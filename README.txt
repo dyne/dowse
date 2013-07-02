@@ -1,0 +1,19 @@
+
+Ghettobox is a minimalistic script that can turn an old GNU/Linux box
+into a local network firewall, privacy proxy and gateway to hidden
+networks as Tor or I2P.
+
+It takes a few steps to use:
+
+1- Install it on a GNU/Linux box, Debian 7 OS is recommended
+
+2- Install dependencies: dnsmasq, privoxy, squid, tor
+
+3- Configure the files in the conf/ folder
+
+4- Launch the ghettobox script in its own source directory
+
+5- Make sure no other DHCP server is running (ADSL routers etc.)
+
+6- (only this step requires root) run 'ghettobox start'
+
