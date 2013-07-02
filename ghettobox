@@ -32,6 +32,7 @@ DEBUG=1
 
 SCRIPT=$0
 
+DIR=${GHETTOBOX:-`pwd`}
 
 # standard output message routines
 autoload colors; colors
@@ -71,20 +72,21 @@ if [[ ${@} == *-D* ]]; then DEBUG=1; fi
     error "No network is configured, create conf/ghetto.net"
     return 1 }
 
-    
+
 
 # }}}
 
 
 notice "Ghettobox $VERSION ($DATE)"
+func "loading configuration from $DIR/conf/ghetto.conf"
+source conf/ghetto.conf
 
 # {{{ SETUP
-ghetto_setup() {    
+ghetto_setup() {
     act "Configuring our ghetto and connecting it to the Internet..."
-    
+
     func "reading configuration in conf/ghetto.conf"
-    source conf/ghetto.conf
-    
+
     func "generating dnsmasq.conf"
     cat <<EOF > dnsmasq.conf
 address=/$ghettoname/$ghettodns
@@ -94,15 +96,18 @@ bogus-priv
 cache-size=1500
 conf-dir=/etc/dnsmasq.d
 dhcp-range=$ghettoguests
-addn-hosts=`pwd`/ghetto.hosts
+addn-hosts=$DIR/ghetto.hosts
+dhcp-leasefile=$DIR/dnsmasq.leases
 domain-needed
-domain=$ghettolan
+domain=$ghettodomain
 expand-hosts
 interface=$ghettoiface
 listen-address=$ghettodns,127.0.0.1
-local=/$ghettolan/
+local=/$ghettodomain/
+user=$ghettouid
+group=$ghettogid
 EOF
-    
+
     func "generating privoxy.conf"
     cat <<EOF > privoxy.conf
 user-manual /usr/share/doc/privoxy/user-manual
@@ -149,8 +154,8 @@ func "generating squid.conf"
 
 cat <<EOF > squid.conf
 # avoid having a cache directory
-#cache_dir aufs /dev/shm/squid 300
-cache_dir aufs /dev/shm/squid 300 16 256
+#cache_dir aufs /dev/shm/ghettobox 300
+cache_dir aufs /dev/shm/ghettobox 300 16 256
 maximum_object_size 10 MB
 minimum_object_size 512 KB
 
@@ -186,7 +191,7 @@ http_port 3128 transparent
 
 hierarchy_stoplist cgi-bin ?
 
-access_log /var/log/squid/access.log squid
+access_log $DIR/log/access.log squid
 
 refresh_pattern ^ftp:		1440	20%	10080
 refresh_pattern ^gopher:	1440	0%	1440
@@ -242,21 +247,23 @@ for i in ${(f)known}; do
 
     # add a line to the dnsmasq host list
     print "dhcp-host=$mac, $host, $ip" >> $ghettodomain
-    
+
+    { test "$host" = "ignore" } || {
     # add a line to the hosts list
-    print "$ip $host" >> ghetto.hosts
+	print "$ip $host" >> ghetto.hosts }
 done
 
-notice "Setup completed in `pwd`"
-act "use 'ghettobox run' as root if you want to get rolling."
+notice "Setup completed in $DIR"
+act "use 'ghettobox start' as root if you want to get rolling."
 return 0
 }
 # }}}
 
-# {{{ RUN
-ghetto_run() {
+# {{{ START
+ghetto_start() {
     act "Checking requirements to run ghettobox..."
-# required programs
+
+    func "required programs"
     for req in dnsmasq iptables privoxy squid; do
 	command -v $req >/dev/null
 	{ test $? != 0 } && {
@@ -264,58 +271,91 @@ ghetto_run() {
 	    return 1
 	}
     done
-    
+
+    func "root access"
     { test "$UID" = "0" } || {
 	error "Ghettobox needs root access to run."
 	return 1 }
 
 
     notice "Setting up the ghetto network..."
-    
-    act "Preparing to launch Squid..."
-    mkdir -p /dev/shm/squid
-    chown $ghettouid:$ghettouid /dev/shm/squid
-    chmod go-rwx /dev/shm/squid
-    squid -z
-    sync
-    squid -f `pwd`/squid.conf
-    
-    act "Preparing to launch privoxy..."
-    privoxy privoxy.conf
-    
+    mkdir -p log
+
     act "Creating a virtual bridge"
     ifconfig | grep '^br0' > /dev/null
     if [ $? != 0 ]; then brctl addbr br0; fi
     ifconfig br0 $ghettobox netmask 255.255.255.0 up
-    
+
     func "enable masquerading over bridge"
     sysctl net.netfilter.nf_conntrack_acct=1
-    
+
     func "enable ip forwarding"
     print 1 > /proc/sys/net/ipv4/ip_forward
-    
+
     func "set up ip masquerading"
     iptables --flush
     iptables --table nat --flush
     iptables --delete-chain
     iptables --table nat --delete-chain
-    
+
     func "setup route towards wired network"
     iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $ghettodns
     iptables --append FORWARD --in-interface $ghettoiface -s $ghettonet -j ACCEPT
-    
+
     func "setup transparent proxy to squid"
     iptables -t nat -A PREROUTING -i $ghettoiface -s $ghettonet -p tcp --dport 80 \
 	-j REDIRECT --to-port 3128
-    
+
     func "defend the ghetto from ipv6"
-    ip6tables -A INPUT -j DROP
-    
+    ip6tables -F
+    ip6tables -P INPUT DROP
+    ip6tables -P FORWARD DROP
+    ip6tables -P OUTPUT DROP
+
+    act "Preparing to launch Squid..."
+    mkdir -p /dev/shm/ghettobox
+    chown $ghettouid:$ghettogid /dev/shm/ghettobox
+    chmod go-rwx /dev/shm/ghettobox
+    func "setuidgid $ghettouid squid -f $DIR/squid.conf"
+    setuidgid $ghettouid squid -z -f $DIR/squid.conf
+    setuidgid $ghettouid squid -f $DIR/squid.conf
+
+    act "Preparing to launch privoxy..."
+    func "setuidgid $ghettouid privoxy --pidfile $DIR/log/privoxy.pid $DIR/privoxy.conf"
+    privoxy --user $ghettouid --pidfile $DIR/log/privoxy.pid $DIR/privoxy.conf
+
+    act "Preparing to launch dnsmasq..."
+    func "dnsmasq --pid-file $DIR/log/dnsmasq.pid -C $DIR/dnsmasq.conf"
+    dnsmasq --pid-file=$DIR/log/dnsmasq.pid -C $DIR/dnsmasq.conf
+
+
 }
 # }}}
 
+# {{{ STOP
+ghetto_stop() {
+    squid -f $DIR/squid.conf -k shutdown
+    if [ -r $DIR/log/privoxy.pid ]; then
+	kill `cat $DIR/log/privoxy.pid`
+    else
+	killall privoxy
+    fi
+    if [ -r $DIR/log/dnsmasq.pid ]; then
+	kill `cat $DIR/log/dnsmasq.pid`
+    else
+	killall dnsmasq
+    fi
 
+}
+# }}}
+
+# {{{ MAIN
+
+# we use a very simple argument parser
 case "$1" in
-    run) ghetto_run ;;
+    start) ghetto_start ;;
+    stop) ghetto_stop ;;
     *) ghetto_setup ;;
 esac
+
+# }}}
