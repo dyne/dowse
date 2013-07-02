@@ -55,6 +55,12 @@ act()    {
 if [[ ${@} == *-q* ]]; then QUIET=1; fi
 if [[ ${@} == *-D* ]]; then DEBUG=1; fi
 
+
+# pid files for our daemons
+pid_squid=$DIR/log/squid.pid
+pid_dnsmasq=$DIR/log/dnsmasq.pid
+pid_privoxy=$DIR/log/privoxy.pid
+
 # }}}
 
 
@@ -153,10 +159,12 @@ EOF
 func "generating squid.conf"
 
 cat <<EOF > squid.conf
-pid_filename $DIR/log/squid.pid
+pid_filename $pid_squid
 cache_store_log none
 cache_log $DIR/log/squid_cache.log
-# avoid having a cache directory
+access_log $DIR/log/squid_access.log squid
+
+# avoid having a physical cache directory
 #cache_dir aufs /dev/shm/ghettobox 300
 cache_dir aufs /dev/shm/ghettobox 300 16 256
 maximum_object_size 10 MB
@@ -194,8 +202,6 @@ http_port 3128 transparent
 
 hierarchy_stoplist cgi-bin ?
 
-access_log $DIR/log/access.log squid
-
 refresh_pattern ^ftp:		1440	20%	10080
 refresh_pattern ^gopher:	1440	0%	1440
 refresh_pattern -i (/cgi-bin/|\?) 0	0%	0
@@ -214,7 +220,7 @@ cache_mgr Ghettobox
 
 hosts_file /etc/hosts
 
-coredump_dir /var/spool/squid
+coredump_dir $DIR/log
 
 cache_peer localhost parent 8118 0 default no-query no-digest no-netdb-exchange
 never_direct allow all
@@ -229,7 +235,6 @@ header_access From deny all
 # header_access User-Agent deny all
 # header_access WWW-Authenticate deny all
 
-# }}}
 EOF
 
 func "Fixing entries for known ghetto inhabitants"
@@ -261,6 +266,72 @@ act "use 'ghettobox start' as root if you want to get rolling."
 return 0
 }
 # }}}
+
+# {{{ START/STOP FORMULAS
+
+
+dnsmasq_stop() {
+    { test -r $pid_dnsmasq } && {
+	act "Stopping dnsmasq (`cat $pid_dnsmasq`)"
+	kill `cat $pid_dnsmasq`
+	rm -f $pid_dnsmasq
+    }
+}
+dnsmasq_start() {
+    act "Preparing to launch dnsmasq..."
+
+    # if running, stop to restart
+    dnsmasq_stop
+
+    func "dnsmasq --pid-file $DIR/log/dnsmasq.pid -C $DIR/dnsmasq.conf"
+    dnsmasq --pid-file=$pid_dnsmasq -C $DIR/dnsmasq.conf
+}
+
+squid_stop() {
+    { test -r $pid_squid } && {
+	act "Stopping squid (`cat $pid_squid`)"
+	squid -f $DIR/squid.conf -k shutdown
+#	kill `cat $pid_squid`
+#	rm -f $pid_squid
+    }
+}
+squid_start() {
+    act "Preparing to launch Squid..."
+
+    # if running, reconfigure
+    { test -r $pid_squid } && {
+	squid -f $DIR/squid.conf -k reconfigure
+	return 0 }
+
+    # create the cache dir in RAM
+    mkdir -p /dev/shm/ghettobox
+    chown $ghettouid:$ghettogid /dev/shm/ghettobox
+    chmod go-rwx /dev/shm/ghettobox
+    func "setuidgid $ghettouid squid -f $DIR/squid.conf"
+    # populate the volatile cache
+    setuidgid $ghettouid squid -z -f $DIR/squid.conf
+    # launch the squid
+    setuidgid $ghettouid squid -f $DIR/squid.conf
+}
+
+privoxy_stop() {
+    { test -r $pid_privoxy } && {
+	act "Stopping privoxy (`cat $pid_privoxy`)"
+	kill `cat $pid_privoxy`
+	rm -f $pid_privoxy
+    }
+}
+privoxy_start() {
+    act "Preparing to launch privoxy..."
+
+    # if running, stop to restart
+    privoxy_stop
+
+    func "setuidgid $ghettouid privoxy --pidfile $pid_privoxy $DIR/privoxy.conf"
+    privoxy --user $ghettouid --pidfile $pid_privoxy $DIR/privoxy.conf
+}
+# }}}
+
 
 # {{{ START
 ghetto_start() {
@@ -317,22 +388,29 @@ ghetto_start() {
     ip6tables -P FORWARD DROP
     ip6tables -P OUTPUT DROP
 
-    act "Preparing to launch Squid..."
-    mkdir -p /dev/shm/ghettobox
-    chown $ghettouid:$ghettogid /dev/shm/ghettobox
-    chmod go-rwx /dev/shm/ghettobox
-    func "setuidgid $ghettouid squid -f $DIR/squid.conf"
-    setuidgid $ghettouid squid -z -f $DIR/squid.conf
-    setuidgid $ghettouid squid -f $DIR/squid.conf
+    # start the squid daemon
+    squid_start
 
-    act "Preparing to launch privoxy..."
-    func "setuidgid $ghettouid privoxy --pidfile $DIR/log/privoxy.pid $DIR/privoxy.conf"
-    privoxy --user $ghettouid --pidfile $DIR/log/privoxy.pid $DIR/privoxy.conf
+    # start the privoxy daemon
+    privoxy_start
 
-    act "Preparing to launch dnsmasq..."
-    func "dnsmasq --pid-file $DIR/log/dnsmasq.pid -C $DIR/dnsmasq.conf"
-    dnsmasq --pid-file=$DIR/log/dnsmasq.pid -C $DIR/dnsmasq.conf
+    act "Pinning down MAC addresses in ARP entries..."
+    known=`cat conf/ghetto.net | grep -v '^#'`
+    for i in ${(f)known}; do
+	func "$i"
+    # gather configuration into variables, line by line
+	mac=${i[(w)1]}
+	host=${i[(w)2]}
+	ip=${i[(w)3]}
 
+	{ test "$host" = "ignore" } && { continue }
+
+	arp -s $ip $mac
+
+    done
+
+    # start the dnsmasq daemon
+    dnsmasq_start
 
 }
 # }}}

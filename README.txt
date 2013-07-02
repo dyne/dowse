@@ -17,3 +17,14 @@ It takes a few steps to use:
 
 6- (only this step requires root) run 'ghettobox start'
 
+
+
+* Recommended
+
+Here below a list of software we recommend using on the Ghettobox:
+
+ - PeerGuardian http://sourceforge.net/projects/peerguardian/
+	maintains blocklists on the firewall
+
+ - Tiger http://savannah.nongnu.org/projects/tiger/
+	audits the system's security
