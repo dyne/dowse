@@ -1,0 +1,22 @@
+# configuration for our network in da ghetto
+# values are assigned with equals, no spaces in between
+# comments are prefixed with hashes, just like this.
+
+# which addresses we take for the ghettobox (2 needed!)
+ghettobox=10.0.0.1
+ghettodns=10.0.0.254
+
+# which ghettobox interface is connected to the network
+ghettoiface=eth0
+
+# hostname by which the ghettobox will be known to the network
+ghettoname=closet
+
+# what connects us to the internet (i.e. adsl router)
+# make sure dhcp is deactivated there, we will give it!
+internet=10.0.0.200
+
+# what is the domain name of the internal network
+lan=home.net
+
+

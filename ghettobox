@@ -1,0 +1,321 @@
+#!/usr/bin/env zsh
+#
+# Copyright (C) 2011-2013 Dyne.org Foundation
+#
+# Ghettobox is designed, written and maintained by Jaromil
+#
+# This source code is free software; you can redistribute it
+# and/or modify it under the terms of the GNU Public License
+# as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# This source code is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.  Please refer to the GNU Public License for more
+# details.
+#
+# You should have received a copy of the GNU Public License
+# along with this source code; if not, write to: Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+# 02139, USA.
+
+
+# {{{ GLOBALS
+
+VERSION=0.1
+DATE="Jul/2013"
+
+QUIET=0
+DEBUG=1
+
+SCRIPT=$0
+
+
+# standard output message routines
+autoload colors; colors
+# it's always useful to wrap them, in case we change behaviour later
+notice() { if [[ $QUIET == 0 ]]; then print "$fg_bold[green][*]$fg_no_bold[default] $1" >&2; fi }
+error()  { if [[ $QUIET == 0 ]]; then print "$fg[red][!]$fg[default] $1" >&2; fi }
+func()   { if [[ $DEBUG == 1 ]]; then print "$fg[blue][D]$fg[default] $1" >&2; fi }
+act()    {
+    if [[ $QUIET == 0 ]]; then
+	if [ "$1" = "-n" ]; then
+	    print -n "$fg_bold[white] . $fg_no_bold[default] $2" >&2;
+	else
+	    print "$fg_bold[white] . $fg_no_bold[default] $1" >&2;
+	fi
+    fi
+}
+
+
+# honor quiet and debug flags as early as possible
+if [[ ${@} == *-q* ]]; then QUIET=1; fi
+if [[ ${@} == *-D* ]]; then DEBUG=1; fi
+
+# }}}
+
+
+# {{{ CHECKS
+
+{ test -r conf } || {
+    error "The ghettobox script must be run inside its source directory"
+    return 1 }
+
+{ test -r conf/ghetto.conf } || {
+    error "Ghettobox configuration is missing, create conf/ghetto.conf"
+    return 1 }
+
+{ test -r conf/ghetto.net } || {
+    error "No network is configured, create conf/ghetto.net"
+    return 1 }
+
+    
+
+# }}}
+
+
+notice "Ghettobox $VERSION ($DATE)"
+
+# {{{ SETUP
+ghetto_setup() {    
+    act "Configuring our ghetto and connecting it to the Internet..."
+    
+    func "reading configuration in conf/ghetto.conf"
+    source conf/ghetto.conf
+    
+    func "generating dnsmasq.conf"
+    cat <<EOF > dnsmasq.conf
+address=/$ghettoname/$ghettodns
+address=/.i2p/$ghettodns
+address=/.onion/$ghettodns
+bogus-priv
+cache-size=1500
+conf-dir=/etc/dnsmasq.d
+dhcp-range=$ghettoguests
+addn-hosts=`pwd`/ghetto.hosts
+domain-needed
+domain=$ghettolan
+expand-hosts
+interface=$ghettoiface
+listen-address=$ghettodns,127.0.0.1
+local=/$ghettolan/
+EOF
+    
+    func "generating privoxy.conf"
+    cat <<EOF > privoxy.conf
+user-manual /usr/share/doc/privoxy/user-manual
+confdir /etc/privoxy
+logdir /var/log/privoxy
+listen-address  0.0.0.0:8118
+toggle  1
+enable-remote-toggle  0
+enable-remote-http-toggle  0
+enable-edit-actions 1
+enforce-blocks 0
+buffer-limit 64000
+
+forwarded-connect-retries  0
+accept-intercepted-requests 1
+allow-cgi-request-crunching 0
+split-large-forms 0
+keep-alive-timeout 5
+socket-timeout 300
+handle-as-empty-doc-returns-ok 1
+
+
+# pass through tor for urls.onion
+forward-socks4a .onion $ghettodns:9050 .
+
+# TODO: tor might use polipo (web cache)
+# forward / $ghettodns:8123
+# forward / 127.0.0.1:8123
+
+# pass through i2p for urls.i2p
+forward .i2p $ghettodns:4444
+forward .i2p 127.0.0.1:4444
+
+# direct access
+forward $ghettoname .
+
+filterfile default.filter
+actionsfile match-all.action # Actions that are applied to all sites and maybe overruled later on.
+actionsfile default.action   # Main actions file
+actionsfile user.action      # User customizations
+EOF
+
+func "generating squid.conf"
+
+cat <<EOF > squid.conf
+# avoid having a cache directory
+#cache_dir aufs /dev/shm/squid 300
+cache_dir aufs /dev/shm/squid 300 16 256
+maximum_object_size 10 MB
+minimum_object_size 512 KB
+
+acl all src all
+acl manager proto cache_object
+acl localhost src 127.0.0.1/32
+acl to_localhost dst 127.0.0.0/8 0.0.0.0/32
+
+acl localnet src $ghettonet
+
+acl SSL_ports port 443		# https
+acl Safe_ports port 80		# http
+acl Safe_ports port 443		# https
+acl purge method PURGE
+acl CONNECT method CONNECT
+
+http_access allow manager localhost
+http_access deny manager
+http_access allow purge localhost
+http_access deny purge
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+
+http_access allow localnet
+http_access allow localhost
+
+http_access deny all
+
+icp_access allow localnet
+icp_access deny all
+
+http_port 3128 transparent
+
+hierarchy_stoplist cgi-bin ?
+
+access_log /var/log/squid/access.log squid
+
+refresh_pattern ^ftp:		1440	20%	10080
+refresh_pattern ^gopher:	1440	0%	1440
+refresh_pattern -i (/cgi-bin/|\?) 0	0%	0
+refresh_pattern (Release|Packages(.gz)*)$	0	20%	2880
+refresh_pattern .		0	20%	4320
+
+acl shoutcast rep_header X-HTTP09-First-Line ^ICY.[0-9]
+upgrade_http0.9 deny shoutcast
+
+acl apache rep_header Server ^Apache
+broken_vary_encoding allow apache
+
+extension_methods REPORT MERGE MKACTIVITY CHECKOUT
+
+cache_mgr Ghettobox
+
+hosts_file /etc/hosts
+
+coredump_dir /var/spool/squid
+
+cache_peer localhost parent 8118 0 default no-query no-digest no-netdb-exchange
+never_direct allow all
+
+header_access From deny all
+
+# the settings below are restrictive:
+# they grant more privacy but break many websites!
+# header_access Link deny all
+# header_access Server deny all
+# header_access Referer deny all
+# header_access User-Agent deny all
+# header_access WWW-Authenticate deny all
+
+# }}}
+EOF
+
+func "Fixing entries for known ghetto inhabitants"
+known=`cat conf/ghetto.net | grep -v '^#'`
+rm -f $ghettodomain
+# this is basically a dnsmasq host configuration file
+print "dhcp-option=option:router,$ghettobox" > $ghettodomain
+
+# this is our generated hosts file
+rm -f ghetto.hosts; touch ghetto.hosts
+
+for i in ${(f)known}; do
+    func "$i"
+    # gather configuration into variables, line by line
+    mac=${i[(w)1]}
+    host=${i[(w)2]}
+    ip=${i[(w)3]}
+
+    # add a line to the dnsmasq host list
+    print "dhcp-host=$mac, $host, $ip" >> $ghettodomain
+    
+    # add a line to the hosts list
+    print "$ip $host" >> ghetto.hosts
+done
+
+notice "Setup completed in `pwd`"
+act "use 'ghettobox run' as root if you want to get rolling."
+return 0
+}
+# }}}
+
+# {{{ RUN
+ghetto_run() {
+    act "Checking requirements to run ghettobox..."
+# required programs
+    for req in dnsmasq iptables privoxy squid; do
+	command -v $req >/dev/null
+	{ test $? != 0 } && {
+	    error "Cannot find $req. You require more BLINGBLING man, please install it."
+	    return 1
+	}
+    done
+    
+    { test "$UID" = "0" } || {
+	error "Ghettobox needs root access to run."
+	return 1 }
+
+
+    notice "Setting up the ghetto network..."
+    
+    act "Preparing to launch Squid..."
+    mkdir -p /dev/shm/squid
+    chown $ghettouid:$ghettouid /dev/shm/squid
+    chmod go-rwx /dev/shm/squid
+    squid -z
+    sync
+    squid -f `pwd`/squid.conf
+    
+    act "Preparing to launch privoxy..."
+    privoxy privoxy.conf
+    
+    act "Creating a virtual bridge"
+    ifconfig | grep '^br0' > /dev/null
+    if [ $? != 0 ]; then brctl addbr br0; fi
+    ifconfig br0 $ghettobox netmask 255.255.255.0 up
+    
+    func "enable masquerading over bridge"
+    sysctl net.netfilter.nf_conntrack_acct=1
+    
+    func "enable ip forwarding"
+    print 1 > /proc/sys/net/ipv4/ip_forward
+    
+    func "set up ip masquerading"
+    iptables --flush
+    iptables --table nat --flush
+    iptables --delete-chain
+    iptables --table nat --delete-chain
+    
+    func "setup route towards wired network"
+    iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $ghettodns
+    iptables --append FORWARD --in-interface $ghettoiface -s $ghettonet -j ACCEPT
+    
+    func "setup transparent proxy to squid"
+    iptables -t nat -A PREROUTING -i $ghettoiface -s $ghettonet -p tcp --dport 80 \
+	-j REDIRECT --to-port 3128
+    
+    func "defend the ghetto from ipv6"
+    ip6tables -A INPUT -j DROP
+    
+}
+# }}}
+
+
+case "$1" in
+    run) ghetto_run ;;
+    *) ghetto_setup ;;
+esac
