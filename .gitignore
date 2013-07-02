@@ -5,3 +5,5 @@ ghetto.hosts
 home.net
 privoxy.conf
 squid.conf
+doc/style.css
+doc/index.html
