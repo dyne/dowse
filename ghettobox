@@ -112,7 +112,7 @@ EOF
     cat <<EOF > privoxy.conf
 user-manual /usr/share/doc/privoxy/user-manual
 confdir /etc/privoxy
-logdir /var/log/privoxy
+logdir $DIR/log/privoxy
 listen-address  0.0.0.0:8118
 toggle  1
 enable-remote-toggle  0
@@ -153,6 +153,9 @@ EOF
 func "generating squid.conf"
 
 cat <<EOF > squid.conf
+pid_filename $DIR/log/squid.pid
+cache_store_log none
+cache_log $DIR/log/squid_cache.log
 # avoid having a cache directory
 #cache_dir aufs /dev/shm/ghettobox 300
 cache_dir aufs /dev/shm/ghettobox 300 16 256
@@ -280,6 +283,8 @@ ghetto_start() {
 
     notice "Setting up the ghetto network..."
     mkdir -p log
+    chmod go-rwx log
+    chown $ghettouid:$ghettogid log
 
     act "Creating a virtual bridge"
     ifconfig | grep '^br0' > /dev/null
@@ -334,17 +339,10 @@ ghetto_start() {
 
 # {{{ STOP
 ghetto_stop() {
-    squid -f $DIR/squid.conf -k shutdown
-    if [ -r $DIR/log/privoxy.pid ]; then
-	kill `cat $DIR/log/privoxy.pid`
-    else
-	killall privoxy
-    fi
-    if [ -r $DIR/log/dnsmasq.pid ]; then
-	kill `cat $DIR/log/dnsmasq.pid`
-    else
-	killall dnsmasq
-    fi
+    act "Stopping all Ghettobox services."
+    { test -r $DIR/log/squid.pid } && { kill `cat $DIR/log/squid.pid` }
+    { test -r $DIR/log/privoxy.pid } && { kill `cat $DIR/log/privoxy.pid` }
+    { test -r $DIR/log/dnsmasq.pid } && { kill `cat $DIR/log/dnsmasq.pid` }
 
 }
 # }}}
