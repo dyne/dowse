@@ -57,9 +57,9 @@ if [[ ${@} == *-D* ]]; then DEBUG=1; fi
 
 
 # pid files for our daemons
-pid_squid=$DIR/log/squid.pid
-pid_dnsmasq=$DIR/log/dnsmasq.pid
-pid_privoxy=$DIR/log/privoxy.pid
+pid_squid=$DIR/run/squid.pid
+pid_dnsmasq=$DIR/run/dnsmasq.pid
+pid_privoxy=$DIR/run/privoxy.pid
 
 # }}}
 
@@ -70,31 +70,44 @@ pid_privoxy=$DIR/log/privoxy.pid
     error "The ghettobox script must be run inside its source directory"
     return 1 }
 
-{ test -r conf/ghetto.conf } || {
-    error "Ghettobox configuration is missing, create conf/ghetto.conf"
+{ test -r conf/settings } || {
+    error "Ghettobox configuration is missing, create conf/settings"
     return 1 }
 
-{ test -r conf/ghetto.net } || {
-    error "No network is configured, create conf/ghetto.net"
+{ test -r conf/network } || {
+    error "No network is configured, create conf/network"
     return 1 }
 
+notice "Ghettobox $VERSION ($DATE)"
+func "loading configuration from $DIR/conf/settings"
+source conf/settings
 
+# setup dirs
+mkdir -p log
+chmod go-rwx log
+chown $ghettouid:$ghettogid log
+
+mkdir -p run
+chmod go-rwx run
+chown $ghettouid:$ghettogid run
+
+# create the cache dir in RAM
+mkdir -p /dev/shm/ghettobox
+chown $ghettouid:$ghettogid /dev/shm/ghettobox
+chmod go-rwx /dev/shm/ghettobox
 
 # }}}
 
 
-notice "Ghettobox $VERSION ($DATE)"
-func "loading configuration from $DIR/conf/ghetto.conf"
-source conf/ghetto.conf
 
 # {{{ SETUP
 ghetto_setup() {
     act "Configuring our ghetto and connecting it to the Internet..."
 
-    func "reading configuration in conf/ghetto.conf"
+    func "reading configuration in conf/settings"
 
     func "generating dnsmasq.conf"
-    cat <<EOF > dnsmasq.conf
+    cat <<EOF > $DIR/run/dnsmasq.conf
 address=/$ghettoname/$ghettodns
 address=/.i2p/$ghettodns
 address=/.onion/$ghettodns
@@ -102,8 +115,8 @@ bogus-priv
 cache-size=1500
 conf-dir=/etc/dnsmasq.d
 dhcp-range=$ghettoguests
-addn-hosts=$DIR/ghetto.hosts
-dhcp-leasefile=$DIR/dnsmasq.leases
+addn-hosts=$DIR/run/hosts
+dhcp-leasefile=$DIR/run/leases
 domain-needed
 domain=$ghettodomain
 expand-hosts
@@ -115,7 +128,7 @@ group=$ghettogid
 EOF
 
     func "generating privoxy.conf"
-    cat <<EOF > privoxy.conf
+    cat <<EOF > $DIR/run/privoxy.conf
 user-manual /usr/share/doc/privoxy/user-manual
 confdir /etc/privoxy
 logdir $DIR/log/privoxy
@@ -158,7 +171,7 @@ EOF
 
 func "generating squid.conf"
 
-cat <<EOF > squid.conf
+cat <<EOF > $DIR/run/squid.conf
 pid_filename $pid_squid
 cache_store_log none
 cache_log $DIR/log/squid_cache.log
@@ -218,7 +231,7 @@ extension_methods REPORT MERGE MKACTIVITY CHECKOUT
 
 cache_mgr Ghettobox
 
-hosts_file /etc/hosts
+hosts_file $DIR/run/hosts
 
 coredump_dir $DIR/log
 
@@ -238,13 +251,13 @@ header_access From deny all
 EOF
 
 func "Fixing entries for known ghetto inhabitants"
-known=`cat conf/ghetto.net | grep -v '^#'`
-rm -f $ghettodomain
+known=`cat conf/network | grep -v '^#'`
+rm -f $DIR/run/dnsmasq.network
 # this is basically a dnsmasq host configuration file
-print "dhcp-option=option:router,$ghettobox" > $ghettodomain
+print "dhcp-option=option:router,$ghettobox" > $DIR/run/dnsmasq.network
 
 # this is our generated hosts file
-rm -f ghetto.hosts; touch ghetto.hosts
+rm -f $DIR/run/hosts; touch $DIR/run/hosts
 
 for i in ${(f)known}; do
     func "$i"
@@ -254,15 +267,14 @@ for i in ${(f)known}; do
     ip=${i[(w)3]}
 
     # add a line to the dnsmasq host list
-    print "dhcp-host=$mac, $host, $ip" >> $ghettodomain
+    print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
 
     { test "$host" = "ignore" } || {
     # add a line to the hosts list
-	print "$ip $host" >> ghetto.hosts }
+	print "$ip $host" >> $DIR/run/hosts }
 done
 
 notice "Setup completed in $DIR"
-act "use 'ghettobox start' as root if you want to get rolling."
 return 0
 }
 # }}}
@@ -284,13 +296,13 @@ dnsmasq_start() {
     dnsmasq_stop
 
     func "dnsmasq --pid-file $DIR/log/dnsmasq.pid -C $DIR/dnsmasq.conf"
-    dnsmasq --pid-file=$pid_dnsmasq -C $DIR/dnsmasq.conf
+    dnsmasq --pid-file=$pid_dnsmasq -C $DIR/run/dnsmasq.conf
 }
 
 squid_stop() {
     { test -r $pid_squid } && {
 	act "Stopping squid (`cat $pid_squid`)"
-	squid -f $DIR/squid.conf -k shutdown
+	squid -f $DIR/run/squid.conf -k shutdown
 #	kill `cat $pid_squid`
 #	rm -f $pid_squid
     }
@@ -300,18 +312,14 @@ squid_start() {
 
     # if running, reconfigure
     { test -r $pid_squid } && {
-	squid -f $DIR/squid.conf -k reconfigure
+	squid -f $DIR/run/squid.conf -k reconfigure
 	return 0 }
 
-    # create the cache dir in RAM
-    mkdir -p /dev/shm/ghettobox
-    chown $ghettouid:$ghettogid /dev/shm/ghettobox
-    chmod go-rwx /dev/shm/ghettobox
-    func "setuidgid $ghettouid squid -f $DIR/squid.conf"
+    func "setuidgid $ghettouid squid -f $DIR/run/squid.conf"
     # populate the volatile cache
-    setuidgid $ghettouid squid -z -f $DIR/squid.conf
+    setuidgid $ghettouid squid -z -f $DIR/run/squid.conf
     # launch the squid
-    setuidgid $ghettouid squid -f $DIR/squid.conf
+    setuidgid $ghettouid squid -f $DIR/run/squid.conf
 }
 
 privoxy_stop() {
@@ -328,7 +336,7 @@ privoxy_start() {
     privoxy_stop
 
     func "setuidgid $ghettouid privoxy --pidfile $pid_privoxy $DIR/privoxy.conf"
-    privoxy --user $ghettouid --pidfile $pid_privoxy $DIR/privoxy.conf
+    privoxy --user $ghettouid --pidfile $pid_privoxy $DIR/run/privoxy.conf
 }
 # }}}
 
@@ -353,9 +361,12 @@ ghetto_start() {
 
 
     notice "Setting up the ghetto network..."
-    mkdir -p log
-    chmod go-rwx log
-    chown $ghettouid:$ghettogid log
+
+    PGL=`pidof pgld`
+    { test "$PGL" = "" } || {
+	act "PeerGuardian found running, will restart it accordingly"
+	pglcmd stop }
+
 
     act "Creating a virtual bridge"
     ifconfig | grep '^br0' > /dev/null
@@ -395,7 +406,7 @@ ghetto_start() {
     privoxy_start
 
     act "Pinning down MAC addresses in ARP entries..."
-    known=`cat conf/ghetto.net | grep -v '^#'`
+    known=`cat conf/network | grep -v '^#'`
     for i in ${(f)known}; do
 	func "$i"
     # gather configuration into variables, line by line
@@ -411,6 +422,9 @@ ghetto_start() {
 
     # start the dnsmasq daemon
     dnsmasq_start
+
+    # if PeerGuardian was running, start it again
+    { test "$PGL" = "" } || { pglcmd start }
 
 }
 # }}}
@@ -429,9 +443,10 @@ ghetto_stop() {
 
 # we use a very simple argument parser
 case "$1" in
-    start) ghetto_start ;;
+    restart|start) ghetto_setup; ghetto_start ;;
+    release) rm $DIR/run/leases; ghetto_setup; ghetto_start ;;
     stop) ghetto_stop ;;
-    *) ghetto_setup ;;
+    *) echo "ghettobox: command not found: $1" ;;
 esac
 
 # }}}
