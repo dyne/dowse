@@ -118,11 +118,11 @@ dhcp-range=$dowseguests
 addn-hosts=$DIR/run/hosts
 dhcp-leasefile=$DIR/run/leases
 domain-needed
-domain=$dowsedomain
+domain=$lan
 expand-hosts
 interface=$interface
 listen-address=$dns,127.0.0.1
-local=/$dowsedomain/
+local=/$lan/
 user=$dowseuid
 group=$dowsegid
 EOF
@@ -367,6 +367,9 @@ dowse_start() {
 	act "PeerGuardian found running, will restart it accordingly"
 	pglcmd stop }
 
+    act "Setting up $interface interface"
+    ifconfig eth0 $dns netmask 255.255.255.0 up
+    route add default gw $gateway
 
     act "Creating a virtual bridge"
     ifconfig | grep '^br0' > /dev/null
@@ -374,6 +377,7 @@ dowse_start() {
     ifconfig br0 $gateway netmask 255.255.255.0 up
 
     func "enable masquerading over bridge"
+    modprobe nf_conntrack_ipv4
     sysctl net.netfilter.nf_conntrack_acct=1
 
     func "enable ip forwarding"
