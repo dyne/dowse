@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2011-2013 Dyne.org Foundation
 #
-# Ghettobox is designed, written and maintained by Jaromil
+# Dowse is designed, written and maintained by Jaromil
 #
 # This source code is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Public License
@@ -24,7 +24,7 @@
 
 # {{{ GLOBALS
 
-VERSION=0.1
+VERSION=0.2
 DATE="Jul/2013"
 
 QUIET=0
@@ -32,7 +32,7 @@ DEBUG=1
 
 SCRIPT=$0
 
-DIR=${GHETTOBOX:-`pwd`}
+DIR=${DOWSE:-`pwd`}
 
 # standard output message routines
 autoload colors; colors
@@ -67,64 +67,64 @@ pid_privoxy=$DIR/run/privoxy.pid
 # {{{ CHECKS
 
 { test -r conf } || {
-    error "The ghettobox script must be run inside its source directory"
+    error "The dowse script must be run inside its source directory"
     return 1 }
 
 { test -r conf/settings } || {
-    error "Ghettobox configuration is missing, create conf/settings"
+    error "Dowse configuration is missing, create conf/settings"
     return 1 }
 
 { test -r conf/network } || {
     error "No network is configured, create conf/network"
     return 1 }
 
-notice "Ghettobox $VERSION ($DATE)"
+notice "Dowse $VERSION ($DATE)"
 func "loading configuration from $DIR/conf/settings"
 source conf/settings
 
 # setup dirs
 mkdir -p log
 chmod go-rwx log
-chown $ghettouid:$ghettogid log
+chown $dowseuid:$dowsegid log
 
 mkdir -p run
 chmod go-rwx run
-chown $ghettouid:$ghettogid run
+chown $dowseuid:$dowsegid run
 
 # create the cache dir in RAM
-mkdir -p /dev/shm/ghettobox
-chown $ghettouid:$ghettogid /dev/shm/ghettobox
-chmod go-rwx /dev/shm/ghettobox
+mkdir -p /dev/shm/dowse
+chown $dowseuid:$dowsegid /dev/shm/dowse
+chmod go-rwx /dev/shm/dowse
 
 # }}}
 
 
 
 # {{{ SETUP
-ghetto_setup() {
-    act "Configuring our ghetto and connecting it to the Internet..."
+dowse_setup() {
+    act "Configuring our box and connecting it to the Internet..."
 
     func "reading configuration in conf/settings"
 
     func "generating dnsmasq.conf"
     cat <<EOF > $DIR/run/dnsmasq.conf
-address=/$ghettoname/$ghettodns
-address=/.i2p/$ghettodns
-address=/.onion/$ghettodns
+address=/$hostname/$dns
+address=/.i2p/$dns
+address=/.onion/$dns
 bogus-priv
 cache-size=1500
 conf-dir=/etc/dnsmasq.d
-dhcp-range=$ghettoguests
+dhcp-range=$dowseguests
 addn-hosts=$DIR/run/hosts
 dhcp-leasefile=$DIR/run/leases
 domain-needed
-domain=$ghettodomain
+domain=$dowsedomain
 expand-hosts
-interface=$ghettoiface
-listen-address=$ghettodns,127.0.0.1
-local=/$ghettodomain/
-user=$ghettouid
-group=$ghettogid
+interface=$interface
+listen-address=$dns,127.0.0.1
+local=/$dowsedomain/
+user=$dowseuid
+group=$dowsegid
 EOF
 
     func "generating privoxy.conf"
@@ -150,18 +150,18 @@ handle-as-empty-doc-returns-ok 1
 
 
 # pass through tor for urls.onion
-forward-socks4a .onion $ghettodns:9050 .
+forward-socks4a .onion $dns:9050 .
 
 # TODO: tor might use polipo (web cache)
-# forward / $ghettodns:8123
+# forward / $dns:8123
 # forward / 127.0.0.1:8123
 
 # pass through i2p for urls.i2p
-forward .i2p $ghettodns:4444
+forward .i2p $dns:4444
 forward .i2p 127.0.0.1:4444
 
 # direct access
-forward $ghettoname .
+forward $hostname .
 
 filterfile default.filter
 actionsfile match-all.action # Actions that are applied to all sites and maybe overruled later on.
@@ -178,8 +178,8 @@ cache_log $DIR/log/squid_cache.log
 access_log $DIR/log/squid_access.log squid
 
 # avoid having a physical cache directory
-#cache_dir aufs /dev/shm/ghettobox 300
-cache_dir aufs /dev/shm/ghettobox 300 16 256
+#cache_dir aufs /dev/shm/dowse 300
+cache_dir aufs /dev/shm/dowse 300 16 256
 maximum_object_size 10 MB
 minimum_object_size 512 KB
 
@@ -188,7 +188,7 @@ acl manager proto cache_object
 acl localhost src 127.0.0.1/32
 acl to_localhost dst 127.0.0.0/8 0.0.0.0/32
 
-acl localnet src $ghettonet
+acl localnet src $dowsenet
 
 acl SSL_ports port 443		# https
 acl Safe_ports port 80		# http
@@ -229,7 +229,7 @@ broken_vary_encoding allow apache
 
 extension_methods REPORT MERGE MKACTIVITY CHECKOUT
 
-cache_mgr Ghettobox
+cache_mgr Dowse
 
 hosts_file $DIR/run/hosts
 
@@ -250,11 +250,11 @@ header_access From deny all
 
 EOF
 
-func "Fixing entries for known ghetto inhabitants"
+func "Fixing entries for known peers"
 known=`cat conf/network | grep -v '^#'`
 rm -f $DIR/run/dnsmasq.network
 # this is basically a dnsmasq host configuration file
-print "dhcp-option=option:router,$ghettobox" > $DIR/run/dnsmasq.network
+print "dhcp-option=option:router,$gateway" > $DIR/run/dnsmasq.network
 
 # this is our generated hosts file
 rm -f $DIR/run/hosts; touch $DIR/run/hosts
@@ -315,11 +315,11 @@ squid_start() {
 	squid -f $DIR/run/squid.conf -k reconfigure
 	return 0 }
 
-    func "setuidgid $ghettouid squid -f $DIR/run/squid.conf"
+    func "setuidgid $dowseuid squid -f $DIR/run/squid.conf"
     # populate the volatile cache
-    setuidgid $ghettouid squid -z -f $DIR/run/squid.conf
+    setuidgid $dowseuid squid -z -f $DIR/run/squid.conf
     # launch the squid
-    setuidgid $ghettouid squid -f $DIR/run/squid.conf
+    setuidgid $dowseuid squid -f $DIR/run/squid.conf
 }
 
 privoxy_stop() {
@@ -335,15 +335,15 @@ privoxy_start() {
     # if running, stop to restart
     privoxy_stop
 
-    func "setuidgid $ghettouid privoxy --pidfile $pid_privoxy $DIR/privoxy.conf"
-    privoxy --user $ghettouid --pidfile $pid_privoxy $DIR/run/privoxy.conf
+    func "setuidgid $dowseuid privoxy --pidfile $pid_privoxy $DIR/privoxy.conf"
+    privoxy --user $dowseuid --pidfile $pid_privoxy $DIR/run/privoxy.conf
 }
 # }}}
 
 
 # {{{ START
-ghetto_start() {
-    act "Checking requirements to run ghettobox..."
+dowse_start() {
+    act "Checking requirements to run dowse..."
 
     func "required programs"
     for req in dnsmasq iptables privoxy squid; do
@@ -356,11 +356,11 @@ ghetto_start() {
 
     func "root access"
     { test "$UID" = "0" } || {
-	error "Ghettobox needs root access to run."
+	error "Dowse needs root access to run."
 	return 1 }
 
 
-    notice "Setting up the ghetto network..."
+    notice "Setting up the network..."
 
     PGL=`pidof pgld`
     { test "$PGL" = "" } || {
@@ -371,7 +371,7 @@ ghetto_start() {
     act "Creating a virtual bridge"
     ifconfig | grep '^br0' > /dev/null
     if [ $? != 0 ]; then brctl addbr br0; fi
-    ifconfig br0 $ghettobox netmask 255.255.255.0 up
+    ifconfig br0 $gateway netmask 255.255.255.0 up
 
     func "enable masquerading over bridge"
     sysctl net.netfilter.nf_conntrack_acct=1
@@ -386,14 +386,14 @@ ghetto_start() {
     iptables --table nat --delete-chain
 
     func "setup route towards wired network"
-    iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $ghettodns
-    iptables --append FORWARD --in-interface $ghettoiface -s $ghettonet -j ACCEPT
+    iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $dns
+    iptables --append FORWARD --in-interface $interface -s $dowsenet -j ACCEPT
 
     func "setup transparent proxy to squid"
-    iptables -t nat -A PREROUTING -i $ghettoiface -s $ghettonet -p tcp --dport 80 \
+    iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 \
 	-j REDIRECT --to-port 3128
 
-    func "defend the ghetto from ipv6"
+    func "defend the network from ipv6"
     ip6tables -F
     ip6tables -P INPUT DROP
     ip6tables -P FORWARD DROP
@@ -430,8 +430,8 @@ ghetto_start() {
 # }}}
 
 # {{{ STOP
-ghetto_stop() {
-    act "Stopping all Ghettobox services."
+dowse_stop() {
+    act "Stopping all services."
     { test -r $DIR/log/squid.pid } && { kill `cat $DIR/log/squid.pid` }
     { test -r $DIR/log/privoxy.pid } && { kill `cat $DIR/log/privoxy.pid` }
     { test -r $DIR/log/dnsmasq.pid } && { kill `cat $DIR/log/dnsmasq.pid` }
@@ -443,10 +443,10 @@ ghetto_stop() {
 
 # we use a very simple argument parser
 case "$1" in
-    restart|start) ghetto_setup; ghetto_start ;;
-    release) rm $DIR/run/leases; ghetto_setup; ghetto_start ;;
-    stop) ghetto_stop ;;
-    *) echo "ghettobox: command not found: $1" ;;
+    restart|start) dowse_setup; dowse_start ;;
+    release) rm $DIR/run/leases; dowse_setup; dowse_start ;;
+    stop) dowse_stop ;;
+    *) echo "dowse: command not found: $1" ;;
 esac
 
 # }}}

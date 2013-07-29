@@ -1,5 +1,5 @@
 
-Ghettobox is a minimalistic script that can turn an old GNU/Linux box
+Dowse is a minimalistic script that can turn an old GNU/Linux box
 into a local network firewall, privacy proxy and gateway to hidden
 networks as Tor or I2P.
 
@@ -15,7 +15,7 @@ It takes a few steps to use:
 
 5- Make sure no other DHCP server is running (ADSL routers etc.)
 
-6- (only this step requires root) run 'ghettobox start'
+6- (only this step requires root) run 'dowse start'
 
 
 

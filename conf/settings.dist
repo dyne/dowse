@@ -3,20 +3,37 @@
 # comments are prefixed with hashes, just like this.
 
 # which addresses we take for the ghettobox (2 needed!)
-ghettobox=10.0.0.1
-ghettodns=10.0.0.254
+gateway=10.0.0.1
+dns=10.0.0.254
 
 # which ghettobox interface is connected to the network
-ghettoiface=eth0
+interface=eth0
 
 # hostname by which the ghettobox will be known to the network
-ghettoname=closet
+hostname=closet
 
 # what connects us to the internet (i.e. adsl router)
 # make sure dhcp is deactivated there, we will give it!
-internet=10.0.0.200
+wan=10.0.0.200
 
 # what is the domain name of the internal network
 lan=home.net
 
+#########################
+# SAFE TO LEAVE UNCHANGED
+# in most cases, if you don't know what you are doing
+# its better to not change the values below.
 
+# under which system UID and GID ghettobox will run
+dowseuid=nobody
+dowsegid=nogroup
+
+# what network range we choose for our ghetto (class C)
+dowsenet=10.0.0.0/24
+
+# which addresses we take for the ghettobox (2 needed!)
+dowsebox=10.0.0.254
+dowsedns=10.0.0.250
+
+# ip range reserved for guests (first,last,leasetime)
+dowseguests=10.0.0.101,10.0.0.199,48h
