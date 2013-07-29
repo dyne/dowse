@@ -368,13 +368,13 @@ dowse_start() {
 	pglcmd stop }
 
     act "Setting up $interface interface"
-    ifconfig eth0 $dns netmask 255.255.255.0 up
-    route add default gw $gateway
+    ifconfig eth0 $dns netmask $netmask up
+    route add default gw $wan
 
     act "Creating a virtual bridge"
     ifconfig | grep '^br0' > /dev/null
     if [ $? != 0 ]; then brctl addbr br0; fi
-    ifconfig br0 $gateway netmask 255.255.255.0 up
+    ifconfig br0 $gateway netmask $netmask up
 
     func "enable masquerading over bridge"
     modprobe nf_conntrack_ipv4

@@ -31,9 +31,8 @@ dowsegid=nogroup
 # what network range we choose for our ghetto (class C)
 dowsenet=10.0.0.0/24
 
-# which addresses we take for the ghettobox (2 needed!)
-dowsebox=10.0.0.254
-dowsedns=10.0.0.250
+# which netmask to be applied (default is class C)
+netmask=255.255.255.0
 
 # ip range reserved for guests (first,last,leasetime)
 dowseguests=10.0.0.101,10.0.0.199,48h
