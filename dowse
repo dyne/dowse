@@ -257,9 +257,26 @@ rm -f $DIR/run/dnsmasq.network
 print "dhcp-option=option:router,$gateway" > $DIR/run/dnsmasq.network
 
 # this is our generated hosts file
+func "Generating hosts file"
 rm -f $DIR/run/hosts; touch $DIR/run/hosts
-
 for i in ${(f)known}; do
+    echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+    if [ $? = 0 ]; then # mac address is first
+	host=${i[(w)2]}
+	ip=${i[(w)3]}
+    else # no mac address specified
+	host=${i[(w)1]}
+	ip=${i[(w)2]}
+    fi
+    { test "$host" = "ignore" } || {
+    # add a line to the hosts list
+	print "$ip $host" >> $DIR/run/hosts }
+done
+
+func "generating dnsmask.network"
+for i in ${(f)known}; do
+    echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+    { test $? = 0 } || { continue } # skip if no mac address
     func "$i"
     # gather configuration into variables, line by line
     mac=${i[(w)1]}
@@ -269,9 +286,6 @@ for i in ${(f)known}; do
     # add a line to the dnsmasq host list
     print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
 
-    { test "$host" = "ignore" } || {
-    # add a line to the hosts list
-	print "$ip $host" >> $DIR/run/hosts }
 done
 
 notice "Setup completed in $DIR"
@@ -412,14 +426,17 @@ dowse_start() {
     act "Pinning down MAC addresses in ARP entries..."
     known=`cat conf/network | grep -v '^#'`
     for i in ${(f)known}; do
-	func "$i"
-    # gather configuration into variables, line by line
+	# check if its a mac address
+	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+        { test $? = 0 } || { continue } # skip if no mac address
+
 	mac=${i[(w)1]}
 	host=${i[(w)2]}
 	ip=${i[(w)3]}
 
 	{ test "$host" = "ignore" } && { continue }
 
+	func "$i"
 	arp -s $ip $mac
 
     done
