@@ -25,8 +25,8 @@ lan=home.net
 # its better to not change the values below.
 
 # under which system UID and GID ghettobox will run
-dowseuid=nobody
-dowsegid=nogroup
+dowseuid=proxy
+dowsegid=proxy
 
 # what network range we choose for our ghetto (class C)
 dowsenet=10.0.0.0/24

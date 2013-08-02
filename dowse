@@ -32,8 +32,6 @@ DEBUG=1
 
 SCRIPT=$0
 
-DIR=${DOWSE:-`pwd`}
-
 # standard output message routines
 autoload colors; colors
 # it's always useful to wrap them, in case we change behaviour later
@@ -54,6 +52,8 @@ act()    {
 # honor quiet and debug flags as early as possible
 if [[ ${@} == *-q* ]]; then QUIET=1; fi
 if [[ ${@} == *-D* ]]; then DEBUG=1; fi
+
+DIR=${DOWSE:-`pwd`}
 
 
 # pid files for our daemons
@@ -173,6 +173,7 @@ func "generating squid.conf"
 
 cat <<EOF > $DIR/run/squid.conf
 pid_filename $pid_squid
+cache_effective_user proxy
 cache_store_log none
 cache_log $DIR/log/squid_cache.log
 access_log $DIR/log/squid_access.log squid
@@ -258,7 +259,8 @@ print "dhcp-option=option:router,$gateway" > $DIR/run/dnsmasq.network
 
 # this is our generated hosts file
 func "Generating hosts file"
-rm -f $DIR/run/hosts; touch $DIR/run/hosts
+rm -f $DIR/run/hosts
+echo "127.0.0.1 localhost" > $DIR/run/hosts
 for i in ${(f)known}; do
     echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
     if [ $? = 0 ]; then # mac address is first
@@ -309,12 +311,15 @@ dnsmasq_start() {
     # if running, stop to restart
     dnsmasq_stop
 
-    func "dnsmasq --pid-file $DIR/log/dnsmasq.pid -C $DIR/dnsmasq.conf"
+    func "dnsmasq --pid-file $DIR/run/dnsmasq.pid -C $DIR/dnsmasq.conf"
     dnsmasq --pid-file=$pid_dnsmasq -C $DIR/run/dnsmasq.conf
 }
 
 squid_stop() {
     { test -r $pid_squid } && {
+        pid=`cat $pid_squid`
+	ps ax | grep '$pid' > /dev/null
+	{ test $? = 0 } || { func "removing stale pid for squid" ; rm -f $pid_squid; return 1 }
 	act "Stopping squid (`cat $pid_squid`)"
 	squid -f $DIR/run/squid.conf -k shutdown
 #	kill `cat $pid_squid`
@@ -324,10 +329,10 @@ squid_stop() {
 squid_start() {
     act "Preparing to launch Squid..."
 
-    # if running, reconfigure
-    { test -r $pid_squid } && {
-	squid -f $DIR/run/squid.conf -k reconfigure
-	return 0 }
+    # if running, reconfigure (??)
+#    { test -r $pid_squid } && {
+#	squid -f $DIR/run/squid.conf -k reconfigure
+#	return 0 }
 
     func "setuidgid $dowseuid squid -f $DIR/run/squid.conf"
     # populate the volatile cache
@@ -417,8 +422,8 @@ dowse_start() {
     ip6tables -P FORWARD DROP
     ip6tables -P OUTPUT DROP
 
-    # start the squid daemon
-    squid_start
+    # start the dnsmasq daemon
+    dnsmasq_start
 
     # start the privoxy daemon
     privoxy_start
@@ -441,8 +446,9 @@ dowse_start() {
 
     done
 
-    # start the dnsmasq daemon
-    dnsmasq_start
+    # start the squid daemon
+    squid_start
+
 
     # if PeerGuardian was running, start it again
     { test "$PGL" = "" } || { pglcmd start }
@@ -453,9 +459,9 @@ dowse_start() {
 # {{{ STOP
 dowse_stop() {
     act "Stopping all services."
-    { test -r $DIR/log/squid.pid } && { kill `cat $DIR/log/squid.pid` }
-    { test -r $DIR/log/privoxy.pid } && { kill `cat $DIR/log/privoxy.pid` }
-    { test -r $DIR/log/dnsmasq.pid } && { kill `cat $DIR/log/dnsmasq.pid` }
+    squid_stop
+    privoxy_stop
+    dnsmasq_stop
 
 }
 # }}}
