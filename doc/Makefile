@@ -1,3 +1,3 @@
 all:
-	./shocco ../ghettobox > index.html
+	./shocco ../dowse > index.html
 	pygmentize -S default -f html > style.css

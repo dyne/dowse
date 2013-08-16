@@ -9,9 +9,9 @@ It takes a few steps to use:
 
 2- Install dependencies: dnsmasq, privoxy, squid, tor
 
-3- Configure the files in the conf/ folder
+3- Configure the files in the conf/ folder: settings and network
 
-4- Launch the ghettobox script in its own source directory
+4- Launch the dowse script in its own source directory
 
 5- Make sure no other DHCP server is running (ADSL routers etc.)
 
@@ -21,7 +21,7 @@ It takes a few steps to use:
 
 * Recommended
 
-Here below a list of software we recommend using on the Ghettobox:
+Here below a list of software we recommend using with dowse:
 
  - PeerGuardian http://sourceforge.net/projects/peerguardian/
 	maintains blocklists on the firewall

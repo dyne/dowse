@@ -1,15 +1,15 @@
-# configuration for our network in da ghetto
+# configuration for our network
 # values are assigned with equals, no spaces in between
 # comments are prefixed with hashes, just like this.
 
-# which addresses we take for the ghettobox (2 needed!)
+# which addresses we take for dowse (2 needed!)
 gateway=10.0.0.1
 dns=10.0.0.254
 
-# which ghettobox interface is connected to the network
+# which interface is connected to the network
 interface=eth0
 
-# hostname by which the ghettobox will be known to the network
+# hostname by which dowse will be known to the network
 hostname=closet
 
 # what connects us to the internet (i.e. adsl router)
@@ -24,11 +24,11 @@ lan=home.net
 # in most cases, if you don't know what you are doing
 # its better to not change the values below.
 
-# under which system UID and GID ghettobox will run
+# under which system UID and GID dowse will run
 dowseuid=proxy
 dowsegid=proxy
 
-# what network range we choose for our ghetto (class C)
+# what network range we choose for our LAN (class C)
 dowsenet=10.0.0.0/24
 
 # which netmask to be applied (default is class C)

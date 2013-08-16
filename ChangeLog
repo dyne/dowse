@@ -1,4 +1,6 @@
 0.2 Renaming and documentation
+	Several checks for smooth deployement on Debian 7
+	Renamed to "dowse" - local area network rabdomancy
 
 0.1 Initial release
 	Versioning the set of scripts used to build and administer my home network

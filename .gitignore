@@ -1,5 +1,5 @@
-conf/ghetto.net
-conf/ghetto.conf
+conf/settings.dist
+conf/network.dist
 dnsmasq.conf
 ghetto.hosts
 home.net
