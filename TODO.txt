@@ -1,0 +1,17 @@
+Scalable tor processes:
+http://www.mightycomputers.com/2012/02/04/how-to-create-an-advanced-proxy-server-using-tor-privoxy-and-squid/
+https://www.torservers.net/wiki/setup/server#multiple_tor_processes
+
+Proper firewalling
+
+Log rotation or so (log only on debug?)
+
+UPNP port forwarding using miniupnpc (upnpc)
+to allow connections via ssh to the dowse box
+
+Watchdog to restart processess if they crash
+(a la restartd)
+
+DDOS protection (when used as DMZ)
+
+

@@ -28,3 +28,9 @@ Here below a list of software we recommend using with dowse:
 
  - Tiger http://savannah.nongnu.org/projects/tiger/
 	audits the system's security
+
+ - SshGuard http://sshguard.sf.net
+	bans failed attempts to log into ssh
+
+ - MiniUPNPc http://miniupnp.free.fr
+	setup port forwardings on gateway routers
