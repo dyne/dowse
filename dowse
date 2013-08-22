@@ -85,15 +85,15 @@ source conf/settings
 # setup dirs
 mkdir -p log
 chmod go-rwx log
-chown $dowseuid:$dowsegid log
+chown -R $dowseuid:$dowsegid log
 
 mkdir -p run
 chmod go-rwx run
-chown $dowseuid:$dowsegid run
+chown -R $dowseuid:$dowsegid run
 
 # create the cache dir in RAM
 mkdir -p /dev/shm/dowse
-chown $dowseuid:$dowsegid /dev/shm/dowse
+chown -R $dowseuid:$dowsegid /dev/shm/dowse
 chmod go-rwx /dev/shm/dowse
 
 # }}}
