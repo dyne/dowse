@@ -1,9 +1,7 @@
-conf/settings.dist
-conf/network.dist
-dnsmasq.conf
-ghetto.hosts
-home.net
-privoxy.conf
-squid.conf
+conf/settings
+conf/network
+log
+run
 doc/style.css
 doc/index.html
+
