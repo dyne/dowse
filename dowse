@@ -290,6 +290,9 @@ for i in ${(f)known}; do
 
 done
 
+# append network settings to dnsmasq conf
+cat $DIR/run/dnsmasq.network >> $DIR/run/dnsmasq.conf
+
 # set permissions of setup files
 chown -R $dowseuid:$dowsegid log
 chown -R $dowseuid:$dowsegid run
@@ -479,5 +482,8 @@ case "$1" in
     stop) dowse_stop ;;
     *) echo "dowse: command not found: $1" ;;
 esac
+
+# be nice with the environment
+return 0
 
 # }}}
