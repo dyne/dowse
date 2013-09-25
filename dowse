@@ -176,13 +176,13 @@ pid_filename $pid_squid
 cache_effective_user $dowseuid
 cache_store_log none
 cache_log $DIR/log/squid_cache.log
-access_log $DIR/log/squid_access.log squid
+# access_log $DIR/log/squid_access.log squid
 
 # avoid having a physical cache directory
-#cache_dir aufs /dev/shm/dowse 300
-cache_dir aufs /dev/shm/dowse 300 16 256
+cache_mem 64 MB
+cache_dir aufs /dev/shm/dowse 256 16 256
 maximum_object_size 10 MB
-minimum_object_size 512 KB
+minimum_object_size 128 KB
 
 acl all src all
 acl manager proto cache_object
