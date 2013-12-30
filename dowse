@@ -179,10 +179,14 @@ cache_log $DIR/log/squid_cache.log
 # access_log $DIR/log/squid_access.log squid
 
 # avoid having a physical cache directory
-cache_mem 64 MB
+cache_mem 16 MB
 cache_dir aufs /dev/shm/dowse 256 16 256
-maximum_object_size 10 MB
-minimum_object_size 128 KB
+maximum_object_size 64 MB
+maximum_object_size_in_memory 1 MB
+minimum_object_size 16 KB
+# memory_pools off
+memory_pools_limit 256 MB
+
 
 acl all src all
 acl manager proto cache_object
@@ -210,7 +214,6 @@ http_access allow localhost
 http_access deny all
 
 icp_access allow localnet
-icp_access deny all
 
 http_port 3128 transparent
 
@@ -219,16 +222,17 @@ hierarchy_stoplist cgi-bin ?
 refresh_pattern ^ftp:		1440	20%	10080
 refresh_pattern ^gopher:	1440	0%	1440
 refresh_pattern -i (/cgi-bin/|\?) 0	0%	0
+refresh_pattern -i (deb|tar|gz|tgz|bz2|zip|rar|msi|exe|rpm)$ 0 90% 1440
 refresh_pattern (Release|Packages(.gz)*)$	0	20%	2880
 refresh_pattern .		0	20%	4320
 
 acl shoutcast rep_header X-HTTP09-First-Line ^ICY.[0-9]
-upgrade_http0.9 deny shoutcast
+# upgrade_http0.9 deny shoutcast
 
 acl apache rep_header Server ^Apache
-broken_vary_encoding allow apache
+# broken_vary_encoding allow apache
 
-extension_methods REPORT MERGE MKACTIVITY CHECKOUT
+# extension_methods REPORT MERGE MKACTIVITY CHECKOUT
 
 cache_mgr Dowse
 
@@ -239,7 +243,7 @@ coredump_dir $DIR/log
 cache_peer localhost parent 8118 0 default no-query no-digest no-netdb-exchange
 never_direct allow all
 
-header_access From deny all
+# header_access From deny all
 
 # the settings below are restrictive:
 # they grant more privacy but break many websites!
@@ -248,6 +252,7 @@ header_access From deny all
 # header_access Referer deny all
 # header_access User-Agent deny all
 # header_access WWW-Authenticate deny all
+
 
 EOF
 
@@ -304,11 +309,24 @@ return 0
 
 # {{{ START/STOP FORMULAS
 
+waitpid() { 
+	# takes a pid
+	pid="$1"
+	while true; do
+		ps ax | grep -v grep | grep "$pid" > /dev/null
+		if [ $? = 0 ]; then print -n . ; sleep 1
+		else break; fi
+		# todo: timeout with kill -9
+	done
+}
+
 
 dnsmasq_stop() {
     { test -r $pid_dnsmasq } && {
-	act "Stopping dnsmasq (`cat $pid_dnsmasq`)"
-	kill `cat $pid_dnsmasq`
+	pid=`cat $pid_dnsmasq`
+	act "Stopping dnsmasq ($pid)"
+	kill $pid
+	waitpid $pid
 	rm -f $pid_dnsmasq
     }
 }
@@ -324,13 +342,13 @@ dnsmasq_start() {
 
 squid_stop() {
     { test -r $pid_squid } && {
-        pid=`cat $pid_squid`
+	pid=`cat $pid_squid`
 	ps ax | grep '$pid' > /dev/null
 	{ test $? = 0 } || { func "removing stale pid for squid" ; rm -f $pid_squid; return 1 }
-	act "Stopping squid (`cat $pid_squid`)"
+	act "Stopping squid ($pid)"
 	squid -f $DIR/run/squid.conf -k shutdown
-#	kill `cat $pid_squid`
-#	rm -f $pid_squid
+	waitpid $pid	
+	rm -f $pid_squid
     }
 }
 squid_start() {
@@ -342,16 +360,21 @@ squid_start() {
 #	return 0 }
 
     func "setuidgid $dowseuid squid -f $DIR/run/squid.conf"
+    # cleanup all previous cache in ram
+    rm -rf /dev/shm/dowse/*
+
     # populate the volatile cache
-    setuidgid $dowseuid squid -z -f $DIR/run/squid.conf
+    setuidgid $dowseuid squid3 -z -f $DIR/run/squid.conf
     # launch the squid
-    setuidgid $dowseuid squid -f $DIR/run/squid.conf
+    setuidgid $dowseuid squid3 -f $DIR/run/squid.conf
 }
 
 privoxy_stop() {
     { test -r $pid_privoxy } && {
-	act "Stopping privoxy (`cat $pid_privoxy`)"
-	kill `cat $pid_privoxy`
+	pid=`cat $pid_privoxy`
+	act "Stopping privoxy ($pid)"
+	kill $pid
+	waitpid $pid
 	rm -f $pid_privoxy
     }
 }
@@ -440,7 +463,7 @@ dowse_start() {
     for i in ${(f)known}; do
 	# check if its a mac address
 	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-        { test $? = 0 } || { continue } # skip if no mac address
+	{ test $? = 0 } || { continue } # skip if no mac address
 
 	mac=${i[(w)1]}
 	host=${i[(w)2]}
@@ -465,11 +488,12 @@ dowse_start() {
 
 # {{{ STOP
 dowse_stop() {
-    act "Stopping all services."
+    notice "Stopping all services."
     squid_stop
     privoxy_stop
     dnsmasq_stop
-
+#    act "waiting 10 seconds for graceful exit"
+#    sleep 10
 }
 # }}}
 
@@ -477,8 +501,9 @@ dowse_stop() {
 
 # we use a very simple argument parser
 case "$1" in
-    restart|start) dowse_setup; dowse_start ;;
-    release) rm $DIR/run/leases; dowse_setup; dowse_start ;;
+    restart|start) dowse_setup; dowse_stop; dowse_start ;;
+    release) rm $DIR/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
+    reload) rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k rec ;;
     stop) dowse_stop ;;
     *) echo "dowse: command not found: $1" ;;
 esac
