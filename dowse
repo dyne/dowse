@@ -309,7 +309,7 @@ return 0
 
 # {{{ START/STOP FORMULAS
 
-waitpid() { 
+waitpid() {
 	# takes a pid
 	pid="$1"
 	while true; do
@@ -347,7 +347,7 @@ squid_stop() {
 	{ test $? = 0 } || { func "removing stale pid for squid" ; rm -f $pid_squid; return 1 }
 	act "Stopping squid ($pid)"
 	squid -f $DIR/run/squid.conf -k shutdown
-	waitpid $pid	
+	waitpid $pid
 	rm -f $pid_squid
     }
 }
@@ -432,19 +432,71 @@ dowse_start() {
     func "enable ip forwarding"
     print 1 > /proc/sys/net/ipv4/ip_forward
 
-    func "set up ip masquerading"
-    iptables --flush
-    iptables --table nat --flush
-    iptables --delete-chain
-    iptables --table nat --delete-chain
+    func "flushing iptables"
+iptables -P OUTPUT ACCEPT
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables --flush
+iptables --table nat --flush
+iptables --delete-chain
+iptables --table nat --delete-chain
 
-    func "setup route towards wired network"
-    iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $dns
-    iptables --append FORWARD --in-interface $interface -s $dowsenet -j ACCEPT
 
-    func "setup transparent proxy to squid"
-    iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 \
-	-j REDIRECT --to-port 3128
+func "allow only local loopback"
+iptables -A INPUT -i eth0 -d 127.0.0.1 -j DROP
+iptables -A INPUT -i eth0 -s 127.0.0.1 -j DROP
+iptables -A FORWARD -i eth0 -s 127.0.0.1 -j DROP
+iptables -A FORWARD -i eth0 -d 127.0.0.1 -j DROP
+iptables -A INPUT -s 127.0.0.1 -j ACCEPT
+iptables -A INPUT -d 127.0.0.1 -j ACCEPT
+
+
+# Block outgoing NetBios (if you have windows machines running
+# on the private subnet).  This will not affect any NetBios
+# traffic that flows over the VPN tunnel, but it will stop
+# local windows machines from broadcasting themselves to
+# the internet.
+iptables -A FORWARD -p tcp --sport 137:139 -j DROP
+iptables -A FORWARD -p udp --sport 137:139 -j DROP
+iptables -A OUTPUT -p tcp --sport 137:139 -j DROP
+iptables -A OUTPUT -p udp --sport 137:139 -j DROP
+
+# Check source address validity on packets going out to internet
+# iptables -A FORWARD -s ! ${dowsenet} -i br0 -j DROP
+# Allow packets from private subnets
+iptables -A INPUT -s ${dowsenet} -j ACCEPT
+iptables -A FORWARD -i br0 -s ${dowsenet} -j ACCEPT
+iptables -A FORWARD -i ${interface} -s ${dowsenet} -j ACCEPT
+
+# Allow incoming pings (can be disabled)
+iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+
+# Allow services such as www and ssh (can be disabled)
+iptables -A INPUT -p tcp --dport http -j ACCEPT
+iptables -A INPUT -p tcp --dport ssh -j ACCEPT
+
+# Keep state of connections from local machine and private subnets
+iptables -A OUTPUT -m state --state NEW -o eth0 -j ACCEPT
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -m state --state NEW -o eth0 -j ACCEPT
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+# not needed with pgl?
+
+notice "Set up ip masquerading"
+func "setup route towards wired network"
+iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $dns
+
+func "setup transparent proxy to squid"
+iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 -j REDIRECT --to-port 3128
+
+# Allow incoming OpenVPN packets. Duplicate the line below for each
+# OpenVPN tunnel, changing --dport n to match the OpenVPN UDP port.
+# In OpenVPN, the port number is controlled by the --port n option.
+# If you put this option in the config file, you can remove the leading '--'
+# If you taking the stateful firewall approach (see the OpenVPN HOWTO),
+# then comment out the line below.
+# iptables -A INPUT -p udp --dport 1194 -j ACCEPT
+
 
     func "defend the network from ipv6"
     ip6tables -F
