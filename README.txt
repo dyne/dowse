@@ -27,6 +27,16 @@ Installation and activation takes a few steps and needs root:
 6- Deactivate the DHCP service (Automatic IP configuration) on any
    other object on the network, typically your ADSL router.
 
+If all went well now one should be able to connect any device to the
+internet as you did before, but now all the traffic is passing via
+Dowse's transparent proxy configuration, which weeds out adverts and
+takes care of browser's privacy.
+
+To make sure that dowse is started at every boot, just add it to the
+/etc/rc.local file, in our example that would be the line:
+
+ /usr/src/dowse/dowse start
+
 
 * Recommended
 
