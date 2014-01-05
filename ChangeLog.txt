@@ -1,3 +1,8 @@
+0.3 Tor integration and proxy performance fixes
+	Testing, code refactoring and stability fixes
+	Squid has been tuned to use reasonable amounts of RAM
+	Tor is now configured and started
+
 0.2 Renaming and documentation
 	Several checks for smooth deployement on Debian 7
 	Renamed to "dowse" - local area network rabdomancy
