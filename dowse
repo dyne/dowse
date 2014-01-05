@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 #
-# Copyright (C) 2011-2013 Dyne.org Foundation
+# Copyright (C) 2011-2014 Dyne.org Foundation
 #
 # Dowse is designed, written and maintained by Jaromil
 #
@@ -24,8 +24,8 @@
 
 # {{{ GLOBALS
 
-VERSION=0.2
-DATE="Jul/2013"
+VERSION=0.3
+DATE="Jan/2014"
 
 QUIET=0
 DEBUG=1
@@ -157,8 +157,8 @@ forward-socks4a .onion $dns:9050 .
 # forward / 127.0.0.1:8123
 
 # pass through i2p for urls.i2p
-forward .i2p $dns:4444
-forward .i2p 127.0.0.1:4444
+# forward .i2p $dns:4444
+# forward .i2p 127.0.0.1:4444
 
 # direct access
 forward $hostname .
@@ -181,11 +181,10 @@ cache_log $DIR/log/squid_cache.log
 # avoid having a physical cache directory
 cache_mem 16 MB
 cache_dir aufs /dev/shm/dowse 256 16 256
-maximum_object_size 64 MB
+maximum_object_size 16 MB
 maximum_object_size_in_memory 1 MB
 minimum_object_size 16 KB
 memory_pools off
-# memory_pools_limit 64 MB
 
 
 acl all src all
@@ -387,66 +386,22 @@ privoxy_start() {
     func "setuidgid $dowseuid privoxy --pidfile $pid_privoxy $DIR/privoxy.conf"
     privoxy --user $dowseuid --pidfile $pid_privoxy $DIR/run/privoxy.conf
 }
-# }}}
 
-
-# {{{ START
-dowse_start() {
-    act "Checking requirements to run dowse..."
-
-    func "required programs"
-    for req in dnsmasq iptables privoxy squid; do
-	command -v $req >/dev/null
-	{ test $? != 0 } && {
-	    error "Cannot find $req. You require more BLINGBLING man, please install it."
-	    return 1
-	}
-    done
-
-    func "root access"
-    { test "$UID" = "0" } || {
-	error "Dowse needs root access to run."
-	return 1 }
-
-
-    notice "Setting up the network..."
-
-    PGL=`pidof pgld`
-    { test "$PGL" = "" } || {
-	act "PeerGuardian found running, will restart it accordingly"
-	pglcmd stop }
-
-    act "Setting up $interface interface"
-    ifconfig eth0 $dns netmask $netmask up
-    route add default gw $wan
-
-    act "Creating a virtual bridge"
-    ifconfig | grep '^br0' > /dev/null
-    if [ $? != 0 ]; then brctl addbr br0; fi
-    ifconfig br0 $gateway netmask $netmask up
-
-    func "enable masquerading over bridge"
-    modprobe nf_conntrack_ipv4
-    sysctl net.netfilter.nf_conntrack_acct=1
-
-    func "enable ip forwarding"
-    print 1 > /proc/sys/net/ipv4/ip_forward
-
-{ test "$firewall" = "no" } || {
-
-    act "flushing iptables"
-iptables -P OUTPUT ACCEPT
+iptables_flush() {
+    act "Flushing iptables firewall rules"
+iptables -F
+iptables -X
+iptables -t nat -F
+iptables -t nat -X
+iptables -t mangle -F
+iptables -t mangle -X
 iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
-iptables --flush
-iptables --table nat --flush
-iptables --delete-chain
-iptables --table nat --delete-chain
-
+iptables -P OUTPUT ACCEPT
 }
 
-{ test "$firewall" = "yes" } && {
-	notice "Setting up a firewall"
+iptables_start() {
+    notice "Setting up iptables firewall rules"
 
 iptables -P OUTPUT ACCEPT
 iptables -P INPUT DROP
@@ -510,9 +465,58 @@ iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
     ip6tables -P FORWARD DROP
     ip6tables -P OUTPUT DROP
 
-} # firewall
+}
 
-notice "Set up ip masquerading"
+
+# }}}
+
+# {{{ START
+dowse_start() {
+    act "Checking requirements to run dowse..."
+
+    func "required programs"
+    for req in dnsmasq iptables privoxy squid; do
+	command -v $req >/dev/null
+	{ test $? != 0 } && {
+	    error "Cannot find $req. You require more BLINGBLING man, please install it."
+	    return 1
+	}
+    done
+
+    func "root access"
+    { test "$UID" = "0" } || {
+	error "Dowse needs root access to run."
+	return 1 }
+
+
+    notice "Setting up the network..."
+
+    PGL=`pidof pgld`
+    { test "$PGL" = "" } || {
+	act "PeerGuardian found running, will restart it accordingly"
+	pglcmd stop }
+
+    act "Setting up $interface interface"
+    ifconfig eth0 $dns netmask $netmask up
+    route add default gw $wan
+
+    act "Creating a virtual bridge"
+    ifconfig | grep '^br0' > /dev/null
+    if [ $? != 0 ]; then brctl addbr br0; fi
+    ifconfig br0 $gateway netmask $netmask up
+
+    func "enable masquerading over bridge"
+    modprobe nf_conntrack_ipv4
+    sysctl net.netfilter.nf_conntrack_acct=1
+
+    func "enable ip forwarding"
+    print 1 > /proc/sys/net/ipv4/ip_forward
+
+{ test "$firewall" = "no" } || { iptables_flush }
+
+{ test "$firewall" = "yes" } && { iptables_start }
+
+notice "Setting up masquerading (NAT)"
 func "setup route towards wired network"
 iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $dns
 
@@ -559,8 +563,6 @@ dowse_stop() {
     squid_stop
     privoxy_stop
     dnsmasq_stop
-#    act "waiting 10 seconds for graceful exit"
-#    sleep 10
 }
 # }}}
 
