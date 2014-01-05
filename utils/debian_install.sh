@@ -5,7 +5,7 @@
 # This script will install all dependencies on a Debian system
 
 # list of programs to be installed:
-daemons=(privoxy squid3 dnsmasq)
+daemons=(privoxy squid3 dnsmasq tor)
 pkgs=(bridge-utils daemontools)
 
 

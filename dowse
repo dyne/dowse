@@ -57,6 +57,7 @@ DIR=${DOWSE:-`pwd`}
 
 
 # pid files for our daemons
+pid_tor=$DIR/run/tor.pid
 pid_squid=$DIR/run/squid.pid
 pid_dnsmasq=$DIR/run/dnsmasq.pid
 pid_privoxy=$DIR/run/privoxy.pid
@@ -151,10 +152,6 @@ handle-as-empty-doc-returns-ok 1
 
 # pass through tor for urls.onion
 forward-socks4a .onion $dns:9050 .
-
-# TODO: tor might use polipo (web cache)
-# forward / $dns:8123
-# forward / 127.0.0.1:8123
 
 # pass through i2p for urls.i2p
 # forward .i2p $dns:4444
@@ -253,6 +250,20 @@ never_direct allow all
 # header_access WWW-Authenticate deny all
 
 
+EOF
+
+cat <<EOF > $DIR/run/tor.conf
+User $dowseuid
+PidFile $pid_tor
+SocksPort $dns:9050
+SocksPolicy accept 10.0.0.250 # $dowsenet
+SocksPolicy reject *
+Log notice file $DIR/log/tor.log
+RunAsDaemon 1
+DataDirectory $DIR/run
+ControlPort 9051
+CookieAuthentication 1
+ExitPolicy reject *:*
 EOF
 
 func "Fixing entries for known peers"
@@ -387,6 +398,23 @@ privoxy_start() {
     privoxy --user $dowseuid --pidfile $pid_privoxy $DIR/run/privoxy.conf
 }
 
+tor_stop() {
+    { test -r $pid_tor } && {
+        pid=`cat $pid_tor`
+        act "Stopping tor ($pid)"
+        kill $pid
+        waitpid $pid
+	# pid file is deleted by tor
+    }
+}
+
+tor_start() {
+    act "Preparing to launch tor..."
+    # if running, stop to restart
+    tor_stop
+    tor -f $DIR/run/tor.conf
+}
+
 iptables_flush() {
     act "Flushing iptables firewall rules"
 iptables -F
@@ -467,6 +495,28 @@ iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 }
 
+sysctl_setup() {
+cat <<EOF | sysctl -p -
+net.ipv4.tcp_syncookies = 1
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.icmp_ignore_bogus_error_responses = 1
+net.core.rmem_max = 33554432
+net.core.wmem_max = 33554432
+net.ipv4.tcp_fin_timeout = 4
+vm.min_free_kbytes = 65536
+net.netfilter.nf_conntrack_tcp_timeout_established = 7200
+net.netfilter.nf_conntrack_checksum = 0
+net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15
+net.ipv4.tcp_keepalive_time = 60
+net.ipv4.tcp_keepalive_intvl = 10
+net.ipv4.tcp_keepalive_probes = 3
+net.ipv4.ip_local_port_range = 1025 65530
+net.ipv4.tcp_timestamps = 0
+EOF
+}
+
+
 
 # }}}
 
@@ -509,6 +559,9 @@ dowse_start() {
     modprobe nf_conntrack_ipv4
     sysctl net.netfilter.nf_conntrack_acct=1
 
+    # strenghten and optimize a bit the system for networking
+    sysctl_setup
+
     func "enable ip forwarding"
     print 1 > /proc/sys/net/ipv4/ip_forward
 
@@ -550,6 +603,8 @@ iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 -j RE
     # start the squid daemon
     squid_start
 
+    # start Tor
+    tor_start
 
     # if PeerGuardian was running, start it again
     { test "$PGL" = "" } || { pglcmd start }
@@ -560,6 +615,7 @@ iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 -j RE
 # {{{ STOP
 dowse_stop() {
     notice "Stopping all services."
+    tor_stop
     squid_stop
     privoxy_stop
     dnsmasq_stop

@@ -2,6 +2,19 @@ Scalable tor processes:
 http://www.mightycomputers.com/2012/02/04/how-to-create-an-advanced-proxy-server-using-tor-privoxy-and-squid/
 https://www.torservers.net/wiki/setup/server#multiple_tor_processes
 
+running multiple tor and privoxy on the same machine, use cache-peer round-robin in squid:
+
+cache_peer localhost parent 8118 0 round-robin no-query
+cache_peer localhost2 parent 8129 0 round-robin no-query
+cache_peer localhost3 parent 8230 0 round-robin no-query
+cache_peer localhost4 parent 8321 0 round-robin no-query
+cache_peer localhost5 parent 8421 0 round-robin no-query
+cache_peer localhost6 parent 8522 0 round-robin no-query
+cache_peer localhost7 parent 8623 0 round-robin no-query
+cache_peer localhost8 parent 8724 0 round-robin no-query
+
+
+
 Proper firewalling
 
 Log rotation or so (log only on debug?)
