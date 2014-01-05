@@ -5,7 +5,7 @@
 # This script will install all dependencies on a Debian system
 
 # list of programs to be installed:
-daemons=(privoxy squid dnsmasq)
+daemons=(privoxy squid3 dnsmasq)
 pkgs=(bridge-utils daemontools)
 
 
@@ -13,8 +13,8 @@ pkgs=(bridge-utils daemontools)
 # (deactivates start at boot)
 for i in $daemons; do
 	apt-get install $i
-	invoke-rc.d $1 stop
-	update-rc.d -f $1 remove
+	invoke-rc.d $i stop
+	update-rc.d -f $i remove
 done
 
 # installation of packages

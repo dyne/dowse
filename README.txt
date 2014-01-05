@@ -3,20 +3,29 @@ Dowse is a minimalistic script that can turn an old GNU/Linux box
 into a local network firewall, privacy proxy and gateway to hidden
 networks as Tor or I2P.
 
-It takes a few steps to use:
+Installation and activation takes a few steps and needs root:
 
-1- Install it on a GNU/Linux box, Debian 7 OS is recommended
+1- Download dowse on a GNU/Linux box (we use Debian 7)
 
-2- Install dependencies: dnsmasq, privoxy, squid, tor
+   # git clone https://github.com/dyne/dowse /usr/src/dowse
 
-3- Configure the files in the conf/ folder: settings and network
+2- Install ZSh, needed to run all scripts in Dowse: apt-get zsh
+   then go into the dowse directory ( cd /usr/src/dowse in example)
 
-4- Launch the dowse script in its own source directory
+3- Run ./utils/debian-install.sh as root, it fires up some commands:
+   apt-get, update-rc.d and invoke-rc.d to install dependencies like
+   dnsmasq, privoxy, squid, tor
 
-5- Make sure no other DHCP server is running (ADSL routers etc.)
+4- Configure the files in the conf/ folder: settings and network
+   The files are plain text and include documentation in comments.
 
-6- (only this step requires root) run 'dowse start'
+5- Launch the dowse script as root, using full path. In our example:
+   # /usr/src/dowse/dowse start
+   Dowse will launch all daemons dropping root privileges and using
+   the user configured (default user is 'proxy')
 
+6- Deactivate the DHCP service (Automatic IP configuration) on any
+   other object on the network, typically your ADSL router.
 
 
 * Recommended
