@@ -14,8 +14,11 @@ cache_peer localhost7 parent 8623 0 round-robin no-query
 cache_peer localhost8 parent 8724 0 round-robin no-query
 
 
+HTTPS everywhere:
+https://github.com/mikecardwell/perl-HTTPSEverywhere
+rules: git://git.torproject.org/https-everywhere.git
+   in: src/chrome/content/rules
 
-Proper firewalling
 
 Log rotation or so (log only on debug?)
 
