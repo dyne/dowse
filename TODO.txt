@@ -19,6 +19,17 @@ https://github.com/mikecardwell/perl-HTTPSEverywhere
 rules: git://git.torproject.org/https-everywhere.git
    in: src/chrome/content/rules
 
+CHROOT binary distribution (for x86 32bit? works everywhere then??)
+
+
+secure DNS queries using dnscrypt
+https://github.com/opendns/dnscrypt-proxy
+
+cache DNS queries using unbound
+
+
+
+Proper firewalling
 
 Log rotation or so (log only on debug?)
 
