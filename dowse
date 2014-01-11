@@ -109,9 +109,9 @@ dowse_setup() {
 
     func "generating dnsmasq.conf"
     cat <<EOF > $DIR/run/dnsmasq.conf
-address=/$hostname/$dns
-address=/.i2p/$dns
-address=/.onion/$dns
+address=/$hostname/$phys
+address=/.i2p/$phys
+address=/.onion/$phys
 bogus-priv
 cache-size=1500
 conf-dir=/etc/dnsmasq.d
@@ -122,7 +122,7 @@ domain-needed
 domain=$lan
 expand-hosts
 interface=$interface
-listen-address=$dns,127.0.0.1
+listen-address=$phys,127.0.0.1
 local=/$lan/
 user=$dowseuid
 group=$dowsegid
@@ -151,10 +151,10 @@ handle-as-empty-doc-returns-ok 1
 
 
 # pass through tor for urls.onion
-forward-socks4a .onion $dns:9050 .
+forward-socks4a .onion $phys:9050 .
 
 # pass through i2p for urls.i2p
-# forward .i2p $dns:4444
+# forward .i2p $phys:4444
 # forward .i2p 127.0.0.1:4444
 
 # direct access
@@ -255,7 +255,7 @@ EOF
 cat <<EOF > $DIR/run/tor.conf
 User $dowseuid
 PidFile $pid_tor
-SocksPort $dns:9050
+SocksPort $phys:9050
 SocksPolicy accept 10.0.0.250 # $dowsenet
 SocksPolicy reject *
 Log notice file $DIR/log/tor.log
@@ -270,7 +270,7 @@ func "Fixing entries for known peers"
 known=`cat conf/network | grep -v '^#'`
 rm -f $DIR/run/dnsmasq.network
 # this is basically a dnsmasq host configuration file
-print "dhcp-option=option:router,$gateway" > $DIR/run/dnsmasq.network
+print "dhcp-option=option:router,$bridge" > $DIR/run/dnsmasq.network
 
 # this is our generated hosts file
 func "Generating hosts file"
@@ -547,13 +547,13 @@ dowse_start() {
 	pglcmd stop }
 
     act "Setting up $interface interface"
-    ifconfig eth0 $dns netmask $netmask up
+    ifconfig eth0 $phys netmask $netmask up
     route add default gw $wan
 
     act "Creating a virtual bridge"
     ifconfig | grep '^br0' > /dev/null
     if [ $? != 0 ]; then brctl addbr br0; fi
-    ifconfig br0 $gateway netmask $netmask up
+    ifconfig br0 $bridge netmask $netmask up
 
     func "enable masquerading over bridge"
     modprobe nf_conntrack_ipv4
@@ -577,7 +577,7 @@ dowse_start() {
 
 notice "Setting up masquerading (NAT)"
 func "setup route towards wired network"
-iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $dns
+iptables --table nat --append POSTROUTING --out-interface eth0 -j SNAT --to $phys
 
 func "setup transparent proxy to squid"
 iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 -j REDIRECT --to-port 3128
