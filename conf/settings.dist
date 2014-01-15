@@ -2,9 +2,8 @@
 # values are assigned with equals, no spaces in between
 # comments are prefixed with hashes, just like this.
 
-# which addresses we take for dowse (2 needed!)
-phys=10.0.0.254
-bridge=10.0.0.250
+# which addresses we take for dowse
+dowse=10.0.0.254
 
 # which interface is connected to the network
 interface=eth0
@@ -18,6 +17,9 @@ wan=10.0.0.1
 
 # what is the domain name of the internal network
 lan=home.net
+
+# should we setup a firewall, flush it or don't touch?
+firewall=yes # yes, no or flush (blank open)
 
 #########################
 # SAFE TO LEAVE UNCHANGED
