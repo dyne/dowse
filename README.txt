@@ -4,9 +4,13 @@
  888    888 888     888  888888888          888 888
    88ooo888o  88ooo88     88   88   88oooooo88    88oooo888
 
-Dowse is a minimalistic script that can turn an old GNU/Linux box
-into a local network firewall, privacy proxy and gateway to hidden
-networks as Tor or I2P.
+       a digital rod for local area network rabdomancy
+
+       http://www.dyne.org/software/dowse       version 0.3
+
+Dowse is a minimalistic script that can turn an old GNU/Linux box into
+a local network firewall, privacy proxy and gateway to hidden networks
+as Tor or I2P.
 
 Installation and activation takes a few steps and needs root:
 

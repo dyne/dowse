@@ -28,7 +28,7 @@ VERSION=0.3
 DATE="Jan/2014"
 
 QUIET=0
-DEBUG=1
+DEBUG=0
 
 SCRIPT=$0
 
@@ -81,7 +81,20 @@ known=`cat conf/network | grep -v '^#'`
     error "No network is configured, create conf/network"
     return 1 }
 
-notice "Dowse $VERSION ($DATE)"
+notice "Dowse $VERSION - local area network rabdomancy"
+cat <<EOF
+
+ Copyright (C) 2013-2014 Dyne.org Foundation, License GNU GPL v3+
+ This is free software: you are free to change and redistribute it
+ For more informations see http://www.dyne.org/software/dowse
+
+EOF
+
+func "root access"
+{ test "$UID" = "0" } || {
+    error "Dowse needs root privileges to operate."
+    return 1 }
+
 func "loading configuration from $DIR/conf/settings"
 source conf/settings
 
@@ -370,7 +383,6 @@ EOF
 dowse_check() {
     act "Checking requirements to run dowse..."
 
-    func "required programs"
     for req in setuidgid dnsmasq iptables privoxy squid3; do
 	command -v $req >/dev/null
 	{ test $? != 0 } && {
@@ -379,11 +391,6 @@ dowse_check() {
 	    return 1
 	}
     done
-
-    func "root access"
-    { test "$UID" = "0" } || {
-	error "Dowse needs root access to run."
-	return 1 }
 
     return 0
 }
@@ -452,9 +459,9 @@ actionsfile default.action   # Main actions file
 actionsfile user.action      # User customizations
 EOF
 
-func "generating squid.conf"
+    func "generating squid.conf"
 
-cat <<EOF > $DIR/run/squid.conf
+    cat <<EOF > $DIR/run/squid.conf
 pid_filename $pid_squid
 cache_effective_user $dowseuid
 cache_store_log none
@@ -539,7 +546,7 @@ never_direct allow all
 
 EOF
 
-cat <<EOF > $DIR/run/tor.conf
+    cat <<EOF > $DIR/run/tor.conf
 User $dowseuid
 PidFile $pid_tor
 SocksPort $dowse:9050
@@ -553,53 +560,53 @@ CookieAuthentication 1
 ExitPolicy reject *:*
 EOF
 
-func "Fixing entries for known peers"
-rm -f $DIR/run/dnsmasq.network
-# this is basically a dnsmasq host configuration file
-print "dhcp-option=option:router,$dowse" > $DIR/run/dnsmasq.network
-
-# this is our generated hosts file
-func "Generating hosts file"
-rm -f $DIR/run/hosts
-echo "127.0.0.1 localhost" > $DIR/run/hosts
-for i in ${(f)known}; do
-    echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-    if [ $? = 0 ]; then # mac address is first
+    func "Fixing entries for known peers"
+    rm -f $DIR/run/dnsmasq.network
+    # this is basically a dnsmasq host configuration file
+    print "dhcp-option=option:router,$dowse" > $DIR/run/dnsmasq.network
+    
+    # this is our generated hosts file
+    func "Generating hosts file"
+    rm -f $DIR/run/hosts
+    echo "127.0.0.1 localhost" > $DIR/run/hosts
+    for i in ${(f)known}; do
+	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+	if [ $? = 0 ]; then # mac address is first
+	    host=${i[(w)2]}
+	    ip=${i[(w)3]}
+	else # no mac address specified
+	    host=${i[(w)1]}
+	    ip=${i[(w)2]}
+	fi
+	{ test "$host" = "ignore" } || {
+    # add a line to the hosts list
+	    print "$ip $host" >> $DIR/run/hosts }
+    done
+    
+    func "generating dnsmask.network"
+    for i in ${(f)known}; do
+	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+	{ test $? = 0 } || { continue } # skip if no mac address
+	func "$i"
+    # gather configuration into variables, line by line
+	mac=${i[(w)1]}
 	host=${i[(w)2]}
 	ip=${i[(w)3]}
-    else # no mac address specified
-	host=${i[(w)1]}
-	ip=${i[(w)2]}
-    fi
-    { test "$host" = "ignore" } || {
-    # add a line to the hosts list
-	print "$ip $host" >> $DIR/run/hosts }
-done
-
-func "generating dnsmask.network"
-for i in ${(f)known}; do
-    echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-    { test $? = 0 } || { continue } # skip if no mac address
-    func "$i"
-    # gather configuration into variables, line by line
-    mac=${i[(w)1]}
-    host=${i[(w)2]}
-    ip=${i[(w)3]}
-
+	
     # add a line to the dnsmasq host list
-    print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
-
-done
-
-# append network settings to dnsmasq conf
-cat $DIR/run/dnsmasq.network >> $DIR/run/dnsmasq.conf
-
-# set permissions of setup files
-chown -R $dowseuid:$dowsegid log
-chown -R $dowseuid:$dowsegid run
-
-notice "Setup completed in $DIR"
-return 0
+	print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
+	
+    done
+    
+    # append network settings to dnsmasq conf
+    cat $DIR/run/dnsmasq.network >> $DIR/run/dnsmasq.conf
+    
+    # set permissions of setup files
+    chown -R $dowseuid:$dowsegid log
+    chown -R $dowseuid:$dowsegid run
+    
+    notice "Setup completed in $DIR"
+    return 0
 }
 
 
@@ -677,7 +684,9 @@ dowse_stop() {
 # {{{ MAIN
 
 dowse_check
-{ test $? = 1 } && { error "Aborting operation for missing requirements."; return 1 }
+{ test $? = 1 } && {
+    error "Aborting operation for missing requirements."
+    return 1 }
 
 # we use a very simple argument parser
 case "$1" in

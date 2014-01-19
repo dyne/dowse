@@ -6,7 +6,7 @@
 
 # list of programs to be installed:
 daemons=(privoxy squid3 dnsmasq tor)
-pkgs=(bridge-utils daemontools)
+pkgs=(daemontools iptables ebtables)
 
 
 # installation process for daemons

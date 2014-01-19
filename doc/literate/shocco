@@ -70,8 +70,10 @@ file="$1"
 
 # These are replaced with the full paths to real utilities by the
 # configure/make system.
-MARKDOWN='markdown'
-PYGMENTIZE='pygmentize'
+MARKDOWN='/usr/bin/markdown_py'
+PYGMENTIZE='/usr/bin/pygmentize'
+# MARKDOWN='markdown'
+# PYGMENTIZE='pygmentize'
 
 # On GNU systems, csplit doesn't elide empty files by default:
 CSPLITARGS=$( (csplit --version 2>/dev/null | grep -i gnu >/dev/null) && echo "--elide-empty-files" || true )
