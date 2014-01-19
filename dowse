@@ -67,7 +67,6 @@ known=`cat conf/network | grep -v '^#'`
 
 # }}}
 
-
 # {{{ CHECKS
 
 { test -r conf } || {
@@ -102,9 +101,293 @@ chmod go-rwx /dev/shm/dowse
 
 # }}}
 
+# {{{ START/STOP DAEMONS
+
+waitpid() {
+	# takes a pid
+	pid="$1"
+	lastnewline=0
+	while true; do
+		ps -p "$pid" > /dev/null
+		if [ $? = 0 ]; then print -n . ; lastnewline=1; sleep 1
+		else break; fi
+		# todo: timeout with kill -9
+	done
+	# just because we care to look good on the console
+	{ test $lastnewline = 1 } && { print }
+}
 
 
-# {{{ SETUP
+dnsmasq_stop() {
+    { test -r $pid_dnsmasq } && {
+	pid=`cat $pid_dnsmasq`
+	act "Stopping dnsmasq ($pid)"
+	kill $pid
+	waitpid $pid
+	rm -f $pid_dnsmasq
+    }
+}
+dnsmasq_start() {
+    act "Preparing to launch dnsmasq..."
+
+    # if running, stop to restart
+    dnsmasq_stop
+
+    func "dnsmasq --pid-file $DIR/run/dnsmasq.pid -C $DIR/dnsmasq.conf"
+    dnsmasq --pid-file=$pid_dnsmasq -C $DIR/run/dnsmasq.conf
+}
+
+squid_stop() {
+    { test -r $pid_squid } && {
+	pid=`cat $pid_squid`
+	ps -p "$pid" > /dev/null
+	{ test $? = 0 } || {
+	    func "removing stale pid for squid"
+	    rm -f $pid_squid
+	    return 1 }
+	act "Stopping squid ($pid)"
+	setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k shutdown
+	{ test $? = 0 } || {
+	    error "Error running squid3, the daemon might be left running."
+	    return 1 }
+	waitpid $pid
+	rm -f $pid_squid
+    }
+}
+squid_start() {
+    act "Preparing to launch Squid..."
+
+    func "setuidgid $dowseuid squid -f $DIR/run/squid.conf"
+    # cleanup all previous cache in ram
+    rm -rf /dev/shm/dowse/*
+
+    # populate the volatile cache
+    setuidgid $dowseuid squid3 -z -f $DIR/run/squid.conf
+    # launch the squid
+    setuidgid $dowseuid squid3 -f $DIR/run/squid.conf
+}
+
+privoxy_stop() {
+    { test -r $pid_privoxy } && {
+	pid=`cat $pid_privoxy`
+	act "Stopping privoxy ($pid)"
+	kill $pid
+	waitpid $pid
+	rm -f $pid_privoxy
+    }
+}
+privoxy_start() {
+    act "Preparing to launch privoxy..."
+
+    # if running, stop to restart
+    privoxy_stop
+
+    privoxy --user $dowseuid --pidfile $pid_privoxy $DIR/run/privoxy.conf
+}
+
+tor_stop() {
+    command -v tor >/dev/null
+    { test $? = 0 } || { func "tor not found, skipping"; return 1 }
+
+    { test -r $pid_tor } && {
+	pid=`cat $pid_tor`
+	act "Stopping tor ($pid)"
+	kill $pid
+	waitpid $pid
+	# pid file is deleted by tor
+    }
+}
+
+tor_start() {
+    command -v tor >/dev/null
+    { test $? = 0 } || { func "tor not found, skipping"; return 1 }
+
+    act "Preparing to launch tor..."
+    # if running, stop to restart
+    tor_stop
+
+    tor -f $DIR/run/tor.conf
+}
+
+iptables_flush() {
+    act "Flushing iptables firewall rules"
+    iptables -F
+    iptables -X
+    iptables -t nat -F
+    iptables -t nat -X
+    iptables -t mangle -F
+    iptables -t mangle -X
+    iptables -P INPUT ACCEPT
+    iptables -P FORWARD ACCEPT
+    iptables -P OUTPUT ACCEPT
+}
+
+iptables_start() {
+    notice "Setting up iptables firewall rules"
+
+    iptables -P OUTPUT ACCEPT
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
+
+    func "allow only local loopback"
+    iptables -A INPUT -i eth0 -d 127.0.0.1 -j DROP
+    iptables -A INPUT -i eth0 -s 127.0.0.1 -j DROP
+    iptables -A FORWARD -i eth0 -s 127.0.0.1 -j DROP
+    iptables -A FORWARD -i eth0 -d 127.0.0.1 -j DROP
+    iptables -A INPUT -s 127.0.0.1 -j ACCEPT
+    iptables -A INPUT -d 127.0.0.1 -j ACCEPT
+
+
+# Block outgoing NetBios (if you have windows machines running
+# on the private subnet).  This will not affect any NetBios
+# traffic that flows over the VPN tunnel, but it will stop
+# local windows machines from broadcasting themselves to
+# the internet.
+# iptables -A FORWARD -p tcp --sport 137:139 -j DROP
+# iptables -A FORWARD -p udp --sport 137:139 -j DROP
+# iptables -A OUTPUT -p tcp --sport 137:139 -j DROP
+# iptables -A OUTPUT -p udp --sport 137:139 -j DROP
+
+# Check source address validity on packets going out to internet
+# iptables -A FORWARD -s ! ${dowsenet} -i eth0 -j DROP
+
+# Allow packets from private subnets
+    iptables -A INPUT -s ${dowsenet} -j ACCEPT
+    iptables -A FORWARD -i ${interface} -s ${dowsenet} -j ACCEPT
+
+# Allow DHCP service
+    iptables -A INPUT -p udp --sport 67:68 --dport 67:68 -j ACCEPT
+
+# Allow incoming pings (can be disabled)
+    iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+
+# Allow services such as www and ssh (can be disabled)
+    iptables -A INPUT -p tcp --dport http -j ACCEPT
+    iptables -A INPUT -p tcp --dport ssh -j ACCEPT
+
+# Keep state of connections from local machine and private subnets
+    iptables -A OUTPUT -m state --state NEW -o eth0 -j ACCEPT
+    iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    iptables -A FORWARD -m state --state NEW -o eth0 -j ACCEPT
+    iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allow incoming OpenVPN packets. Duplicate the line below for each
+# OpenVPN tunnel, changing --dport n to match the OpenVPN UDP port.
+# In OpenVPN, the port number is controlled by the --port n option.
+# If you put this option in the config file, you can remove the leading '--'
+# If you taking the stateful firewall approach (see the OpenVPN HOWTO),
+# then comment out the line below.
+# iptables -A INPUT -p udp --dport 1194 -j ACCEPT
+
+
+    func "defend the network from ipv6"
+    ip6tables -F
+    ip6tables -P INPUT DROP
+    ip6tables -P FORWARD DROP
+    ip6tables -P OUTPUT DROP
+
+}
+
+ebtables_flush() {
+    command -v ebtables >/dev/null
+    { test $? = 0 } || { func "ebtables not found, skipping"; return 1 }
+
+    act "flushing ebtables (layer 2 firewall)"
+    ebtables -P FORWARD ACCEPT
+    ebtables -P OUTPUT ACCEPT
+    ebtables -P INPUT ACCEPT
+    ebtables -F
+}
+
+ebtables_start() {
+    command -v ebtables >/dev/null
+    { test $? = 0 } || { func "ebtables not found, skipping"; return 1 }
+
+    notice "Setting up ebtables rules (layer 2 firewall)"
+    ebtables -P FORWARD DROP
+    ebtables -A FORWARD -p IPv4 -j ACCEPT
+    ebtables -A FORWARD -p ARP -j ACCEPT
+    ebtables -A FORWARD -p LENGTH -j ACCEPT
+    ebtables -A FORWARD --log-level info --log-ip --log-prefix EBFW
+    ebtables -P INPUT DROP
+    ebtables -A INPUT -p IPv4 -j ACCEPT
+    ebtables -A INPUT -p ARP -j ACCEPT
+    ebtables -A INPUT -p LENGTH -j ACCEPT
+    ebtables -A INPUT --log-level info --log-ip --log-prefix EBFW
+    ebtables -P OUTPUT DROP
+    ebtables -A OUTPUT -p IPv4 -j ACCEPT
+    ebtables -A OUTPUT -p ARP -j ACCEPT
+    ebtables -A OUTPUT -p LENGTH -j ACCEPT
+    ebtables -A OUTPUT --log-level info --log-ip --log-arp --log-prefix EBFW -j DROP
+
+    act "pinning down known MAC addresses to IP"
+    for i in ${(f)known}; do
+	# check if its a mac address
+	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+	{ test $? = 0 } || { continue } # skip if no mac address
+
+	mac=${i[(w)1]}
+	host=${i[(w)2]}
+	ip=${i[(w)3]}
+
+	{ test "$host" = "ignore" } && { continue }
+
+	func "$i"
+
+	ebtables -A FORWARD -p IPv4 --ip-src ${ip} -s ! ${mac} -j DROP
+
+    done
+
+}
+
+sysctl_setup() {
+cat <<EOF | sysctl -p -
+net.ipv4.tcp_syncookies = 1
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.icmp_ignore_bogus_error_responses = 1
+net.core.rmem_max = 33554432
+net.core.wmem_max = 33554432
+net.ipv4.tcp_fin_timeout = 4
+vm.min_free_kbytes = 65536
+net.netfilter.nf_conntrack_tcp_timeout_established = 7200
+net.netfilter.nf_conntrack_checksum = 0
+net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15
+net.ipv4.tcp_keepalive_time = 60
+net.ipv4.tcp_keepalive_intvl = 10
+net.ipv4.tcp_keepalive_probes = 3
+net.ipv4.ip_local_port_range = 1025 65530
+net.ipv4.tcp_timestamps = 0
+EOF
+}
+
+
+
+# }}}
+
+# {{{ DOWSE FUNCTIONS
+
+dowse_check() {
+    act "Checking requirements to run dowse..."
+
+    func "required programs"
+    for req in setuidgid dnsmasq iptables privoxy squid3; do
+	command -v $req >/dev/null
+	{ test $? != 0 } && {
+	    error "Cannot find $req"
+	    error "You need it to run dowse, please install it."
+	    return 1
+	}
+    done
+
+    func "root access"
+    { test "$UID" = "0" } || {
+	error "Dowse needs root access to run."
+	return 1 }
+
+    return 0
+}
+
 dowse_setup() {
     act "Configuring our box and connecting it to the Internet..."
 
@@ -318,274 +601,9 @@ chown -R $dowseuid:$dowsegid run
 notice "Setup completed in $DIR"
 return 0
 }
-# }}}
-
-# {{{ START/STOP FORMULAS
-
-waitpid() {
-	# takes a pid
-	pid="$1"
-	while true; do
-		ps -p "$pid" > /dev/null
-		if [ $? = 0 ]; then print -n . ; sleep 1
-		else break; fi
-		# todo: timeout with kill -9
-	done
-}
 
 
-dnsmasq_stop() {
-    { test -r $pid_dnsmasq } && {
-	pid=`cat $pid_dnsmasq`
-	act "Stopping dnsmasq ($pid)"
-	kill $pid
-	waitpid $pid
-	rm -f $pid_dnsmasq
-    }
-}
-dnsmasq_start() {
-    act "Preparing to launch dnsmasq..."
-
-    # if running, stop to restart
-    dnsmasq_stop
-
-    func "dnsmasq --pid-file $DIR/run/dnsmasq.pid -C $DIR/dnsmasq.conf"
-    dnsmasq --pid-file=$pid_dnsmasq -C $DIR/run/dnsmasq.conf
-}
-
-squid_stop() {
-    { test -r $pid_squid } && {
-	pid=`cat $pid_squid`
-	ps ax | grep '$pid' > /dev/null
-	{ test $? = 0 } || { func "removing stale pid for squid" ; rm -f $pid_squid; return 1 }
-	act "Stopping squid ($pid)"
-	squid -f $DIR/run/squid.conf -k shutdown
-	waitpid $pid
-	rm -f $pid_squid
-    }
-}
-squid_start() {
-    act "Preparing to launch Squid..."
-
-    # if running, reconfigure (??)
-#    { test -r $pid_squid } && {
-#	squid -f $DIR/run/squid.conf -k reconfigure
-#	return 0 }
-
-    func "setuidgid $dowseuid squid -f $DIR/run/squid.conf"
-    # cleanup all previous cache in ram
-    rm -rf /dev/shm/dowse/*
-
-    # populate the volatile cache
-    setuidgid $dowseuid squid3 -z -f $DIR/run/squid.conf
-    # launch the squid
-    setuidgid $dowseuid squid3 -f $DIR/run/squid.conf
-}
-
-privoxy_stop() {
-    { test -r $pid_privoxy } && {
-	pid=`cat $pid_privoxy`
-	act "Stopping privoxy ($pid)"
-	kill $pid
-	waitpid $pid
-	rm -f $pid_privoxy
-    }
-}
-privoxy_start() {
-    act "Preparing to launch privoxy..."
-
-    # if running, stop to restart
-    privoxy_stop
-
-    func "setuidgid $dowseuid privoxy --pidfile $pid_privoxy $DIR/privoxy.conf"
-    privoxy --user $dowseuid --pidfile $pid_privoxy $DIR/run/privoxy.conf
-}
-
-tor_stop() {
-    { test -r $pid_tor } && {
-	pid=`cat $pid_tor`
-	act "Stopping tor ($pid)"
-	kill $pid
-	waitpid $pid
-	# pid file is deleted by tor
-    }
-}
-
-tor_start() {
-    act "Preparing to launch tor..."
-    # if running, stop to restart
-    tor_stop
-    tor -f $DIR/run/tor.conf
-}
-
-iptables_flush() {
-    act "Flushing iptables firewall rules"
-    iptables -F
-    iptables -X
-    iptables -t nat -F
-    iptables -t nat -X
-    iptables -t mangle -F
-    iptables -t mangle -X
-    iptables -P INPUT ACCEPT
-    iptables -P FORWARD ACCEPT
-    iptables -P OUTPUT ACCEPT
-}
-
-iptables_start() {
-    notice "Setting up iptables firewall rules"
-
-    iptables -P OUTPUT ACCEPT
-    iptables -P INPUT DROP
-    iptables -P FORWARD DROP
-
-    func "allow only local loopback"
-    iptables -A INPUT -i eth0 -d 127.0.0.1 -j DROP
-    iptables -A INPUT -i eth0 -s 127.0.0.1 -j DROP
-    iptables -A FORWARD -i eth0 -s 127.0.0.1 -j DROP
-    iptables -A FORWARD -i eth0 -d 127.0.0.1 -j DROP
-    iptables -A INPUT -s 127.0.0.1 -j ACCEPT
-    iptables -A INPUT -d 127.0.0.1 -j ACCEPT
-
-
-# Block outgoing NetBios (if you have windows machines running
-# on the private subnet).  This will not affect any NetBios
-# traffic that flows over the VPN tunnel, but it will stop
-# local windows machines from broadcasting themselves to
-# the internet.
-# iptables -A FORWARD -p tcp --sport 137:139 -j DROP
-# iptables -A FORWARD -p udp --sport 137:139 -j DROP
-# iptables -A OUTPUT -p tcp --sport 137:139 -j DROP
-# iptables -A OUTPUT -p udp --sport 137:139 -j DROP
-
-# Check source address validity on packets going out to internet
-# iptables -A FORWARD -s ! ${dowsenet} -i eth0 -j DROP
-
-# Allow packets from private subnets
-    iptables -A INPUT -s ${dowsenet} -j ACCEPT
-    iptables -A FORWARD -i ${interface} -s ${dowsenet} -j ACCEPT
-
-# Allow DHCP service
-    iptables -A INPUT -p udp --sport 67:68 --dport 67:68 -j ACCEPT
-
-# Allow incoming pings (can be disabled)
-    iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
-
-# Allow services such as www and ssh (can be disabled)
-    iptables -A INPUT -p tcp --dport http -j ACCEPT
-    iptables -A INPUT -p tcp --dport ssh -j ACCEPT
-
-# Keep state of connections from local machine and private subnets
-    iptables -A OUTPUT -m state --state NEW -o eth0 -j ACCEPT
-    iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-    iptables -A FORWARD -m state --state NEW -o eth0 -j ACCEPT
-    iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-# Allow incoming OpenVPN packets. Duplicate the line below for each
-# OpenVPN tunnel, changing --dport n to match the OpenVPN UDP port.
-# In OpenVPN, the port number is controlled by the --port n option.
-# If you put this option in the config file, you can remove the leading '--'
-# If you taking the stateful firewall approach (see the OpenVPN HOWTO),
-# then comment out the line below.
-# iptables -A INPUT -p udp --dport 1194 -j ACCEPT
-
-
-    func "defend the network from ipv6"
-    ip6tables -F
-    ip6tables -P INPUT DROP
-    ip6tables -P FORWARD DROP
-    ip6tables -P OUTPUT DROP
-
-}
-
-ebtables_flush() {
-    act "flushing ebtables (layer 2 firewall)"
-    ebtables -P FORWARD ACCEPT
-    ebtables -P OUTPUT ACCEPT
-    ebtables -P INPUT ACCEPT
-    ebtables -F
-}
-
-ebtables_start() {
-    notice "Setting up ebtables rules (layer 2 firewall)"
-    ebtables -P FORWARD DROP
-    ebtables -A FORWARD -p IPv4 -j ACCEPT
-    ebtables -A FORWARD -p ARP -j ACCEPT
-    ebtables -A FORWARD -p LENGTH -j ACCEPT
-    ebtables -A FORWARD --log-level info --log-ip --log-prefix EBFW
-    ebtables -P INPUT DROP
-    ebtables -A INPUT -p IPv4 -j ACCEPT
-    ebtables -A INPUT -p ARP -j ACCEPT
-    ebtables -A INPUT -p LENGTH -j ACCEPT
-    ebtables -A INPUT --log-level info --log-ip --log-prefix EBFW
-    ebtables -P OUTPUT DROP
-    ebtables -A OUTPUT -p IPv4 -j ACCEPT
-    ebtables -A OUTPUT -p ARP -j ACCEPT
-    ebtables -A OUTPUT -p LENGTH -j ACCEPT
-    ebtables -A OUTPUT --log-level info --log-ip --log-arp --log-prefix EBFW -j DROP
-
-    act "pinning down known MAC addresses to IP"
-    for i in ${(f)known}; do
-	# check if its a mac address
-	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-	{ test $? = 0 } || { continue } # skip if no mac address
-
-	mac=${i[(w)1]}
-	host=${i[(w)2]}
-	ip=${i[(w)3]}
-
-	{ test "$host" = "ignore" } && { continue }
-
-	func "$i"
-
-	ebtables -A FORWARD -p IPv4 --ip-src ${ip} -s ! ${mac} -j DROP
-
-    done
-
-}
-
-sysctl_setup() {
-cat <<EOF | sysctl -p -
-net.ipv4.tcp_syncookies = 1
-net.ipv4.icmp_echo_ignore_broadcasts = 1
-net.ipv4.conf.all.accept_redirects = 0
-net.ipv4.icmp_ignore_bogus_error_responses = 1
-net.core.rmem_max = 33554432
-net.core.wmem_max = 33554432
-net.ipv4.tcp_fin_timeout = 4
-vm.min_free_kbytes = 65536
-net.netfilter.nf_conntrack_tcp_timeout_established = 7200
-net.netfilter.nf_conntrack_checksum = 0
-net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15
-net.ipv4.tcp_keepalive_time = 60
-net.ipv4.tcp_keepalive_intvl = 10
-net.ipv4.tcp_keepalive_probes = 3
-net.ipv4.ip_local_port_range = 1025 65530
-net.ipv4.tcp_timestamps = 0
-EOF
-}
-
-
-
-# }}}
-
-# {{{ START
 dowse_start() {
-    act "Checking requirements to run dowse..."
-
-    func "required programs"
-    for req in dnsmasq iptables ebtables privoxy squid3; do
-	command -v $req >/dev/null
-	{ test $? != 0 } && {
-	    error "Cannot find $req. You need it to run dowse, please install it."
-	    return 1
-	}
-    done
-
-    func "root access"
-    { test "$UID" = "0" } || {
-	error "Dowse needs root access to run."
-	return 1 }
-
 
     notice "Setting up the network..."
 
@@ -613,22 +631,22 @@ dowse_start() {
     # and http://www.spinics.net/lists/netdev/msg179687.html
     echo 0 >>/proc/sys/net/ipv4/conf/eth0/accept_redirects
 
-{ test "$firewall" = "no" } || {
-    ebtables_flush
-    iptables_flush
-}
+    { test "$firewall" = "no" } || {
+	ebtables_flush
+	iptables_flush
+    }
 
-{ test "$firewall" = "yes" } && {
-    ebtables_start
-    iptables_start
-}
+    { test "$firewall" = "yes" } && {
+	ebtables_start
+	iptables_start
+    }
 
-notice "Setting up masquerading (NAT)"
-func "setup route towards wired network"
-iptables --table nat --append POSTROUTING --out-interface $interface -j SNAT --to $dowse
+    notice "Setting up masquerading (NAT)"
+    func "setup route towards wired network"
+    iptables --table nat --append POSTROUTING --out-interface $interface -j SNAT --to $dowse
 
-func "setup transparent proxy to squid"
-iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 -j REDIRECT --to-port 3128
+    func "setup transparent proxy to squid"
+    iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 -j REDIRECT --to-port 3128
 
     # start the dnsmasq daemon
     dnsmasq_start
@@ -636,36 +654,17 @@ iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 -j RE
     # start the privoxy daemon
     privoxy_start
 
-    act "Pinning down MAC addresses in ARP table..."
-    for i in ${(f)known}; do
-	# check if its a mac address
-	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-	{ test $? = 0 } || { continue } # skip if no mac address
-
-	mac=${i[(w)1]}
-	host=${i[(w)2]}
-	ip=${i[(w)3]}
-
-	{ test "$host" = "ignore" } && { continue }
-
-	func "$i"
-	arp -s $ip $mac
-
-    done
-
     # start the squid daemon
     squid_start
 
-    # start Tor
+    # if found, start Tor
     tor_start
 
     # if PeerGuardian was running, start it again
     { test "$PGL" = "" } || { pglcmd start }
 
 }
-# }}}
 
-# {{{ STOP
 dowse_stop() {
     notice "Stopping all services."
     tor_stop
@@ -676,6 +675,9 @@ dowse_stop() {
 # }}}
 
 # {{{ MAIN
+
+dowse_check
+{ test $? = 1 } && { error "Aborting operation for missing requirements."; return 1 }
 
 # we use a very simple argument parser
 case "$1" in
