@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2011-2014 Dyne.org Foundation
 #
-# Dowse is designed, written and maintained by Jaromil
+# Dowse is written by Denis Roio <jaromil@dyne.org>
 #
 # This source code is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Public License
@@ -61,6 +61,9 @@ pid_tor=$DIR/run/tor.pid
 pid_squid=$DIR/run/squid.pid
 pid_dnsmasq=$DIR/run/dnsmasq.pid
 pid_privoxy=$DIR/run/privoxy.pid
+
+# read the network configuration of known hosts
+known=`cat conf/network | grep -v '^#'`
 
 # }}}
 
@@ -268,7 +271,6 @@ ExitPolicy reject *:*
 EOF
 
 func "Fixing entries for known peers"
-known=`cat conf/network | grep -v '^#'`
 rm -f $DIR/run/dnsmasq.network
 # this is basically a dnsmasq host configuration file
 print "dhcp-option=option:router,$dowse" > $DIR/run/dnsmasq.network
@@ -401,10 +403,10 @@ privoxy_start() {
 
 tor_stop() {
     { test -r $pid_tor } && {
-        pid=`cat $pid_tor`
-        act "Stopping tor ($pid)"
-        kill $pid
-        waitpid $pid
+	pid=`cat $pid_tor`
+	act "Stopping tor ($pid)"
+	kill $pid
+	waitpid $pid
 	# pid file is deleted by tor
     }
 }
@@ -418,31 +420,31 @@ tor_start() {
 
 iptables_flush() {
     act "Flushing iptables firewall rules"
-iptables -F
-iptables -X
-iptables -t nat -F
-iptables -t nat -X
-iptables -t mangle -F
-iptables -t mangle -X
-iptables -P INPUT ACCEPT
-iptables -P FORWARD ACCEPT
-iptables -P OUTPUT ACCEPT
+    iptables -F
+    iptables -X
+    iptables -t nat -F
+    iptables -t nat -X
+    iptables -t mangle -F
+    iptables -t mangle -X
+    iptables -P INPUT ACCEPT
+    iptables -P FORWARD ACCEPT
+    iptables -P OUTPUT ACCEPT
 }
 
 iptables_start() {
     notice "Setting up iptables firewall rules"
 
-iptables -P OUTPUT ACCEPT
-iptables -P INPUT DROP
-iptables -P FORWARD DROP
+    iptables -P OUTPUT ACCEPT
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
 
-func "allow only local loopback"
-iptables -A INPUT -i eth0 -d 127.0.0.1 -j DROP
-iptables -A INPUT -i eth0 -s 127.0.0.1 -j DROP
-iptables -A FORWARD -i eth0 -s 127.0.0.1 -j DROP
-iptables -A FORWARD -i eth0 -d 127.0.0.1 -j DROP
-iptables -A INPUT -s 127.0.0.1 -j ACCEPT
-iptables -A INPUT -d 127.0.0.1 -j ACCEPT
+    func "allow only local loopback"
+    iptables -A INPUT -i eth0 -d 127.0.0.1 -j DROP
+    iptables -A INPUT -i eth0 -s 127.0.0.1 -j DROP
+    iptables -A FORWARD -i eth0 -s 127.0.0.1 -j DROP
+    iptables -A FORWARD -i eth0 -d 127.0.0.1 -j DROP
+    iptables -A INPUT -s 127.0.0.1 -j ACCEPT
+    iptables -A INPUT -d 127.0.0.1 -j ACCEPT
 
 
 # Block outgoing NetBios (if you have windows machines running
@@ -459,24 +461,24 @@ iptables -A INPUT -d 127.0.0.1 -j ACCEPT
 # iptables -A FORWARD -s ! ${dowsenet} -i eth0 -j DROP
 
 # Allow packets from private subnets
-iptables -A INPUT -s ${dowsenet} -j ACCEPT
-iptables -A FORWARD -i ${interface} -s ${dowsenet} -j ACCEPT
+    iptables -A INPUT -s ${dowsenet} -j ACCEPT
+    iptables -A FORWARD -i ${interface} -s ${dowsenet} -j ACCEPT
 
 # Allow DHCP service
-iptables -A INPUT -p udp --sport 67:68 --dport 67:68 -j ACCEPT
+    iptables -A INPUT -p udp --sport 67:68 --dport 67:68 -j ACCEPT
 
 # Allow incoming pings (can be disabled)
-iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+    iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 
 # Allow services such as www and ssh (can be disabled)
-iptables -A INPUT -p tcp --dport http -j ACCEPT
-iptables -A INPUT -p tcp --dport ssh -j ACCEPT
+    iptables -A INPUT -p tcp --dport http -j ACCEPT
+    iptables -A INPUT -p tcp --dport ssh -j ACCEPT
 
 # Keep state of connections from local machine and private subnets
-iptables -A OUTPUT -m state --state NEW -o eth0 -j ACCEPT
-iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-iptables -A FORWARD -m state --state NEW -o eth0 -j ACCEPT
-iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+    iptables -A OUTPUT -m state --state NEW -o eth0 -j ACCEPT
+    iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    iptables -A FORWARD -m state --state NEW -o eth0 -j ACCEPT
+    iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # Allow incoming OpenVPN packets. Duplicate the line below for each
 # OpenVPN tunnel, changing --dport n to match the OpenVPN UDP port.
@@ -492,6 +494,52 @@ iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
     ip6tables -P INPUT DROP
     ip6tables -P FORWARD DROP
     ip6tables -P OUTPUT DROP
+
+}
+
+ebtables_flush() {
+    act "flushing ebtables (layer 2 firewall)"
+    ebtables -P FORWARD ACCEPT
+    ebtables -P OUTPUT ACCEPT
+    ebtables -P INPUT ACCEPT
+    ebtables -F
+}
+
+ebtables_start() {
+    notice "Setting up ebtables rules (layer 2 firewall)"
+    ebtables -P FORWARD DROP
+    ebtables -A FORWARD -p IPv4 -j ACCEPT
+    ebtables -A FORWARD -p ARP -j ACCEPT
+    ebtables -A FORWARD -p LENGTH -j ACCEPT
+    ebtables -A FORWARD --log-level info --log-ip --log-prefix EBFW
+    ebtables -P INPUT DROP
+    ebtables -A INPUT -p IPv4 -j ACCEPT
+    ebtables -A INPUT -p ARP -j ACCEPT
+    ebtables -A INPUT -p LENGTH -j ACCEPT
+    ebtables -A INPUT --log-level info --log-ip --log-prefix EBFW
+    ebtables -P OUTPUT DROP
+    ebtables -A OUTPUT -p IPv4 -j ACCEPT
+    ebtables -A OUTPUT -p ARP -j ACCEPT
+    ebtables -A OUTPUT -p LENGTH -j ACCEPT
+    ebtables -A OUTPUT --log-level info --log-ip --log-arp --log-prefix EBFW -j DROP
+
+    act "pinning down known MAC addresses to IP"
+    for i in ${(f)known}; do
+	# check if its a mac address
+	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+	{ test $? = 0 } || { continue } # skip if no mac address
+
+	mac=${i[(w)1]}
+	host=${i[(w)2]}
+	ip=${i[(w)3]}
+
+	{ test "$host" = "ignore" } && { continue }
+
+	func "$i"
+
+	ebtables -A FORWARD -p IPv4 --ip-src ${ip} -s ! ${mac} -j DROP
+
+    done
 
 }
 
@@ -525,10 +573,10 @@ dowse_start() {
     act "Checking requirements to run dowse..."
 
     func "required programs"
-    for req in dnsmasq iptables privoxy squid; do
+    for req in dnsmasq iptables ebtables privoxy squid3; do
 	command -v $req >/dev/null
 	{ test $? != 0 } && {
-	    error "Cannot find $req. You require more BLINGBLING man, please install it."
+	    error "Cannot find $req. You need it to run dowse, please install it."
 	    return 1
 	}
     done
@@ -565,9 +613,15 @@ dowse_start() {
     # and http://www.spinics.net/lists/netdev/msg179687.html
     echo 0 >>/proc/sys/net/ipv4/conf/eth0/accept_redirects
 
-{ test "$firewall" = "no" } || { iptables_flush }
+{ test "$firewall" = "no" } || {
+    ebtables_flush
+    iptables_flush
+}
 
-{ test "$firewall" = "yes" } && { iptables_start }
+{ test "$firewall" = "yes" } && {
+    ebtables_start
+    iptables_start
+}
 
 notice "Setting up masquerading (NAT)"
 func "setup route towards wired network"
@@ -582,8 +636,7 @@ iptables -t nat -A PREROUTING -i $interface -s $dowsenet -p tcp --dport 80 -j RE
     # start the privoxy daemon
     privoxy_start
 
-    act "Pinning down MAC addresses in ARP entries..."
-    known=`cat conf/network | grep -v '^#'`
+    act "Pinning down MAC addresses in ARP table..."
     for i in ${(f)known}; do
 	# check if its a mac address
 	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
