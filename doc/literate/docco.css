@@ -217,6 +217,7 @@ ul.sections > li > div {
   ul.sections > li > div.content {
     padding: 9px 15px 16px 25px;
   }
+  td.docs { width: 500px }
 }
 
 /*---------------------- Syntax Highlighting -----------------------------*/

@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 #
-# Copyright (C) 2011-2014 Dyne.org Foundation
+# Copyright (C) 2012-2014 Dyne.org Foundation
 #
-# Dowse is written by Denis Roio <jaromil@dyne.org>
+# Dowse is written by Denis Roio http://jaromil.dyne.org
 #
 # This source code is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Public License
@@ -84,9 +84,9 @@ known=`cat conf/network | grep -v '^#'`
 notice "Dowse $VERSION - local area network rabdomancy"
 cat <<EOF
 
- Copyright (C) 2013-2014 Dyne.org Foundation, License GNU GPL v3+
+ Copyright (C) 2012-2014 Dyne.org Foundation. License: GNU GPL v3+
  This is free software: you are free to change and redistribute it
- For more informations see http://www.dyne.org/software/dowse
+ For more information see http://www.dyne.org/software/dowse
 
 EOF
 
@@ -374,8 +374,6 @@ net.ipv4.tcp_timestamps = 0
 EOF
 }
 
-
-
 # }}}
 
 # {{{ DOWSE FUNCTIONS
@@ -543,6 +541,40 @@ never_direct allow all
 # header_access User-Agent deny all
 # header_access WWW-Authenticate deny all
 
+redirect_program $DIR/run/squid-httpsredirect.pl
+
+EOF
+
+    cat <<EOF > $DIR/run/squid-httpsredirect.pl
+#!/usr/bin/perl  
+use strict;
+use warnings;
+use lib '$DIR/modules/squid-httpseverywhere';
+use HTTPSEverywhere;
+
+\$|=1;  
+
+my \$he      = new HTTPSEverywhere( rulesets => ["\$base/rules"] );    
+my \$updated = time;
+
+while(<>){  
+   my( \$url ) = /^(\S+)/;
+
+   ## Re-read the rulesets if it has been more than an hour
+     if( \$updated < time-3600 ){
+        \$he->read();
+        \$updated = time;
+     }
+
+   ## Converted version of the url
+     my \$newurl = \$he->convert( \$url );
+
+   if( \$url eq \$newurl ){
+      print "\$url\n";
+   } else {
+      print "301:\$newurl\n";
+   }
+}  
 
 EOF
 
