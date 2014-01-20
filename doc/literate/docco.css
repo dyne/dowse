@@ -123,6 +123,7 @@ ul.sections {
   padding:0 0 5px 0;;
   margin:0;
 }
+td.docs { width: 500px }
 
 /*
   Force border-box so that % widths fit the parent
