@@ -2,6 +2,10 @@ NAME
     HTTPSEverywhere -- Use the rulesets generated for HTTPS-Everywhere from
     Perl.
 
+REQUIREMENT
+
+    apt-get install libxml-libxml-perl
+
 DESCRIPTION
     HTTPS Everywhere is a Firefox addon which forces users to use https for
     certain websites. This Perl module was written to take advantage of the
