@@ -1,0 +1,12 @@
+This directory contains modules for Dowse
+
+Look into 'available' to see all modules.
+
+Make a symlink of any of them into 'enabled' to activate it.
+
+At start, Dowse will activate all modules present in 'enabled'.
+
+Modules are very simple to make, all what Dowse does is execute the
+$module/conf.zsh file with zsh. That script will create and add
+configurations accordingly.
+

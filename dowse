@@ -374,8 +374,6 @@ net.ipv4.tcp_timestamps = 0
 EOF
 }
 
-
-
 # }}}
 
 # {{{ DOWSE FUNCTIONS
@@ -609,6 +607,19 @@ EOF
     return 0
 }
 
+dowse_init_modules() {
+    notice "Scanning for enabled modules..."
+    enabled=`find -L $DIR/modules/enabled -type d`
+    for i in ${(f)enabled}; do
+	{ test -r $i/conf.zsh } && {
+	    pushd $i
+	    act "`basename $i`: activating module"
+	    # execute the module init
+	    DOWSE=$DIR zsh ./conf.zsh
+	    popd
+	}
+    done
+}
 
 dowse_start() {
 
@@ -678,6 +689,9 @@ dowse_stop() {
     squid_stop
     privoxy_stop
     dnsmasq_stop
+
+    iptables_flush
+    ebtables_flush
 }
 # }}}
 
@@ -690,7 +704,13 @@ dowse_check
 
 # we use a very simple argument parser
 case "$1" in
-    restart|start) dowse_setup; dowse_stop; dowse_start ;;
+    restart|start)
+	dowse_stop
+	dowse_setup
+	dowse_init_modules
+	dowse_start
+	;;
+
     release) rm $DIR/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
     reload) rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k rec ;;
     stop) dowse_stop ;;

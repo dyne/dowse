@@ -1,0 +1,59 @@
+NAME
+    HTTPSEverywhere -- Use the rulesets generated for HTTPS-Everywhere from
+    Perl.
+
+DESCRIPTION
+    HTTPS Everywhere is a Firefox addon which forces users to use https for
+    certain websites. This Perl module was written to take advantage of the
+    rulesets generated for that project. You need to download the rules
+    separately.
+
+    Project page:
+
+      https://www.eff.org/https-everywhere
+
+    Obtain the repository and rules from Git:
+
+      git clone git://git.torproject.org/https-everywhere.git
+
+    This project is currently under heavy development and the format of the
+    rulesets are likely to change. This module may stop working because of
+    that. I will endeavour to keep it up to date with the latest ruleset
+    format.
+
+EXAMPLES
+      my $he = new HTTPSEverywhere(
+         rulesets => [
+            '/git/https-everywhere/src/chrome/content/rules',
+         ],
+      );
+      my $url = $he->convert('http://gmail.com/foo');
+
+      In this example, $url would contain https://mail.google.com/foo
+
+METHODS
+    new( rulesets = \@paths ))>
+          "rulesets" contains a list of paths to the directory or directories
+          containing the xml ruleset files
+
+    read( @paths )
+          Clears out the known rulesets and reads them from each of the
+          directories in @paths. If @paths is not provided, it re-reads
+          them from the paths specified in new().
+
+    convert( $url )
+          Returns the converted version of the URL. If no rules match the
+          URL, the original URL is returned.
+
+COPYRIGHT
+    Copyright (c) 2010 Mike Cardwell
+
+LICENSE
+    Licensed under the GNU General Public License. See
+    http://www.opensource.org/licenses/gpl-2.0.php
+
+AUTHOR
+    Mike Cardwell - https://grepular.com/
+
+    Copyright (C) 2010 Mike Cardwell
+
