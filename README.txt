@@ -6,7 +6,7 @@
 
        a digital rod for local area network rabdomancy
 
-       http://www.dyne.org/software/dowse       version 0.3
+       http://www.dyne.org/software/dowse       version 0.4
 
 Dowse is a minimalistic script that can turn an old GNU/Linux box into
 a local network firewall, privacy proxy and gateway to hidden networks

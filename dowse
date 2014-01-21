@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 #
-# Copyright (C) 2011-2014 Dyne.org Foundation
+# Copyright (C) 2012-2014 Dyne.org Foundation
 #
 # Dowse is written by Denis Roio <jaromil@dyne.org>
 #
@@ -24,7 +24,7 @@
 
 # {{{ GLOBALS
 
-VERSION=0.3
+VERSION=0.4
 DATE="Jan/2014"
 
 QUIET=0
@@ -84,7 +84,7 @@ known=`cat conf/network | grep -v '^#'`
 notice "Dowse $VERSION - local area network rabdomancy"
 cat <<EOF
 
- Copyright (C) 2013-2014 Dyne.org Foundation, License GNU GPL v3+
+ Copyright (C) 2012-2014 Dyne.org Foundation, License GNU GPL v3+
  This is free software: you are free to change and redistribute it
  For more informations see http://www.dyne.org/software/dowse
 
