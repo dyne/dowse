@@ -37,6 +37,9 @@ while(<>){
 
 EOF
 
-print "redirect_program $DOWSE/run/$THIS.pl" >> $DOWSE/run/squid.conf
+cat <<EOF >> $DOWSE/run/squid.conf
+redirect_program $DOWSE/run/$THIS.pl
+url_rewrite_children 40
+EOF
 
 return 0
