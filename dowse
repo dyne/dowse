@@ -607,17 +607,48 @@ EOF
     return 0
 }
 
-dowse_init_modules() {
+typeset -A mods
+
+dowse_setup_modules() {
     notice "Scanning for enabled modules..."
     enabled=`find -L $DIR/modules/enabled -type d`
     for i in ${(f)enabled}; do
 	{ test -r $i/conf.zsh } && {
 	    pushd $i
-	    act "`basename $i`: activating module"
-	    # execute the module init
-	    DOWSE=$DIR zsh ./conf.zsh
+	    act "`basename $i`: initializing module"
+	    # execute the module_setup()
+	    source ./conf.zsh
+	    { test $? = 0 } && {
+		mods+=($i)
+		DOWSE=$DIR module_setup }
 	    popd
 	}
+    done
+}
+
+dowse_start_modules() {
+    notice "Scanning for enabled modules..."
+    enabled=`find -L $DIR/modules/enabled -type d`
+    for i in ${mods}; do
+	pushd $i
+	act "`basename $i`: starting module"
+	# execute the module_start()
+	source ./conf.zsh
+	DOWSE=$DIR module_start
+	popd
+    done
+}
+
+dowse_stop_modules() {
+    notice "Scanning for enabled modules..."
+    enabled=`find -L $DIR/modules/enabled -type d`
+    for i in ${mods}; do
+	pushd $i
+	act "`basename $i`: starting module"
+        # execute the module_stop()
+	source ./conf.zsh
+	DOWSE=$DIR module_stop
+	popd
     done
 }
 
