@@ -469,7 +469,7 @@ access_log /dev/null
 
 # avoid having a physical cache directory
 cache_mem 16 MB
-cache_dir aufs /dev/shm/dowse 256 16 256
+cache_dir aufs /dev/shm/dowse 64 16 64
 maximum_object_size 16 MB
 maximum_object_size_in_memory 1 MB
 minimum_object_size 16 KB
