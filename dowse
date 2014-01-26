@@ -607,7 +607,7 @@ EOF
     return 0
 }
 
-typeset -A mods
+typeset -a mods
 
 dowse_setup_modules() {
     notice "Scanning for enabled modules..."
@@ -738,13 +738,15 @@ case "$1" in
     restart|start)
 	dowse_stop
 	dowse_setup
-	dowse_init_modules
+	dowse_setup_modules
 	dowse_start
+	dowse_start_modules
 	;;
 
     release) rm $DIR/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
     reload) rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k rec ;;
-    stop) dowse_stop ;;
+    stop) dowse_stop_modules;  dowse_stop ;;
+
     *) echo "dowse: command not found: $1" ;;
 esac
 

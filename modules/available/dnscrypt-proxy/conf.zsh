@@ -1,7 +1,4 @@
-#!/usr/bin/env zsh
-
 command -v dnscrypt-proxy > /dev/null
-
 { test $? = 0 } || { print "dnscrypt-proxy not found."; return 1 }
 
 module_setup() {
@@ -12,9 +9,10 @@ EOF
 }
 
 module_start() {
-    dnscrypt-proxy -a 127.0.0.1:5353 -d
+    setuidgid $dowseuid dnscrypt-proxy -a 127.0.0.1:5353 -d -p $DOWSE/run/dnscrypt-proxy.pid
 }
 
 module_stop() {
-    killall dnscrypt-proxy
+    { test -r $DOWSE/run/dnscrypt-proxy.pid } && {
+	kill `cat $DOWSE/run/dnscrypt-proxy.pid` }
 }
