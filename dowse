@@ -57,7 +57,6 @@ DIR=${DOWSE:-`pwd`}
 
 
 # pid files for our daemons
-pid_tor=$DIR/run/tor.pid
 pid_squid=$DIR/run/squid.pid
 pid_dnsmasq=$DIR/run/dnsmasq.pid
 pid_privoxy=$DIR/run/privoxy.pid
@@ -196,30 +195,6 @@ privoxy_start() {
     privoxy_stop
 
     privoxy --user $dowseuid --pidfile $pid_privoxy $DIR/run/privoxy.conf
-}
-
-tor_stop() {
-    command -v tor >/dev/null
-    { test $? = 0 } || { func "tor not found, skipping"; return 1 }
-
-    { test -r $pid_tor } && {
-	pid=`cat $pid_tor`
-	act "Stopping tor ($pid)"
-	kill $pid
-	waitpid $pid
-	# pid file is deleted by tor
-    }
-}
-
-tor_start() {
-    command -v tor >/dev/null
-    { test $? = 0 } || { func "tor not found, skipping"; return 1 }
-
-    act "Preparing to launch tor..."
-    # if running, stop to restart
-    tor_stop
-
-    tor -f $DIR/run/tor.conf
 }
 
 iptables_flush() {
@@ -440,10 +415,6 @@ keep-alive-timeout 5
 socket-timeout 300
 handle-as-empty-doc-returns-ok 1
 
-
-# pass through tor for urls.onion
-forward-socks4a .onion $dowse:9050 .
-
 # pass through i2p for urls.i2p
 # forward .i2p $dowse:4444
 # forward .i2p 127.0.0.1:4444
@@ -542,20 +513,6 @@ never_direct allow all
 # header_access WWW-Authenticate deny all
 
 
-EOF
-
-    cat <<EOF > $DIR/run/tor.conf
-User $dowseuid
-PidFile $pid_tor
-SocksPort $dowse:9050
-SocksPolicy accept 10.0.0.250 # $dowsenet
-SocksPolicy reject *
-Log notice file $DIR/log/tor.log
-RunAsDaemon 1
-DataDirectory $DIR/run
-ControlPort 9051
-CookieAuthentication 1
-ExitPolicy reject *:*
 EOF
 
     func "Fixing entries for known peers"
@@ -706,8 +663,6 @@ dowse_start() {
     # start the squid daemon
     squid_start
 
-    # if found, start Tor
-    tor_start
 
     # if PeerGuardian was running, start it again
     { test "$PGL" = "" } || { pglcmd start }
@@ -716,7 +671,6 @@ dowse_start() {
 
 dowse_stop() {
     notice "Stopping all services."
-    tor_stop
     squid_stop
     privoxy_stop
     dnsmasq_stop
