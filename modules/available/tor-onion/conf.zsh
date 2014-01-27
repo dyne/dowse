@@ -7,7 +7,7 @@ module_setup() {
     cat <<EOF > $DOWSE/run/tor.conf
 User $dowseuid
 PidFile $pid_tor
-SocksPort $127.0.0.1:9050
+SocksPort 127.0.0.1:9050
 SocksPolicy accept 127.0.0.1
 SocksPolicy accept $dowse
 SocksPolicy reject *
