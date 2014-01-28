@@ -6,7 +6,11 @@ Make a symlink of any of them into 'enabled' to activate it.
 
 At start, Dowse will activate all modules present in 'enabled'.
 
-Modules are very simple to make, all what Dowse does is execute the
-$module/conf.zsh file with zsh. That script will create and add
-configurations accordingly.
+Modules are very simple to make and consist in 3 functions:
+module_stetup() creates all needed configurations
+module_start() launches the daemon (possibly saving its pid)
+module_stop() kills the daemon (possibly using the pid)
+
+For a good simple start have a look at the dnscrypt-proxy module.
+
 

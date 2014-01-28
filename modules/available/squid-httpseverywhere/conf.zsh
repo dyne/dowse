@@ -3,6 +3,9 @@
 # name of this module
 THIS=`basename $PWD`
 
+# it's all conf!
+module_setup() {
+
 cat <<EOF > $DOWSE/run/$THIS.pl
 #!/usr/bin/perl
 use strict;
@@ -41,5 +44,10 @@ cat <<EOF >> $DOWSE/run/squid.conf
 redirect_program $DOWSE/run/$THIS.pl
 url_rewrite_children 40
 EOF
+}
+
+# nop
+module_start() { }
+module_stop() { }
 
 return 0
