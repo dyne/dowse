@@ -568,7 +568,7 @@ typeset -a mods
 
 dowse_setup_modules() {
     notice "Scanning for enabled modules..."
-    enabled=`find -L $DIR/modules/enabled -type d`
+    enabled=`find -L $DIR/modules/enabled -maxdepth 1 -type d`
     for i in ${(f)enabled}; do
 	{ test -r $i/conf.zsh } && {
 	    pushd $i
@@ -584,8 +584,6 @@ dowse_setup_modules() {
 }
 
 dowse_start_modules() {
-    notice "Scanning for enabled modules..."
-    enabled=`find -L $DIR/modules/enabled -type d`
     for i in ${mods}; do
 	pushd $i
 	act "`basename $i`: starting module"
@@ -598,10 +596,11 @@ dowse_start_modules() {
 
 dowse_stop_modules() {
     notice "Scanning for enabled modules..."
-    enabled=`find -L $DIR/modules/enabled -type d`
-    for i in ${mods}; do
+    enabled=`find -L $DIR/modules/enabled -maxdepth 1 -type d`
+    for i in ${(f)enabled}; do
+	{ test -r $i/conf.zsh } || { continue }
 	pushd $i
-	act "`basename $i`: starting module"
+	act "`basename $i`: stopping module"
         # execute the module_stop()
 	source ./conf.zsh
 	DOWSE=$DIR module_stop
