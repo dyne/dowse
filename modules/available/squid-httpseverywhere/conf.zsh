@@ -6,8 +6,9 @@ THIS=`basename $PWD`
 # it's all conf!
 module_setup() {
 
-cat <<EOF > $DOWSE/run/$THIS.pl
-#!/usr/bin/perl
+rm -f $PWD/$THIS.pl
+cat <<EOF > $PWD/$THIS.pl
+#!/usr/bin/env perl
 use strict;
 use warnings;
 use lib '$PWD';
@@ -36,13 +37,12 @@ while(<>){
       print "301:\$newurl\n";
    }
 }
-
-
 EOF
+chmod +x $PWD/$THIS.pl
 
 cat <<EOF >> $DOWSE/run/squid.conf
-redirect_program $DOWSE/run/$THIS.pl
-url_rewrite_children 40
+redirect_program $PWD/$THIS.pl
+url_rewrite_children 5
 EOF
 }
 
