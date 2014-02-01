@@ -171,7 +171,7 @@ squid_start() {
 
     func "setuidgid $dowseuid squid -f $DIR/run/squid.conf"
     # cleanup all previous cache in ram
-#     rm -rf /dev/shm/dowse/*
+    rm -rf /dev/shm/dowse/*
 
     # populate the volatile cache
     setuidgid $dowseuid squid3 -z -f $DIR/run/squid.conf
@@ -196,6 +196,31 @@ privoxy_start() {
 
     privoxy --user $dowseuid --pidfile $pid_privoxy $DIR/run/privoxy.conf
 }
+
+sysctl_setup() {
+cat <<EOF | sysctl -p -
+net.ipv4.tcp_syncookies = 1
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.icmp_ignore_bogus_error_responses = 1
+net.core.rmem_max = 33554432
+net.core.wmem_max = 33554432
+net.ipv4.tcp_fin_timeout = 4
+vm.min_free_kbytes = 65536
+net.netfilter.nf_conntrack_tcp_timeout_established = 7200
+net.netfilter.nf_conntrack_checksum = 0
+net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15
+net.ipv4.tcp_keepalive_time = 60
+net.ipv4.tcp_keepalive_intvl = 10
+net.ipv4.tcp_keepalive_probes = 3
+net.ipv4.ip_local_port_range = 1025 65530
+net.ipv4.tcp_timestamps = 0
+EOF
+}
+
+# }}}
+
+# {{{ IPTABLES
 
 iptables_flush() {
     act "Flushing iptables firewall rules"
@@ -276,6 +301,10 @@ iptables_start() {
 
 }
 
+# }}}
+
+# {{{ EBTABLES
+
 ebtables_flush() {
     command -v ebtables >/dev/null
     { test $? = 0 } || { func "ebtables not found, skipping"; return 1 }
@@ -328,29 +357,6 @@ ebtables_start() {
 
 }
 
-sysctl_setup() {
-cat <<EOF | sysctl -p -
-net.ipv4.tcp_syncookies = 1
-net.ipv4.tcp_max_syn_backlog = 8192
-net.core.rmem_max = 33554432
-net.core.wmem_max = 33554432
-net.ipv4.tcp_rmem = 4096 87380 16777216
-net.ipv4.tcp_wmem = 4096 65536 16777216
-net.ipv4.icmp_echo_ignore_broadcasts = 1
-net.ipv4.conf.all.accept_redirects = 0
-net.ipv4.icmp_ignore_bogus_error_responses = 1
-net.ipv4.tcp_fin_timeout = 4
-vm.min_free_kbytes = 65536
-net.netfilter.nf_conntrack_tcp_timeout_established = 7200
-net.netfilter.nf_conntrack_checksum = 0
-net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15
-net.ipv4.tcp_keepalive_time = 60
-net.ipv4.tcp_keepalive_intvl = 10
-net.ipv4.tcp_keepalive_probes = 3
-net.ipv4.ip_local_port_range = 1025 65530
-net.ipv4.tcp_timestamps = 0
-EOF
-}
 
 # }}}
 
