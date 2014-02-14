@@ -330,7 +330,8 @@ ebtables_start() {
 
 sysctl_setup() {
 cat <<EOF | sysctl -p -
-net.ipv4.tcp_syncookies = 1
+# net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_syncookies = 0
 net.ipv4.icmp_echo_ignore_broadcasts = 1
 net.ipv4.conf.all.accept_redirects = 0
 net.ipv4.icmp_ignore_bogus_error_responses = 1
@@ -365,6 +366,8 @@ dowse_check() {
 	}
     done
 
+    act "all is in place."
+
     return 0
 }
 
@@ -389,7 +392,8 @@ domain=$lan
 expand-hosts
 interface=$interface
 listen-address=$dowse,127.0.0.1
-local=/$lan/
+local=//127.0.0.1
+local=/$lan/127.0.0.1
 user=$dowseuid
 group=$dowsegid
 EOF
@@ -439,16 +443,24 @@ access_log /dev/null
 # access_log $DIR/log/squid_access.log squid
 
 # avoid having a physical cache directory
+cache deny all
 cache_mem 16 MB
-cache_dir aufs /dev/shm/dowse 64 16 64
+# cache_dir null /tmp
+# cache_dir aufs /dev/shm/dowse 64 16 64
 maximum_object_size 16 MB
 maximum_object_size_in_memory 1 MB
 minimum_object_size 16 KB
 memory_pools off
 
+# dns client section
+dns_nameservers 127.0.0.1
+hosts_file $DIR/run/hosts
+append_domain .$lan
+positive_dns_ttl 8 hours
+negative_dns_ttl 30 seconds
 
 acl all src all
-acl manager proto cache_object
+# acl manager proto cache_object
 acl localhost src 127.0.0.1/32
 acl to_localhost dst 127.0.0.0/8 0.0.0.0/32
 
@@ -460,21 +472,22 @@ acl Safe_ports port 443		# https
 acl purge method PURGE
 acl CONNECT method CONNECT
 
-http_access allow manager localhost
-http_access deny manager
-http_access allow purge localhost
+# http_access allow manager localhost
+# http_access deny manager
+# http_access allow purge localhost
 http_access deny purge
 http_access deny !Safe_ports
 http_access deny CONNECT !SSL_ports
 
 http_access allow localnet
-http_access allow localhost
+# http_access allow localhost
 
 http_access deny all
 
 icp_access allow localnet
 
-http_port 3128 transparent
+http_port $dowse:3128 transparent
+visible_hostname ${hostname}.${lan}
 
 hierarchy_stoplist cgi-bin ?
 
