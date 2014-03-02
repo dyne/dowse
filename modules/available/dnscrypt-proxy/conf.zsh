@@ -9,7 +9,7 @@ EOF
 }
 
 dnscrypt() {
-setuidgid $dowseuid dnscrypt-proxy -a 127.0.0.1:5353 -d -p $DOWSE/run/dnscrypt-proxy.pid -l $DOWSE/log/dnscrypt.log -r "$1" -k "$2" -N "$3" -T
+setuidgid $dowseuid dnscrypt-proxy -a 127.0.0.1:5353 -d -p $DOWSE/run/dnscrypt-proxy.pid -l $DOWSE/log/dnscrypt.log -r "$1" -k "$2" -N "$3"
 }
 
 module_start() {
@@ -24,9 +24,16 @@ dnscrypt 176.56.237.171:443 67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40
 
 # OpenDNS
 # dnscrypt 208.67.220.220:443 B735:1140:206F:225D:3E2B:D822:D7FD:691E:A1C3:3CC8:D666:8D0C:BE04:BFAB:CA43:FB79 2.dnscrypt-cert.opendns.com
+
+
+    # close outgoing dns queries
+    # iptables -A OUTPUT  -p udp --dport 53 -j DROP
+
 }
 
 module_stop() {
     { test -r $DOWSE/run/dnscrypt-proxy.pid } && {
 	kill `cat $DOWSE/run/dnscrypt-proxy.pid` }
+    # reopen routing of dns queries
+    # iptables -A OUTPUT  -p udp --dport 53 -j ACCEPT
 }
