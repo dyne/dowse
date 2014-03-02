@@ -171,7 +171,7 @@ squid_start() {
 
     func "setuidgid $dowseuid squid -f $DIR/run/squid.conf"
     # cleanup all previous cache in ram
-    rm -rf /dev/shm/dowse/*
+#     rm -rf /dev/shm/dowse/*
 
     # populate the volatile cache
     setuidgid $dowseuid squid3 -z -f $DIR/run/squid.conf
@@ -330,13 +330,15 @@ ebtables_start() {
 
 sysctl_setup() {
 cat <<EOF | sysctl -p -
-# net.ipv4.tcp_syncookies = 1
-net.ipv4.tcp_syncookies = 0
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_max_syn_backlog = 8192
+net.core.rmem_max = 33554432
+net.core.wmem_max = 33554432
+net.ipv4.tcp_rmem = 4096 87380 16777216
+net.ipv4.tcp_wmem = 4096 65536 16777216
 net.ipv4.icmp_echo_ignore_broadcasts = 1
 net.ipv4.conf.all.accept_redirects = 0
 net.ipv4.icmp_ignore_bogus_error_responses = 1
-net.core.rmem_max = 33554432
-net.core.wmem_max = 33554432
 net.ipv4.tcp_fin_timeout = 4
 vm.min_free_kbytes = 65536
 net.netfilter.nf_conntrack_tcp_timeout_established = 7200
@@ -379,10 +381,11 @@ dowse_setup() {
     func "generating dnsmasq.conf"
     cat <<EOF > $DIR/run/dnsmasq.conf
 address=/$hostname/$dowse
-address=/.i2p/$dowse
-address=/.onion/$dowse
+address=/$hostname.$lan/$dowse
+# address=/.i2p/$dowse
+# address=/.onion/$dowse
 bogus-priv
-cache-size=1500
+cache-size=300
 conf-dir=/etc/dnsmasq.d
 dhcp-range=$dowseguests
 addn-hosts=$DIR/run/hosts
@@ -390,10 +393,11 @@ dhcp-leasefile=$DIR/run/leases
 domain-needed
 domain=$lan
 expand-hosts
+edns-packet-max=4096
 interface=$interface
 listen-address=$dowse,127.0.0.1
-local=//127.0.0.1
-local=/$lan/127.0.0.1
+local=//127.0.0.1#53
+local=/$lan/
 user=$dowseuid
 group=$dowsegid
 EOF
