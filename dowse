@@ -240,17 +240,13 @@ iptables_start() {
     iptables -P INPUT DROP
     iptables -P FORWARD DROP
 
-    # func "allow only local loopback"
-    # iptables -A ALL -p all -i $interface -s 127.0.0.0/7 -j DROP
-    # iptables -A ALL -p all -i $interface -s 0.0.0.0/7 -j DROP
-    # iptables -A ALL -p all -i $interface -d 127.0.0.0/7 -j DROP
-    # iptables -A ALL -p all -i $interface -d 0.0.0.0/7 -j DROP
-
-    func "drop invalid packets"
-    iptables -A ALL -p all -m state --state INVALID -j DROP
-
-# Check source address validity on packets going out to internet
-# iptables -A FORWARD -s ! ${dowsenet} -i $interface -j DROP
+    func "allow only local loopback"
+    iptables -A INPUT -i eth0 -d 127.0.0.1 -j DROP
+    iptables -A INPUT -i eth0 -s 127.0.0.1 -j DROP
+    iptables -A FORWARD -i eth0 -s 127.0.0.1 -j DROP
+    iptables -A FORWARD -i eth0 -d 127.0.0.1 -j DROP
+    iptables -A INPUT -s 127.0.0.1 -j ACCEPT
+    iptables -A INPUT -d 127.0.0.1 -j ACCEPT
 
 # Allow packets from private subnets
     iptables -A INPUT -s ${dowsenet} -j ACCEPT
@@ -265,6 +261,12 @@ iptables_start() {
 # Allow services such as www and ssh (can be disabled)
     iptables -A INPUT -p tcp --dport http -j ACCEPT
     iptables -A INPUT -p tcp --dport ssh -j ACCEPT
+
+# Keep state of connections from local machine and private subnets
+    iptables -A OUTPUT -m state --state NEW -o eth0 -j ACCEPT
+    iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    iptables -A FORWARD -m state --state NEW -o eth0 -j ACCEPT
+    iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 
     notice "Setting up masquerading (NAT)"
     func "setup route towards wired network"
