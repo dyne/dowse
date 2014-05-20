@@ -158,7 +158,7 @@ squid_stop() {
 	    rm -f $pid_squid
 	    return 1 }
 	act "Stopping squid ($pid)"
-	setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k shutdown
+	setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k kill
 	{ test $? = 0 } || {
 	    error "Error running squid3, the daemon might be left running."
 	    return 1 }
