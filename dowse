@@ -273,10 +273,6 @@ iptables_start() {
     iptables --table nat --append POSTROUTING \
 	--out-interface $interface -j SNAT --to $dowse
 
-    func "setup transparent proxy to squid"
-    iptables -t nat -A PREROUTING -i $interface -s $dowsenet \
-	-p tcp --dport 80 -j REDIRECT --to-port 3128
-
     func "defend the network from ipv6"
     ip6tables -F
     ip6tables -P INPUT DROP
@@ -348,7 +344,7 @@ ebtables_start() {
 dowse_check() {
     act "Checking requirements to run dowse..."
     # this is a simple check on binaries present in PATH
-    for req in setuidgid dnsmasq iptables privoxy squid3; do
+    for req in setuidgid dnsmasq iptables; do
 	command -v $req >/dev/null
 	{ test $? != 0 } && {
 	    error "Cannot find $req"
@@ -392,138 +388,6 @@ user=$dowseuid
 group=$dowsegid
 EOF
 
-
-# Privoxy configuration template
-    func "generating privoxy.conf"
-    cat <<EOF > $DIR/run/privoxy.conf
-user-manual /usr/share/doc/privoxy/user-manual
-confdir /etc/privoxy
-logdir $DIR/log/privoxy
-listen-address  0.0.0.0:8118
-toggle  1
-enable-remote-toggle  0
-enable-remote-http-toggle  0
-enable-edit-actions 1
-enforce-blocks 0
-buffer-limit 64000
-
-forwarded-connect-retries  0
-accept-intercepted-requests 1
-allow-cgi-request-crunching 0
-split-large-forms 0
-keep-alive-timeout 5
-socket-timeout 300
-handle-as-empty-doc-returns-ok 1
-
-# pass through i2p for urls.i2p
-# forward .i2p $dowse:4444
-# forward .i2p 127.0.0.1:4444
-
-# direct access
-forward $hostname .
-
-filterfile default.filter
-actionsfile match-all.action # Actions that are applied to all sites and maybe overruled later on.
-actionsfile default.action   # Main actions file
-actionsfile user.action      # User customizations
-EOF
-
-    func "generating squid.conf"
-
-# Squid2 configuration template
-    cat <<EOF > $DIR/run/squid.conf
-pid_filename $pid_squid
-cache_effective_user $dowseuid
-cache_store_log none
-cache_log $DIR/log/squid_cache.log
-access_log /dev/null
-# access_log $DIR/log/squid_access.log squid
-
-# avoid having a physical cache directory
-cache deny all
-cache_mem 16 MB
-# cache_dir null /tmp
-# cache_dir aufs /dev/shm/dowse 64 16 64
-maximum_object_size 16 MB
-maximum_object_size_in_memory 1 MB
-minimum_object_size 16 KB
-memory_pools off
-
-# dns client section
-dns_nameservers 127.0.0.1
-hosts_file $DIR/run/hosts
-append_domain .$lan
-positive_dns_ttl 8 hours
-negative_dns_ttl 30 seconds
-
-acl all src all
-# acl manager proto cache_object
-acl localhost src 127.0.0.1/32
-acl to_localhost dst 127.0.0.0/8 0.0.0.0/32
-
-acl localnet src $dowsenet
-
-acl SSL_ports port 443		# https
-acl Safe_ports port 80		# http
-acl Safe_ports port 443		# https
-acl purge method PURGE
-acl CONNECT method CONNECT
-
-# http_access allow manager localhost
-# http_access deny manager
-# http_access allow purge localhost
-http_access deny purge
-http_access deny !Safe_ports
-http_access deny CONNECT !SSL_ports
-
-http_access allow localnet
-# http_access allow localhost
-
-http_access deny all
-
-icp_access allow localnet
-
-http_port $dowse:3128 transparent
-visible_hostname ${hostname}.${lan}
-
-hierarchy_stoplist cgi-bin ?
-
-refresh_pattern ^ftp:		1440	20%	10080
-refresh_pattern ^gopher:	1440	0%	1440
-refresh_pattern -i (/cgi-bin/|\?) 0	0%	0
-refresh_pattern -i (deb|tar|gz|tgz|bz2|zip|rar|msi|exe|rpm)$ 0 90% 1440
-refresh_pattern (Release|Packages(.gz)*)$	0	20%	2880
-refresh_pattern .		0	20%	4320
-
-acl shoutcast rep_header X-HTTP09-First-Line ^ICY.[0-9]
-# upgrade_http0.9 deny shoutcast
-
-acl apache rep_header Server ^Apache
-# broken_vary_encoding allow apache
-
-# extension_methods REPORT MERGE MKACTIVITY CHECKOUT
-
-cache_mgr Dowse
-
-hosts_file $DIR/run/hosts
-
-coredump_dir $DIR/log
-
-cache_peer localhost parent 8118 0 default no-query no-digest no-netdb-exchange
-never_direct allow all
-
-# header_access From deny all
-
-# the settings below are restrictive:
-# they grant more privacy but break many websites!
-# header_access Link deny all
-# header_access Server deny all
-# header_access Referer deny all
-# header_access User-Agent deny all
-# header_access WWW-Authenticate deny all
-
-
-EOF
 
 # DNSMasq LAN resolution
 
@@ -668,13 +532,6 @@ dowse_start() {
 
     # start the dnsmasq daemon
     dnsmasq_start
-
-    # start the privoxy daemon
-    privoxy_start
-
-    # start the squid daemon
-    squid_start
-
 
     # if PeerGuardian was running, start it again
     { test "$PGL" = "" } || { pglcmd start }
