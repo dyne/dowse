@@ -720,9 +720,10 @@ case "$1" in
 	dowse_setup_modules
 	dowse_start
 	dowse_start_modules
+	notice "Press 'y' to confirm current configuration (10 sec timeout)"
 	read -t 10 -q ans > /dev/null
 	case ${ans} in
-	    y|Y|$'\n') notice "Test configuration confirmed." ;;
+	    y|Y|$'\n') act "Test configuration confirmed." ;;
 	    *) error "Reverting test configuration."
 		dowse_stop_modules
 		dowse_stop
