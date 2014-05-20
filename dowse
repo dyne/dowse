@@ -708,7 +708,26 @@ case "$1" in
     release) rm $DIR/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
     reload) rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k rec ;;
     stop) dowse_stop_modules;  dowse_stop ;;
-
+    
+    # start dowse and ask for confirmation with timeout, if not present stop
+    # this is useful for testing potentially disrupting configurations on a remote
+    # machine without loosing the access to it.
+    test)
+	dowse_stop
+	dowse_setup
+	dowse_setup_modules
+	dowse_start
+	dowse_start_modules
+	read -t 10 -q ans > /dev/null
+	case ${ans} in
+	    y|Y|$'\n') notice "Test configuration confirmed." ;;
+	    *) error "Reverting test configuration."
+		dowse_stop_modules
+		dowse_stop
+		;;
+    	esac
+	;;
+	
     *) echo "dowse: command not found: $1" ;;
 esac
 
