@@ -5,7 +5,9 @@ hackmeeting community.
 
 Its (fairly minimal) codebase is designed, written and maintained by
 Denis Roio <jaromil@dyne.org> and distributed by the Dyne.org foundation.
-Anatole Shaw and Patrick Mc.Donald have contributed with ideas and testing.
+
+Anatole Shaw, Hellekin O. Wold and Patrick Mc.Donald have contributed
+with ideas and testing.
 
 Dowse depends from various free and open source software components
 redistributed under the GNU GPLv2 and GPLv3, MIT/BSD or Apache
