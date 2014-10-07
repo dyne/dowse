@@ -55,7 +55,7 @@ handle-as-empty-doc-returns-ok 1
 forward $hostname .
 
 # pass through polipo
-forward / localhost:8123
+forward / $dowse:8123
 
 filterfile default.filter
 actionsfile match-all.action # Actions that are applied to all sites and maybe overruled later on.
