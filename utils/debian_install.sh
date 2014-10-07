@@ -13,6 +13,11 @@ pkgs=(daemontools iptables ebtables)
 # (deactivates start at boot)
 for i in $daemons; do
 	apt-get install $i
+done
+
+# deactivate start at boot
+# since Dowse will control daemons
+for i in $daemons; do
 	invoke-rc.d $i stop
 	update-rc.d -f $i remove
 done
