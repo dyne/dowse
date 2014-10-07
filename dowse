@@ -24,42 +24,29 @@
 
 # {{{ GLOBALS
 
-VERSION=0.5
-DATE="June/2014"
+VERSION=0.6
+DATE="Oct/2014"
 
 QUIET=0
-DEBUG=0
+DEBUG=1
 
 SCRIPT=$0
 
-# standard output message routines
-autoload colors; colors
-# it's always useful to wrap them, in case we change behaviour later
-notice() { if [[ $QUIET == 0 ]]; then print "$fg_bold[green][*]$fg_no_bold[default] $1" >&2; fi }
-error()  { if [[ $QUIET == 0 ]]; then print "$fg[red][!]$fg[default] $1" >&2; fi }
-func()   { if [[ $DEBUG == 1 ]]; then print "$fg[blue][D]$fg[default] $1" >&2; fi }
-act()    {
-    if [[ $QUIET == 0 ]]; then
-	if [ "$1" = "-n" ]; then
-	    print -n "$fg_bold[white] . $fg_no_bold[default] $2" >&2;
-	else
-	    print "$fg_bold[white] . $fg_no_bold[default] $1" >&2;
-	fi
-    fi
-}
-
-
-# honor quiet and debug flags as early as possible
-if [[ ${@} == *-q* ]]; then QUIET=1; fi
-if [[ ${@} == *-D* ]]; then DEBUG=1; fi
-
+# export DOWSE to env with path to the installation
+# else start it from inside the dir with ./dowse
 DIR=${DOWSE:-`pwd`}
 
+# For gettext
+TEXTDOMAIN=dowse
+typeset -AH opts
 
-# pid files for our daemons
-pid_squid=$DIR/run/squid.pid
-pid_dnsmasq=$DIR/run/dnsmasq.pid
-pid_privoxy=$DIR/run/privoxy.pid
+source $DIR/zlibs/core
+
+init_commandline ${=argv}
+
+# honor quiet and debug flags as early as possible
+option_is_set -q && { QUIET=1  }
+option_is_set -D && { DEBUG=1; func "Debug mode on";  }
 
 # read the network configuration of known hosts
 known=`cat conf/network | grep -v '^#'`
@@ -68,19 +55,19 @@ known=`cat conf/network | grep -v '^#'`
 
 # {{{ CHECKS
 
-{ test -r conf } || {
+[[ -r $DIR/conf ]] || {
     error "The dowse script must be run inside its source directory"
     return 1 }
 
-{ test -r conf/settings } || {
+[[ -r $DIR/conf/settings ]] || {
     error "Dowse configuration is missing, create conf/settings"
     return 1 }
 
-{ test -r conf/network } || {
+[[ -r conf/network ]] || {
     error "No network is configured, create conf/network"
     return 1 }
 
-notice "Dowse $VERSION - local area network rabdomancy"
+notice "Dowse ::1:: - local area network rabdomancy" $VERSION
 cat <<EOF
 
  Copyright (C) 2012-2014 Dyne.org Foundation, License GNU GPL v3+
@@ -89,14 +76,20 @@ cat <<EOF
 
 EOF
 
-func "root access"
+_verbose "Tomb command: ::1 subcommand:: ::2 param::" $subcommand ${PARAM:-none}
+_verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." $UID $GID $TTY
+
+
 { test "$UID" = "0" } || {
     error "Dowse needs root privileges to operate."
     return 1 }
 
-func "loading configuration from $DIR/conf/settings"
+func "root access via sudo granted"
+
+act "loading configuration from $DIR/conf/settings"
 source conf/settings
 
+act "daemons running as user and group $dowseuid:$dowsegid"
 # setup dirs
 mkdir -p log
 chmod go-rwx log
@@ -106,99 +99,13 @@ mkdir -p run
 chmod go-rwx run
 chown -R $dowseuid:$dowsegid run
 
-# create the cache dir in RAM
-mkdir -p /dev/shm/dowse
-chown -R $dowseuid:$dowsegid /dev/shm/dowse
-chmod go-rwx /dev/shm/dowse
 
 # }}}
 
-# {{{ START/STOP DAEMONS
-
-waitpid() {
-	# takes a pid
-	pid="$1"
-	lastnewline=0
-	while true; do
-		ps -p "$pid" > /dev/null
-		if [ $? = 0 ]; then print -n . ; lastnewline=1; sleep 1
-		else break; fi
-		# todo: timeout with kill -9
-	done
-	# just because we care to look good on the console
-	{ test $lastnewline = 1 } && { print }
-}
-
-
-dnsmasq_stop() {
-    { test -r $pid_dnsmasq } && {
-	pid=`cat $pid_dnsmasq`
-	act "Stopping dnsmasq ($pid)"
-	kill $pid
-	waitpid $pid
-	rm -f $pid_dnsmasq
-    }
-}
-dnsmasq_start() {
-    act "Preparing to launch dnsmasq..."
-
-    # if running, stop to restart
-    dnsmasq_stop
-
-    func "dnsmasq --pid-file $DIR/run/dnsmasq.pid -C $DIR/dnsmasq.conf"
-    dnsmasq --pid-file=$pid_dnsmasq -C $DIR/run/dnsmasq.conf
-}
-
-squid_stop() {
-    { test -r $pid_squid } && {
-	pid=`cat $pid_squid`
-	ps -p "$pid" > /dev/null
-	{ test $? = 0 } || {
-	    func "removing stale pid for squid"
-	    rm -f $pid_squid
-	    return 1 }
-	act "Stopping squid ($pid)"
-	setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k kill
-	{ test $? = 0 } || {
-	    error "Error running squid3, the daemon might be left running."
-	    return 1 }
-	waitpid $pid
-	rm -f $pid_squid
-    }
-}
-squid_start() {
-    act "Preparing to launch Squid..."
-
-    func "setuidgid $dowseuid squid -f $DIR/run/squid.conf"
-    # cleanup all previous cache in ram
-    rm -rf /dev/shm/dowse/*
-
-    # populate the volatile cache
-    setuidgid $dowseuid squid3 -z -f $DIR/run/squid.conf
-    # launch the squid
-    setuidgid $dowseuid squid3 -f $DIR/run/squid.conf
-}
-
-privoxy_stop() {
-    { test -r $pid_privoxy } && {
-	pid=`cat $pid_privoxy`
-	act "Stopping privoxy ($pid)"
-	kill $pid
-	waitpid $pid
-	rm -f $pid_privoxy
-    }
-}
-privoxy_start() {
-    act "Preparing to launch privoxy..."
-
-    # if running, stop to restart
-    privoxy_stop
-
-    privoxy --user $dowseuid --pidfile $pid_privoxy $DIR/run/privoxy.conf
-}
+# {{{ SYSTEM SETUP
 
 sysctl_setup() {
-cat <<EOF | sysctl -p -
+cat <<EOF | sysctl -p - >/dev/null
 net.ipv4.tcp_syncookies = 1
 net.ipv4.icmp_echo_ignore_broadcasts = 1
 net.ipv4.conf.all.accept_redirects = 0
@@ -220,137 +127,15 @@ EOF
 
 # }}}
 
-# {{{ IPTABLES
-
-iptables_flush() {
-    act "Flushing iptables firewall rules"
-    iptables -F
-    iptables -X
-    iptables -t nat -F
-    iptables -t nat -X
-    iptables -P INPUT ACCEPT
-    iptables -P FORWARD ACCEPT
-    iptables -P OUTPUT ACCEPT
-}
-
-iptables_start() {
-    notice "Setting up iptables firewall rules"
-
-    iptables -P OUTPUT ACCEPT
-    iptables -P INPUT DROP
-    iptables -P FORWARD DROP
-
-    func "allow only local loopback"
-    iptables -A INPUT -i eth0 -d 127.0.0.1 -j DROP
-    iptables -A INPUT -i eth0 -s 127.0.0.1 -j DROP
-    iptables -A FORWARD -i eth0 -s 127.0.0.1 -j DROP
-    iptables -A FORWARD -i eth0 -d 127.0.0.1 -j DROP
-    iptables -A INPUT -s 127.0.0.1 -j ACCEPT
-    iptables -A INPUT -d 127.0.0.1 -j ACCEPT
-
-# Allow packets from private subnets
-    iptables -A INPUT -s ${dowsenet} -j ACCEPT
-    iptables -A FORWARD -i ${interface} -s ${dowsenet} -j ACCEPT
-
-# Allow DHCP service
-    iptables -A INPUT -p udp --sport 67:68 --dport 67:68 -j ACCEPT
-
-# Allow incoming pings (can be disabled)
-    iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
-
-# Allow services such as www and ssh (can be disabled)
-    iptables -A INPUT -p tcp --dport http -j ACCEPT
-    iptables -A INPUT -p tcp --dport ssh -j ACCEPT
-
-# Keep state of connections from local machine and private subnets
-    iptables -A OUTPUT -m state --state NEW -o eth0 -j ACCEPT
-    iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-    iptables -A FORWARD -m state --state NEW -o eth0 -j ACCEPT
-    iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-    notice "Setting up masquerading (NAT)"
-    func "setup route towards wired network"
-    iptables --table nat --append POSTROUTING \
-	--out-interface $interface -j SNAT --to $dowse
-
-    func "defend the network from ipv6"
-    ip6tables -F
-    ip6tables -P INPUT DROP
-    ip6tables -P FORWARD DROP
-    ip6tables -P OUTPUT DROP
-    
-}
-
-# }}}
-
-# {{{ EBTABLES
-
-ebtables_flush() {
-    command -v ebtables >/dev/null
-    { test $? = 0 } || { func "ebtables not found, skipping"; return 1 }
-
-    act "flushing ebtables (layer 2 firewall)"
-    ebtables -P FORWARD ACCEPT
-    ebtables -P OUTPUT ACCEPT
-    ebtables -P INPUT ACCEPT
-    ebtables -F
-}
-
-ebtables_start() {
-    command -v ebtables >/dev/null
-    { test $? = 0 } || { func "ebtables not found, skipping"; return 1 }
-
-    notice "Setting up ebtables rules (layer 2 firewall)"
-    ebtables -P FORWARD DROP
-    ebtables -A FORWARD -p IPv4 -j ACCEPT
-    ebtables -A FORWARD -p ARP -j ACCEPT
-    ebtables -A FORWARD -p LENGTH -j ACCEPT
-    ebtables -A FORWARD --log-level info --log-ip --log-prefix EBFW
-    ebtables -P INPUT DROP
-    ebtables -A INPUT -p IPv4 -j ACCEPT
-    ebtables -A INPUT -p ARP -j ACCEPT
-    ebtables -A INPUT -p LENGTH -j ACCEPT
-    ebtables -A INPUT --log-level info --log-ip --log-prefix EBFW
-    ebtables -P OUTPUT DROP
-    ebtables -A OUTPUT -p IPv4 -j ACCEPT
-    ebtables -A OUTPUT -p ARP -j ACCEPT
-    ebtables -A OUTPUT -p LENGTH -j ACCEPT
-    ebtables -A OUTPUT --log-level info --log-ip --log-arp --log-prefix EBFW -j DROP
-
-    act "pinning down known MAC addresses to IP"
-    for i in ${(f)known}; do
-	# check if its a mac address
-	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-	{ test $? = 0 } || { continue } # skip if no mac address
-
-	mac=${i[(w)1]}
-	host=${i[(w)2]}
-	ip=${i[(w)3]}
-
-	{ test "$host" = "ignore" } && { continue }
-
-	func "$i"
-
-	ebtables -A FORWARD -p IPv4 --ip-src ${ip} -s ! ${mac} -j DROP
-
-    done
-
-}
-
-# }}}
-
 # {{{ DOWSE FUNCTIONS
 
 dowse_check() {
     act "Checking requirements to run dowse..."
-    # this is a simple check on binaries present in PATH
-    for req in setuidgid dnsmasq iptables; do
-	command -v $req >/dev/null
-	{ test $? != 0 } && {
-	    error "Cannot find $req"
-	    error "You need it to run dowse, please install it."
-	    return 1
-	}
+    # this is a check on binaries present in PATH
+    # if not found, Dowse will abort.
+    # for each found, Dowse will load zlibs/$.sh if present
+    for req in setuidgid dnsmasq iptables ebtables; do
+        require $req || return 1
     done
 
     act "all is in place."
@@ -360,82 +145,60 @@ dowse_check() {
 
 # DNSMasq configuration template
 dowse_setup() {
+
     act "Configuring our box and connecting it to the Internet..."
 
     func "reading configuration in conf/settings"
 
-    func "generating dnsmasq.conf"
-    cat <<EOF > $DIR/run/dnsmasq.conf
-address=/$hostname/$dowse
-address=/$hostname.$lan/$dowse
-# address=/.i2p/$dowse
-# address=/.onion/$dowse
-bogus-priv
-cache-size=300
-conf-dir=/etc/dnsmasq.d
-dhcp-range=$dowseguests
-addn-hosts=$DIR/run/hosts
-dhcp-leasefile=$DIR/run/leases
-domain-needed
-domain=$lan
-expand-hosts
-edns-packet-max=4096
-interface=$interface
-listen-address=$dowse,127.0.0.1
-local=//127.0.0.1#53
-local=/$lan/
-user=$dowseuid
-group=$dowsegid
-EOF
+    # generate dnsmasq configuration
+    dnsmasq_conf > $DIR/run/dnsmasq.conf
 
-
-# DNSMasq LAN resolution
-
+    # DNSMasq LAN resolution
     func "Fixing entries for known peers"
     rm -f $DIR/run/dnsmasq.network
     # this is basically a dnsmasq host configuration file
     print "dhcp-option=option:router,$dowse" > $DIR/run/dnsmasq.network
-    
+
     # this is our generated hosts file
     func "Generating hosts file"
     rm -f $DIR/run/hosts
     echo "127.0.0.1 localhost" > $DIR/run/hosts
     for i in ${(f)known}; do
-	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-	if [ $? = 0 ]; then # mac address is first
-	    host=${i[(w)2]}
-	    ip=${i[(w)3]}
-	else # no mac address specified
-	    host=${i[(w)1]}
-	    ip=${i[(w)2]}
-	fi
-	{ test "$host" = "ignore" } || {
+    echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+    if [ $? = 0 ]; then # mac address is first
+        host=${i[(w)2]}
+        ip=${i[(w)3]}
+    else # no mac address specified
+        host=${i[(w)1]}
+        ip=${i[(w)2]}
+    fi
+    { test "$host" = "ignore" } || {
     # add a line to the hosts list
-	    print "$ip $host" >> $DIR/run/hosts }
+        print "$ip $host" >> $DIR/run/hosts }
     done
-    
+
     func "generating dnsmask.network"
     for i in ${(f)known}; do
-	echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-	{ test $? = 0 } || { continue } # skip if no mac address
-	func "$i"
+    echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
+    { test $? = 0 } || { continue } # skip if no mac address
+    func "$i"
     # gather configuration into variables, line by line
-	mac=${i[(w)1]}
-	host=${i[(w)2]}
-	ip=${i[(w)3]}
-	
+    mac=${i[(w)1]}
+    host=${i[(w)2]}
+    ip=${i[(w)3]}
+
     # add a line to the dnsmasq host list
-	print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
-	
+    print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
+
     done
-    
+
     # append network settings to dnsmasq conf
     cat $DIR/run/dnsmasq.network >> $DIR/run/dnsmasq.conf
-    
+
     # set permissions of setup files
     chown -R $dowseuid:$dowsegid log
     chown -R $dowseuid:$dowsegid run
-    
+
     notice "Setup completed in $DIR"
     return 0
 }
@@ -450,27 +213,27 @@ dowse_setup_modules() {
     notice "Scanning for enabled modules..."
     enabled=`find -L $DIR/modules/enabled -maxdepth 1 -type d`
     for i in ${(f)enabled}; do
-	{ test -r $i/conf.zsh } && {
-	    pushd $i
-	    act "`basename $i`: initializing module"
-	    # execute the module_setup()
-	    source ./conf.zsh
-	    { test $? = 0 } && {
-		mods+=($i)
-		DOWSE=$DIR module_setup }
-	    popd
-	}
+    { test -r $i/conf.zsh } && {
+        pushd $i
+        act "`basename $i`: initializing module"
+        # execute the module_setup()
+        source ./conf.zsh
+        { test $? = 0 } && {
+        mods+=($i)
+        DOWSE=$DIR module_setup }
+        popd
+    }
     done
 }
 
 dowse_start_modules() {
     for i in ${mods}; do
-	pushd $i
-	act "`basename $i`: starting module"
-	# execute the module_start()
-	source ./conf.zsh
-	DOWSE=$DIR module_start
-	popd
+    pushd $i
+    act "`basename $i`: starting module"
+    # execute the module_start()
+    source ./conf.zsh
+    DOWSE=$DIR module_start
+    popd
     done
 }
 
@@ -478,13 +241,13 @@ dowse_stop_modules() {
     notice "Scanning for enabled modules..."
     enabled=`find -L $DIR/modules/enabled -maxdepth 1 -type d`
     for i in ${(f)enabled}; do
-	{ test -r $i/conf.zsh } || { continue }
-	pushd $i
-	act "`basename $i`: stopping module"
+    { test -r $i/conf.zsh } || { continue }
+    pushd $i
+    act "`basename $i`: stopping module"
         # execute the module_stop()
-	source ./conf.zsh
-	DOWSE=$DIR module_stop
-	popd
+    source ./conf.zsh
+    DOWSE=$DIR module_stop
+    popd
     done
 }
 
@@ -497,9 +260,9 @@ dowse_start() {
     notice "Setting up the network..."
 
     PGL=`pidof pgld`
-    { test "$PGL" = "" } || {
-	act "PeerGuardian found running, will restart it accordingly"
-	pglcmd stop }
+    [[ "$PGL" = "" ]] || {
+        act "PeerGuardian found running, will restart it accordingly"
+        pglcmd stop }
 
     act "Setting up $interface interface"
     ifconfig $interface $dowse netmask $netmask up
@@ -518,77 +281,81 @@ dowse_start() {
     func "bugfix for routing table weirdness in Linux >3.1"
     # see https://lkml.org/lkml/2011/11/18/191
     # and http://www.spinics.net/lists/netdev/msg179687.html
-    echo 0 >>/proc/sys/net/ipv4/conf/$interface/accept_redirects
+    print 0 >>/proc/sys/net/ipv4/conf/$interface/accept_redirects
 
-    { test "$firewall" = "no" } || {
-	ebtables_flush
-	iptables_flush
+    [[ "$firewall" = "no" ]] || {
+        ebtables_stop
+        iptables_stop
     }
 
-    { test "$firewall" = "yes" } && {
-	ebtables_start
-	iptables_start
+    [[ "$firewall" = "yes" ]] && {
+        ebtables_start
+        iptables_start
     }
 
     # start the dnsmasq daemon
     dnsmasq_start
 
     # if PeerGuardian was running, start it again
-    { test "$PGL" = "" } || { pglcmd start }
+    [[ "$PGL" = "" ]] || { pglcmd start }
 
 }
 
 dowse_stop() {
     notice "Stopping all services."
-    squid_stop
-    privoxy_stop
     dnsmasq_stop
-
-    iptables_flush
-    ebtables_flush
+    iptables_stop
+    ebtables_stop
 }
 
 
-dowse_check
-{ test $? = 1 } && {
+dowse_check || {
     error "Aborting operation for missing requirements."
     return 1 }
 
-# we use a very simple argument parser
-case "$1" in
-    restart|start)
-	dowse_stop
-	dowse_setup
-	dowse_setup_modules
-	dowse_start
-	dowse_start_modules
-	;;
 
-    release) rm $DIR/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
-    reload) rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k rec ;;
-    stop) dowse_stop_modules;  dowse_stop ;;
-    
+# we use a very simple argument parser
+case "$subcommand" in
+    restart|start)
+        dowse_stop
+        dowse_setup
+        dowse_setup_modules
+        dowse_start
+        dowse_start_modules
+        ;;
+
+    release)
+        rm $DIR/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
+
+    reload)
+        rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k rec ;;
+    stop)
+        dowse_stop_modules;  dowse_stop ;;
+
     # start dowse and ask for confirmation with timeout, if not present stop
     # this is useful for testing potentially disrupting configurations on a remote
     # machine without loosing the access to it.
     test)
-	dowse_stop
-	dowse_setup
-	dowse_setup_modules
-	dowse_start
-	dowse_start_modules
-	notice "Press 'y' to confirm current configuration (10 sec timeout)"
-	read -t 10 -q ans > /dev/null
-	case ${ans} in
-	    y|Y|$'\n') act "Test configuration confirmed." ;;
-	    *) error "Reverting test configuration."
-		dowse_stop_modules
-		dowse_stop
-		;;
-    	esac
-	;;
-	
-    *) echo "dowse: command not found: $1" ;;
+        dowse_stop
+        dowse_setup
+        dowse_setup_modules
+        dowse_start
+        dowse_start_modules
+        notice "Press 'y' to confirm current configuration (10 sec timeout)"
+        read -t 10 -q ans > /dev/null
+        case ${ans} in
+            y|Y|$'\n') act "Test configuration confirmed." ;;
+            *) error "Reverting test configuration."
+                dowse_stop_modules
+                dowse_stop
+                ;;
+        esac
+        ;;
+
+    # internal commands useful to developers
+    'source') ;;
+    __default) _print "usage: dowse (start|stop|restart|test)" ;;
+    *) error "dowse: command not found: $1" ;;
 esac
 
 # be nice with the environment

@@ -1,0 +1,5 @@
+# include all dowse zlibs at once
+# exclude those loaded as required
+
+source $DIR/zlibs/messaging.sh
+source $DIR/zlibs/processes.sh
