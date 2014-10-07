@@ -119,6 +119,7 @@ http_access deny all
 icp_access allow localnet
 
 http_port $dowse:3128 transparent
+
 visible_hostname ${hostname}.${lan}
 
 hierarchy_stoplist cgi-bin ?
@@ -144,7 +145,7 @@ hosts_file $DIR/run/hosts
 
 coredump_dir $DIR/log
 
-cache_peer localhost parent 8118 0 default no-query no-digest no-netdb-exchange
+cache_peer $dowse parent 8118 0 default no-query no-digest no-netdb-exchange proxy-only
 never_direct allow all
 
 # header_access From deny all
@@ -212,6 +213,7 @@ module_start() {
     func "setup transparent proxy to squid"
     iptables -t nat -A PREROUTING -i $interface -s $dowsenet \
     -p tcp --dport 80 -j REDIRECT --to-port 3128
+
 
     polipo_start
 

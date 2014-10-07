@@ -8,11 +8,14 @@ no-resolv
 EOF
 }
 
+dnscrypt_pid="$DIR/run/dnscrypt-proxy.pid"
+
 dnscrypt() {
-setuidgid $dowseuid dnscrypt-proxy -a 127.0.0.1:5353 -d -p $DOWSE/run/dnscrypt-proxy.pid -l $DOWSE/log/dnscrypt.log -r "$1" -k "$2" -N "$3"
+setuidgid $dowseuid dnscrypt-proxy -a 127.0.0.1:5353 -p $dnscrypt_pid -l $DIR/log/dnscrypt.log -r "$1" -k "$2" -N "$3"  -d
 }
 
 module_start() {
+
 # DNSCrypt.EU (Netherlands)
 dnscrypt 176.56.237.171:443 67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66 2.dnscrypt-cert.resolver1.dnscrypt.eu
 
@@ -32,8 +35,10 @@ dnscrypt 176.56.237.171:443 67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40
 }
 
 module_stop() {
-    { test -r $DOWSE/run/dnscrypt-proxy.pid } && {
-	kill `cat $DOWSE/run/dnscrypt-proxy.pid` }
+    { test -r $dnscrypt_pid } && {
+	kill `cat $dnscrypt_pid`
+	rm -f $dnscrypt_pid
+    }
     # reopen routing of dns queries
     # iptables -A OUTPUT  -p udp --dport 53 -j ACCEPT
 }
