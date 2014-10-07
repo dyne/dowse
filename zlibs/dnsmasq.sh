@@ -32,7 +32,7 @@ dnsmasq_start() {
     # if running, stop to restart
     dnsmasq_stop
     
-    func "dnsmasq --pid-file $DIR/run/dnsmasq.pid -C $DIR/dnsmasq.conf"
+    func "dnsmasq --pid-file $DIR/run/dnsmasq.pid -C $DIR/run/dnsmasq.conf"
     dnsmasq --pid-file=$DIR/run/dnsmasq.pid -C "$1"
 }
 
