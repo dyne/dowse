@@ -341,7 +341,9 @@ dowse_status() {
         nmap -sn -n -oG - $ip[$i] | grep -i 'status: up' > /dev/null
         [[ $? = 0 ]] && ping[$i]="online"
 
-#	func "::1 num:: ::2 known:: ::3 ping::" $i $known[$i] $ping[$i]
+        # additional subcommand "status online" to list only online objects
+        [[ "$ping[$i]" == "offline" ]] && [[ "$PARAM" =~ "online" ]] && continue
+
         [[ "$known[$i]" == "known" ]] && { # found
             act "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
         } || { # not found
