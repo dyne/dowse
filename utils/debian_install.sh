@@ -5,9 +5,8 @@
 # This script will install all dependencies on a Debian system
 
 # list of programs to be installed:
-daemons=(privoxy squid3 dnsmasq tor)
+daemons=(dnsmasq privoxy squid3 polipo tor)
 pkgs=(daemontools iptables ebtables)
-
 
 # installation process for daemons
 # (deactivates start at boot)

@@ -33,8 +33,10 @@ dnsQueryIPv6 = no
 dnsNameServer = $dowse
 
 daemonise = true
-pidFile = $pid_polipo
-logFile = $DIR/log/polipo.log
+
+# to be specified by caller module
+# pidFile = $DIR/log/polipo.pid
+# logFile = $DIR/log/polipo.log
 
 # to be tested
 # disableVia=false
@@ -57,11 +59,11 @@ polipo_start() {
 }
 
 polipo_stop() {
-    { test -r $pid_polipo } && {
-        pid=`cat $pid_polipo`
+    { test -r "$1" } && {
+        pid=`cat $1`
         act "Stopping polipo ($pid)"
         kill $pid
         waitpid $pid
-        rm -f $pid_polipo
+        rm -f "$1"
     }
 }

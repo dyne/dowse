@@ -4,12 +4,8 @@ squid_conf() {
     # Squid2 configuration template
     func "generating squid3 configuration"
     cat <<EOF
-pid_filename $pid_squid
 cache_effective_user $dowseuid
 cache_store_log none
-cache_log $DIR/log/squid_cache.log
-access_log /dev/null
-# access_log $DIR/log/squid_access.log squid
 
 # avoid having a physical cache directory
 cache deny all

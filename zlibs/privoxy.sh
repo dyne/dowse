@@ -6,7 +6,6 @@ privoxy_conf() {
     cat <<EOF
 user-manual /usr/share/doc/privoxy/user-manual
 confdir /etc/privoxy
-logdir $DIR/log/privoxy.log
 listen-address  0.0.0.0:8118
 toggle  1
 enable-remote-toggle  0
@@ -38,21 +37,24 @@ EOF
 
 }
 
+# $1 arg is path to configuration
 privoxy_start() {
     act "Preparing to launch privoxy..."
 
+    pid=`awk '/^pid-file/ { print $2 }' "$1"`
     # if running, stop to restart
-    privoxy_stop
+    privoxy_stop "$pid"
 
-    privoxy --user $dowseuid --pidfile $pid_privoxy "$1"
+    privoxy --user $dowseuid --pidfile "$pid" "$1"
 }
 
+# $1 arg is path to pid
 privoxy_stop() {
-    { test -r $pid_privoxy } && {
-        pid=`cat $pid_privoxy`
+    { test -r "$1" } && {
+        pid=`cat $1`
         act "Stopping privoxy ($pid)"
         kill $pid
         waitpid $pid
-        rm -f $pid_privoxy
+        rm -f "$1"
     }
 }
