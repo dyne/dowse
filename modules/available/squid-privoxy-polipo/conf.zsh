@@ -32,7 +32,7 @@ EOF
     privoxy_conf > $DIR/run/privoxy.conf
     cat <<EOF >> $DIR/run/privoxy.conf
 logdir $DIR/log/privoxy.log
-pid-file $DIR/log/privoxy.pid
+pid-file $DIR/run/privoxy.pid
 # pass through polipo
 forward / $dowse:8123
 EOF
@@ -63,7 +63,7 @@ module_stop() {
 
     squid_stop $DIR/run/squid.pid
 
-    privoxy_stop $DIR/log/privoxy.pid
+    privoxy_stop $DIR/run/privoxy.pid
 
     polipo_stop $DIR/run/polipo.pid
 
