@@ -48,6 +48,8 @@ init_commandline() {
     subcommands_opts[__default]=""
     subcommands_opts[start]=""
     subcommands_opts[stop]=""
+    subcommands_opts[status]=""
+    subcommands_opts[scan]=""
     subcommands_opts[restart]=""
     subcommands_opts[test]=""
     subcommands_opts[release]=""

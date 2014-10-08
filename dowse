@@ -308,6 +308,65 @@ dowse_stop() {
     ebtables_stop
 }
 
+dowse_parse_leases() {
+    awk '
+BEGIN { c=0 }
+{
+  mac[c]=$2
+  ip[c]=$3
+  if($4=="*") host[c]="anonymous"; else host[c]=$4
+  c++
+}
+END {
+  printf "mac=("; for(i=0;i<c;i++) { printf "%s ", mac[i] }; printf ")\n"
+  printf "ip=("; for(i=0;i<c;i++) { printf "%s ", ip[i] }; printf ")\n"
+  printf "host=("; for(i=0;i<c;i++) { printf "%s ", host[i] }; printf ")\n"
+}' $DIR/run/leases
+}
+
+dowse_status() {
+    notice "Reporting network status"
+    eval `dowse_parse_leases`
+    known=()
+    ping=()
+    for i in {0..${#mac}}; do
+
+        [[ $mac[$i] = "" ]] && { continue }
+
+        known[$i]="unknown"
+        grep "${mac[$i]}" $DIR/conf/network > /dev/null
+        [[ $? = 0 ]] && known[$i]="known"
+
+        ping[$i]="offline"
+        nmap -sn -n -oG - $ip[$i] | grep -i 'status: up' > /dev/null
+        [[ $? = 0 ]] && ping[$i]="online"
+
+#	func "::1 num:: ::2 known:: ::3 ping::" $i $known[$i] $ping[$i]
+        [[ "$known[$i]" == "known" ]] && { # found
+            act "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
+        } || { # not found
+            error "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
+        }
+    done
+}
+
+dowse_scan() {
+    notice "Scanning unknown network objects"
+    eval `dowse_parse_leases`
+
+    for s in {0..${#mac}}; do
+        [[ $mac[$s] == "" ]] && { continue }
+        grep "${mac[$s]}" $DIR/conf/network > /dev/null
+	[[ $? == 1 ]] && { # unknown
+	    act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
+            func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""
+            nmap -A -F -sT -Pn -T5 -n "${ip[$s]}"
+	    print
+        }
+    done
+
+}
+
 
 dowse_check || {
     error "Aborting operation for missing requirements."
@@ -324,6 +383,8 @@ case "$subcommand" in
         dowse_start_modules
         ;;
 
+    status) dowse_status ;;
+    scan) dowse_scan ;;
     release)
         rm $DIR/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
 
