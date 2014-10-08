@@ -28,7 +28,9 @@ dnscrypt 176.56.237.171:443 67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40
 # OpenDNS
 # dnscrypt 208.67.220.220:443 B735:1140:206F:225D:3E2B:D822:D7FD:691E:A1C3:3CC8:D666:8D0C:BE04:BFAB:CA43:FB79 2.dnscrypt-cert.opendns.com
 
-
+    iptables -t nat -A PREROUTING -i $interface -s $dowsenet \
+        -p udp --dport 53 -j REDIRECT --to-port 53
+ 
     # close outgoing dns queries
     # iptables -A OUTPUT  -p udp --dport 53 -j DROP
 

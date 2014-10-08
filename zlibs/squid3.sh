@@ -105,12 +105,12 @@ squid_start() {
 }
 
 squid_stop() {
-    [[ -r $pid_squid ]] && {
-        pid=`cat $pid_squid`
+    [[ -r $1 ]] && {
+        pid=`cat $1`
         ps -p "$pid" > /dev/null
         { test $? = 0 } || {
             func "removing stale pid for squid"
-            rm -f $pid_squid
+            rm -f $1
             return 1 }
         act "Stopping squid ($pid)"
         setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k kill
@@ -118,6 +118,6 @@ squid_stop() {
             error "Error running squid3, the daemon might be left running."
             return 1 }
         waitpid $pid
-        rm -f $pid_squid
+        rm -f $1
     }
 }

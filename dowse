@@ -48,9 +48,6 @@ init_commandline ${=argv}
 option_is_set -q && { QUIET=1  }
 option_is_set -D && { DEBUG=1; func "Debug mode on";  }
 
-# read the network configuration of known hosts
-known=`cat conf/network | grep -v '^#'`
-
 # }}}
 
 # {{{ CHECKS
@@ -153,48 +150,6 @@ dowse_setup() {
     # generate dnsmasq configuration
     dnsmasq_conf > $DIR/run/dnsmasq.conf
 
-    # DNSMasq LAN resolution
-    func "Fixing entries for known peers"
-    rm -f $DIR/run/dnsmasq.network
-    # this is basically a dnsmasq host configuration file
-    print "dhcp-option=option:router,$dowse" > $DIR/run/dnsmasq.network
-
-    # this is our generated hosts file
-    func "Generating hosts file"
-    rm -f $DIR/run/hosts
-    echo "127.0.0.1 localhost" > $DIR/run/hosts
-    for i in ${(f)known}; do
-    echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-    if [ $? = 0 ]; then # mac address is first
-        host=${i[(w)2]}
-        ip=${i[(w)3]}
-    else # no mac address specified
-        host=${i[(w)1]}
-        ip=${i[(w)2]}
-    fi
-    { test "$host" = "ignore" } || {
-    # add a line to the hosts list
-        print "$ip $host" >> $DIR/run/hosts }
-    done
-
-    func "generating dnsmask.network"
-    for i in ${(f)known}; do
-    echo "$i" | grep '^..:..:..:..:..:..' > /dev/null
-    { test $? = 0 } || { continue } # skip if no mac address
-    func "$i"
-    # gather configuration into variables, line by line
-    mac=${i[(w)1]}
-    host=${i[(w)2]}
-    ip=${i[(w)3]}
-
-    # add a line to the dnsmasq host list
-    print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
-
-    done
-
-    # append network settings to dnsmasq conf
-    cat $DIR/run/dnsmasq.network >> $DIR/run/dnsmasq.conf
-
     # set permissions of setup files
     chown -R $dowseuid:$dowsegid log
     chown -R $dowseuid:$dowsegid run
@@ -294,7 +249,7 @@ dowse_start() {
     }
 
     # start the dnsmasq daemon
-    dnsmasq_start
+    dnsmasq_start $DIR/run/dnsmasq.conf
 
     # if PeerGuardian was running, start it again
     [[ "$PGL" = "" ]] || { pglcmd start }
