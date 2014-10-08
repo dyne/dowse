@@ -25,7 +25,7 @@ group=$dowsegid
 EOF
     # read the network configuration of known hosts
     known=`cat $DIR/conf/network | grep -v '^#'`
-  
+
     # DNSMasq LAN resolution
     func "Fixing entries for known peers"
     rm -f $DIR/run/dnsmasq.network
@@ -37,31 +37,31 @@ EOF
     rm -f $DIR/run/hosts
     print "127.0.0.1 localhost" > $DIR/run/hosts
     for i in ${(f)known}; do
-    print "$i" | grep '^..:..:..:..:..:..' > /dev/null
-    if [ $? = 0 ]; then # mac address is first
-        host=${i[(w)2]}
-        ip=${i[(w)3]}
-    else # no mac address specified
-        host=${i[(w)1]}
-        ip=${i[(w)2]}
-    fi
-    { test "$host" = "ignore" } || {
-    # add a line to the hosts list
-        print "$ip $host" >> $DIR/run/hosts }
+	print "$i" | grep '^..:..:..:..:..:..' > /dev/null
+	if [ $? = 0 ]; then # mac address is first
+	    host=${i[(w)2]}
+	    ip=${i[(w)3]}
+	else # no mac address specified
+	    host=${i[(w)1]}
+	    ip=${i[(w)2]}
+	fi
+	{ test "$host" = "ignore" } || {
+	    # add a line to the hosts list
+	    print "$ip $host" >> $DIR/run/hosts }
     done
 
     func "generating dnsmask.network"
     for i in ${(f)known}; do
-    print "$i" | grep '^..:..:..:..:..:..' > /dev/null
-    { test $? = 0 } || { continue } # skip if no mac address
-    func "$i"
-    # gather configuration into variables, line by line
-    mac=${i[(w)1]}
-    host=${i[(w)2]}
-    ip=${i[(w)3]}
+	print "$i" | grep '^..:..:..:..:..:..' > /dev/null
+	{ test $? = 0 } || { continue } # skip if no mac address
+	func "$i"
+	# gather configuration into variables, line by line
+	mac=${i[(w)1]}
+	host=${i[(w)2]}
+	ip=${i[(w)3]}
 
-    # add a line to the dnsmasq host list
-    print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
+	# add a line to the dnsmasq host list
+	print "dhcp-host=$mac, $host, $ip" >> $DIR/run/dnsmasq.network
 
     done
 
@@ -72,20 +72,20 @@ EOF
 
 dnsmasq_start() {
     act "Preparing to launch dnsmasq..."
- 
+
     # if running, stop to restart
     dnsmasq_stop
-    
+
     func "dnsmasq --pid-file $DIR/run/dnsmasq.pid -C $1"
     dnsmasq --pid-file=$DIR/run/dnsmasq.pid -C "$1"
 }
 
 dnsmasq_stop() {
     [[ -r $DIR/run/dnsmasq.pid ]] && {
-        pid=`cat $DIR/run/dnsmasq.pid`
-        act "Stopping dnsmasq ($pid)"
-        kill $pid
-        waitpid $pid
-        rm -f $DIR/run/dnsmasq.pid
+	pid=`cat $DIR/run/dnsmasq.pid`
+	act "Stopping dnsmasq ($pid)"
+	kill $pid
+	waitpid $pid
+	rm -f $DIR/run/dnsmasq.pid
     }
 }
