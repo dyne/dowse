@@ -324,13 +324,29 @@ dowse_scan() {
 
 }
 
+# main()
 
 dowse_check || {
     error "Aborting operation for missing requirements."
     return 1 }
 
+# initialize commandline parser
+typeset -A opts
+typeset -A subcommands_opts
 
-# we use a very simple argument parser
+main_opts=(q -quiet=q D -debug=D h -help=h v -version=v -no-color)
+subcommands_opts[__default]=""
+subcommands_opts[start]=""
+subcommands_opts[stop]=""
+subcommands_opts[status]=""
+subcommands_opts[scan]=""
+subcommands_opts[restart]=""
+subcommands_opts[test]=""
+subcommands_opts[release]=""
+subcommands_opts[reload]=""
+
+init_commandline ${=argv}
+
 case "$subcommand" in
     restart|start)
         dowse_stop

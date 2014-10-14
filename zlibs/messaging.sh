@@ -22,7 +22,6 @@
 # 02139, USA.
 
 init_commandline() {
-    local -A subcommands_opts
     ### Options configuration
     #
     # Hi, dear developer!  Are you trying to add a new subcommand, or
@@ -43,17 +42,6 @@ init_commandline() {
     # can only use the non-abbreviated long-option version like:
     # -force and NOT -f
     #
-
-    main_opts=(q -quiet=q D -debug=D h -help=h v -version=v -no-color)
-    subcommands_opts[__default]=""
-    subcommands_opts[start]=""
-    subcommands_opts[stop]=""
-    subcommands_opts[status]=""
-    subcommands_opts[scan]=""
-    subcommands_opts[restart]=""
-    subcommands_opts[test]=""
-    subcommands_opts[release]=""
-    subcommands_opts[reload]=""
     
 
     ### Detect subcommand
@@ -97,6 +85,7 @@ init_commandline() {
     set -A cmd_opts ${main_opts} ${=subcommands_opts[$subcommand]}
     # if there is no option, we don't need parsing
     if [[ -n $cmd_opts ]]; then
+        # here is declared opts=
         zparseopts -M -E -D -Aopts ${cmd_opts}
         if [[ $? != 0 ]]; then
             _warning "Some error occurred during option processing."
@@ -199,7 +188,7 @@ function _message say act() {
 }
 
 function _verbose xxx func() {
-    option_is_set -D && _msg verbose $@
+    option_is_set -D || [[ $DEBUG = 1 ]] && _msg verbose $@
     return 0
 }
 
