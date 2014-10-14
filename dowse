@@ -42,8 +42,6 @@ typeset -AH opts
 
 source $DIR/zlibs/core
 
-init_commandline ${=argv}
-
 # honor quiet and debug flags as early as possible
 option_is_set -q && { QUIET=1  }
 option_is_set -D && { DEBUG=1; func "Debug mode on";  }
@@ -72,10 +70,6 @@ cat <<EOF
  For more informations see http://www.dyne.org/software/dowse
 
 EOF
-
-_verbose "Tomb command: ::1 subcommand:: ::2 param::" $subcommand ${PARAM:-none}
-_verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." $UID $GID $TTY
-
 
 { test "$UID" = "0" } || {
     error "Dowse needs root privileges to operate."
@@ -346,6 +340,9 @@ subcommands_opts[release]=""
 subcommands_opts[reload]=""
 
 init_commandline ${=argv}
+
+_verbose "Dowse command: ::1 subcommand:: ::2 param::" $subcommand ${PARAM:-none}
+_verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." $UID $GID $TTY
 
 case "$subcommand" in
     restart|start)
