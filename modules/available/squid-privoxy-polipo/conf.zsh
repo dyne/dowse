@@ -51,7 +51,7 @@ module_start() {
     iptables -t nat -A PREROUTING -i $interface -s $dowsenet \
         -p tcp --dport 80 -j REDIRECT --to-port 3128
     
-    polipo_start $DIR/run/polipo.conf
+    polipo_start $DIR/run/polipo.conf $DIR/run/polipo.pid
 
     privoxy_start $DIR/run/privoxy.conf
     

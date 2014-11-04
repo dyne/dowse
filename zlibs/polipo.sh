@@ -54,7 +54,7 @@ EOF
 polipo_start() {
     act "Preparing to launch polipo..."
     # if running, stop to restart
-    polipo_stop
+    polipo_stop $2
     setuidgid $dowseuid polipo -c "$1"
 }
 
