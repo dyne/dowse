@@ -71,6 +71,10 @@ cat <<EOF
 
 EOF
 
+_verbose "Dowse command: ::1 subcommand:: ::2 param::" $subcommand ${PARAM:-none}
+_verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." $UID $GID $TTY
+
+
 { test "$UID" = "0" } || {
     error "Dowse needs root privileges to operate."
     return 1 }
@@ -294,9 +298,9 @@ dowse_status() {
         [[ "$ping[$i]" == "offline" ]] && [[ "$PARAM" =~ "online" ]] && continue
 
         [[ "$known[$i]" == "known" ]] && { # found
-            act "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
+            yes "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
         } || { # not found
-            error "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
+            no "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
         }
     done
 }
@@ -308,17 +312,16 @@ dowse_scan() {
     for s in {0..${#mac}}; do
         [[ $mac[$s] == "" ]] && { continue }
         grep "${mac[$s]}" $DIR/conf/network > /dev/null
-	[[ $? == 1 ]] && { # unknown
-	    act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
+	    [[ $? == 1 ]] && { # unknown
+	        act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
             func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""
             nmap -A -F -sT -Pn -T5 -n "${ip[$s]}"
-	    print
+	        print
         }
     done
 
 }
 
-# main()
 
 dowse_check || {
     error "Aborting operation for missing requirements."

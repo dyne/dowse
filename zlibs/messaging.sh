@@ -3,6 +3,8 @@
 # Copyright (C) 2014 Dyne.org Foundation
 #
 # Written by Denis Roio <jaromil@dyne.org>
+# Originally taken from Tomb the Crypto Undertaker
+# where code was contributed by Hellekin O. Wolf and GDrooid
 #
 # This source code is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Public License
