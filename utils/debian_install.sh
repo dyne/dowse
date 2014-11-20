@@ -6,12 +6,12 @@
 
 # list of programs to be installed:
 daemons=(dnsmasq privoxy squid3 polipo tor)
-pkgs=(daemontools iptables ebtables)
+pkgs=(daemontools iptables ebtables gettext-base procps net-tools)
 
 # installation process for daemons
 # (deactivates start at boot)
 for i in $daemons; do
-	apt-get install $i
+	apt-get install -y $i
 done
 
 # deactivate start at boot
@@ -23,6 +23,5 @@ done
 
 # installation of packages
 for i in $pkgs; do
-	apt-get install $i
+	apt-get install -y $i
 done
-
