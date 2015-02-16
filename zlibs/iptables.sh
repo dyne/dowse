@@ -39,6 +39,11 @@ iptables_start() {
     func "setup route towards wired network"
     iptables --table nat --append POSTROUTING \
     --out-interface $interface -j SNAT --to $dowse
+    # Testing with dreamer lead to use of -j MASQUERADE without
+    # destination and out-interface as external to ADSL router WAN
+    # SNAT has better detection of open connections, beware.
+
+
 
     func "defend the network from ipv6"
     ip6tables -F
