@@ -34,13 +34,13 @@ SCRIPT=$0
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with ./dowse
-DIR=${DOWSE:-`pwd`}
+dowse_path=${DOWSE:-`pwd`}
 
 # For gettext
 TEXTDOMAIN=dowse
 typeset -AH opts
 
-source $DIR/zlibs/core
+source $dowse_path/zlibs/core
 
 # honor quiet and debug flags as early as possible
 option_is_set -q && { QUIET=1  }
@@ -50,15 +50,15 @@ option_is_set -D && { DEBUG=1; func "Debug mode on";  }
 
 # {{{ CHECKS
 
-[[ -r $DIR/conf ]] || {
-    error "The dowse script must be run inside its source directory"
+[[ -r $dowse_path/conf ]] || {
+    error "The dowse script must be sourced inside its source directory"
     return 1 }
 
-[[ -r $DIR/conf/settings ]] || {
+[[ -r $dowse_path/conf/settings ]] || {
     error "Dowse configuration is missing, create conf/settings"
     return 1 }
 
-[[ -r conf/network ]] || {
+[[ -r $dowse_path/conf/network ]] || {
     error "No network is configured, create conf/network"
     return 1 }
 
@@ -81,7 +81,7 @@ _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." $UID $GID $TT
 
 func "root access via sudo granted"
 
-act "loading configuration from $DIR/conf/settings"
+act "loading configuration from $dowse_path/conf/settings"
 source conf/settings
 
 act "daemons running as user and group $dowseuid:$dowsegid"
@@ -146,13 +146,13 @@ dowse_setup() {
     func "reading configuration in conf/settings"
 
     # generate dnsmasq configuration
-    dnsmasq_conf > $DIR/run/dnsmasq.conf
+    dnsmasq_conf > $dowse_path/run/dnsmasq.conf
 
     # set permissions of setup files
     chown -R $dowseuid:$dowsegid log
     chown -R $dowseuid:$dowsegid run
 
-    notice "Setup completed in $DIR"
+    notice "Setup completed in $dowse_path"
     return 0
 }
 
@@ -164,7 +164,7 @@ typeset -a mods
 
 dowse_setup_modules() {
     notice "Scanning for enabled modules..."
-    enabled=`find -L $DIR/modules/enabled -maxdepth 1 -type d`
+    enabled=`find -L $dowse_path/modules/enabled -maxdepth 1 -type d`
     for i in ${(f)enabled}; do
     { test -r $i/conf.zsh } && {
         pushd $i
@@ -173,7 +173,7 @@ dowse_setup_modules() {
         source ./conf.zsh
         { test $? = 0 } && {
         mods+=($i)
-        DOWSE=$DIR module_setup }
+        DOWSE=$dowse_path module_setup }
         popd
     }
     done
@@ -185,21 +185,21 @@ dowse_start_modules() {
     act "`basename $i`: starting module"
     # execute the module_start()
     source ./conf.zsh
-    DOWSE=$DIR module_start
+    DOWSE=$dowse_path module_start
     popd
     done
 }
 
 dowse_stop_modules() {
     notice "Scanning for enabled modules..."
-    enabled=`find -L $DIR/modules/enabled -maxdepth 1 -type d`
+    enabled=`find -L $dowse_path/modules/enabled -maxdepth 1 -type d`
     for i in ${(f)enabled}; do
     { test -r $i/conf.zsh } || { continue }
     pushd $i
     act "`basename $i`: stopping module"
         # execute the module_stop()
     source ./conf.zsh
-    DOWSE=$DIR module_stop
+    DOWSE=$dowse_path module_stop
     popd
     done
 }
@@ -247,7 +247,7 @@ dowse_start() {
     }
 
     # start the dnsmasq daemon
-    dnsmasq_start $DIR/run/dnsmasq.conf
+    dnsmasq_start $dowse_path/run/dnsmasq.conf
 
     # if PeerGuardian was running, start it again
     [[ "$PGL" = "" ]] || { pglcmd start }
@@ -274,7 +274,7 @@ END {
   printf "mac=("; for(i=0;i<c;i++) { printf "%s ", mac[i] }; printf ")\n"
   printf "ip=("; for(i=0;i<c;i++) { printf "%s ", ip[i] }; printf ")\n"
   printf "host=("; for(i=0;i<c;i++) { printf "%s ", host[i] }; printf ")\n"
-}' $DIR/run/leases
+}' $dowse_path/run/leases
 }
 
 dowse_status() {
@@ -287,7 +287,7 @@ dowse_status() {
         [[ $mac[$i] = "" ]] && { continue }
 
         known[$i]="unknown"
-        grep "${mac[$i]}" $DIR/conf/network > /dev/null
+        grep "${mac[$i]}" $dowse_path/conf/network > /dev/null
         [[ $? = 0 ]] && known[$i]="known"
 
         ping[$i]="offline"
@@ -311,7 +311,7 @@ dowse_scan() {
 
     for s in {0..${#mac}}; do
         [[ $mac[$s] == "" ]] && { continue }
-        grep "${mac[$s]}" $DIR/conf/network > /dev/null
+        grep "${mac[$s]}" $dowse_path/conf/network > /dev/null
 	    [[ $? == 1 ]] && { # unknown
 	        act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
             func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""
@@ -359,10 +359,10 @@ case "$subcommand" in
     status) dowse_status ;;
     scan) dowse_scan ;;
     release)
-        rm $DIR/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
+        rm $dowse_path/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
 
     reload)
-        rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k rec ;;
+        rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $dowse_path/run/squid.conf -k rec ;;
     stop)
         dowse_stop_modules;  dowse_stop ;;
 
