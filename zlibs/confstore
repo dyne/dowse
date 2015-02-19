@@ -17,7 +17,7 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
     v=$2
 
     curl --silent \
-        -X PUT -d "$v" "http://localhost:8500/v1/kv/$k" | sysread res
+        -X PUT -d "$v" "http://$dowse:8500/v1/kv/$k" | sysread res
     [[ "$res" = "true" ]] || {
         warn "cannot set key/value in consul: $k = $v"
         return 1
@@ -32,7 +32,7 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
     k=$1
 
-    curl --silent "http://localhost:8500/v1/kv/$k" | awk -F: '
+    curl --silent "http://$dowse:8500/v1/kv/$k" | awk -F: '
 /"Value":/ { gsub(/"|}]/,"",$7) ; print $7 }' | base64 -d
 
 }

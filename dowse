@@ -348,7 +348,7 @@ dowse-modules-setup() {
         module-setup
         popd
 
-        consul-add-service
+        [[ ${#dowse_mod_ports} -gt 0 ]] && consul-add-service
 
     done
 }

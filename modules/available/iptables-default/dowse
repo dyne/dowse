@@ -1,16 +1,28 @@
+#!/usr/bin/env zsh
+
+dowse_mod_name=iptables-default
+dowse_mod_desc="Default iptables rules for basic protection"
+dowse_mod_type=(firewall)
+dowse_mod_ports=()
+dowse_mod_deps=(iptables)
+dowse_mod_authors=(Jaromil)
+dowse_mod_version=0.1
+
+
+
 command -v iptables > /dev/null
 { test $? = 0 } || { print "iptables not found."; return 1 }
 
 # configure the layer 3 firewall rules
 # (excluding the nat which is in dowse core)
 
-module_setup() {
+module-setup() {
 
     # nop
 
 }
 
-module_start() {
+module-start() {
    # This table allow all established connections and related traffic
    # through the firewall without further filtering. 
       
@@ -137,7 +149,7 @@ module_start() {
     
 }
 
-module_stop() {
+module-stop() {
 
     iptables -F ASSURED
     iptables -X ASSURED
