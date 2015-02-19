@@ -95,13 +95,13 @@ dnsmasq-start() {
     fn dnsmasq-start
     conf=$1
     shift 1
-    freq($conf)
+    freq=($conf)
     ckreq
 
     act "launching dnsmasq"
 
-    func "dnsmasq --pid-file $dowse_path/run/dnsmasq.pid -C $conf $*"
-    dnsmasq --pid-file=$dowse_path/run/dnsmasq.pid -C $conf $*
+    func "dnsmasq --pid-file $dowse_path/run/dnsmasq.pid -C $dowse_path/$conf $*"
+    dnsmasq --pid-file=$dowse_path/run/dnsmasq.pid -C $dowse_path/$conf $*
     return $?
 }
 

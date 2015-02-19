@@ -378,8 +378,6 @@ dowse-modules-start() {
 
 dowse-modules-stop() {
     fn dowse-module-stop
-    req=(mods)
-    ckreq
 
     enabled=`find -L $dowse_path/modules/enabled -maxdepth 1 -type d`
     for i in ${(f)enabled}; do
@@ -405,14 +403,13 @@ dowse-start() {
     freq=(run/dnsmasq.conf)
     ckreq
 
+    function TRAPZERR() { }
+
     [[ -r $dowse_path/run/consul.pid ]] && {
         warn "Dowse is already running"
         return 0
     }
     notice "Starting Dowse"
-
-    act "launching consul"
-    consul-start
 
     [[ -z $root ]] || {
 
@@ -429,10 +426,10 @@ dowse-start() {
         modprobe nf_conntrack_ipv4
         sysctl net.netfilter.nf_conntrack_acct=1
         # strenghten and optimize a bit the system for networking
-        sysctl_setup
+        sysctl-setup
         
         func "enable ip forwarding"
-        print 1 > /proc/sys/net/ipv4/ip_forward
+        print 1 >> /proc/sys/net/ipv4/ip_forward
 
         func "bugfix for routing table weirdness in Linux >3.1"
         # see https://lkml.org/lkml/2011/11/18/191
@@ -450,12 +447,16 @@ dowse-start() {
         }
                 
         # start the dnsmasq daemon
-        dnsmasq-start $dowse_path/run/dnsmasq.conf
+        dnsmasq-start run/dnsmasq.conf
         
         # if PeerGuardian was running, start it again
         [[ "$PGL" = "" ]] || { pglcmd start }
 
     }
+
+    act "launching consul"
+    consul-start
+
 
     dowse-modules-setup
 

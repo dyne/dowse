@@ -49,7 +49,7 @@ vars+=(cluster_addr)
 
 
     setdef() { consul_watch[$1]=${consul_watch[$1]:-$2} }
-    setdef checks $dowse_path/consul/checks
+    setdef watches $dowse_path/consul/watches
 
     unset setdef
 
@@ -112,7 +112,7 @@ vars+=(cluster_addr)
         sep="["
         for w in ${(k)consul_watch}; do
             print $sep >> $conf
-            print "{ \"type\": \"$w\"," >> $conf
+            print "{ \"type\": \"checks\"," >> $conf
             print -n "\"handler\": \"${consul_watch[$w]}\" }" >> $conf
             sep=","
         done
@@ -240,6 +240,7 @@ consul-start() {
         -config-dir $dowse_path/run/consul.d \
         -ui-dir $dowse_path/consul/web \
         -pid-file $dowse_path/run/consul.pid \
+        -client $dowse -bind $dowse \
         -dc dowse1 -server 2>&1 >> $dowse_path/log/consul.log &
     
 }
