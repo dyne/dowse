@@ -16,13 +16,32 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
     k=$1
     v=$2
 
-    curl --silent \
-        -X PUT -d "$v" "http://$dowse:8500/v1/kv/$k" | sysread res
-    [[ "$res" = "true" ]] || {
+    ztcp $dowse 8500
+    fd=$REPLY
+#    func "tcp open on fd $fd"
+    cat <<EOF >& $fd
+PUT /v1/kv/$k HTTP/1.1
+User-Agent: Dowse/$dowse_version
+Host: $dowse:8500
+Accept: */*
+Content-Length: ${#v}
+Content-Type: application/x-www-form-urlencoded
+
+EOF
+
+    print -n "$v" >& $fd
+
+    sysread -i $fd res
+    ztcp -c $fd
+
+    [[ "$res" =~ "true" ]] || {
         warn "cannot set key/value in consul: $k = $v"
         return 1
     }
-    func "set $k = $v"
+
+#    func "set $k = $v"
+    return 0
+
 }    
 
 .conf-get-kv() {
@@ -32,8 +51,22 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
     k=$1
 
-    curl --silent "http://$dowse:8500/v1/kv/$k" | awk -F: '
+    ztcp $dowse 8500
+    fd=$REPLY
+#    func "tcp open on fd $fd"
+    cat <<EOF >& $fd
+GET /v1/kv/$k HTTP/1.1
+User-Agent: Dowse/$dowse_version
+Host: $dowse:8500
+Accept: */*
+
+EOF
+    sysread -i $fd -o 1 | awk -F: '
 /"Value":/ { gsub(/"|}]/,"",$7) ; print $7 }' | base64 -d
+
+    ztcp -c $fd
+
+    return 0
 
 }
 
