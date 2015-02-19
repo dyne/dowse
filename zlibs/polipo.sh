@@ -1,14 +1,14 @@
 #!/usr/bin/env zsh
 
-polipo_conf() {
-    func "generating polipo.conf"
+polipo-conf() {
+    func "generating base configuration for polipo"
     cat <<EOF
 # own address (restricts to ipv4)
 proxyAddress = "$dowse"
 proxyName = "Dowse"
 
 # allow local network
-allowedClients = 127.0.0.1, $dowsenet
+allowedClients = 127.0.0.1, $dowse_net
 
 # avoid proxy users to see what others do
 disableLocalInterface = true
@@ -35,8 +35,8 @@ dnsNameServer = $dowse
 daemonise = true
 
 # to be specified by caller module
-# pidFile = $DIR/log/polipo.pid
-# logFile = $DIR/log/polipo.log
+# pidFile = $dowse_path/log/polipo.pid
+# logFile = $dowse_path/log/polipo.log
 
 # to be tested
 # disableVia=false
@@ -51,19 +51,41 @@ EOF
 }
 
 
-polipo_start() {
-    act "Preparing to launch polipo..."
-    # if running, stop to restart
-    polipo_stop $2
-    setuidgid $dowseuid polipo -c "$1"
+polipo-start() {
+    fn "polipo-start $*"
+    conf=$1
+    shift 1
+    req=(conf)
+    freq=($conf)
+    ckreq
+
+    pushd $dowse_path
+
+    if [[ -z $root ]]; then
+        polipo -c $conf $*
+    else
+        setuidgid $dowse_uid polipo -c $conf $*
+    fi
+
+    popd
 }
 
-polipo_stop() {
-    { test -r "$1" } && {
-        pid=`cat $1`
-        act "Stopping polipo ($pid)"
-        kill $pid
-        waitpid $pid
-        rm -f "$1"
+polipo-stop() {
+    fn polipo-stop
+    pidfile=$1
+
+    [[ -r $pidfile ]] || {
+        warn "polipo not running"
+        return 0
     }
+
+    pushd $dowse_path
+
+    pid=`cat $1`
+    act "stopping polipo pid: ::1 pid::" $pid
+    kill $pid
+    waitpid $pid
+#    rm -f "$pid"
+
+    popd
 }

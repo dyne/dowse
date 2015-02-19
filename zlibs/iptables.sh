@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-iptables_start() {
+iptables-start() {
     notice "Setting up iptables firewall rules"
 
     iptables -P OUTPUT ACCEPT
@@ -16,8 +16,8 @@ iptables_start() {
     iptables -A INPUT -d 127.0.0.1 -j ACCEPT
 
 # Allow packets from private subnets
-    iptables -A INPUT -s ${dowsenet} -j ACCEPT
-    iptables -A FORWARD -i ${interface} -s ${dowsenet} -j ACCEPT
+    iptables -A INPUT -s ${dowse_net} -j ACCEPT
+    iptables -A FORWARD -i ${interface} -s ${dowse_net} -j ACCEPT
 
 # Allow DHCP service
     iptables -A INPUT -p udp --sport 67:68 --dport 67:68 -j ACCEPT
@@ -53,7 +53,7 @@ iptables_start() {
 
 }
 
-iptables_stop() {
+iptables-stop() {
     act "Flushing iptables (layer 3 firewall)"
     iptables -F
     iptables -X

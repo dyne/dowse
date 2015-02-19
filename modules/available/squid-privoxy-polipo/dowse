@@ -1,0 +1,68 @@
+#!/usr/bin/env zsh
+
+dowse_mod_name=squid-privoxy-polipo
+dowse_mod_desc="Transparent http proxy pipeline chaining squid to privoxy to polipo"
+dowse_mod_type=(http proxy)
+dowse_mod_ports=(squid3/3128 privoxy/8118 polipo/8123)
+dowse_mod_deps=(squid3 privoxy polipo)
+dowse_mod_authors=(Jaromil)
+dowse_mod_version=0.1
+
+# setup a transparent proxy on port 80
+# using squid and privoxy
+module-setup() {
+    rm -f run/squid.conf
+    squid-conf > run/squid.conf
+    cat <<EOF >> run/squid.conf
+http_port $dowse:3128 transparent
+pid_filename $dowse_path/run/squid.pid
+cache_log $dowse_path/log/squid_cache.log
+access_log /dev/null
+# access_log $dowse_path/log/squid_access.log squid
+# pass through privoxy
+cache_peer $dowse parent 8118 0 default no-query no-digest no-netdb-exchange proxy-only
+EOF
+
+    rm -f run/privoxy.conf
+    privoxy-conf > run/privoxy.conf
+    cat <<EOF >> run/privoxy.conf
+logdir $dowse_path/log/privoxy.log
+pid-file $dowse_path/run/privoxy.pid
+# pass through polipo
+forward / $dowse:8123
+EOF
+
+    rm -f run/polipo.conf
+    polipo-conf > run/polipo.conf
+    cat <<EOF >> run/polipo.conf
+pidFile = $dowse_path/run/polipo.pid
+logFile = $dowse_path/log/polipo.log
+EOF
+
+}
+
+module-start() {
+
+    [[ -z $root ]] || {
+        notice "setup transparent proxy to squid"
+        iptables -t nat -A PREROUTING -i $interface -s $dowsenet \
+            -p tcp --dport 80 -j REDIRECT --to-port 3128
+    }
+
+    polipo-start run/polipo.conf
+
+    privoxy-start run/privoxy.conf
+    
+    squid-start run/squid.conf
+
+}
+
+module-stop() {
+
+    squid-stop run/squid.pid
+
+    privoxy-stop run/privoxy.pid
+
+    polipo-stop run/polipo.pid
+
+}

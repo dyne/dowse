@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-ebtables_start() {
+ebtables-start() {
     require ebtables
     { test $? = 0 } || { func "ebtables not found, skipping"; return 1 }
 
@@ -41,7 +41,7 @@ ebtables_start() {
 
 }
 
-ebtables_stop() {
+ebtables-stop() {
     require ebtables
 
     act "flushing ebtables (layer 2 firewall)"

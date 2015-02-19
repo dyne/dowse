@@ -1,0 +1,88 @@
+#!/usr/bin/env zsh
+
+
+vars+=(dowse interface hostname wan lan firewall)
+vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
+
+# there is room for optimization here in get/set kv
+# using zsh/tcp instead of spawning curl
+# and perhaps querying with one call using ?recursive
+
+.conf-set-kv() {
+    fn .conf-set-kv
+    freq=(run/consul.pid)
+    ckreq
+
+    k=$1
+    v=$2
+
+    curl --silent \
+        -X PUT -d "$v" "http://localhost:8500/v1/kv/$k" | sysread res
+    [[ "$res" = "true" ]] || {
+        warn "cannot set key/value in consul: $k = $v"
+        return 1
+    }
+    func "set $k = $v"
+}    
+
+.conf-get-kv() {
+    fn .conf-get-kv
+    freq=(run/consul.pid)
+    ckreq
+
+    k=$1
+
+    curl --silent "http://localhost:8500/v1/kv/$k" | awk -F: '
+/"Value":/ { gsub(/"|}]/,"",$7) ; print $7 }' | base64 -d
+
+}
+
+
+
+conf-load() {
+    fn conf-load
+    req=(dowse_path)
+    ckreq
+
+    # conf/settings override all
+    [[ -r $dowse_path/conf/settings ]] && {
+        act "loading configuration from conf/settings"
+        source conf/settings
+
+        if [[ -r $dowse_path/run/consul.pid ]]; then
+            [[ -z $dowse ]]     || .conf-set-kv address   $dowse
+            [[ -z $interface ]] || .conf-set-kv interface $interface
+            [[ -z $hostname ]]  || .conf-set-kv hostname  $hostname
+            [[ -z $wan ]]       || .conf-set-kv wan       $wan
+            [[ -z $lan ]]       || .conf-set-kv lan       $lan
+            [[ -z $firewall ]]  || .conf-set-kv firewall  $firewall
+            # dowse_uid=proxy
+            # dowse_gid=proxy
+            
+            # what network range we choose for our LAN (class C)
+            # dowse_net=10.0.0.0/24
+            
+            # which netmask to be applied (default is class C)
+            # netmask=255.255.0.0
+            
+            # ip range reserved for guests (first,last,leasetime)
+            # dowse_guests=10.0.0.101,10.0.0.199,48h
+        else
+            warn "Dowse is not running, launch with: dowse-start"
+        fi
+    }
+
+    [[ -r $dowse_path/run/consul.pid ]] && {
+        # gather settings from consul's key/value store
+        dowse=`.conf-get-kv address`
+        interface=`.conf-get-kv interface`
+        hostname=`.conf-get-kv hostname`
+        wan=`.conf-get-kv wan`
+        lan=`.conf-get-kv lan`
+        firewall=`.conf-get-kv firewall`
+    }
+}
+
+conf-save() {
+
+}

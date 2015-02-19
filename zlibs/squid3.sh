@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
 
-squid_conf() {
+squid-conf() {
     # Squid2 configuration template
-    func "generating squid3 configuration"
+    func "generating base configuration for squid3"
     cat <<EOF
-cache_effective_user $dowseuid
+cache_effective_user $dowse_uid
 cache_store_log none
 
 # avoid having a physical cache directory
@@ -19,7 +19,7 @@ memory_pools off
 
 # dns client section
 dns_nameservers 127.0.0.1
-hosts_file $DIR/run/hosts
+hosts_file $dowse_path/run/hosts
 append_domain .$lan
 positive_dns_ttl 8 hours
 negative_dns_ttl 30 seconds
@@ -29,7 +29,7 @@ acl all src all
 acl localhost src 127.0.0.1/32
 acl to_localhost dst 127.0.0.0/8 0.0.0.0/32
 
-acl localnet src $dowsenet
+acl localnet src $dowse_net
 
 acl SSL_ports port 443		# https
 acl Safe_ports port 80		# http
@@ -51,7 +51,6 @@ http_access deny all
 
 icp_access allow localnet
 
-http_port $dowse:3128 transparent
 
 visible_hostname ${hostname}.${lan}
 
@@ -74,9 +73,9 @@ acl apache rep_header Server ^Apache
 
 cache_mgr Dowse
 
-hosts_file $DIR/run/hosts
+hosts_file $dowse_path/run/hosts
 
-coredump_dir $DIR/log
+coredump_dir $dowse_path/log
 
 never_direct allow all
 
@@ -95,29 +94,48 @@ EOF
 
 }
 
-squid_start() {
-    act "Preparing to launch Squid..."
+squid-start() {
+    fn squid-start
+    req=(dowse_uid)
+    conf=$1
+    shift 1
+    freq=($conf)
+    ckreq
 
+    act "launching squid3"
+
+    pushd $dowse_path
     # # populate the volatile cache
     # setuidgid $dowseuid squid3 -z -f "$1"
     # launch the squid
-    setuidgid $dowseuid squid3 -f "$1"
+    if [[ -z $root ]]; then
+        squid3 -f $conf $*
+    else
+        setuidgid $dowse_uid squid3 -f $conf $*
+    fi
+    popd
 }
 
-squid_stop() {
-    [[ -r $1 ]] && {
-        pid=`cat $1`
-        ps -p "$pid" > /dev/null
-        { test $? = 0 } || {
-            func "removing stale pid for squid"
-            rm -f $1
-            return 1 }
-        act "Stopping squid ($pid)"
-        setuidgid $dowseuid squid3 -f $DIR/run/squid.conf -k kill
-        { test $? = 0 } || {
-            error "Error running squid3, the daemon might be left running."
-            return 1 }
-        waitpid $pid
-        rm -f $1
+squid-stop() {
+    fn squid-stop
+    pidfile=$1
+
+    [[ -r $pidfile ]] || {
+        warn "squid not running"
+        return 0
     }
+
+    pushd $dowse_path
+
+    pid=`cat $pidfile`
+    act "stopping squid ($pid)"
+    if [[ -z $root ]]; then
+        squid3 -f run/squid.conf -k kill
+    else
+        setuidgid $dowse_uid squid3 -f run/squid.conf -k kill
+    fi
+
+    waitpid $pid
+
+    popd
 }

@@ -1,0 +1,263 @@
+#!/usr/bin/env zsh
+#
+# Dowse - consul manager
+#
+# Copyright (C) 2012-2015 Dyne.org Foundation
+#
+# designed, written and maintained by Denis Roio <jaromil@dyne.org>
+#
+# This source code is free software; you can redistribute it
+# and/or modify it under the terms of the GNU Public License
+# as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# This source code is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.  Please refer to the GNU Public License for more
+# details.
+#
+# You should have received a copy of the GNU Public License
+# along with this source code; if not, write to: Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+# 02139, USA.
+
+# safety setting
+GOMAXPROCS=10
+
+mkdir -p $sdk_path/datadir
+
+vars+=(cluster_addr)
+
+.consul-init() {
+    fn _consul-init
+    freq=(consul/consul.64 consul/consul.32)
+    ckreq
+
+    setdef() { consul_conf[$1]=${consul_conf[$1]:-$2} }
+
+    setdef "datacenter" "dowse"
+    setdef "data_dir" "$dowse_path/consul/datadir"
+    setdef "log_level" "INFO"
+    setdef "node_name" "$hostname"
+    setdef "disable_update_check" true
+    setdef "domain" "$lan"
+    setdef "leave_on_terminate" true
+    setdef "recursor" "localhost"
+    setdef "bootstrap" true
+
+
+    setdef() { consul_watch[$1]=${consul_watch[$1]:-$2} }
+    setdef checks $dowse_path/consul/checks
+
+    unset setdef
+
+    mkdir -p $dowse_path/run/consul.d
+
+    # check binary platform
+    arch=`uname -m`
+    case $arch in
+        x86_64)
+            ln -sf $dowse_path/consul/consul.64 $dowse_path/consul/consul
+            act "detected 64bit binary architecture"
+            ;;
+        i686|i586|i486|i386)
+            ln -sf $dowse_path/consul/consul.32 $dowse_path/consul/consul
+            act "detected 32bit binary architecture"
+            ;;
+        *)
+            error "Architecture not supported: $arch"
+            return 1
+            ;;
+    esac
+}
+
+# renders configuration
+.consul-conf() {
+    conf=$dowse_path/run/consul.json
+    rm -f $conf
+    touch $conf
+
+    # jsh=''
+    # for c in ${(k)consul_conf}; do
+    #     jsh+=" -s $c -i ${consul_conf[$c]} "
+    # done
+    # print "{}" | jshon ${=jsh}
+
+    
+
+    sep="{"
+    for c in ${(k)consul_conf}; do
+        print $sep >> $conf
+
+        # deal with booleans
+        case "${consul_conf[$c]}" in
+            true|false)
+                print -n "\"$c\": ${consul_conf[$c]}" >> $conf
+                ;;
+            *)
+                print -n "\"$c\": \"${consul_conf[$c]}\"" >> $conf
+                ;;
+        esac
+
+        sep=","
+    done
+
+
+    # now render watches
+    [[ ${#consul_watch} -gt 0 ]] && {
+        print "," >> $conf
+        print "\"watches\":" >> $conf
+        sep="["
+        for w in ${(k)consul_watch}; do
+            print $sep >> $conf
+            print "{ \"type\": \"$w\"," >> $conf
+            print -n "\"handler\": \"${consul_watch[$w]}\" }" >> $conf
+            sep=","
+        done
+        print >> $conf
+        print "]" >> $conf
+    }
+
+    print "}" >> $conf
+}
+
+# dowse_mod_* vars must be initialized by having sourced a dowse
+# module before calling this function
+consul-add-service() {
+    fn consul-add-service-module
+    req=(dowse_mod_name dowse_mod_ports)
+    freq=(run/consul.d)
+    ckreq
+
+    # use a generic check or the one provided by the module
+    check=$dowse_path/consul/generic_check
+    [[ -r $dowse_path/modules/enabled/$dowse_mod_name/check ]] && {
+        check=$dowse_path/modules/enabled/$dowse_mod_name/check
+    }
+
+    # parse the ports definition in module to list services
+    for p in $dowse_mod_ports; do
+
+        serv=${p[(ws:/:)1]}
+        # TODO: check port is really a numeric
+        port=${p[(ws:/:)2]}
+        prot=${p[(ws:/:)3]}
+        # TODO: make better tags
+        
+        # each service needs a separate file
+        conf=$dowse_path/run/consul.d/module-$serv.json
+        rm -f $conf
+        cat <<EOF > $conf
+{
+  "service": {
+    "name": "$serv",
+    "tags": [ "$dowse_mod_name" ],
+    "port": $port,
+    "check": {
+      "script": "$check $serv $port $prot",
+      "interval": "10s"
+    }
+  }
+}
+EOF
+
+        act "added service port $p"
+
+    done
+
+}
+
+# changes consul configuration and reloads it
+consul-set-conf() {
+    fn consul-set
+    freq=(consul/consul)
+    ckreq
+
+    consul_conf[$1]=${consul_conf[$1]:-$2}
+    .consul-conf
+    consul reload
+}
+
+consul() {
+    fn "consul ${=*}"
+    req=(dowse_path)
+    freq=(consul/consul)
+    ckreq
+
+    TRAPZERR() { } 
+
+    # handle differences between consul commands
+            
+    case $1 in
+        agent)
+            $dowse_path/consul/consul $* \
+                -config-file $dowse_path/run/consul.json \
+                -config-dir $dowse_path/run/consul.d \
+                -dc dowse1 
+            ;;
+        'exec') # cheap security measure: chroot exec to dowse dir
+            shift 1
+            $dowse_path/consul/consul exec $dowse_path/$*
+            ;;
+        *)
+            $dowse_path/consul/consul $*
+            ;;
+    esac
+    return $?
+}
+
+consul-start() {
+    fn "consul-start $*"
+    req=(dowse_path)
+    ckreq
+
+    [[ -f $dowse_path/run/consul.pid ]] && {
+        warn "consul running: (`cat $dowse_path/run/consul.pid`) (run/consul.pid)"
+        warn "call consul-stop to restart"
+        return 1
+    }
+
+    mkdir -p $dowse_path/consul/datadir
+
+    .consul-init
+    .consul-conf
+
+   # "watches": [
+   #   {
+   #       "type": "checks",
+   #       "handler": "/usr/bin/health-check-handler.sh"
+   #   }
+   # ]
+
+
+    touch $dowse_path/log/consul.log 
+    fn "consul launch"
+    GOMAXPROCS=$GOMAXPROCS \
+        $dowse_path/consul/consul agent \
+        -config-file $dowse_path/run/consul.json \
+        -config-dir $dowse_path/run/consul.d \
+        -ui-dir $dowse_path/consul/web \
+        -pid-file $dowse_path/run/consul.pid \
+        -dc dowse1 -server 2>&1 >> $dowse_path/log/consul.log &
+    
+}
+
+consul-reload() {
+    fn consul-reload
+    freq=(run/consul.pid)
+    ckreq
+
+    kill -HUP `cat $dowse_path/run/consul.pid`
+}
+
+consul-stop() {
+    fn consul-stop
+    freq=(run/consul.pid)
+    ckreq
+
+    act "sending quit signal to Dowse"
+    kill -INT `cat $dowse_path/run/consul.pid`
+    notice "Dowse is not running"
+}

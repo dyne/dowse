@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-privoxy_conf() {
+privoxy-conf() {
     # Privoxy configuration template
     func "generating privoxy configuration"
     cat <<EOF
@@ -38,23 +38,47 @@ EOF
 }
 
 # $1 arg is path to configuration
-privoxy_start() {
-    act "Preparing to launch privoxy..."
+privoxy-start() {
+    fn privoxy-start
+    conf=$1
+    shift 1
+    req=(conf)
+    freq=($conf)
+    ckreq
 
-    pid=`awk '/^pid-file/ { print $2 }' "$1"`
-    # if running, stop to restart
-    privoxy_stop "$pid"
+    pushd $dowse_path
 
-    privoxy --user $dowseuid --pidfile "$pid" "$1"
+    # pid-file is not really a privoxy directive
+    pidfile=`awk '/^pid-file/ { print $2 }' $conf`
+    rm -f $conf.real
+    sed 's/pid-file.*//' $conf > $conf.real
+
+    act "starting privoxy: $conf $*"
+    if [[ -z $root ]]; then
+        privoxy --pidfile $pidfile $conf.real $*
+    else
+        privoxy --user $dowse_uid --pidfile $pidfile $conf.real $*
+    fi
+        
+    popd
 }
 
 # $1 arg is path to pid
-privoxy_stop() {
-    { test -r "$1" } && {
-        pid=`cat $1`
-        act "Stopping privoxy ($pid)"
-        kill $pid
-        waitpid $pid
-        rm -f "$1"
+privoxy-stop() {
+    fn privoxy-stop
+    pidfile=$1
+
+    [[ -r $pidfile ]] || {
+        warn "privoxy not running"
+        return 0
     }
+
+    pushd $dowse_path
+    
+    pid=`cat $pidfile`
+    act "stopping privoxy pid: ::1 pid::" $pid
+    kill $pid
+    waitpid $pid
+
+    popd
 }

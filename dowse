@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 #
-# Copyright (C) 2012-2014 Dyne.org Foundation
+# Copyright (C) 2012-2015 Dyne.org Foundation
 #
-# Dowse is written by Denis Roio <jaromil@dyne.org>
+# Dowse is designed, written and maintained by Denis Roio <jaromil@dyne.org>
 #
 # This source code is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Public License
@@ -24,83 +24,181 @@
 
 # {{{ GLOBALS
 
-VERSION=0.6
-DATE="Oct/2014"
+dowse_version=0.6
+dowse_release_date="Feb/2015"
 
-QUIET=0
-DEBUG=1
+# Messaging function with pretty coloring
+autoload colors
+colors
 
-SCRIPT=$0
-
-# export DOWSE to env with path to the installation
-# else start it from inside the dir with ./dowse
-dowse_path=${DOWSE:-`pwd`}
+typeset -aU vars
+typeset -aU arrs
+vars=()
+arrs=()
 
 # For gettext
 TEXTDOMAIN=dowse
-typeset -AH opts
 
-source $dowse_path/zlibs/core
+# path and debugging
+vars+=(dowse_path dowse_loaded debug quiet script fun)
+vars+=(last_notice last_act last_func)
+vars+=(root)
+arrs+=(mods)
 
-# honor quiet and debug flags as early as possible
-option_is_set -q && { QUIET=1  }
-option_is_set -D && { DEBUG=1; func "Debug mode on";  }
+# export DOWSE to env with path to the installation
+# else start it from inside the dir with source dowse
+dowse_path=${DOWSE_PATH:-`pwd`}
+debug=${debug:-0}
+quiet=${quiet:-0}
 
-# }}}
+# uid/git
+vars+=(dowse_uid dowse_gid)
 
-# {{{ CHECKS
+# function requirement checks
+arrs+=(req freq)
 
-[[ -r $dowse_path/conf ]] || {
-    error "The dowse script must be sourced inside its source directory"
-    return 1 }
+# globals filled by lease parser
+arrs+=(host mac ip)
 
-[[ -r $dowse_path/conf/settings ]] || {
-    error "Dowse configuration is missing, create conf/settings"
-    return 1 }
+# globals used when loading modules
+vars+=(dowse_mod_name dowse_mod_desc dowse_mod_version)
+arrs+=(dowse_mod_type dowse_mod_ports dowse_mod_deps)
+arrs+=(dowse_mod_authors dowse_mod_tags)
 
-[[ -r $dowse_path/conf/network ]] || {
-    error "No network is configured, create conf/network"
-    return 1 }
+# consul's configuration map
+typeset -A consul_conf
+typeset -A consul_watch
 
-notice "Dowse ::1:: - local area network rabdomancy" $VERSION
+zmodload zsh/system
+zmodload zsh/regex
+zmodload zsh/sched
+zmodload zsh/system
+
+source $dowse_path/zlibs/messaging.sh
+source $dowse_path/zlibs/processes.sh
+source $dowse_path/zlibs/iptables.sh
+source $dowse_path/zlibs/ebtables.sh
+source $dowse_path/zlibs/dnsmasq.sh
+source $dowse_path/zlibs/squid3.sh
+source $dowse_path/zlibs/privoxy.sh
+source $dowse_path/zlibs/polipo.sh
+source $dowse_path/zlibs/confstore
+source $dowse_path/zlibs/consul
+
+# initialize globals only after sourcing
+# since zlibs may contain more variable declarations
+for v in $vars; do
+    typeset -h $v
+done
+for a in $arrs; do
+    typeset -a $a
+done
+
+fun=""
+last_act=""
+last_func=""
+last_notice=""
+consul_conf=()
+consul_watch=()
+
+dump dowse-internal-status() {
+    act "Dowse status dump:"
+    for v in $vars; do
+        print "$v \t ${(P)v}"
+    done
+    for a in $arrs; do
+        print "$a \t ${(P)a}"
+    done
+}
+
+
+# debugging and require control
+fn throw() {
+    local msg="$1"
+    command -v gettext 1>/dev/null 2>/dev/null \
+        && msg="$(gettext -s "$1")"
+    for i in $(seq 2 ${#}); do
+        msg=${(S)msg//::$(($i - 1))*::/$*[$i]}
+    done
+
+    fun="$msg"
+    func "$fun"
+#    RPROMPT="$fun"
+    req=()
+    freq=()
+    function TRAPZERR() { zerr; return 1 }
+}
+catch() { fun="" }
+
+export function zerr() { 
+    error "error in: ${fun:-$last_notice}"
+
+    [[ "$last_func" = "" ]] || warn "called in: $last_func"
+    [[ "$last_act" = "" ]] || warn "called in: $last_act"
+    [[ "$fun" = "" ]] || [[ "$fun" -regex-match "^Dowse" ]] || warn "called in: $last_notice"
+    error "error reported, operation aborted."
+    return 1
+}
+
+ckreq reqck() {
+    err=0
+    for v in $req; do
+        [[ "${(P)v}" = "" ]] && {
+            warn "required setting is blank: $v"
+            err=1
+        }
+    done
+
+    [[ $err = 1 ]] && return $err
+
+    for f in $freq; do
+        # exists and has size greater than zero
+        [[ -s $dowse_path/$f ]] || {
+            warn "required file empty: $f"
+            err=1
+        }
+    done
+    return $err
+}
+
+
+
+if [[ $dowse_loaded = 1 ]]; then
+    act "Dowse CLI reloaded ::1::" $dowse_version
+    RPROMPT=Dowse
+else
+    notice "Dowse CLI ::1:: - local area network rabdomancy" $dowse_version
+    dowse_loaded=1
+    RPROMPT=Dowse
+fi
+
 cat <<EOF
 
- Copyright (C) 2012-2014 Dyne.org Foundation, License GNU GPL v3+
+ Copyright (C) 2012-2015 Dyne.org Foundation, License GNU GPL v3+
  This is free software: you are free to change and redistribute it
  For more informations see http://www.dyne.org/software/dowse
 
 EOF
 
-_verbose "Dowse command: ::1 subcommand:: ::2 param::" $subcommand ${PARAM:-none}
-_verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." $UID $GID $TTY
+# }}}
 
+# {{{ CHECKS
 
-{ test "$UID" = "0" } || {
-    error "Dowse needs root privileges to operate."
-    return 1 }
-
-func "root access via sudo granted"
-
-act "loading configuration from $dowse_path/conf/settings"
-source conf/settings
-
-act "daemons running as user and group $dowseuid:$dowsegid"
-# setup dirs
-mkdir -p log
-chmod go-rwx log
-chown -R $dowseuid:$dowsegid log
-
-mkdir -p run
-chmod go-rwx run
-chown -R $dowseuid:$dowsegid run
+# zlibs/confstore
+conf-load
 
 
 # }}}
 
 # {{{ SYSTEM SETUP
 
-sysctl_setup() {
-cat <<EOF | sysctl -p - >/dev/null
+sysctl-setup() {
+    [[ -z $root ]] && {
+        warn "no super user privileges: skipping sysctl settings"
+        return 0
+    }
+
+    cat <<EOF | sysctl -p - >/dev/null
 net.ipv4.tcp_syncookies = 1
 net.ipv4.icmp_echo_ignore_broadcasts = 1
 net.ipv4.conf.all.accept_redirects = 0
@@ -124,8 +222,9 @@ EOF
 
 # {{{ DOWSE FUNCTIONS
 
-dowse_check() {
-    act "Checking requirements to run dowse..."
+dowse-check() {
+    fn dowse-check
+    act "checking requirements to run dowse..."
     # this is a check on binaries present in PATH
     # if not found, Dowse will abort.
     # for each found, Dowse will load zlibs/$.sh if present
@@ -133,26 +232,87 @@ dowse_check() {
         require $req || return 1
     done
 
-    act "all is in place."
+    
+    root=1
+    [[ "$UID" = "0" ]] || unset root
+    if [[ "$root" = "" ]]; then
+        warn "no root privileges, limited functionality"
+    else
+        act "root privileges granted"
+    fi
+
+    dowse_uid=${dowse_uid:-`id -un`}
+    dowse_gid=${dowse_gid:-`id -gn`}
+
+    _verbose "Dowse command: ::1 commands::" "$*"
+    _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
+        $dowse_uid $dowse_gid $TTY
+
+
+    throw "$dowse_path/conf dowse_path_configuration"
+    test -r $dowse_path/conf
+    
+    throw "$dowse_path/conf/settings dowse_path_configuration"
+    test -r $dowse_path/conf/settings
+    
+    throw "$dowse_path/conf/network dowse_path_configuration"
+    test -r $dowse_path/conf/network 
+
+    act "daemons running as user and group $dowse_uid:$dowse_gid"
+    [[ -z $root ]] || {
+        # setup dirs
+        mkdir -p $dowse_path/log
+        chmod go-rwx $dowse_path/log
+        chown -R $dowse_uid:$dowse_gid $dowse_path/log
+        
+        mkdir -p $dowse_path/run
+        chmod go-rwx $dowse_path/run
+        chown -R $dowse_uid:$dowse_gid $dowse_path/run
+    }
+
+    func "::1 dir:: directory writable by ::2 uid::" \
+        run $dowse_uid
+    touch $dowse_path/run/test
+    rm -f $dowse_path/run/test
+
+    func "::1 dir:: directory writable by ::2 uid::" \
+        log $dowse_uid
+    touch $dowse_path/log/test
+    rm -f $dowse_path/log/test
+
+    catch
+    act "all requirements in place"
 
     return 0
 }
 
 # DNSMasq configuration template
-dowse_setup() {
+dowse-setup() {
+    notice "Setup dowse core configurations"
+    freq=(conf/settings conf/network)
+    ckreq
 
-    act "Configuring our box and connecting it to the Internet..."
+    dowse-check
 
     func "reading configuration in conf/settings"
 
-    # generate dnsmasq configuration
-    dnsmasq_conf > $dowse_path/run/dnsmasq.conf
 
-    # set permissions of setup files
-    chown -R $dowseuid:$dowsegid log
-    chown -R $dowseuid:$dowsegid run
+    [[ -z $root ]] || {
 
-    notice "Setup completed in $dowse_path"
+        # generate dnsmasq configuration
+        rm -f $dowse_path/run/dnsmasq.conf
+        dnsmasq_conf > $dowse_path/run/dnsmasq.conf
+
+        # set permissions of setup files
+        chown -R $dowse_uid:$dowse_gid $dowse_path/log
+        chown -R $dowse_uid:$dowse_gid $dowse_path/run
+
+    }
+
+    chmod go-rwx $dowse_path/log
+    chmod go-rwx $dowse_path/run
+
+    act "setup completed in ::1 path::" $dowse_path
     return 0
 }
 
@@ -160,47 +320,78 @@ dowse_setup() {
 
 # {{{ MODULES
 
-typeset -a mods
+dowse-modules-setup() {
+    fn dowse-module-setup
+    req=(dowse_path)
+    freq=(modules/enabled)
+    ckreq
 
-dowse_setup_modules() {
-    notice "Scanning for enabled modules..."
+    mods=()
     enabled=`find -L $dowse_path/modules/enabled -maxdepth 1 -type d`
+
+    # remove all service definitions for modules from consul
+    consmods=`find $dowse_path/run/consul.d -maxdepth 1 -type f -name 'module-*.json'`
+    for m in ${(f)consmods}; do
+        rm -f $m
+    done
+
     for i in ${(f)enabled}; do
-    { test -r $i/conf.zsh } && {
-        pushd $i
-        act "`basename $i`: initializing module"
-        # execute the module_setup()
-        source ./conf.zsh
-        { test $? = 0 } && {
+        [[ -r $i/dowse ]] || continue
+        
         mods+=($i)
-        DOWSE=$dowse_path module_setup }
+        
+        source $i/dowse
+        notice "Setup module: ::1 name::" $dowse_mod_name
+        act "$dowse_mod_desc"
+
+        pushd $dowse_path
+        module-setup
         popd
-    }
+
+        consul-add-service
+
     done
 }
 
-dowse_start_modules() {
-    for i in ${mods}; do
-    pushd $i
-    act "`basename $i`: starting module"
-    # execute the module_start()
-    source ./conf.zsh
-    DOWSE=$dowse_path module_start
-    popd
+dowse-modules-start() {
+    fn dowse-module-start
+    req=(mods)
+    freq=(modules/enabled)
+    ckreq
+
+    for i in $mods; do
+
+        # execute the module-start()
+        source $i/dowse
+        notice "Setup module: ::1 name::" $dowse_mod_name
+        act "$dowse_mod_desc"
+
+        pushd $dowse_path
+        module-start
+        popd
+
     done
+    
+    consul-reload
+
 }
 
-dowse_stop_modules() {
-    notice "Scanning for enabled modules..."
+dowse-modules-stop() {
+    fn dowse-module-stop
+    req=(mods)
+    ckreq
+
     enabled=`find -L $dowse_path/modules/enabled -maxdepth 1 -type d`
     for i in ${(f)enabled}; do
-    { test -r $i/conf.zsh } || { continue }
-    pushd $i
-    act "`basename $i`: stopping module"
-        # execute the module_stop()
-    source ./conf.zsh
-    DOWSE=$dowse_path module_stop
-    popd
+
+        [[ -r $i/dowse ]] || continue
+
+        source $i/dowse
+        
+        pushd $dowse_path
+        module-stop
+        popd
+
     done
 }
 
@@ -208,60 +399,88 @@ dowse_stop_modules() {
 
 # {{{ MAIN
 
-dowse_start() {
+dowse-start() {
+    fn dowse-start
+    req=(interface dowse netmask wan)
+    freq=(run/dnsmasq.conf)
+    ckreq
 
-    notice "Setting up the network..."
+    [[ -r $dowse_path/run/consul.pid ]] && {
+        warn "Dowse is already running"
+        return 0
+    }
+    notice "Starting Dowse"
 
-    PGL=`pidof pgld`
-    [[ "$PGL" = "" ]] || {
-        act "PeerGuardian found running, will restart it accordingly"
-        pglcmd stop }
+    act "launching consul"
+    consul-start
 
-    act "Setting up $interface interface"
-    ifconfig $interface $dowse netmask $netmask up
-    route add default gw $wan
+    [[ -z $root ]] || {
 
-    func "enable masquerading"
-    modprobe nf_conntrack_ipv4
-    sysctl net.netfilter.nf_conntrack_acct=1
+        PGL=`pidof pgld`
+        [[ "$PGL" = "" ]] || {
+            act "PeerGuardian found running, will restart it accordingly"
+            pglcmd stop }
+        
+        act "set up $interface interface"
+        ifconfig $interface $dowse netmask $netmask up
+        route add default gw $wan
+        
+        func "enable masquerading"
+        modprobe nf_conntrack_ipv4
+        sysctl net.netfilter.nf_conntrack_acct=1
+        # strenghten and optimize a bit the system for networking
+        sysctl_setup
+        
+        func "enable ip forwarding"
+        print 1 > /proc/sys/net/ipv4/ip_forward
 
-    # strenghten and optimize a bit the system for networking
-    sysctl_setup
+        func "bugfix for routing table weirdness in Linux >3.1"
+        # see https://lkml.org/lkml/2011/11/18/191
+        # and http://www.spinics.net/lists/netdev/msg179687.html
+        print 0 >>/proc/sys/net/ipv4/conf/$interface/accept_redirects
 
-    func "enable ip forwarding"
-    print 1 > /proc/sys/net/ipv4/ip_forward
+        [[ "$firewall" = "no" ]] || {
+            ebtables-stop
+            iptables-stop
+        }        
 
-    func "bugfix for routing table weirdness in Linux >3.1"
-    # see https://lkml.org/lkml/2011/11/18/191
-    # and http://www.spinics.net/lists/netdev/msg179687.html
-    print 0 >>/proc/sys/net/ipv4/conf/$interface/accept_redirects
+        [[ "$firewall" = "yes" ]] && {
+            ebtables-start
+            iptables-start
+        }
+                
+        # start the dnsmasq daemon
+        dnsmasq-start $dowse_path/run/dnsmasq.conf
+        
+        # if PeerGuardian was running, start it again
+        [[ "$PGL" = "" ]] || { pglcmd start }
 
-    [[ "$firewall" = "no" ]] || {
-        ebtables_stop
-        iptables_stop
     }
 
-    [[ "$firewall" = "yes" ]] && {
-        ebtables_start
-        iptables_start
+    dowse-modules-setup
+
+    dowse-modules-start
+    
+}
+
+dowse-stop() {
+    fn "dowse-stop"
+ 
+    dowse-modules-stop
+
+    [[ -r $dowse_path/run/consul.pid ]] && consul-stop
+
+    [[ -z $root ]] || {
+        dnsmasq-stop
+        iptables-stop
+        ebtables-stop
     }
 
-    # start the dnsmasq daemon
-    dnsmasq_start $dowse_path/run/dnsmasq.conf
-
-    # if PeerGuardian was running, start it again
-    [[ "$PGL" = "" ]] || { pglcmd start }
+    act "Dowse is not running"
 
 }
 
-dowse_stop() {
-    notice "Stopping all services."
-    dnsmasq_stop
-    iptables_stop
-    ebtables_stop
-}
-
-dowse_parse_leases() {
+dowse-parse-leases() {
     awk '
 BEGIN { c=0 }
 {
@@ -277,9 +496,9 @@ END {
 }' $dowse_path/run/leases
 }
 
-dowse_status() {
+dowse-status() {
     notice "Reporting network status"
-    eval `dowse_parse_leases`
+    eval `dowse-parse-leases`
     known=()
     ping=()
     for i in {0..${#mac}}; do
@@ -305,9 +524,9 @@ dowse_status() {
     done
 }
 
-dowse_scan() {
+dowse-scan() {
     notice "Scanning unknown network objects"
-    eval `dowse_parse_leases`
+    eval `dowse-parse-leases`
 
     for s in {0..${#mac}}; do
         [[ $mac[$s] == "" ]] && { continue }
@@ -322,77 +541,18 @@ dowse_scan() {
 
 }
 
+throw "checking installed requirements"
+dowse-check
 
-dowse_check || {
-    error "Aborting operation for missing requirements."
-    return 1 }
 
-# initialize commandline parser
-typeset -A opts
-typeset -A subcommands_opts
 
-main_opts=(q -quiet=q D -debug=D h -help=h v -version=v -no-color)
-subcommands_opts[__default]=""
-subcommands_opts[start]=""
-subcommands_opts[stop]=""
-subcommands_opts[status]=""
-subcommands_opts[scan]=""
-subcommands_opts[restart]=""
-subcommands_opts[test]=""
-subcommands_opts[release]=""
-subcommands_opts[reload]=""
-
-init_commandline ${=argv}
-
-_verbose "Dowse command: ::1 subcommand:: ::2 param::" $subcommand ${PARAM:-none}
-_verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." $UID $GID $TTY
-
-case "$subcommand" in
-    restart|start)
-        dowse_stop
-        dowse_setup
-        dowse_setup_modules
-        dowse_start
-        dowse_start_modules
-        ;;
-
-    status) dowse_status ;;
-    scan) dowse_scan ;;
-    release)
-        rm $dowse_path/run/leases; dowse_setup; dnsmasq_stop; dnsmasq_start ;;
-
-    reload)
-        rm -rf /dev/shm/dowse/*; dowse_setup; setuidgid $dowseuid squid3 -f $dowse_path/run/squid.conf -k rec ;;
-    stop)
-        dowse_stop_modules;  dowse_stop ;;
-
-    # start dowse and ask for confirmation with timeout, if not present stop
-    # this is useful for testing potentially disrupting configurations on a remote
-    # machine without loosing the access to it.
-    test)
-        dowse_stop
-        dowse_setup
-        dowse_setup_modules
-        dowse_start
-        dowse_start_modules
-        notice "Press 'y' to confirm current configuration (10 sec timeout)"
-        read -t 10 -q ans > /dev/null
-        case ${ans} in
-            y|Y|$'\n') act "Test configuration confirmed." ;;
-            *) error "Reverting test configuration."
-                dowse_stop_modules
-                dowse_stop
-                ;;
-        esac
-        ;;
-
-    # internal commands useful to developers
-    'source') ;;
-    __default) _print "usage: dowse (start|stop|restart|test)" ;;
-    *) error "dowse: command not found: $1" ;;
-esac
+# if args, call them
+[[ "$*" = "" ]] || {
+    TRAPZERR() { }
+    $*
+}
 
 # be nice with the environment
-return 0
+return $?
 
 # }}}

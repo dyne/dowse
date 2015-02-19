@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+print $*
+print "All OK"
+
+return 0
