@@ -8,7 +8,7 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 # using zsh/tcp instead of spawning curl
 # and perhaps querying with one call using ?recursive
 
-.conf-set-kv() {
+.conf-set-kv .set() {
     fn .conf-set-kv
     freq=(run/consul.pid)
     ckreq
@@ -39,12 +39,12 @@ EOF
         return 1
     }
 
-#    func "set $k = $v"
+    func "set $k = $v"
     return 0
 
 }    
 
-.conf-get-kv() {
+.conf-get-kv .get() {
     fn .conf-get-kv
     freq=(run/consul.pid)
     ckreq

@@ -73,6 +73,7 @@ zmodload zsh/system
 zmodload zsh/regex
 zmodload zsh/sched
 zmodload zsh/system
+zmodload zsh/net/tcp
 
 source $dowse_path/zlibs/messaging.sh
 source $dowse_path/zlibs/processes.sh
@@ -113,7 +114,7 @@ dump dowse-internal-status() {
 
 
 # debugging and require control
-fn throw() {
+fn() {
     local msg="$1"
     command -v gettext 1>/dev/null 2>/dev/null \
         && msg="$(gettext -s "$1")"
@@ -126,11 +127,9 @@ fn throw() {
 #    RPROMPT="$fun"
     req=()
     freq=()
-    function TRAPZERR() { zerr; return 1 }
 }
-catch() { fun="" }
 
-export function zerr() { 
+function zerr() { 
     error "error in: ${fun:-$last_notice}"
 
     [[ "$last_func" = "" ]] || warn "called in: $last_func"
@@ -139,6 +138,7 @@ export function zerr() {
     error "error reported, operation aborted."
     return 1
 }
+function TRAPZERR() { zerr; return 1 }
 
 ckreq reqck() {
     err=0
@@ -498,12 +498,19 @@ END {
 }
 
 dowse-status() {
+    fn dowse-status
+    freq=(run/leases)
+    ckreq
+
+    typeset -a mac ip host ping known
     notice "Reporting network status"
     eval `dowse-parse-leases`
     known=()
     ping=()
-    for i in {0..${#mac}}; do
 
+    function TRAPZERR() { }
+
+    for i in {0..${#mac}}; do
         [[ $mac[$i] = "" ]] && { continue }
 
         known[$i]="unknown"
@@ -514,14 +521,21 @@ dowse-status() {
         nmap -sn -n -oG - $ip[$i] | grep -i 'status: up' > /dev/null
         [[ $? = 0 ]] && ping[$i]="online"
 
-        # additional subcommand "status online" to list only online objects
-        [[ "$ping[$i]" == "offline" ]] && [[ "$PARAM" =~ "online" ]] && continue
+        if [[ "$known[$i]" == "known" ]]; then
 
-        [[ "$known[$i]" == "known" ]] && { # found
-            yes "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
-        } || { # not found
-            no "::1 ping::\t::2 mac::\t::3 ip::\t::4 host::" $ping[$i] $mac[$i] $ip[$i] $host[$i]
-        }
+            yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
+            .set things/known/$host[$i] "status: $ping[$i]
+ip: $ip[$i]
+mac: $mac[$i]"
+
+        else
+
+            no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
+            .set things/unknown/$host[$i] "status: $ping[$i]
+ip: $ip[$i]
+mac: $mac[$i]"
+
+        fi
     done
 }
 
