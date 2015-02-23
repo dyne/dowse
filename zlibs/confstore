@@ -83,12 +83,12 @@ conf-load() {
         source conf/settings
 
         if [[ -r $dowse_path/run/consul.pid ]]; then
-            [[ -z $dowse ]]     || .conf-set-kv address   $dowse
-            [[ -z $interface ]] || .conf-set-kv interface $interface
-            [[ -z $hostname ]]  || .conf-set-kv hostname  $hostname
-            [[ -z $wan ]]       || .conf-set-kv wan       $wan
-            [[ -z $lan ]]       || .conf-set-kv lan       $lan
-            [[ -z $firewall ]]  || .conf-set-kv firewall  $firewall
+            [[ -z $dowse ]]     || .set configuration/address   $dowse
+            [[ -z $interface ]] || .set configuration/interface $interface
+            [[ -z $hostname ]]  || .set configuration/hostname  $hostname
+            [[ -z $wan ]]       || .set configuration/wan       $wan
+            [[ -z $lan ]]       || .set configuration/lan       $lan
+            [[ -z $firewall ]]  || .set configuration/firewall  $firewall
             # dowse_uid=proxy
             # dowse_gid=proxy
             
@@ -107,12 +107,12 @@ conf-load() {
 
     [[ -r $dowse_path/run/consul.pid ]] && {
         # gather settings from consul's key/value store
-        dowse=`.conf-get-kv address`
-        interface=`.conf-get-kv interface`
-        hostname=`.conf-get-kv hostname`
-        wan=`.conf-get-kv wan`
-        lan=`.conf-get-kv lan`
-        firewall=`.conf-get-kv firewall`
+        dowse=`.conf-get-kv configuration/address`
+        interface=`.conf-get-kv configuration/interface`
+        hostname=`.conf-get-kv configuration/hostname`
+        wan=`.conf-get-kv configuration/wan`
+        lan=`.conf-get-kv configuration/lan`
+        firewall=`.conf-get-kv configuration/firewall`
     }
 }
 

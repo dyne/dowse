@@ -21,8 +21,11 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
-dnsmasq_conf() {
-    func "generating dnsmasq configuration"
+dnsmasq-conf() {
+    fn "dnsmasq-conf"
+    freq=(conf/network)
+    ckreq
+
     cat <<EOF
 address=/$hostname/$dowse
 address=/$hostname.$lan/$dowse
@@ -45,7 +48,11 @@ user=$dowse_uid
 group=$dowse_gid
 EOF
     # read the network configuration of known hosts
-    known=`cat $dowse_path/conf/network | grep -v '^#'`
+    known=`cat $dowse_path/conf/network`
+    act "$dowse_path/conf/network (${#known} bytes parsed)"
+    # for i in ${(f)known}; do
+    #     func "$i"
+    # done
 
     # DNSMasq LAN resolution
     func "Fixing entries for known peers"
@@ -58,37 +65,38 @@ EOF
     rm -f $dowse_path/run/hosts
     print "127.0.0.1 localhost" > $dowse_path/run/hosts
     for i in ${(f)known}; do
-	print "$i" | grep '^..:..:..:..:..:..' > /dev/null
-	if [ $? = 0 ]; then # mac address is first
-	    host=${i[(w)2]}
-	    ip=${i[(w)3]}
-	else # no mac address specified
-	    host=${i[(w)1]}
-	    ip=${i[(w)2]}
-	fi
-	{ test "$host" = "ignore" } || {
-	    # add a line to the hosts list
-	    print "$ip $host" >> $dowse_path/run/hosts }
-    done
+        [[ "${i[1]}" = "#" ]] && continue
 
+	    if [[ "$i" -regex-match '^..:..:..:..:..:..' ]]; then
+#	    if [ $? = 0 ]; then # mac address is first
+	        host=${i[(w)2]}
+	        ip=${i[(w)3]}
+	    else # no mac address specified
+	        host=${i[(w)1]}
+	        ip=${i[(w)2]}
+	    fi
+	    [[ "$host" = "ignore" ]] || {
+	        # add a line to the hosts list
+	        print "$ip $host" >> $dowse_path/run/hosts }
+    done
+    
     func "generating dnsmask.network"
     for i in ${(f)known}; do
-	print "$i" | grep '^..:..:..:..:..:..' > /dev/null
-	{ test $? = 0 } || { continue } # skip if no mac address
-	func "$i"
-	# gather configuration into variables, line by line
-	mac=${i[(w)1]}
-	host=${i[(w)2]}
-	ip=${i[(w)3]}
-
-	# add a line to the dnsmasq host list
-	print "dhcp-host=$mac, $host, $ip" >> $dowse_path/run/dnsmasq.network
-
+	    [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
+	        func "$i"
+	        # gather configuration into variables, line by line
+	        mac=${i[(w)1]}
+	        host=${i[(w)2]}
+	        ip=${i[(w)3]}
+        }
+	    # add a line to the dnsmasq host list
+	    print "dhcp-host=$mac, $host, $ip" >> $dowse_path/run/dnsmasq.network
+        
     done
-
+    
     # append network settings to dnsmasq conf
     cat $dowse_path/run/dnsmasq.network
-
+    
 }
 
 dnsmasq-start() {

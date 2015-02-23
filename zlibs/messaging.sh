@@ -74,7 +74,7 @@ function _msg() {
 function _message say act() {
     local notice="message"
     [[ "$1" = "-n" ]] && shift && notice="inline"
-    [[ $debug = 1 ]] || _msg "$notice" $@
+    [[ $quiet = 1 ]] || _msg "$notice" $@
     return 0
 }
 

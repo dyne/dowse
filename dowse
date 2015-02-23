@@ -70,6 +70,7 @@ typeset -A consul_conf
 typeset -A consul_watch
 
 zmodload zsh/system
+zmodload zsh/mapfile
 zmodload zsh/regex
 zmodload zsh/sched
 zmodload zsh/system
@@ -114,7 +115,7 @@ dump dowse-internal-status() {
 
 
 # debugging and require control
-fn() {
+throw fn() {
     local msg="$1"
     command -v gettext 1>/dev/null 2>/dev/null \
         && msg="$(gettext -s "$1")"
@@ -129,7 +130,7 @@ fn() {
     freq=()
 }
 
-function zerr() { 
+zerr() { 
     error "error in: ${fun:-$last_notice}"
 
     [[ "$last_func" = "" ]] || warn "called in: $last_func"
@@ -138,7 +139,7 @@ function zerr() {
     error "error reported, operation aborted."
     return 1
 }
-function TRAPZERR() { zerr; return 1 }
+TRAPZERR() { zerr; return 1 }
 
 ckreq reqck() {
     err=0
@@ -182,14 +183,6 @@ EOF
 
 # }}}
 
-# {{{ CHECKS
-
-# zlibs/confstore
-conf-load
-
-
-# }}}
-
 # {{{ SYSTEM SETUP
 
 sysctl-setup() {
@@ -217,10 +210,6 @@ net.ipv4.ip_local_port_range = 1025 65530
 net.ipv4.tcp_timestamps = 0
 EOF
 }
-
-# }}}
-
-# {{{ DOWSE FUNCTIONS
 
 dowse-check() {
     fn dowse-check
@@ -280,13 +269,15 @@ dowse-check() {
     touch $dowse_path/log/test
     rm -f $dowse_path/log/test
 
-    catch
     act "all requirements in place"
 
     return 0
 }
 
-# DNSMasq configuration template
+# }}}
+
+
+# {{{ DOWSE FUNCTIONS
 dowse-setup() {
     notice "Setup dowse core configurations"
     freq=(conf/settings conf/network)
@@ -295,13 +286,15 @@ dowse-setup() {
     dowse-check
 
     func "reading configuration in conf/settings"
+    # zlibs/confstore
+    conf-load
 
 
     [[ -z $root ]] || {
 
         # generate dnsmasq configuration
         rm -f $dowse_path/run/dnsmasq.conf
-        dnsmasq_conf > $dowse_path/run/dnsmasq.conf
+        dnsmasq-conf > $dowse_path/run/dnsmasq.conf
 
         # set permissions of setup files
         chown -R $dowse_uid:$dowse_gid $dowse_path/log
@@ -347,6 +340,15 @@ dowse-modules-setup() {
         pushd $dowse_path
         module-setup
         popd
+
+        func "announcing modules"
+        .set modules/$dowse_mod_name "$dowse_mod_desc
+type: $dowse_mod_type
+ports: $dowse_mod_ports
+depends: $dowse_mod_deps
+authors: $dowse_mod_authors
+version: $dowse_mod_version
+"
 
         [[ ${#dowse_mod_ports} -gt 0 ]] && consul-add-service
 
@@ -524,14 +526,14 @@ dowse-status() {
         if [[ "$known[$i]" == "known" ]]; then
 
             yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-            .set things/known/$host[$i] "status: $ping[$i]
+            .set things_known/$host[$i] "status: $ping[$i]
 ip: $ip[$i]
 mac: $mac[$i]"
 
         else
 
             no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-            .set things/unknown/$host[$i] "status: $ping[$i]
+            .set things_unknown/$host[$i] "status: $ping[$i]
 ip: $ip[$i]
 mac: $mac[$i]"
 
@@ -555,9 +557,6 @@ dowse-scan() {
     done
 
 }
-
-throw "checking installed requirements"
-dowse-check
 
 
 
