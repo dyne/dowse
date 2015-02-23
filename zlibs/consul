@@ -44,7 +44,7 @@ vars+=(cluster_addr)
     setdef "disable_update_check" true
     setdef "domain" "$lan"
     setdef "leave_on_terminate" true
-    setdef "recursor" "localhost"
+    setdef "recursor" "$dowse"
 
 
     setdef() { consul_watch[$1]=${consul_watch[$1]:-$2} }
