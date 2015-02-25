@@ -45,7 +45,6 @@ vars+=(cluster_addr)
     setdef "domain" "$lan"
     setdef "leave_on_terminate" true
     setdef "recursor" "localhost"
-    setdef "bootstrap" true
 
 
     setdef() { consul_watch[$1]=${consul_watch[$1]:-$2} }
@@ -189,13 +188,25 @@ consul() {
     TRAPZERR() { } 
 
     # handle differences between consul commands
-            
+ 
+   os=`uname -o`
+
+   [[ "$os" = "Cygwin" ]] && {
+
+    touch $dowse_path/log/consul.log 
+    fn "consul launch"
+    orig_dowse_path=$dowse_path
+    dowse_path="C:\\dowse\\"
+    func "dowse_path for consul: $dowse_path"
+           
+   }
+
     case $1 in
         agent)
             $dowse_path/consul/consul $* \
                 -config-file $dowse_path/run/consul.json \
                 -config-dir $dowse_path/run/consul.d \
-                -dc dowse1 
+                -dc dowse1 -client $dowse
             ;;
         'exec') # cheap security measure: chroot exec to dowse dir
             shift 1
@@ -205,6 +216,15 @@ consul() {
             $dowse_path/consul/consul $*
             ;;
     esac
+ 
+   [[ "$os" = "Cygwin" ]] && {
+
+    touch $dowse_path/log/consul.log 
+    dowse_path=$orig_dowse_path
+           
+   }
+
+  
     return $?
 }
 
@@ -231,18 +251,36 @@ consul-start() {
    #   }
    # ]
 
+   os=`uname -o`
+   if [[ "$os" = "Cygwin" ]]; then
 
     touch $dowse_path/log/consul.log 
     fn "consul launch"
-    GOMAXPROCS=$GOMAXPROCS \
-        $dowse_path/consul/consul agent \
+    orig_dowse_path=$dowse_path
+    dowse_path="C:\\dowse\\"
+    func "dowse_path for consul: $dowse_path"
+    export GOMAXPROCS=$GOMAXPROCS
+        ./consul/consul agent \
         -config-file $dowse_path/run/consul.json \
         -config-dir $dowse_path/run/consul.d \
         -ui-dir $dowse_path/consul/web \
         -pid-file $dowse_path/run/consul.pid \
         -client $dowse -bind $dowse \
-        -dc dowse1 -server 2>&1 >> $dowse_path/log/consul.log &
-    
+        -dc dowse1 2>&1 >> $dowse_path/log/consul.log &
+    dowse_path=$orig_dowse_path 
+
+   else
+    touch $dowse_path/log/consul.log 
+    fn "consul launch"
+    export GOMAXPROCS=$GOMAXPROCS
+        ./consul/consul agent \
+        -config-file $dowse_path/run/consul.json \
+        -config-dir $dowse_path/run/consul.d \
+        -ui-dir $dowse_path/consul/web \
+        -pid-file $dowse_path/run/consul.pid \
+        -client $dowse -bind $dowse \
+        -dc dowse1 -server -bootstrap 2>&1 >> $dowse_path/log/consul.log &
+   fi
 }
 
 consul-reload() {

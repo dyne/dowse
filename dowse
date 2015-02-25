@@ -217,9 +217,9 @@ dowse-check() {
     # this is a check on binaries present in PATH
     # if not found, Dowse will abort.
     # for each found, Dowse will load zlibs/$.sh if present
-    for req in setuidgid dnsmasq iptables ebtables; do
-        require $req || return 1
-    done
+#    for req in setuidgid dnsmasq iptables ebtables; do
+#        require $req || return 1
+#    done
 
     
     root=1
@@ -248,13 +248,13 @@ dowse-check() {
     test -r $dowse_path/conf/network 
 
     act "daemons running as user and group $dowse_uid:$dowse_gid"
+    mkdir -p $dowse_path/log
+    mkdir -p $dowse_path/run
     [[ -z $root ]] || {
         # setup dirs
-        mkdir -p $dowse_path/log
         chmod go-rwx $dowse_path/log
         chown -R $dowse_uid:$dowse_gid $dowse_path/log
         
-        mkdir -p $dowse_path/run
         chmod go-rwx $dowse_path/run
         chown -R $dowse_uid:$dowse_gid $dowse_path/run
     }
@@ -567,6 +567,6 @@ dowse-scan() {
 }
 
 # be nice with the environment
-return $?
+# return $?
 
 # }}}
