@@ -80,12 +80,13 @@ source $dowse_path/zlibs/messaging.sh
 source $dowse_path/zlibs/processes.sh
 source $dowse_path/zlibs/iptables.sh
 source $dowse_path/zlibs/ebtables.sh
-source $dowse_path/zlibs/dnsmasq.sh
-source $dowse_path/zlibs/squid3.sh
-source $dowse_path/zlibs/privoxy.sh
-source $dowse_path/zlibs/polipo.sh
 source $dowse_path/zlibs/confstore
 source $dowse_path/zlibs/consul
+
+source $dowse_path/daemons/dnsmasq
+source $dowse_path/daemons/squid3
+source $dowse_path/daemons/privoxy
+source $dowse_path/daemons/polipo
 
 # initialize globals only after sourcing
 # since zlibs may contain more variable declarations
