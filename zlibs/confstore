@@ -4,7 +4,7 @@
 vars+=(dowse interface hostname wan lan firewall)
 vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
-# there is room for optimization here in get/set kv
+# there is a clear zsh optimization here in get/set kv
 # using zsh/tcp instead of spawning curl
 # and perhaps querying with one call using ?recursive
 
@@ -32,6 +32,8 @@ EOF
     print -n "$v" >& $fd
 
     sysread -i $fd res
+
+    # close connection
     ztcp -c $fd
 
     [[ "$res" =~ "true" ]] || {
@@ -70,6 +72,7 @@ EOF
     sysread -i $fd -o 1 | awk -F: '
 /"Value":/ { gsub(/"|}]/,"",$7) ; print $7 }' | base64 -d
 
+    # close connection
     ztcp -c $fd
 
     return 0
