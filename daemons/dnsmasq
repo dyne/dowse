@@ -81,6 +81,9 @@ EOF
     done
     
     func "generating dnsmask.network"
+    rm -f $dowse_path/run/dnsmasq.network
+    # TODO: first entry about self
+    touch $dowse_path/run/dnsmasq.network
     for i in ${(f)known}; do
 	    [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
 	        func "$i"
@@ -88,7 +91,7 @@ EOF
 	        mac=${i[(w)1]}
 	        host=${i[(w)2]}
 	        ip=${i[(w)3]}
-        }
+            }
 	    # add a line to the dnsmasq host list
 	    print "dhcp-host=$mac, $host, $ip" >> $dowse_path/run/dnsmasq.network
         
@@ -101,8 +104,8 @@ EOF
 
 dnsmasq-start() {
     fn dnsmasq-start
-    conf=$1
-    shift 1
+    conf=${1:-run/dnsmasq.conf}
+    [[ "$1" = "" ]] || shift 1
     freq=($conf)
     ckreq
 
@@ -115,15 +118,24 @@ dnsmasq-start() {
 
 dnsmasq-stop() {
     fn dnsmasq-stop
-    freq=(run/dnsmasq.pid)
-    ckreq
-    throw
+
+    if [[ "$1" = "" ]]; then
+        [[ -r $dowse_path/run/dnsmasq.pid ]] || {
+	   warn "dnsmasq not found running"
+	   return 0
+        }
 	pid=`cat $dowse_path/run/dnsmasq.pid`
+    else
+        [[ -r "$dowse_path/$1" ]] || {
+           error "dnsmasq pid not found: $1"
+           return 1
+        }
+        pid=`cat $dowse_path/$1`
+    fi
 
 	act "Stopping dnsmasq ($pid)"
 	kill $pid
 	waitpid $pid
 	rm -f $dowse_path/run/dnsmasq.pid
 
-    catch
 }
