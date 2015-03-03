@@ -6,7 +6,7 @@
 
 		   a digital rod for local area network rabdomancy
 
-Version: 0.5
+Version: 0.7
 
 Updates: http://www.dyne.org/software/dowse
 
@@ -30,16 +30,6 @@ implementations. At the core of Dowse is a very portable shell script
 codebase implementing a modular plugin architecture that isolates
 processes and supports any executable written in any language: Shell,
 C, Perl, Python etc.
-
-# Plea for support
-
-If you like to support the development of this project, please rate it
-and endorse it on the CHEST funding platform:
-
-http://ideas.chest-project.eu/?q=node/3358
-
-We are seeking funding to continue this free and open source development.
-It does not require much, just a registration and rating. Thanks.
 
 # Features
 
@@ -80,12 +70,14 @@ Installation and activation takes a few steps and needs root:
 4. Configure the files in the `conf/` folder: settings and network
    The files are plain text and include documentation in comments.
 
-5. Launch the dowse script as root, using full path. In our example:
+5. Source the dowse environment:
 
-    /usr/src/dowse/dowse start
+    source dowse
 
-   Dowse will launch all daemons dropping root privileges and using
-   the user configured (default user is `proxy`)
+6. Setup and launch dowse:
+
+    dowse-setup
+    dowse-start
 
 6. Deactivate the DHCP service (Automatic IP configuration) on any
    other object on the network, typically your ADSL router.
@@ -95,14 +87,9 @@ internet as you did before, but now all the traffic is passing via
 Dowse's transparent proxy configuration, which weeds out adverts and
 takes care of browser's privacy.
 
-To make sure that dowse is started at every boot, just add it to the
-`/etc/rc.local` file, in our example that would be the line:
-
-	/usr/src/dowse/dowse start
-
 # Disclaimer
 
-Dowse is Copyright (C) 2012-2014 by the Dyne.org Foundation
+Dowse is Copyright (C) 2012-2015 by the Dyne.org Foundation
 
 Dowse is written by Denis Roio <jaromil@dyne.org>
 
