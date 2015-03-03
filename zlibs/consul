@@ -32,8 +32,6 @@ vars+=(cluster_addr)
 
 .consul-init() {
     fn _consul-init
-    freq=(consul/consul.64 consul/consul.32)
-    ckreq
 
     setdef() { consul_conf[$1]=${consul_conf[$1]:-$2} }
 
@@ -56,20 +54,32 @@ vars+=(cluster_addr)
 
     # check binary platform
     arch=`uname -m`
+
+    pushd $dowse_path/consul
     case $arch in
         x86_64)
-            ln -sf $dowse_path/consul/consul.64 $dowse_path/consul/consul
             act "detected 64bit binary architecture"
+            [[ -r consul ]] || { # no consul binary found
+                act "downloading consul binary"
+                # using wget because cloudfront does redirects unsupported by curl
+                wget "https://dl.bintray.com/mitchellh/consul/0.5.0_linux_amd64.zip"
+                unzip 0.5.0_linux_amd64.zip # unzipped is just 'consul'
+            }
             ;;
         i686|i586|i486|i386)
-            ln -sf $dowse_path/consul/consul.32 $dowse_path/consul/consul
             act "detected 32bit binary architecture"
+            [[ -r consul ]] || { # no consul binary found
+                wget "https://dl.bintray.com/mitchellh/consul/0.5.0_linux_386.zip"
+                unzip 0.5.0_linux_386.zip # unzipped is just 'consul'
+            }
+
             ;;
         *)
             error "Architecture not supported: $arch"
             return 1
             ;;
     esac
+    popd
 }
 
 # renders configuration
@@ -84,7 +94,7 @@ vars+=(cluster_addr)
     # done
     # print "{}" | jshon ${=jsh}
 
-    
+
 
     sep="{"
     for c in ${(k)consul_conf}; do
@@ -144,7 +154,7 @@ consul-add-service() {
         port=${p[(ws:/:)2]}
         prot=${p[(ws:/:)3]}
         # TODO: make better tags
-        
+
         # each service needs a separate file
         conf=$dowse_path/run/consul.d/module-$serv.json
         rm -f $conf
@@ -185,20 +195,20 @@ consul() {
     freq=(consul/consul)
     ckreq
 
-    TRAPZERR() { } 
+    TRAPZERR() { }
 
     # handle differences between consul commands
- 
+
    os=`uname -o`
 
    [[ "$os" = "Cygwin" ]] && {
 
-    touch $dowse_path/log/consul.log 
+    touch $dowse_path/log/consul.log
     fn "consul launch"
     orig_dowse_path=$dowse_path
     dowse_path="C:\\dowse\\"
     func "dowse_path for consul: $dowse_path"
-           
+
    }
 
     case $1 in
@@ -216,15 +226,15 @@ consul() {
             $dowse_path/consul/consul $*
             ;;
     esac
- 
+
    [[ "$os" = "Cygwin" ]] && {
 
-    touch $dowse_path/log/consul.log 
+    touch $dowse_path/log/consul.log
     dowse_path=$orig_dowse_path
-           
+
    }
 
-  
+
     return $?
 }
 
@@ -251,36 +261,55 @@ consul-start() {
    #   }
    # ]
 
-   os=`uname -o`
-   if [[ "$os" = "Cygwin" ]]; then
+    os=`uname -o`
+    if [[ "$os" = "Cygwin" ]]; then
 
-    touch $dowse_path/log/consul.log 
-    fn "consul launch"
-    orig_dowse_path=$dowse_path
-    dowse_path="C:\\dowse\\"
-    func "dowse_path for consul: $dowse_path"
-    export GOMAXPROCS=$GOMAXPROCS
+        touch $dowse_path/log/consul.log
+        fn "consul launch"
+        orig_dowse_path=$dowse_path
+        dowse_path="C:\\dowse\\"
+        func "dowse_path for consul: $dowse_path"
+        export GOMAXPROCS=$GOMAXPROCS
         ./consul/consul agent \
-        -config-file $dowse_path/run/consul.json \
-        -config-dir $dowse_path/run/consul.d \
-        -ui-dir $dowse_path/consul/web \
-        -pid-file $dowse_path/run/consul.pid \
-        -client $dowse -bind $dowse \
-        -dc dowse1 2>&1 >> $dowse_path/log/consul.log &
-    dowse_path=$orig_dowse_path 
+            -config-file $dowse_path/run/consul.json \
+            -config-dir $dowse_path/run/consul.d \
+            -ui-dir $dowse_path/consul/web \
+            -pid-file $dowse_path/run/consul.pid \
+            -client $dowse -bind $dowse \
+            -dc dowse.it 2>&1 >> $dowse_path/log/consul.log &
+        dowse_path=$orig_dowse_path
 
-   else
-    touch $dowse_path/log/consul.log 
-    fn "consul launch"
-    export GOMAXPROCS=$GOMAXPROCS
-        ./consul/consul agent \
-        -config-file $dowse_path/run/consul.json \
-        -config-dir $dowse_path/run/consul.d \
-        -ui-dir $dowse_path/consul/web \
-        -pid-file $dowse_path/run/consul.pid \
-        -client $dowse -bind $dowse \
-        -dc dowse1 -server -bootstrap 2>&1 >> $dowse_path/log/consul.log &
-   fi
+    else # running on gnu/linux
+
+        touch $dowse_path/log/consul.log
+        fn "consul launch"
+        export GOMAXPROCS=$GOMAXPROCS
+
+        # if root then run as server, else as client
+
+        if [[ -z $root ]]; then
+
+            ./consul/consul agent \
+                -config-file $dowse_path/run/consul.json \
+                -config-dir $dowse_path/run/consul.d \
+                -ui-dir $dowse_path/consul/web \
+                -pid-file $dowse_path/run/consul.pid \
+                -client $dowse -bind $dowse \
+                -dc dowse.it 2>&1 >> $dowse_path/log/consul.log &
+
+        else # running as root
+
+            ./consul/consul agent \
+                -config-file $dowse_path/run/consul.json \
+                -config-dir $dowse_path/run/consul.d \
+                -ui-dir $dowse_path/consul/web \
+                -pid-file $dowse_path/run/consul.pid \
+                -client $dowse -bind $dowse \
+                -dc dowse.it -server -bootstrap 2>&1 >> $dowse_path/log/consul.log &
+
+        fi
+
+    fi
 }
 
 consul-reload() {
