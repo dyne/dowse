@@ -9,7 +9,7 @@ dowse=10.0.0.254
 interface=eth0
 
 # hostname by which dowse will be known to the network
-hostname=dowse
+hostname=`hostname`
 
 # what connects us to the internet (i.e. adsl router)
 # make sure dhcp is deactivated there, we will give it!
@@ -27,14 +27,15 @@ firewall=yes # yes, no or flush (blank open)
 # its better to not change the values below.
 
 # under which system UID and GID dowse will run
-dowseuid=proxy
-dowsegid=proxy
+# default is current user
+# dowse_uid=proxy
+# dowse_gid=proxy
 
 # what network range we choose for our LAN (class C)
-dowsenet=10.0.0.0/24
+dowse_net=10.0.0.0/24
 
 # which netmask to be applied (default is class C)
-netmask=255.255.255.0
+netmask=255.255.0.0
 
 # ip range reserved for guests (first,last,leasetime)
-dowseguests=10.0.0.101,10.0.0.199,48h
+dowse_guests=10.0.0.101,10.0.0.199,48h

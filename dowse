@@ -24,8 +24,8 @@
 
 # {{{ GLOBALS
 
-dowse_version=0.6
-dowse_release_date="Feb/2015"
+dowse_version=0.7
+dowse_release_date="Mar/2015"
 
 # Messaging function with pretty coloring
 autoload colors
@@ -140,7 +140,7 @@ zerr() {
     error "error reported, operation aborted."
     return 1
 }
-TRAPZERR() { zerr; return 1 }
+# TRAPZERR() { zerr; return 1 }
 
 ckreq reqck() {
     err=0
@@ -358,9 +358,13 @@ version: $dowse_mod_version
 
 dowse-modules-start() {
     fn dowse-module-start
-    req=(mods)
     freq=(modules/enabled)
     ckreq
+
+    [[ ${#mods} = 0 ]] && {
+        act "no modules activated"
+        return 0
+    }
 
     for i in $mods; do
 
@@ -384,7 +388,7 @@ version: $dowse_mod_version"
 
     done
     
-    consul-reload
+    consul reload
 
 }
 

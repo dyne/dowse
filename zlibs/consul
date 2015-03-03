@@ -199,17 +199,17 @@ consul() {
 
     # handle differences between consul commands
 
-   os=`uname -o`
+    os=`uname -o`
 
-   [[ "$os" = "Cygwin" ]] && {
+    [[ "$os" = "Cygwin" ]] && {
 
-    touch $dowse_path/log/consul.log
-    fn "consul launch"
-    orig_dowse_path=$dowse_path
-    dowse_path="C:\\dowse\\"
-    func "dowse_path for consul: $dowse_path"
+        touch $dowse_path/log/consul.log
+        fn "consul launch"
+        orig_dowse_path=$dowse_path
+        dowse_path="C:\\dowse\\"
+        func "dowse_path for consul: $dowse_path"
 
-   }
+    }
 
     case $1 in
         agent)
@@ -218,22 +218,31 @@ consul() {
                 -config-dir $dowse_path/run/consul.d \
                 -dc dowse1 -client $dowse
             ;;
+
         'exec') # cheap security measure: chroot exec to dowse dir
             shift 1
-            $dowse_path/consul/consul exec $dowse_path/$*
+            $dowse_path/consul/consul exec \
+                -http-addr $dowse:8500 \
+                $dowse_path/$*
             ;;
         *)
-            $dowse_path/consul/consul $*
+            if [[ "$1" = "" ]]; then
+                $dowse_path/consul/consul
+            else
+                _command=$1
+                shift 1
+                $dowse_path/consul/consul \
+                    $_command --rpc-addr=$dowse:8400 $*
+            fi
             ;;
     esac
 
-   [[ "$os" = "Cygwin" ]] && {
+    [[ "$os" = "Cygwin" ]] && {
 
-    touch $dowse_path/log/consul.log
-    dowse_path=$orig_dowse_path
+        touch $dowse_path/log/consul.log
+        dowse_path=$orig_dowse_path
 
-   }
-
+    }
 
     return $?
 }
@@ -254,12 +263,12 @@ consul-start() {
     .consul-init
     .consul-conf
 
-   # "watches": [
-   #   {
-   #       "type": "checks",
-   #       "handler": "/usr/bin/health-check-handler.sh"
-   #   }
-   # ]
+    # "watches": [
+    #   {
+    #       "type": "checks",
+    #       "handler": "/usr/bin/health-check-handler.sh"
+    #   }
+    # ]
 
     os=`uname -o`
     if [[ "$os" = "Cygwin" ]]; then
@@ -270,7 +279,7 @@ consul-start() {
         dowse_path="C:\\dowse\\"
         func "dowse_path for consul: $dowse_path"
         export GOMAXPROCS=$GOMAXPROCS
-        ./consul/consul agent \
+        $dowse_path/consul/consul agent \
             -config-file $dowse_path/run/consul.json \
             -config-dir $dowse_path/run/consul.d \
             -ui-dir $dowse_path/consul/web \
@@ -288,36 +297,28 @@ consul-start() {
         # if root then run as server, else as client
 
         if [[ -z $root ]]; then
-
-            ./consul/consul agent \
+            act "launching consul as client"
+            $dowse_path/consul/consul agent \
                 -config-file $dowse_path/run/consul.json \
                 -config-dir $dowse_path/run/consul.d \
                 -ui-dir $dowse_path/consul/web \
                 -pid-file $dowse_path/run/consul.pid \
                 -client $dowse -bind $dowse \
-                -dc dowse.it 2>&1 >> $dowse_path/log/consul.log &
+                -dc dowse1 2>&1 >> $dowse_path/log/consul.log &
 
         else # running as root
-
-            ./consul/consul agent \
+            act "launching consul as server"
+            $dowse_path/consul/consul agent \
                 -config-file $dowse_path/run/consul.json \
                 -config-dir $dowse_path/run/consul.d \
                 -ui-dir $dowse_path/consul/web \
                 -pid-file $dowse_path/run/consul.pid \
                 -client $dowse -bind $dowse \
-                -dc dowse.it -server -bootstrap 2>&1 >> $dowse_path/log/consul.log &
+                -dc dowse1 -server -bootstrap 2>&1 >> $dowse_path/log/consul.log &
 
         fi
 
     fi
-}
-
-consul-reload() {
-    fn consul-reload
-    freq=(run/consul.pid)
-    ckreq
-
-    kill -HUP `cat $dowse_path/run/consul.pid`
 }
 
 consul-stop() {
