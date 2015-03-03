@@ -280,7 +280,7 @@ dowse-check() {
 
 # {{{ DOWSE FUNCTIONS
 dowse-setup() {
-    notice "Setup dowse core configurations"
+    fn "Setup dowse core configurations"
     freq=(conf/settings conf/network)
     ckreq
 

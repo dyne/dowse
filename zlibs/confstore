@@ -55,7 +55,7 @@ EOF
 
     shift 1
 
-    addr=${1:-dowse}
+    addr=${1:-$dowse}
  
     func "get $k $addr"
 

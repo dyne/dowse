@@ -64,7 +64,12 @@ EOF
     func "Generating hosts file"
     rm -f $dowse_path/run/hosts
     print "127.0.0.1 localhost" > $dowse_path/run/hosts
-    for i in ${(f)known}; do
+
+    typeset -aU known_network
+    # pass via an array to remove duplicates
+    for i in ${(f)known}; do known_network+=($i); done
+
+    for i in ${known_network}; do
         [[ "${i[1]}" = "#" ]] && continue
 
 	    if [[ "$i" -regex-match '^..:..:..:..:..:..' ]]; then
@@ -84,17 +89,16 @@ EOF
     rm -f $dowse_path/run/dnsmasq.network
     # TODO: first entry about self
     touch $dowse_path/run/dnsmasq.network
-    for i in ${(f)known}; do
+    for i in ${known_network}; do
 	    [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
 	        func "$i"
 	        # gather configuration into variables, line by line
 	        mac=${i[(w)1]}
 	        host=${i[(w)2]}
 	        ip=${i[(w)3]}
+	        # add a line to the dnsmasq host list
+	        print "dhcp-host=$mac, $host, $ip" >> $dowse_path/run/dnsmasq.network
             }
-	    # add a line to the dnsmasq host list
-	    print "dhcp-host=$mac, $host, $ip" >> $dowse_path/run/dnsmasq.network
-        
     done
     
     # append network settings to dnsmasq conf
@@ -111,8 +115,9 @@ dnsmasq-start() {
 
     act "launching dnsmasq"
 
-    func "dnsmasq --pid-file $dowse_path/run/dnsmasq.pid -C $dowse_path/$conf $*"
-    dnsmasq --pid-file=$dowse_path/run/dnsmasq.pid -C $dowse_path/$conf $*
+    func "dnsmasq -x $dowse_path/run/dnsmasq.pid -C $dowse_path/$conf $*"
+    dnsmasq -x $dowse_path/run/dnsmasq.pid -C $dowse_path/$conf $*
+ 
     return $?
 }
 
