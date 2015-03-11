@@ -33,6 +33,7 @@ vars+=(cluster_addr)
 .consul-init() {
     fn _consul-init
 
+    # set default values in case none is set already
     setdef() { consul_conf[$1]=${consul_conf[$1]:-$2} }
 
     setdef "datacenter" "dowse"
@@ -284,8 +285,8 @@ consul-start() {
             -config-dir $dowse_path/run/consul.d \
             -ui-dir $dowse_path/consul/web \
             -pid-file $dowse_path/run/consul.pid \
-            -client $dowse -bind $dowse \
-            -dc dowse.it 2>&1 >> $dowse_path/log/consul.log &
+            -client $dowse -bind $dowse -dc dowse.it \
+            2>&1 >> $dowse_path/log/consul.log &
         dowse_path=$orig_dowse_path
 
     else # running on gnu/linux
@@ -303,10 +304,11 @@ consul-start() {
                 -config-dir $dowse_path/run/consul.d \
                 -ui-dir $dowse_path/consul/web \
                 -pid-file $dowse_path/run/consul.pid \
-                -client $dowse -bind $dowse \
-                -dc dowse1 2>&1 >> $dowse_path/log/consul.log &
+                -client $dowse -bind $dowse -dc dowse1 \
+                2>&1 >> $dowse_path/log/consul.log &
 
         else # running as root
+
             act "launching consul as server"
             $dowse_path/consul/consul agent \
                 -config-file $dowse_path/run/consul.json \
@@ -314,7 +316,8 @@ consul-start() {
                 -ui-dir $dowse_path/consul/web \
                 -pid-file $dowse_path/run/consul.pid \
                 -client $dowse -bind $dowse \
-                -dc dowse1 -server -bootstrap 2>&1 >> $dowse_path/log/consul.log &
+                -dc dowse1 -server -bootstrap \
+                2>&1 >> $dowse_path/log/consul.log &
 
         fi
 
@@ -324,9 +327,11 @@ consul-start() {
 consul-stop() {
     fn consul-stop
     freq=(run/consul.pid)
-    ckreq
+    ckreq || return $?
 
-    act "sending quit signal to Dowse"
-    kill -INT `cat $dowse_path/run/consul.pid`
-    notice "Dowse is not running"
+    act "sending quit signal to Consul"
+
+    killpidfile run/consul.pid
+
+    act "Consul is not running."
 }

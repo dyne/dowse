@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-    
+
 require() {
     # check if an executable is found in $PATH
     command -v "$1" > /dev/null
@@ -18,17 +18,63 @@ require() {
     return 0
 }
 
-waitpid() {
-	# takes a pid
-	pid="$1"
-	lastnewline=0
-	while true; do
-		ps -p "$pid" > /dev/null
-		if [ $? = 0 ]; then print -n . ; lastnewline=1; sleep 1
-		else break; fi
-		# todo: timeout with kill -9
-	done
-	# just because we care to look good on the console
-	{ test $lastnewline = 1 } && { print }
+isrunning() {
+    fn isrunning
+    _pid="$1"
+    req=(_pid)
+    ckreq || return $?
+
+    # TODO: check if pid is running on CYGWIN and OSX
+    ps -p $_pid > /dev/null
+    return $?
 }
 
+killpid() {
+    fn killpid
+    _pid="$1"
+    req=(_pid)
+    ckreq || return $?
+
+    if isrunning $_pid; then
+        func "sending INT signal to pid: $_pid"
+        kill -INT $_pid
+        return 0
+    else
+        func "cannot kill pid not running: $_pid"
+        return 1
+    fi
+}
+
+killpidfile() {
+    fn killpidfile
+    _pidfile="$1"
+    freq=($_pidfile)
+    ckreq || return $?
+
+    _pid=`cat "$_pidfile"`
+    killpid $_pid # kill INT
+    waitpid $_pid # blocking
+    rm -f "$_pidfile"
+}
+
+waitpid() {
+    fn waitpid
+    _pid="$1"
+    req=(_pid)
+    ckreq || return $?
+
+    lastnewline=0
+    while true; do
+        if isrunning $_pid; then
+            print -n . ; lastnewline=1
+            sleep 1
+        else
+            break
+        fi
+        # todo: timeout with kill -9
+    done
+
+    # this because we care to look good on the console
+    [[ $lastnewline = 1 ]] && print
+
+}
