@@ -1,0 +1,60 @@
+
+* authentication
+
+  as every node will store its own public configurations in the k/v
+  store, other nodes will need to autenticate if the information is
+  really inserted by that node. this can be done with asymmetrical key
+  encryption and kept short and fast using a small ECC algo.
+  http://kmackay.ca/micro-ecc/ micro-ECC seems the most portable option
+
+  To encrypt streamed data and to make it secret, cr3 is interesting
+  https://github.com/stef/cr3
+
+
+* domotica
+
+https://github.com/Freeboard/freeboard
+
+http://connectsdk.com/discover/
+
+http://jpmens.net/2014/01/14/a-story-of-home-automation/
+
+
+
+* old notes (transparent proxy related)
+
+Scalable tor processes:
+http://www.mightycomputers.com/2012/02/04/how-to-create-an-advanced-proxy-server-using-tor-privoxy-and-squid/
+https://www.torservers.net/wiki/setup/server#multiple_tor_processes
+
+running multiple tor and privoxy on the same machine, use cache-peer round-robin in squid:
+
+cache_peer localhost parent 8118 0 round-robin no-query
+cache_peer localhost2 parent 8129 0 round-robin no-query
+cache_peer localhost3 parent 8230 0 round-robin no-query
+cache_peer localhost4 parent 8321 0 round-robin no-query
+cache_peer localhost5 parent 8421 0 round-robin no-query
+cache_peer localhost6 parent 8522 0 round-robin no-query
+cache_peer localhost7 parent 8623 0 round-robin no-query
+cache_peer localhost8 parent 8724 0 round-robin no-query
+
+
+HTTPS everywhere:
+https://github.com/mikecardwell/perl-HTTPSEverywhere
+rules: git://git.torproject.org/https-everywhere.git
+   in: src/chrome/content/rules
+
+CHROOT binary distribution (for x86 32bit? works everywhere then??)
+
+
+Log rotation or so (log only on debug?)
+
+UPNP port forwarding using miniupnpc (upnpc)
+to allow connections via ssh to the dowse box
+
+Watchdog to restart processess if they crash
+(a la restartd)
+
+DDOS protection (when used as DMZ)
+
+
