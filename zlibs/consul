@@ -196,7 +196,7 @@ consul-set-conf() {
 
 consul() {
     fn "consul $*"
-    req=(dowse_path)
+    req=(R)
     freq=(consul/consul)
     ckreq || return $?
 
@@ -211,8 +211,8 @@ consul() {
         touch $R/log/consul.log
         fn "consul launch"
         orig_dowse_path=$R
-        dowse_path="C:\\dowse\\"
-        func "dowse_path for consul: $R"
+        R="C:\\dowse\\"
+        func "Path for consul: $R"
 
     }
 
@@ -245,7 +245,7 @@ consul() {
     [[ "$os" = "Cygwin" ]] && {
 
         touch $R/log/consul.log
-        dowse_path=$orig_dowse_path
+        R=$orig_dowse_path
 
     }
 
@@ -281,8 +281,8 @@ consul-start() {
         touch $R/log/consul.log
         fn "consul launch"
         orig_dowse_path=$R
-        dowse_path="C:\\dowse\\"
-        func "dowse_path for consul: $R"
+        R="C:\\dowse\\"
+        func "Dowse path for consul: $R"
         export GOMAXPROCS=$GOMAXPROCS
         $R/consul/consul agent \
             -config-file $R/run/consul.json \
@@ -291,7 +291,7 @@ consul-start() {
             -pid-file $R/run/consul.pid \
             -client $dowse -bind $dowse -dc dowse.it \
             2>&1 >> $R/log/consul.log &
-        dowse_path=$orig_dowse_path
+        R=$orig_dowse_path
 
     else # running on gnu/linux
 
