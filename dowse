@@ -298,7 +298,7 @@ dowse-modules-start() {
         module-start
         popd
 
-        .set modules/$dowse_mod_name "
+        .put /modules/$dowse_mod_name "
 $dowse_mod_desc
 
 type: $dowse_mod_type
