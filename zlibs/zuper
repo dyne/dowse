@@ -392,7 +392,7 @@ EOF
             _fd=$REPLY
             #    func "tcp open on fd $fd"
             cat <<EOF >& $_fd
-PUT ${_path}/$_k HTTP/1.1
+PUT ${_path}${_k} HTTP/1.1
 User-Agent: Zuper/$zuper_version
 Host: ${_host}:${_port}
 Accept: */*
@@ -450,7 +450,7 @@ EOF
         # TODO: work out various parsers, this one works with consul.io
 
         cat <<EOF >& $_fd
-GET ${_path}/$_k HTTP/1.1
+GET ${_path}${_k} HTTP/1.1
 User-Agent: Zuper/$zuper_version
 Host: $_host:$_port
 Accept: */*

@@ -22,12 +22,12 @@ conf-load() {
         source conf/settings
 
         if [[ -r $R/run/consul.pid ]]; then
-            [[ -z $dowse ]]     || .put configuration/address   $dowse
-            [[ -z $interface ]] || .put configuration/interface $interface
-            [[ -z $hostname ]]  || .put configuration/hostname  $hostname
-            [[ -z $wan ]]       || .put configuration/wan       $wan
-            [[ -z $lan ]]       || .put configuration/lan       $lan
-            [[ -z $firewall ]]  || .put configuration/firewall  $firewall
+            [[ -z $dowse ]]     || .put /configuration/address   $dowse
+            [[ -z $interface ]] || .put /configuration/interface $interface
+            [[ -z $hostname ]]  || .put /configuration/hostname  $hostname
+            [[ -z $wan ]]       || .put /configuration/wan       $wan
+            [[ -z $lan ]]       || .put /configuration/lan       $lan
+            [[ -z $firewall ]]  || .put /configuration/firewall  $firewall
             # dowse_uid=proxy
             # dowse_gid=proxy
             
@@ -46,11 +46,11 @@ conf-load() {
 
     [[ -r $R/run/consul.pid ]] && {
         # gather settings from consul's key/value store
-        dowse=`.get configuration/address`
-        interface=`.get configuration/interface`
-        hostname=`.get configuration/hostname`
-        wan=`.get configuration/wan`
-        lan=`.get configuration/lan`
-        firewall=`.get configuration/firewall`
+        dowse=`.get /configuration/address`
+        interface=`.get /configuration/interface`
+        hostname=`.get /configuration/hostname`
+        wan=`.get /configuration/wan`
+        lan=`.get /configuration/lan`
+        firewall=`.get /configuration/firewall`
     }
 }
