@@ -152,12 +152,12 @@ module-start() {
 module-stop() {
 
     iptables -F ASSURED
-    iptables -X ASSURED
+    # iptables -X ASSURED
 
     iptables -F TCP
-    iptables -X TCP 
+    # iptables -X TCP 
 
     iptables -F ICMP
-    iptables -X ICMP 
+    # iptables -X ICMP 
 
 }

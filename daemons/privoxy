@@ -67,18 +67,12 @@ privoxy-start() {
 privoxy-stop() {
     fn privoxy-stop
     pidfile=$1
+    freq=($pidfile)
+    ckreq || return 0
 
-    [[ -r $pidfile ]] || {
-        warn "privoxy not running"
-        return 0
-    }
-
-    pushd $R
-    
     pid=`cat $pidfile`
     act "stopping privoxy pid: ::1 pid::" $pid
     kill $pid
     waitpid $pid
 
-    popd
 }

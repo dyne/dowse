@@ -11,23 +11,23 @@ dowse_mod_version=0.1
 # setup a transparent proxy on port 80
 # using squid and privoxy
 module-setup() {
-    rm -f run/squid.conf
-    squid-conf > run/squid.conf
-    cat <<EOF >> run/squid.conf
+    rm -f $R/run/squid.conf
+    squid-conf > $R/run/squid.conf
+    cat <<EOF >> $R/run/squid.conf
 http_port $dowse:3128 transparent
-pid_filename $dowse_path/run/squid.pid
-cache_log $dowse_path/log/squid_cache.log
+pid_filename $R/run/squid.pid
+cache_log $R/log/squid_cache.log
 access_log /dev/null
-# access_log $dowse_path/log/squid_access.log squid
+# access_log $R/log/squid_access.log squid
 # pass through privoxy
 cache_peer $dowse parent 8118 0 default no-query no-digest no-netdb-exchange proxy-only
 EOF
 
-    rm -f run/privoxy.conf
-    privoxy-conf > run/privoxy.conf
-    cat <<EOF >> run/privoxy.conf
-logdir $dowse_path/log/privoxy.log
-pid-file $dowse_path/run/privoxy.pid
+    rm -f $R/run/privoxy.conf
+    privoxy-conf > $R/run/privoxy.conf
+    cat <<EOF >> $R/run/privoxy.conf
+logdir $R/log/privoxy.log
+pid-file $R/run/privoxy.pid
 EOF
 
 }
@@ -36,20 +36,20 @@ module-start() {
 
     [[ -z $root ]] || {
         notice "setup transparent proxy to squid"
-        iptables -t nat -A PREROUTING -i $interface -s $dowsenet \
+        iptables -t nat -A PREROUTING -i $interface -s $dowse_net \
             -p tcp --dport 80 -j REDIRECT --to-port 3128
     }
 
-    privoxy-start run/privoxy.conf
+    privoxy-start $R/run/privoxy.conf
     
-    squid-start run/squid.conf
+    squid-start $R/run/squid.conf
 
 }
 
 module-stop() {
 
-    squid-stop run/squid.pid
+    squid-stop $R/run/squid.pid
 
-    privoxy-stop run/privoxy.pid
+    privoxy-stop $R/run/privoxy.pid
 
 }

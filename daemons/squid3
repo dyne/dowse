@@ -104,7 +104,6 @@ squid-start() {
 
     act "launching squid3"
 
-    pushd $R
     # # populate the volatile cache
     # setuidgid $dowseuid squid3 -z -f "$1"
     # launch the squid
@@ -113,29 +112,23 @@ squid-start() {
     else
         setuidgid $dowse_uid squid3 -f $conf $*
     fi
-    popd
+
 }
 
 squid-stop() {
     fn squid-stop
     pidfile=$1
-
-    [[ -r $pidfile ]] || {
-        warn "squid not running"
-        return 0
-    }
-
-    pushd $R
+    freq=($pidfile)
+    ckreq || return 0
 
     pid=`cat $pidfile`
     act "stopping squid ($pid)"
     if [[ -z $root ]]; then
-        squid3 -f run/squid.conf -k kill
+        squid3 -f $R/run/squid.conf -k kill
     else
-        setuidgid $dowse_uid squid3 -f run/squid.conf -k kill
+        setuidgid $dowse_uid squid3 -f $R/run/squid.conf -k kill
     fi
 
     waitpid $pid
 
-    popd
 }

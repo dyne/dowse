@@ -389,9 +389,9 @@ dowse-start() {
 
     }
 
-    act "launching consul"
+    notice "Launching consul"
     consul-start
-
+    sleep 3 # give it some time
 
     dowse-modules-setup
 
@@ -412,7 +412,7 @@ dowse-stop() {
         ebtables-stop
     }
 
-    consul-stop
+    # consul-stop
 
     notice "Dowse is not running."
 

@@ -410,8 +410,9 @@ EOF
 
             [[ "$_res" =~ "true" ]] || {
                 warn "failed PUT on restful key/value"
-                warn "endpoint: $_host:$_port/$_path"
+                warn "endpoint: ${_host}:${_port}${_path}"
                 warn "resource: $_k = $_v"
+                print - "$_res"
                 zerr
                 return 1
             }
