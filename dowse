@@ -27,35 +27,31 @@
 dowse_version=0.7
 dowse_release_date="Mar/2015"
 
-# Messaging function with pretty coloring
-autoload colors
-colors
+zkv=1
+restful=1
+helper=1
 
-typeset -aU vars
-typeset -aU arrs
-vars=()
-arrs=()
+R=${DOWSE_PATH:-`pwd`}
+
+source $R/zlibs/zuper
 
 # For gettext
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(dowse_path dowse_loaded debug quiet script fun)
+vars+=(R dowse_loaded debug quiet script fun)
 vars+=(last_notice last_act last_func)
 vars+=(root)
 arrs+=(mods)
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
-dowse_path=${DOWSE_PATH:-`pwd`}
-debug=${debug:-0}
-quiet=${quiet:-0}
+DEBUG=${DEBUG:-0}
+QUIET=${QUIET:-0}
+LOG=${LOG:-""}
 
 # uid/git
 vars+=(dowse_uid dowse_gid)
-
-# function requirement checks
-arrs+=(req freq)
 
 # globals filled by lease parser
 arrs+=(host mac ip)
@@ -66,8 +62,7 @@ arrs+=(dowse_mod_type dowse_mod_ports dowse_mod_deps)
 arrs+=(dowse_mod_authors dowse_mod_tags)
 
 # consul's configuration map
-typeset -A consul_conf
-typeset -A consul_watch
+maps+=(consul_conf consul_watch)
 
 zmodload zsh/system
 zmodload zsh/mapfile
@@ -76,94 +71,23 @@ zmodload zsh/sched
 zmodload zsh/system
 zmodload zsh/net/tcp
 
-source $dowse_path/zlibs/messaging.sh
-source $dowse_path/zlibs/processes.sh
-source $dowse_path/zlibs/iptables.sh
-source $dowse_path/zlibs/ebtables.sh
-source $dowse_path/zlibs/confstore
-source $dowse_path/zlibs/consul
+source $R/zlibs/messaging.sh
+source $R/zlibs/processes.sh
+source $R/zlibs/iptables.sh
+source $R/zlibs/ebtables.sh
+source $R/zlibs/confstore
+source $R/zlibs/consul
 
-source $dowse_path/daemons/dnsmasq
-source $dowse_path/daemons/squid3
-source $dowse_path/daemons/privoxy
-source $dowse_path/daemons/polipo
+source $R/daemons/dnsmasq
+source $R/daemons/squid3
+source $R/daemons/privoxy
+source $R/daemons/polipo
 
-# initialize globals only after sourcing
-# since zlibs may contain more variable declarations
-for v in $vars; do
-    typeset -h $v
-done
-for a in $arrs; do
-    typeset -a $a
-done
+# conclude initialization
+source $R/zlibs/zuper.init
 
-fun=""
-last_act=""
-last_func=""
-last_notice=""
 consul_conf=()
 consul_watch=()
-
-dump dowse-internal-status() {
-    act "Dowse status dump:"
-    for v in $vars; do
-        print "$v \t ${(P)v}"
-    done
-    for a in $arrs; do
-        print "$a \t ${(P)a}"
-    done
-}
-
-
-# debugging and require control
-throw fn() {
-    local msg="$1"
-    command -v gettext 1>/dev/null 2>/dev/null \
-        && msg="$(gettext -s "$1")"
-    for i in $(seq 2 ${#}); do
-        msg=${(S)msg//::$(($i - 1))*::/$*[$i]}
-    done
-
-    fun="$msg"
-    func "$fun"
-#    RPROMPT="$fun"
-    req=()
-    freq=()
-}
-
-zerr() { 
-    error "error in: ${fun:-$last_notice}"
-
-    [[ "$last_func" = "" ]] || warn "called in: $last_func"
-    [[ "$last_act" = "" ]] || warn "called in: $last_act"
-    [[ "$fun" = "" ]] || [[ "$fun" -regex-match "^Dowse" ]] || warn "called in: $last_notice"
-    error "error reported, operation aborted."
-    return 1
-}
-# TRAPZERR() { zerr; return 1 }
-
-ckreq reqck() {
-    err=0
-    for v in $req; do
-        [[ "${(P)v}" = "" ]] && {
-            warn "required setting is blank: $v"
-            err=1
-        }
-    done
-
-    [[ $err = 1 ]] && return $err
-
-    for f in $freq; do
-        # exists and has size greater than zero
-        [[ -s $dowse_path/$f ]] || {
-            warn "required file empty: $f"
-            err=1
-        }
-    done
-    return $err
-}
-
-
 
 if [[ $dowse_loaded = 1 ]]; then
     act "Dowse CLI reloaded ::1::" $dowse_version
@@ -214,6 +138,12 @@ EOF
 
 dowse-check() {
     fn dowse-check
+    func "$R/conf dowse_path_configuration"
+    func "$R/conf/settings dowse_path_configuration"
+    func "$R/conf/network dowse_path_configuration"
+    freq=($R/conf $R/conf/settings $R/conf/network)
+    ckreq || return $?
+
     act "checking requirements to run dowse..."
     # this is a check on binaries present in PATH
     # if not found, Dowse will abort.
@@ -239,36 +169,28 @@ dowse-check() {
         $dowse_uid $dowse_gid $TTY
 
 
-    throw "$dowse_path/conf dowse_path_configuration"
-    test -r $dowse_path/conf
-    
-    throw "$dowse_path/conf/settings dowse_path_configuration"
-    test -r $dowse_path/conf/settings
-    
-    throw "$dowse_path/conf/network dowse_path_configuration"
-    test -r $dowse_path/conf/network 
 
     act "daemons running as user and group $dowse_uid:$dowse_gid"
-    mkdir -p $dowse_path/log
-    mkdir -p $dowse_path/run
+    mkdir -p $R/log
+    mkdir -p $R/run
     [[ -z $root ]] || {
         # setup dirs
-        chmod go-rwx $dowse_path/log
-        chown -R $dowse_uid:$dowse_gid $dowse_path/log
+        chmod go-rwx $R/log
+        chown -R $dowse_uid:$dowse_gid $R/log
         
-        chmod go-rwx $dowse_path/run
-        chown -R $dowse_uid:$dowse_gid $dowse_path/run
+        chmod go-rwx $R/run
+        chown -R $dowse_uid:$dowse_gid $R/run
     }
 
     func "::1 dir:: directory writable by ::2 uid::" \
         run $dowse_uid
-    touch $dowse_path/run/test
-    rm -f $dowse_path/run/test
+    touch $R/run/test
+    rm -f $R/run/test
 
     func "::1 dir:: directory writable by ::2 uid::" \
         log $dowse_uid
-    touch $dowse_path/log/test
-    rm -f $dowse_path/log/test
+    touch $R/log/test
+    rm -f $R/log/test
 
     act "all requirements in place"
 
@@ -281,7 +203,7 @@ dowse-check() {
 # {{{ DOWSE FUNCTIONS
 dowse-setup() {
     fn "Setup dowse core configurations"
-    freq=(conf/settings conf/network)
+    freq=($R/conf/settings $R/conf/network)
     ckreq
 
     dowse-check
@@ -294,19 +216,19 @@ dowse-setup() {
     [[ -z $root ]] || {
 
         # generate dnsmasq configuration
-        rm -f $dowse_path/run/dnsmasq.conf
-        dnsmasq-conf > $dowse_path/run/dnsmasq.conf
+        rm -f $R/run/dnsmasq.conf
+        dnsmasq-conf > $R/run/dnsmasq.conf
 
         # set permissions of setup files
-        chown -R $dowse_uid:$dowse_gid $dowse_path/log
-        chown -R $dowse_uid:$dowse_gid $dowse_path/run
+        chown -R $dowse_uid:$dowse_gid $R/log
+        chown -R $dowse_uid:$dowse_gid $R/run
 
     }
 
-    chmod go-rwx $dowse_path/log
-    chmod go-rwx $dowse_path/run
+    chmod go-rwx $R/log
+    chmod go-rwx $R/run
 
-    act "setup completed in ::1 path::" $dowse_path
+    act "setup completed in ::1 path::" $R
     return 0
 }
 
@@ -316,15 +238,14 @@ dowse-setup() {
 
 dowse-modules-setup() {
     fn dowse-module-setup
-    req=(dowse_path)
-    freq=(modules/enabled)
-    ckreq
+    freq=($R/modules/enabled)
+    ckreq || return $?
 
     mods=()
-    enabled=`find -L $dowse_path/modules/enabled -maxdepth 1 -type d`
+    enabled=`find -L $R/modules/enabled -maxdepth 1 -type d`
 
     # remove all service definitions for modules from consul
-    consmods=`find $dowse_path/run/consul.d -maxdepth 1 -type f -name 'module-*.json'`
+    consmods=`find $R/run/consul.d -maxdepth 1 -type f -name 'module-*.json'`
     for m in ${(f)consmods}; do
         rm -f $m
     done
@@ -338,7 +259,7 @@ dowse-modules-setup() {
         notice "Setup module: ::1 name::" $dowse_mod_name
         act "$dowse_mod_desc"
 
-        pushd $dowse_path
+        pushd $R
         module-setup
         popd
 
@@ -358,7 +279,7 @@ version: $dowse_mod_version
 
 dowse-modules-start() {
     fn dowse-module-start
-    freq=(modules/enabled)
+    freq=($R/modules/enabled)
     ckreq
 
     [[ ${#mods} = 0 ]] && {
@@ -373,7 +294,7 @@ dowse-modules-start() {
         notice "Setup module: ::1 name::" $dowse_mod_name
         act "$dowse_mod_desc"
 
-        pushd $dowse_path
+        pushd $R
         module-start
         popd
 
@@ -395,14 +316,14 @@ version: $dowse_mod_version"
 dowse-modules-stop() {
     fn dowse-module-stop
 
-    enabled=`find -L $dowse_path/modules/enabled -maxdepth 1 -type d`
+    enabled=`find -L $R/modules/enabled -maxdepth 1 -type d`
     for i in ${(f)enabled}; do
 
         [[ -r $i/dowse ]] || continue
 
         source $i/dowse
         
-        pushd $dowse_path
+        pushd $R
         module-stop
         popd
 
@@ -416,12 +337,10 @@ dowse-modules-stop() {
 dowse-start() {
     fn dowse-start
     req=(interface dowse netmask wan)
-    freq=(run/dnsmasq.conf)
+    freq=($R/run/dnsmasq.conf)
     ckreq
 
-    function TRAPZERR() { }
-
-    [[ -r $dowse_path/run/consul.pid ]] && {
+    [[ -r $R/run/consul.pid ]] && {
         warn "Dowse is already running"
         return 0
     }
@@ -485,7 +404,7 @@ dowse-stop() {
  
     dowse-modules-stop
 
-    [[ -r $dowse_path/run/consul.pid ]] && consul-stop
+    [[ -r $R/run/consul.pid ]] && consul-stop
 
     [[ -z $root ]] || {
         dnsmasq-stop
@@ -493,7 +412,9 @@ dowse-stop() {
         ebtables-stop
     }
 
-    act "Dowse is not running"
+    consul-stop
+
+    notice "Dowse is not running."
 
 }
 
@@ -510,12 +431,12 @@ END {
   printf "mac=("; for(i=0;i<c;i++) { printf "%s ", mac[i] }; printf ")\n"
   printf "ip=("; for(i=0;i<c;i++) { printf "%s ", ip[i] }; printf ")\n"
   printf "host=("; for(i=0;i<c;i++) { printf "%s ", host[i] }; printf ")\n"
-}' $dowse_path/run/leases
+}' $R/run/leases
 }
 
 dowse-status() {
     fn dowse-status
-    freq=(run/leases)
+    freq=($R/run/leases)
     ckreq
 
     typeset -a mac ip host ping known
@@ -530,7 +451,7 @@ dowse-status() {
         [[ $mac[$i] = "" ]] && { continue }
 
         known[$i]="unknown"
-        grep "${mac[$i]}" $dowse_path/conf/network > /dev/null
+        grep "${mac[$i]}" $R/conf/network > /dev/null
         [[ $? = 0 ]] && known[$i]="known"
 
         ping[$i]="offline"
@@ -561,7 +482,7 @@ dowse-scan() {
 
     for s in {0..${#mac}}; do
         [[ $mac[$s] == "" ]] && { continue }
-        grep "${mac[$s]}" $dowse_path/conf/network > /dev/null
+        grep "${mac[$s]}" $R/conf/network > /dev/null
 	    [[ $? == 1 ]] && { # unknown
 	        act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
             func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""

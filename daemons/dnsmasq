@@ -34,8 +34,8 @@ address=/$hostname.$lan/$dowse
 bogus-priv
 cache-size=300
 dhcp-range=$dowse_guests
-addn-hosts=$dowse_path/run/hosts
-dhcp-leasefile=$dowse_path/run/leases
+addn-hosts=$R/run/hosts
+dhcp-leasefile=$R/run/leases
 domain-needed
 domain=$lan
 expand-hosts
@@ -48,22 +48,22 @@ user=$dowse_uid
 group=$dowse_gid
 EOF
     # read the network configuration of known hosts
-    known=`cat $dowse_path/conf/network`
-    act "$dowse_path/conf/network (${#known} bytes parsed)"
+    known=`cat $R/conf/network`
+    act "$R/conf/network (${#known} bytes parsed)"
     # for i in ${(f)known}; do
     #     func "$i"
     # done
 
     # DNSMasq LAN resolution
     func "Fixing entries for known peers"
-    rm -f $dowse_path/run/dnsmasq.network
+    rm -f $R/run/dnsmasq.network
     # this is basically a dnsmasq host configuration file
-    print "dhcp-option=option:router,$dowse" > $dowse_path/run/dnsmasq.network
+    print "dhcp-option=option:router,$dowse" > $R/run/dnsmasq.network
 
     # this is our generated hosts file
     func "Generating hosts file"
-    rm -f $dowse_path/run/hosts
-    print "127.0.0.1 localhost" > $dowse_path/run/hosts
+    rm -f $R/run/hosts
+    print "127.0.0.1 localhost" > $R/run/hosts
 
     typeset -aU known_network
     # pass via an array to remove duplicates
@@ -82,13 +82,13 @@ EOF
 	    fi
 	    [[ "$host" = "ignore" ]] || {
 	        # add a line to the hosts list
-	        print "$ip $host" >> $dowse_path/run/hosts }
+	        print "$ip $host" >> $R/run/hosts }
     done
     
     func "generating dnsmask.network"
-    rm -f $dowse_path/run/dnsmasq.network
+    rm -f $R/run/dnsmasq.network
     # TODO: first entry about self
-    touch $dowse_path/run/dnsmasq.network
+    touch $R/run/dnsmasq.network
     for i in ${known_network}; do
 	    [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
 	        func "$i"
@@ -97,12 +97,12 @@ EOF
 	        host=${i[(w)2]}
 	        ip=${i[(w)3]}
 	        # add a line to the dnsmasq host list
-	        print "dhcp-host=$mac, $host, $ip" >> $dowse_path/run/dnsmasq.network
+	        print "dhcp-host=$mac, $host, $ip" >> $R/run/dnsmasq.network
             }
     done
     
     # append network settings to dnsmasq conf
-    cat $dowse_path/run/dnsmasq.network
+    cat $R/run/dnsmasq.network
     
 }
 
@@ -115,8 +115,8 @@ dnsmasq-start() {
 
     act "launching dnsmasq"
 
-    func "dnsmasq -x $dowse_path/run/dnsmasq.pid -C $dowse_path/$conf $*"
-    dnsmasq -x $dowse_path/run/dnsmasq.pid -C $dowse_path/$conf $*
+    func "dnsmasq -x $R/run/dnsmasq.pid -C $R/$conf $*"
+    dnsmasq -x $R/run/dnsmasq.pid -C $R/$conf $*
  
     return $?
 }
@@ -125,22 +125,22 @@ dnsmasq-stop() {
     fn dnsmasq-stop
 
     if [[ "$1" = "" ]]; then
-        [[ -r $dowse_path/run/dnsmasq.pid ]] || {
+        [[ -r $R/run/dnsmasq.pid ]] || {
 	   warn "dnsmasq not found running"
 	   return 0
         }
-	pid=`cat $dowse_path/run/dnsmasq.pid`
+	pid=`cat $R/run/dnsmasq.pid`
     else
-        [[ -r "$dowse_path/$1" ]] || {
+        [[ -r "$R/$1" ]] || {
            error "dnsmasq pid not found: $1"
            return 1
         }
-        pid=`cat $dowse_path/$1`
+        pid=`cat $R/$1`
     fi
 
 	act "Stopping dnsmasq ($pid)"
 	kill $pid
 	waitpid $pid
-	rm -f $dowse_path/run/dnsmasq.pid
+	rm -f $R/run/dnsmasq.pid
 
 }

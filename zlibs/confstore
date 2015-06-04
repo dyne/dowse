@@ -8,90 +8,20 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 # using zsh/tcp instead of spawning curl
 # and perhaps querying with one call using ?recursive
 
-.conf-set-kv .set() {
-    fn .conf-set-kv
-    freq=(run/consul.pid)
-    ckreq
-
-    k=$1
-    v=$2
-
-    ztcp $dowse 8500
-    fd=$REPLY
-#    func "tcp open on fd $fd"
-    cat <<EOF >& $fd
-PUT /v1/kv/$k HTTP/1.1
-User-Agent: Dowse/$dowse_version
-Host: $dowse:8500
-Accept: */*
-Content-Length: ${#v}
-Content-Type: application/x-www-form-urlencoded
-
-EOF
-
-    print -n "$v" >& $fd
-
-    sysread -i $fd res
-
-    # close connection
-    ztcp -c $fd
-
-    [[ "$res" =~ "true" ]] || {
-        warn "cannot set key/value in consul: $k = $v"
-        return 1
-    }
-
-    func "set $k = $v"
-    return 0
-
-}    
-
-.conf-get-kv .get() {
-    fn .conf-get-kv
-    freq=(run/consul.pid)
-    ckreq
-
-    k=$1
-
-    shift 1
-
-    addr=${1:-$dowse}
- 
-    func "get $k $addr"
-
-    ztcp $addr 8500
-    fd=$REPLY
-#    func "tcp open on fd $fd"
-    cat <<EOF >& $fd
-GET /v1/kv/$k HTTP/1.1
-User-Agent: Dowse/$dowse_version
-Host: $addr:8500
-Accept: */*
-
-EOF
-    sysread -i $fd -o 1 | awk -F: '
-/"Value":/ { gsub(/"|}]/,"",$7) ; print $7 }' | base64 -d
-
-    # close connection
-    ztcp -c $fd
-
-    return 0
-
-}
-
+# wrapper to communicate to our local consul
+.set() { restful.put $dowse 8500 v1/kv/ $* }
+.get() { restful.get $dowse 8500 v1/kv/ $* }
 
 
 conf-load() {
     fn conf-load
-    req=(dowse_path)
-    ckreq
 
     # conf/settings override all
-    [[ -r $dowse_path/conf/settings ]] && {
+    [[ -r $R/conf/settings ]] && {
         act "loading configuration from conf/settings"
         source conf/settings
 
-        if [[ -r $dowse_path/run/consul.pid ]]; then
+        if [[ -r $R/run/consul.pid ]]; then
             [[ -z $dowse ]]     || .set configuration/address   $dowse
             [[ -z $interface ]] || .set configuration/interface $interface
             [[ -z $hostname ]]  || .set configuration/hostname  $hostname
@@ -110,21 +40,17 @@ conf-load() {
             # ip range reserved for guests (first,last,leasetime)
             # dowse_guests=10.0.0.101,10.0.0.199,48h
         else
-            warn "Dowse is not running, launch with: dowse-start"
+            warn "Consul is not running, launch with: dowse-start"
         fi
     }
 
-    [[ -r $dowse_path/run/consul.pid ]] && {
+    [[ -r $R/run/consul.pid ]] && {
         # gather settings from consul's key/value store
-        dowse=`.conf-get-kv configuration/address`
-        interface=`.conf-get-kv configuration/interface`
-        hostname=`.conf-get-kv configuration/hostname`
-        wan=`.conf-get-kv configuration/wan`
-        lan=`.conf-get-kv configuration/lan`
-        firewall=`.conf-get-kv configuration/firewall`
+        dowse=`.get configuration/address`
+        interface=`.get configuration/interface`
+        hostname=`.get configuration/hostname`
+        wan=`.get configuration/wan`
+        lan=`.get configuration/lan`
+        firewall=`.get configuration/firewall`
     }
-}
-
-conf-save() {
-
 }

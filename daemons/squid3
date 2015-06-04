@@ -19,7 +19,7 @@ memory_pools off
 
 # dns client section
 dns_nameservers 127.0.0.1
-hosts_file $dowse_path/run/hosts
+hosts_file $R/run/hosts
 append_domain .$lan
 positive_dns_ttl 8 hours
 negative_dns_ttl 30 seconds
@@ -73,9 +73,9 @@ acl apache rep_header Server ^Apache
 
 cache_mgr Dowse
 
-hosts_file $dowse_path/run/hosts
+hosts_file $R/run/hosts
 
-coredump_dir $dowse_path/log
+coredump_dir $R/log
 
 never_direct allow all
 
@@ -104,7 +104,7 @@ squid-start() {
 
     act "launching squid3"
 
-    pushd $dowse_path
+    pushd $R
     # # populate the volatile cache
     # setuidgid $dowseuid squid3 -z -f "$1"
     # launch the squid
@@ -125,7 +125,7 @@ squid-stop() {
         return 0
     }
 
-    pushd $dowse_path
+    pushd $R
 
     pid=`cat $pidfile`
     act "stopping squid ($pid)"

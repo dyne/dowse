@@ -46,7 +46,7 @@ privoxy-start() {
     freq=($conf)
     ckreq
 
-    pushd $dowse_path
+    pushd $R
 
     # pid-file is not really a privoxy directive
     pidfile=`awk '/^pid-file/ { print $2 }' $conf`
@@ -73,7 +73,7 @@ privoxy-stop() {
         return 0
     }
 
-    pushd $dowse_path
+    pushd $R
     
     pid=`cat $pidfile`
     act "stopping privoxy pid: ::1 pid::" $pid

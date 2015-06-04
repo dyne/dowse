@@ -35,8 +35,8 @@ dnsNameServer = $dowse
 daemonise = true
 
 # to be specified by caller module
-# pidFile = $dowse_path/log/polipo.pid
-# logFile = $dowse_path/log/polipo.log
+# pidFile = $R/log/polipo.pid
+# logFile = $R/log/polipo.log
 
 # to be tested
 # disableVia=false
@@ -59,7 +59,7 @@ polipo-start() {
     freq=($conf)
     ckreq
 
-    pushd $dowse_path
+    pushd $R
 
     if [[ -z $root ]]; then
         polipo -c $conf $*
@@ -79,7 +79,7 @@ polipo-stop() {
         return 0
     }
 
-    pushd $dowse_path
+    pushd $R
 
     pid=`cat $1`
     act "stopping polipo pid: ::1 pid::" $pid

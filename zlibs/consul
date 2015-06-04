@@ -26,18 +26,18 @@
 # safety setting
 GOMAXPROCS=10
 
-mkdir -p $sdk_path/datadir
+mkdir -p $R/datadir
 
 vars+=(cluster_addr)
 
 .consul-init() {
-    fn _consul-init
+    fn ".consul-init $*"
 
     # set default values in case none is set already
     setdef() { consul_conf[$1]=${consul_conf[$1]:-$2} }
 
     setdef "datacenter" "dowse"
-    setdef "data_dir" "$dowse_path/consul/datadir"
+    setdef "data_dir" "$R/consul/datadir"
     setdef "log_level" "INFO"
     setdef "node_name" "$hostname"
     setdef "disable_update_check" true
@@ -47,16 +47,16 @@ vars+=(cluster_addr)
 
 
     setdef() { consul_watch[$1]=${consul_watch[$1]:-$2} }
-    setdef watches $dowse_path/consul/watches
+    setdef watches $R/consul/watches
 
     unset setdef
 
-    mkdir -p $dowse_path/run/consul.d
+    mkdir -p $R/run/consul.d
 
     # check binary platform
     arch=`uname -m`
 
-    pushd $dowse_path/consul
+    pushd $R/consul
     case $arch in
         x86_64)
             act "detected 64bit binary architecture"
@@ -85,7 +85,11 @@ vars+=(cluster_addr)
 
 # renders configuration
 .consul-conf() {
-    conf=$dowse_path/run/consul.json
+    fn ".consul-conf $*"
+    req=(consul_conf)
+    ckreq || return $?
+
+    conf=$R/run/consul.json
     rm -f $conf
     touch $conf
 
@@ -136,15 +140,15 @@ vars+=(cluster_addr)
 # dowse_mod_* vars must be initialized by having sourced a dowse
 # module before calling this function
 consul-add-service() {
-    fn consul-add-service-module
+    fn "consul-add-service $*"
     req=(dowse_mod_name dowse_mod_ports)
-    freq=(run/consul.d)
-    ckreq
+    freq=($R/run/consul.d)
+    ckreq || return $?
 
     # use a generic check or the one provided by the module
-    check=$dowse_path/consul/generic_check
-    [[ -r $dowse_path/modules/enabled/$dowse_mod_name/check ]] && {
-        check=$dowse_path/modules/enabled/$dowse_mod_name/check
+    check=$R/consul/generic_check
+    [[ -r $R/modules/enabled/$dowse_mod_name/check ]] && {
+        check=$R/modules/enabled/$dowse_mod_name/check
     }
 
     # parse the ports definition in module to list services
@@ -157,7 +161,7 @@ consul-add-service() {
         # TODO: make better tags
 
         # each service needs a separate file
-        conf=$dowse_path/run/consul.d/module-$serv.json
+        conf=$R/run/consul.d/module-$serv.json
         rm -f $conf
         cat <<EOF > $conf
 {
@@ -181,9 +185,9 @@ EOF
 
 # changes consul configuration and reloads it
 consul-set-conf() {
-    fn consul-set
+    fn "consul-set $*"
     freq=(consul/consul)
-    ckreq
+    ckreq || return $?
 
     consul_conf[$1]=${consul_conf[$1]:-$2}
     .consul-conf
@@ -191,10 +195,10 @@ consul-set-conf() {
 }
 
 consul() {
-    fn "consul ${=*}"
+    fn "consul $*"
     req=(dowse_path)
     freq=(consul/consul)
-    ckreq
+    ckreq || return $?
 
     TRAPZERR() { }
 
@@ -204,35 +208,35 @@ consul() {
 
     [[ "$os" = "Cygwin" ]] && {
 
-        touch $dowse_path/log/consul.log
+        touch $R/log/consul.log
         fn "consul launch"
-        orig_dowse_path=$dowse_path
+        orig_dowse_path=$R
         dowse_path="C:\\dowse\\"
-        func "dowse_path for consul: $dowse_path"
+        func "dowse_path for consul: $R"
 
     }
 
     case $1 in
         agent)
-            $dowse_path/consul/consul $* \
-                -config-file $dowse_path/run/consul.json \
-                -config-dir $dowse_path/run/consul.d \
+            $R/consul/consul $* \
+                -config-file $R/run/consul.json \
+                -config-dir $R/run/consul.d \
                 -dc dowse1 -client $dowse
             ;;
 
         'exec') # cheap security measure: chroot exec to dowse dir
             shift 1
-            $dowse_path/consul/consul exec \
+            $R/consul/consul exec \
                 -http-addr $dowse:8500 \
-                $dowse_path/$*
+                $R/$*
             ;;
         *)
             if [[ "$1" = "" ]]; then
-                $dowse_path/consul/consul
+                $R/consul/consul
             else
                 _command=$1
                 shift 1
-                $dowse_path/consul/consul \
+                $R/consul/consul \
                     $_command --rpc-addr=$dowse:8400 $*
             fi
             ;;
@@ -240,7 +244,7 @@ consul() {
 
     [[ "$os" = "Cygwin" ]] && {
 
-        touch $dowse_path/log/consul.log
+        touch $R/log/consul.log
         dowse_path=$orig_dowse_path
 
     }
@@ -250,16 +254,16 @@ consul() {
 
 consul-start() {
     fn "consul-start $*"
-    req=(dowse_path)
-    ckreq
+    req=(R)
+    ckreq || return $?
 
-    [[ -f $dowse_path/run/consul.pid ]] && {
-        warn "consul running: (`cat $dowse_path/run/consul.pid`) (run/consul.pid)"
+    [[ -f $R/run/consul.pid ]] && {
+        warn "consul running: (`cat $R/run/consul.pid`) (run/consul.pid)"
         warn "call consul-stop to restart"
         return 1
     }
 
-    mkdir -p $dowse_path/consul/datadir
+    mkdir -p $R/consul/datadir
 
     .consul-init
     .consul-conf
@@ -274,24 +278,24 @@ consul-start() {
     os=`uname -o`
     if [[ "$os" = "Cygwin" ]]; then
 
-        touch $dowse_path/log/consul.log
+        touch $R/log/consul.log
         fn "consul launch"
-        orig_dowse_path=$dowse_path
+        orig_dowse_path=$R
         dowse_path="C:\\dowse\\"
-        func "dowse_path for consul: $dowse_path"
+        func "dowse_path for consul: $R"
         export GOMAXPROCS=$GOMAXPROCS
-        $dowse_path/consul/consul agent \
-            -config-file $dowse_path/run/consul.json \
-            -config-dir $dowse_path/run/consul.d \
-            -ui-dir $dowse_path/consul/web \
-            -pid-file $dowse_path/run/consul.pid \
+        $R/consul/consul agent \
+            -config-file $R/run/consul.json \
+            -config-dir $R/run/consul.d \
+            -ui-dir $R/consul/web \
+            -pid-file $R/run/consul.pid \
             -client $dowse -bind $dowse -dc dowse.it \
-            2>&1 >> $dowse_path/log/consul.log &
+            2>&1 >> $R/log/consul.log &
         dowse_path=$orig_dowse_path
 
     else # running on gnu/linux
 
-        touch $dowse_path/log/consul.log
+        touch $R/log/consul.log
         fn "consul launch"
         export GOMAXPROCS=$GOMAXPROCS
 
@@ -299,25 +303,25 @@ consul-start() {
 
         if [[ -z $root ]]; then
             act "launching consul as client"
-            $dowse_path/consul/consul agent \
-                -config-file $dowse_path/run/consul.json \
-                -config-dir $dowse_path/run/consul.d \
-                -ui-dir $dowse_path/consul/web \
-                -pid-file $dowse_path/run/consul.pid \
+            $R/consul/consul agent \
+                -config-file $R/run/consul.json \
+                -config-dir $R/run/consul.d \
+                -ui-dir $R/consul/web \
+                -pid-file $R/run/consul.pid \
                 -client $dowse -bind $dowse -dc dowse1 \
-                2>&1 >> $dowse_path/log/consul.log &
+                2>&1 >> $R/log/consul.log &
 
         else # running as root
 
             act "launching consul as server"
-            $dowse_path/consul/consul agent \
-                -config-file $dowse_path/run/consul.json \
-                -config-dir $dowse_path/run/consul.d \
-                -ui-dir $dowse_path/consul/web \
-                -pid-file $dowse_path/run/consul.pid \
+            $R/consul/consul agent \
+                -config-file $R/run/consul.json \
+                -config-dir $R/run/consul.d \
+                -ui-dir $R/consul/web \
+                -pid-file $R/run/consul.pid \
                 -client $dowse -bind $dowse \
                 -dc dowse1 -server -bootstrap \
-                2>&1 >> $dowse_path/log/consul.log &
+                2>&1 >> $R/log/consul.log &
 
         fi
 
@@ -326,7 +330,7 @@ consul-start() {
 
 consul-stop() {
     fn consul-stop
-    freq=(run/consul.pid)
+    freq=($R/run/consul.pid)
     ckreq || return $?
 
     act "sending quit signal to Consul"
