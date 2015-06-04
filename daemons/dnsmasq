@@ -72,75 +72,66 @@ EOF
     for i in ${known_network}; do
         [[ "${i[1]}" = "#" ]] && continue
 
-	    if [[ "$i" -regex-match '^..:..:..:..:..:..' ]]; then
-#	    if [ $? = 0 ]; then # mac address is first
-	        host=${i[(w)2]}
-	        ip=${i[(w)3]}
-	    else # no mac address specified
-	        host=${i[(w)1]}
-	        ip=${i[(w)2]}
-	    fi
-	    [[ "$host" = "ignore" ]] || {
-	        # add a line to the hosts list
-	        print "$ip $host" >> $R/run/hosts }
+        if [[ "$i" -regex-match '^..:..:..:..:..:..' ]]; then
+#       if [ $? = 0 ]; then # mac address is first
+            host=${i[(w)2]}
+            ip=${i[(w)3]}
+        else # no mac address specified
+            host=${i[(w)1]}
+            ip=${i[(w)2]}
+        fi
+        [[ "$host" = "ignore" ]] || {
+            # add a line to the hosts list
+            print "$ip $host" >> $R/run/hosts }
     done
-    
+
     func "generating dnsmask.network"
     rm -f $R/run/dnsmasq.network
     # TODO: first entry about self
     touch $R/run/dnsmasq.network
     for i in ${known_network}; do
-	    [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
-	        func "$i"
-	        # gather configuration into variables, line by line
-	        mac=${i[(w)1]}
-	        host=${i[(w)2]}
-	        ip=${i[(w)3]}
-	        # add a line to the dnsmasq host list
-	        print "dhcp-host=$mac, $host, $ip" >> $R/run/dnsmasq.network
+        [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
+            func "$i"
+            # gather configuration into variables, line by line
+            mac=${i[(w)1]}
+            host=${i[(w)2]}
+            ip=${i[(w)3]}
+            # add a line to the dnsmasq host list
+            print "dhcp-host=$mac, $host, $ip" >> $R/run/dnsmasq.network
             }
     done
-    
+
     # append network settings to dnsmasq conf
     cat $R/run/dnsmasq.network
-    
+
 }
 
 dnsmasq-start() {
     fn dnsmasq-start
-    conf=${1:-run/dnsmasq.conf}
+    conf=${1:-$R/run/dnsmasq.conf}
     [[ "$1" = "" ]] || shift 1
     freq=($conf)
-    ckreq
+    ckreq || return $?
 
     act "launching dnsmasq"
 
     func "dnsmasq -x $R/run/dnsmasq.pid -C $R/$conf $*"
     dnsmasq -x $R/run/dnsmasq.pid -C $R/$conf $*
- 
+
     return $?
 }
 
 dnsmasq-stop() {
     fn dnsmasq-stop
+    pidfile=$1
+    freq=($pidfile)
+    ckreq || return 0
 
-    if [[ "$1" = "" ]]; then
-        [[ -r $R/run/dnsmasq.pid ]] || {
-	   warn "dnsmasq not found running"
-	   return 0
-        }
-	pid=`cat $R/run/dnsmasq.pid`
-    else
-        [[ -r "$R/$1" ]] || {
-           error "dnsmasq pid not found: $1"
-           return 1
-        }
-        pid=`cat $R/$1`
-    fi
+    pid=`cat $pidfile`
 
-	act "Stopping dnsmasq ($pid)"
-	kill $pid
-	waitpid $pid
-	rm -f $R/run/dnsmasq.pid
+    act "Stopping dnsmasq ($pid)"
+    kill $pid
+    waitpid $pid
+    rm -f $pidfile
 
 }

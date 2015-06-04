@@ -122,7 +122,7 @@ squid-stop() {
     ckreq || return 0
 
     pid=`cat $pidfile`
-    act "stopping squid ($pid)"
+    act "Stopping squid ($pid)"
     if [[ -z $root ]]; then
         squid3 -f $R/run/squid.conf -k kill
     else
@@ -130,5 +130,6 @@ squid-stop() {
     fi
 
     waitpid $pid
+    rm -f $pidfile
 
 }

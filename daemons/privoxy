@@ -59,7 +59,7 @@ privoxy-start() {
     else
         privoxy --user $dowse_uid --pidfile $pidfile $conf.real $*
     fi
-        
+
     popd
 }
 
