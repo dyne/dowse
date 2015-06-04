@@ -9,8 +9,8 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 # and perhaps querying with one call using ?recursive
 
 # wrapper to communicate to our local consul
-.set() { restful.put $dowse 8500 /v1/kv/ $* }
-.get() { restful.get $dowse 8500 /v1/kv/ $* }
+.put() { restful.put $dowse 8500 /v1/kv $* }
+.get() { restful.get $dowse 8500 /v1/kv $* }
 
 
 conf-load() {
@@ -22,12 +22,12 @@ conf-load() {
         source conf/settings
 
         if [[ -r $R/run/consul.pid ]]; then
-            [[ -z $dowse ]]     || .set configuration/address   $dowse
-            [[ -z $interface ]] || .set configuration/interface $interface
-            [[ -z $hostname ]]  || .set configuration/hostname  $hostname
-            [[ -z $wan ]]       || .set configuration/wan       $wan
-            [[ -z $lan ]]       || .set configuration/lan       $lan
-            [[ -z $firewall ]]  || .set configuration/firewall  $firewall
+            [[ -z $dowse ]]     || .put configuration/address   $dowse
+            [[ -z $interface ]] || .put configuration/interface $interface
+            [[ -z $hostname ]]  || .put configuration/hostname  $hostname
+            [[ -z $wan ]]       || .put configuration/wan       $wan
+            [[ -z $lan ]]       || .put configuration/lan       $lan
+            [[ -z $firewall ]]  || .put configuration/firewall  $firewall
             # dowse_uid=proxy
             # dowse_gid=proxy
             
