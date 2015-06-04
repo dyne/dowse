@@ -23,9 +23,9 @@ well as application space, by chaining a firewall setup to a
 trasparent proxy setup. A core feature for Dowse is that of **hiding
 all the complexity** of such a setup.
 
-Dowse is also a **highly extensible platform**: interoperability between
-modules is available using Socks4/5, UNIX pipes, local TCP/IP sockets
-and port redirection, conforming to specific daemon
+Dowse is also a **highly extensible platform**: interoperability
+between modules is available using Socks4/5, UNIX pipes, local TCP/IP
+sockets and port redirection, conforming to specific daemon
 implementations. At the core of Dowse is a very portable shell script
 codebase implementing a modular plugin architecture that isolates
 processes and supports any executable written in any language: Shell,
@@ -34,20 +34,22 @@ C, Perl, Python etc.
 # Features
 
   Dowse takes control of a LAN by becoming its DHCP server and thereby
-  assigning itself as main gateway and DNS server for all clients. It keeps tracks
-  of assigned leases by MAC Address. DNSMasq is the DHCP and DNS daemon.
+  assigning itself as main gateway and DNS server for all clients. It
+  keeps tracks of assigned leases by MAC Address. DNSMasq is the DHCP
+  and DNS daemon.
 
-  All network traffic is passed through NAT rules for masquerading. All
-  HTTP traffic (TCP port 80) is filtered through a transparent proxy, using an
-  application layer chain of Squid2 and Privoxy.
+  All network traffic is passed through NAT rules for
+  masquerading. All HTTP traffic (TCP port 80) is filtered through a
+  transparent proxy, using an application layer chain of Squid2 and
+  Privoxy.
 
   All DNS traffic (UDP port 53) is filtered through DNSCrypt-proxy and
   encrypted using AES/SHA256 before being sent to DNSCrypt.eu or other
   configurable servers supporting this protocol.
 
   In the future, traffic of all kinds may be transparently proxied for
-  monitoring, filtering, and transformation by other applications loaded on the
-  Dowse device.
+  monitoring, filtering, and transformation by other applications
+  loaded on the Dowse device.
 
   All daemons are running as a unique non-privileged UID. The future
   plan is to separate them using a different UID for each daemon.
@@ -64,20 +66,13 @@ Installation and activation takes a few steps and needs root:
    then go into the dowse directory ( cd /usr/src/dowse in example)
 
 3. Run `./utils/debian-install.sh` as root, it fires up some commands:
-   `apt-get`, `update-rc.d` and `invoke-rc.d` to install dependencies like
-   `dnsmasq`, `privoxy` and `squid3`
+   `apt-get`, `update-rc.d` and `invoke-rc.d` to install dependencies
+   like `dnsmasq`, `privoxy` and `squid3`
 
 4. Configure the files in the `conf/` folder: settings and network
    The files are plain text and include documentation in comments.
 
-5. Source the dowse environment:
-
-    source dowse
-
-6. Setup and launch dowse:
-
-    dowse-setup
-    dowse-start
+5. Fire up the startup script as root: `sudo ./start.sh`
 
 6. Deactivate the DHCP service (Automatic IP configuration) on any
    other object on the network, typically your ADSL router.
@@ -86,6 +81,9 @@ If all went well now one should be able to connect any device to the
 internet as you did before, but now all the traffic is passing via
 Dowse's transparent proxy configuration, which weeds out adverts and
 takes care of browser's privacy.
+
+Open your browser to the address of the dowse router to see its status
+from a web interface: `http://dowse.home.net:8500/`
 
 # Disclaimer
 

@@ -109,7 +109,6 @@ EOF
 dnsmasq-start() {
     fn dnsmasq-start
     conf=${1:-$R/run/dnsmasq.conf}
-    [[ "$1" = "" ]] || shift 1
     freq=($conf)
     ckreq || return $?
 

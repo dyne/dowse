@@ -1,3 +1,22 @@
+# 0.7
+## June 2015
+### Refactoring, GOSSIP networking via Consul
+
+The workflow has been refactored to function as interactive sourced
+extension to the running shell. Consul.io is adopted as k/v
+communication hub for LAN and WAN networking over GOSSIP. The module
+format has been reviewed for better identification. Services, modules
+and things discovered are registered on Consul. Zuper is adopted for
+internal functions and RESTful communication.
+
+
+# 0.6
+## November 2014
+### Fixes, process handling
+
+Process life is handled by Dowse. Commands are available to scan the
+known objects from the DHCP leases.
+
 # 0.5
 ## June 2014
 ### Module enhancements, whitepaper and code cleanup

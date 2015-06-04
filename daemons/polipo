@@ -54,12 +54,8 @@ EOF
 polipo-start() {
     fn "polipo-start $*"
     conf=$1
-    shift 1
-    req=(conf)
     freq=($conf)
-    ckreq
-
-    pushd $R
+    ckreq || return 0
 
     if [[ -z $root ]]; then
         polipo -c $conf $*
@@ -67,25 +63,18 @@ polipo-start() {
         setuidgid $dowse_uid polipo -c $conf $*
     fi
 
-    popd
 }
 
 polipo-stop() {
     fn polipo-stop
     pidfile=$1
+    freq=($pidfile)
+    ckreq || return 0
 
-    [[ -r $pidfile ]] || {
-        warn "polipo not running"
-        return 0
-    }
-
-    pushd $R
-
-    pid=`cat $1`
+    pid=`cat $pidfile`
     act "stopping polipo pid: ::1 pid::" $pid
     kill $pid
     waitpid $pid
-#    rm -f "$pid"
+    rm -f "$pid"
 
-    popd
 }

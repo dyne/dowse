@@ -133,7 +133,21 @@ fn() {
     fun="$@"
     req=()
     freq=()
+    func "$fun"
 }
+
+zerr() {
+    error "error in: ${fun:-$last_notice}"
+    [[ "$last_func"   = "" ]] || warn "called in: $last_func"
+    [[ "$last_act"    = "" ]] || warn "called in: $last_act"
+    [[ "$last_notice" = "" ]] || warn "called in: $last_notice"
+    # [[ "$fun"         = "" ]] || warn "called in: $fun"
+    TRAPEXIT() {
+        error "error reported, operation aborted."
+    }
+    return 1
+}
+
 
 ckreq reqck() {
     err=0
@@ -153,17 +167,8 @@ ckreq reqck() {
             err=1
         }
     done
+    [[ $err == 1 ]] && zerr
     return $err
-}
-
-zerr() {
-    error "error in: ${fun:-$last_notice}"
-    [[ "$last_func"   = "" ]] || warn "called in: $last_func"
-    [[ "$last_act"    = "" ]] || warn "called in: $last_act"
-    [[ "$last_notice" = "" ]] || warn "called in: $last_notice"
-    [[ "$fun"         = "" ]] || warn "called in: $fun"
-    error "error reported, operation aborted."
-    return 1
 }
 
 zdump() {

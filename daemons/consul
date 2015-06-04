@@ -26,7 +26,6 @@
 # safety setting
 GOMAXPROCS=10
 
-mkdir -p $R/datadir
 
 vars+=(cluster_addr)
 
@@ -51,7 +50,7 @@ vars+=(cluster_addr)
 
     unset setdef
 
-    mkdir -p $R/run/consul.d
+    mkdir -p $R/run/consul.d || zerr
 
     # check binary platform
     arch=`uname -m`
@@ -77,7 +76,7 @@ vars+=(cluster_addr)
             ;;
         *)
             error "Architecture not supported: $arch"
-            return 1
+            zerr
             ;;
     esac
     popd
@@ -90,8 +89,8 @@ vars+=(cluster_addr)
     ckreq || return $?
 
     conf=$R/run/consul.json
-    rm -f $conf
-    touch $conf
+    rm -f $conf || zerr
+    touch $conf || zerr
 
     # jsh=''
     # for c in ${(k)consul_conf}; do
@@ -103,15 +102,15 @@ vars+=(cluster_addr)
 
     sep="{"
     for c in ${(k)consul_conf}; do
-        print $sep >> $conf
+        print - $sep >> $conf
 
         # deal with booleans
         case "${consul_conf[$c]}" in
             true|false)
-                print -n "\"$c\": ${consul_conf[$c]}" >> $conf
+                print -n - "\"$c\": ${consul_conf[$c]}" >> $conf
                 ;;
             *)
-                print -n "\"$c\": \"${consul_conf[$c]}\"" >> $conf
+                print -n - "\"$c\": \"${consul_conf[$c]}\"" >> $conf
                 ;;
         esac
 
@@ -121,13 +120,13 @@ vars+=(cluster_addr)
 
     # now render watches
     [[ ${#consul_watch} -gt 0 ]] && {
-        print "," >> $conf
-        print "\"watches\":" >> $conf
+        print - "," >> $conf
+        print - "\"watches\":" >> $conf
         sep="["
         for w in ${(k)consul_watch}; do
-            print $sep >> $conf
-            print "{ \"type\": \"checks\"," >> $conf
-            print -n "\"handler\": \"${consul_watch[$w]}\" }" >> $conf
+            print - $sep >> $conf
+            print - "{ \"type\": \"checks\"," >> $conf
+            print -n - "\"handler\": \"${consul_watch[$w]}\" }" >> $conf
             sep=","
         done
         print >> $conf
@@ -196,11 +195,8 @@ consul-set-conf() {
 
 consul() {
     fn "consul $*"
-    req=(R)
-    freq=(consul/consul)
+    freq=($R/consul/consul)
     ckreq || return $?
-
-    TRAPZERR() { }
 
     # handle differences between consul commands
 
@@ -208,7 +204,7 @@ consul() {
 
     [[ "$os" = "Cygwin" ]] && {
 
-        touch $R/log/consul.log
+        touch $R/log/consul.log || zerr
         fn "consul launch"
         orig_dowse_path=$R
         R="C:\\dowse\\"
@@ -244,7 +240,7 @@ consul() {
 
     [[ "$os" = "Cygwin" ]] && {
 
-        touch $R/log/consul.log
+        touch $R/log/consul.log || zerr
         R=$orig_dowse_path
 
     }
@@ -254,8 +250,7 @@ consul() {
 
 consul-start() {
     fn "consul-start $*"
-    req=(R)
-    ckreq || return $?
+
 
     [[ -f $R/run/consul.pid ]] && {
         warn "consul running: (`cat $R/run/consul.pid`) (run/consul.pid)"
@@ -263,11 +258,11 @@ consul-start() {
         return 1
     }
 
-    mkdir -p $R/consul/datadir
+
+    mkdir -p $R/consul/datadir || zerr
 
     .consul-init
     .consul-conf
-
     # "watches": [
     #   {
     #       "type": "checks",
@@ -278,7 +273,8 @@ consul-start() {
     os=`uname -o`
     if [[ "$os" = "Cygwin" ]]; then
 
-        touch $R/log/consul.log
+        touch $R/log/consul.log || zerr
+
         fn "consul launch"
         orig_dowse_path=$R
         R="C:\\dowse\\"
@@ -295,7 +291,7 @@ consul-start() {
 
     else # running on gnu/linux
 
-        touch $R/log/consul.log
+        touch $R/log/consul.log || zerr
         fn "consul launch"
         export GOMAXPROCS=$GOMAXPROCS
 
@@ -335,7 +331,7 @@ consul-stop() {
 
     act "sending quit signal to Consul"
 
-    killpidfile run/consul.pid
+    killpidfile $R/run/consul.pid
 
     act "Consul is not running."
 }

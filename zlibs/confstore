@@ -21,7 +21,8 @@ conf-load() {
         act "loading configuration from conf/settings"
         source conf/settings
 
-        if [[ -r $R/run/consul.pid ]]; then
+        # read configurations from consul if running
+        [[ -r $R/run/consul.pid ]] && {
             [[ -z $dowse ]]     || .put /configuration/address   $dowse
             [[ -z $interface ]] || .put /configuration/interface $interface
             [[ -z $hostname ]]  || .put /configuration/hostname  $hostname
@@ -39,9 +40,8 @@ conf-load() {
             
             # ip range reserved for guests (first,last,leasetime)
             # dowse_guests=10.0.0.101,10.0.0.199,48h
-        else
-            warn "Consul is not running, launch with: dowse-start"
-        fi
+        }
+
     }
 
     [[ -r $R/run/consul.pid ]] && {

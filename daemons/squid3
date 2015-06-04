@@ -98,9 +98,8 @@ squid-start() {
     fn squid-start
     req=(dowse_uid)
     conf=$1
-    shift 1
     freq=($conf)
-    ckreq
+    ckreq || return 0
 
     act "launching squid3"
 

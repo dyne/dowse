@@ -71,13 +71,12 @@ zmodload zsh/sched
 zmodload zsh/system
 zmodload zsh/net/tcp
 
-source $R/zlibs/messaging.sh
-source $R/zlibs/processes.sh
-source $R/zlibs/iptables.sh
-source $R/zlibs/ebtables.sh
+source $R/zlibs/processes
+source $R/zlibs/iptables
+source $R/zlibs/ebtables
 source $R/zlibs/confstore
-source $R/zlibs/consul
 
+source $R/daemons/consul
 source $R/daemons/dnsmasq
 source $R/daemons/squid3
 source $R/daemons/privoxy
@@ -138,9 +137,6 @@ EOF
 
 dowse-check() {
     fn dowse-check
-    func "$R/conf dowse_path_configuration"
-    func "$R/conf/settings dowse_path_configuration"
-    func "$R/conf/network dowse_path_configuration"
     freq=($R/conf $R/conf/settings $R/conf/network)
     ckreq || return $?
 
@@ -182,14 +178,12 @@ dowse-check() {
         chown -R $dowse_uid:$dowse_gid $R/run
     }
 
-    func "::1 dir:: directory writable by ::2 uid::" \
-        run $dowse_uid
-    touch $R/run/test
+    func "::1 dir:: directory writable by ::2 uid::" run $dowse_uid
+    touch $R/run/test || return $?
     rm -f $R/run/test
 
-    func "::1 dir:: directory writable by ::2 uid::" \
-        log $dowse_uid
-    touch $R/log/test
+    func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
+    touch $R/log/test || return $?
     rm -f $R/log/test
 
     act "all requirements in place"
@@ -204,9 +198,9 @@ dowse-check() {
 dowse-setup() {
     fn "Setup dowse core configurations"
     freq=($R/conf/settings $R/conf/network)
-    ckreq
+    ckreq || return $?
 
-    dowse-check
+    dowse-check || return $?
 
     func "reading configuration in conf/settings"
     # zlibs/confstore
@@ -341,7 +335,7 @@ dowse-start() {
     fn dowse-start
     req=(interface dowse netmask wan)
     freq=($R/run/dnsmasq.conf)
-    ckreq
+    ckreq || return $?
 
     [[ -r $R/run/consul.pid ]] && {
         warn "Dowse is already running"
@@ -392,13 +386,14 @@ dowse-start() {
 
     }
 
-    notice "Launching consul"
-    consul-start
-    sleep 3 # give it some time
+    consul-start || return $?
 
     dowse-modules-setup
 
     dowse-modules-start
+
+    notice "Dowse succesfully started, web interface up on:"
+    act "http://${dowse}:8500/"
     
 }
 
@@ -440,15 +435,13 @@ END {
 dowse-status() {
     fn dowse-status
     freq=($R/run/leases)
-    ckreq
+    ckreq || return $?
 
     typeset -a mac ip host ping known
     notice "Reporting network status"
     eval `dowse-parse-leases`
     known=()
     ping=()
-
-    function TRAPZERR() { }
 
     for i in {0..${#mac}}; do
         [[ $mac[$i] = "" ]] && { continue }
@@ -495,16 +488,5 @@ dowse-scan() {
     done
 
 }
-
-
-
-# if args, call them
-[[ "$*" = "" ]] || {
-    TRAPZERR() { }
-    $*
-}
-
-# be nice with the environment
-# return $?
 
 # }}}
