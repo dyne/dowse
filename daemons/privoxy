@@ -40,13 +40,9 @@ EOF
 # $1 arg is path to configuration
 privoxy-start() {
     fn privoxy-start
-    conf=$1
-    shift 1
-    req=(conf)
+    conf=${1:-$R/run/privoxy.conf}
     freq=($conf)
-    ckreq
-
-    pushd $R
+    ckreq || return 1
 
     # pid-file is not really a privoxy directive
     pidfile=`awk '/^pid-file/ { print $2 }' $conf`
@@ -60,7 +56,6 @@ privoxy-start() {
         privoxy --user $dowse_uid --pidfile $pidfile $conf.real $*
     fi
 
-    popd
 }
 
 # $1 arg is path to pid

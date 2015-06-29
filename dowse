@@ -157,14 +157,16 @@ dowse-check() {
         act "root privileges granted"
     fi
 
+    func "reading configuration in conf/settings"
+    # zlibs/confstore
+    conf-load
+
     dowse_uid=${dowse_uid:-`id -un`}
     dowse_gid=${dowse_gid:-`id -gn`}
 
     _verbose "Dowse command: ::1 commands::" "$*"
     _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
         $dowse_uid $dowse_gid $TTY
-
-
 
     act "daemons running as user and group $dowse_uid:$dowse_gid"
     mkdir -p $R/log
@@ -193,40 +195,6 @@ dowse-check() {
 
 # }}}
 
-
-# {{{ DOWSE FUNCTIONS
-dowse-setup() {
-    fn "Setup dowse core configurations"
-    freq=($R/conf/settings $R/conf/network)
-    ckreq || return $?
-
-    dowse-check || return $?
-
-    func "reading configuration in conf/settings"
-    # zlibs/confstore
-    conf-load
-
-
-    [[ -z $root ]] || {
-
-        # generate dnsmasq configuration
-        rm -f $R/run/dnsmasq.conf
-        dnsmasq-conf > $R/run/dnsmasq.conf
-
-        # set permissions of setup files
-        chown -R $dowse_uid:$dowse_gid $R/log
-        chown -R $dowse_uid:$dowse_gid $R/run
-
-    }
-
-    chmod go-rwx $R/log
-    chmod go-rwx $R/run
-
-    act "setup completed in ::1 path::" $R
-    return 0
-}
-
-# }}}
 
 # {{{ MODULES
 
@@ -333,8 +301,7 @@ dowse-modules-stop() {
 
 dowse-start() {
     fn dowse-start
-    req=(interface dowse netmask wan)
-    freq=($R/run/dnsmasq.conf)
+    freq=($R/conf/settings $R/conf/network)
     ckreq || return $?
 
     [[ -r $R/run/consul.pid ]] && {
@@ -342,6 +309,8 @@ dowse-start() {
         return 0
     }
     notice "Starting Dowse"
+
+    dowse-check || zerr
 
     [[ -z $root ]] || {
 
@@ -378,8 +347,11 @@ dowse-start() {
             iptables-start
         }
                 
+        # generate dnsmasq configuration
         # start the dnsmasq daemon
-        dnsmasq-start run/dnsmasq.conf
+        rm -f $R/run/dnsmasq.conf
+        dnsmasq-conf > $R/run/dnsmasq.conf
+        dnsmasq-start $R/run/dnsmasq.conf
         
         # if PeerGuardian was running, start it again
         [[ "$PGL" = "" ]] || { pglcmd start }
@@ -400,6 +372,8 @@ dowse-start() {
 dowse-stop() {
     fn "dowse-stop"
  
+    dowse-check || zerr
+
     dowse-modules-stop
 
     [[ -r $R/run/consul.pid ]] && consul-stop

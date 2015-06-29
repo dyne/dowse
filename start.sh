@@ -1,3 +1,3 @@
 #!/usr/bin/env zsh
 
-source dowse && dowse-setup && dowse-start
+source dowse && dowse-start

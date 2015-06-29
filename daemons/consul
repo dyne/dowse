@@ -322,6 +322,9 @@ consul-start() {
         fi
 
     fi
+
+    # wait for leadership to be settled
+    sleep 3
 }
 
 consul-stop() {
