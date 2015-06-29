@@ -49,11 +49,11 @@ privoxy-start() {
     rm -f $conf.real
     sed 's/pid-file.*//' $conf > $conf.real
 
-    act "starting privoxy: $conf $*"
+    act "starting privoxy: $conf"
     if [[ -z $root ]]; then
-        privoxy --pidfile $pidfile $conf.real $*
+        privoxy --pidfile $pidfile $conf.real
     else
-        privoxy --user $dowse_uid --pidfile $pidfile $conf.real $*
+        privoxy --user $dowse_uid --pidfile $pidfile $conf.real
     fi
 
 }
