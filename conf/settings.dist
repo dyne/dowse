@@ -1,6 +1,7 @@
-# configuration for our network
-# values are assigned with equals, no spaces in between
+# Configuration for our Dowse network
+# Values are assigned with equals, no spaces in between
 # comments are prefixed with hashes, just like this.
+# In fact this is a shell script.
 
 # which addresses we take for dowse
 dowse=10.0.0.254
@@ -9,11 +10,15 @@ dowse=10.0.0.254
 interface=eth0
 
 # hostname by which dowse will be known to the network
-hostname=`hostname`
+hostname=$(hostname)
 
 # what connects us to the internet (i.e. adsl router)
 # make sure dhcp is deactivated there, we will give it!
 wan=10.0.0.1
+
+# upstream DNS to query for unknown hostnames
+# by default this is the same as the wan gateway
+dns=$wan
 
 # what is the domain name of the internal network
 lan=home.net

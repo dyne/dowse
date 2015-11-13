@@ -42,7 +42,7 @@ vars+=(cluster_addr)
     setdef "disable_update_check" true
     setdef "domain" "$lan"
     setdef "leave_on_terminate" true
-    setdef "recursor" "$dowse"
+    setdef "recursor" "$address"
 
 
     setdef() { consul_watch[$1]=${consul_watch[$1]:-$2} }
@@ -217,13 +217,13 @@ consul() {
             $R/consul/consul $* \
                 -config-file $R/run/consul.json \
                 -config-dir $R/run/consul.d \
-                -dc dowse1 -client $dowse
+                -dc dowse1 -client $address
             ;;
 
         'exec') # cheap security measure: chroot exec to dowse dir
             shift 1
             $R/consul/consul exec \
-                -http-addr $dowse:8500 \
+                -http-addr $address:8500 \
                 $R/$*
             ;;
         *)
@@ -233,7 +233,7 @@ consul() {
                 _command=$1
                 shift 1
                 $R/consul/consul \
-                    $_command --rpc-addr=$dowse:8400 $*
+                    $_command --rpc-addr=$address:8400 $*
             fi
             ;;
     esac
@@ -285,7 +285,7 @@ consul-start() {
             -config-dir $R/run/consul.d \
             -ui-dir $R/consul/web \
             -pid-file $R/run/consul.pid \
-            -client $dowse -bind $dowse -dc dowse.it \
+            -client $address -bind $address -dc dowse.it \
             2>&1 >> $R/log/consul.log &
         R=$orig_dowse_path
 
@@ -304,7 +304,7 @@ consul-start() {
                 -config-dir $R/run/consul.d \
                 -ui-dir $R/consul/web \
                 -pid-file $R/run/consul.pid \
-                -client $dowse -bind $dowse -dc dowse1 \
+                -client $address -bind $address -dc dowse1 \
                 2>&1 >> $R/log/consul.log &
 
         else # running as root
@@ -315,7 +315,7 @@ consul-start() {
                 -config-dir $R/run/consul.d \
                 -ui-dir $R/consul/web \
                 -pid-file $R/run/consul.pid \
-                -client $dowse -bind $dowse \
+                -client $address -bind $address \
                 -dc dowse1 -server -bootstrap \
                 2>&1 >> $R/log/consul.log &
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 
-vars+=(dowse interface hostname wan lan firewall)
+vars+=(address interface hostname wan lan firewall)
 vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
 # there is a clear zsh optimization here in get/set kv
@@ -26,14 +26,18 @@ conf-load() {
         act "loading configuration from conf/settings"
         source conf/settings
 
+        # cover defaults
+        dns=${dns:-$wan}
+
         # read configurations from consul if running
         [[ -r $R/run/consul.pid ]] && {
-            [[ -z $dowse ]]     || print "$dowse"     | .put $dowse /v1/kv/configuration/address
-            [[ -z $interface ]] || print "$interface" | .put $dowse /v1/kv/configuration/interface
-            [[ -z $hostname ]]  || print "$hostname"  | .put $dowse /v1/kv/configuration/hostname
-            [[ -z $wan ]]       || print "$wan"       | .put $dowse /v1/kv/configuration/wan
-            [[ -z $lan ]]       || print "$lan"       | .put $dowse /v1/kv/configuration/lan
-            [[ -z $firewall ]]  || print "$firewall"  | .put $dowse /v1/kv/configuration/firewall
+            [[ -z $address ]]   || print "$address"   | .put $address /v1/kv/configuration/address
+            [[ -z $interface ]] || print "$interface" | .put $address /v1/kv/configuration/interface
+            [[ -z $hostname ]]  || print "$hostname"  | .put $address /v1/kv/configuration/hostname
+            [[ -z $wan ]]       || print "$wan"       | .put $address /v1/kv/configuration/wan
+            [[ -z $dns ]]       || print "$dns"       | .put $address /v1/kv/configuration/dns
+            [[ -z $lan ]]       || print "$lan"       | .put $address /v1/kv/configuration/lan
+            [[ -z $firewall ]]  || print "$firewall"  | .put $address /v1/kv/configuration/firewall
             # dowse_uid=proxy
             # dowse_gid=proxy
 
@@ -51,11 +55,11 @@ conf-load() {
 
     [[ -r $R/run/consul.pid ]] && {
         # gather settings from consul's key/value store
-        dowse=`.get $dowse /configuration/address`
-        interface=`.get $dowse /configuration/interface`
-        hostname=`.get $dowse /configuration/hostname`
-        wan=`.get $dowse /configuration/wan`
-        lan=`.get $dowse /configuration/lan`
-        firewall=`.get $dowse /configuration/firewall`
+        address=`.get $address /v1/kv/configuration/address`
+        interface=`.get $address /v1/kv/configuration/interface`
+        hostname=`.get $address /v1/kv/configuration/hostname`
+        wan=`.get $address /v1/kv/configuration/wan`
+        lan=`.get $address /v1/kv/configuration/lan`
+        firewall=`.get $address /v1/kv/configuration/firewall`
     }
 }

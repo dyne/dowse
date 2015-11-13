@@ -4,11 +4,11 @@ polipo-conf() {
     func "generating base configuration for polipo"
     cat <<EOF
 # own address (restricts to ipv4)
-proxyAddress = "$dowse"
+proxyAddress = "$address"
 proxyName = "Dowse"
 
 # allow local network
-allowedClients = 127.0.0.1, $dowse_net
+allowedClients = 127.0.0.1, $address_net
 
 # avoid proxy users to see what others do
 disableLocalInterface = true
@@ -30,7 +30,7 @@ dnsQueryIPv6 = no
 # default resolver instead.  If you do that, Polipo will freeze during
 # every DNS query: (TODO: test and benchmark)
 # dnsUseGethostbyname = yes
-dnsNameServer = $dowse
+dnsNameServer = $address
 
 daemonise = true
 

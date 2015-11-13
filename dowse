@@ -39,7 +39,7 @@ source $R/zlibs/zuper
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(R dowse_loaded debug quiet script fun)
+vars+=(R address_loaded debug quiet script fun)
 vars+=(last_notice last_act last_func)
 vars+=(root)
 arrs+=(mods)
@@ -263,7 +263,7 @@ dowse-modules-start() {
         popd
 
         func "announcing modules"
-        cat <<EOF | .put $dowse /v1/kv/modules/$dowse_mod_name
+        cat <<EOF | .put $address /v1/kv/modules/$dowse_mod_name
 $dowse_mod_desc
 
 type: $dowse_mod_type
@@ -321,7 +321,7 @@ dowse-start() {
             pglcmd stop }
 
         act "set up $interface interface"
-        ifconfig $interface $dowse netmask $netmask up
+        ifconfig $interface $address netmask $netmask up
         route add default gw $wan
 
         func "enable masquerading"
@@ -366,7 +366,7 @@ dowse-start() {
     dowse-modules-start
 
     notice "Dowse succesfully started, web interface up on:"
-    act "http://${dowse}:8500/"
+    act "http://${address}:8500/"
 
 }
 
@@ -409,6 +409,9 @@ END {
 
 dowse-status() {
     fn dowse-status
+    conf-load
+
+    req=(address)
     freq=($R/run/leases)
     ckreq || return $?
 
@@ -433,7 +436,7 @@ dowse-status() {
 
             yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
 
-            cat <<EOF | restful.put $dowse 8500 /v1/kv/things_known/$host[$i]
+            cat <<EOF | restful.put $address 8500 /v1/kv/things_known/$host[$i]
 status: $ping[$i]
 ip: $ip[$i]
 mac: $mac[$i]
@@ -442,7 +445,7 @@ EOF
         else
 
             no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-            cat <<EOF | restful.put $dowse 8500 /v1/kv/things_unknown/$host[$i]
+            cat <<EOF | restful.put $address 8500 /v1/kv/things_unknown/$host[$i]
 status: $ping[$i]
 ip: $ip[$i]
 mac: $mac[$i]

@@ -4,7 +4,7 @@ squid-conf() {
     # Squid2 configuration template
     func "generating base configuration for squid3"
     cat <<EOF
-cache_effective_user $dowse_uid
+cache_effective_user $address_uid
 cache_store_log none
 
 # avoid having a physical cache directory

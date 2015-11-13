@@ -47,7 +47,7 @@ function _msg() {
     done
 
     local command="print -P"
-    local progname="$fg[magenta]${TOMBEXEC##*/}$reset_color"
+    local progname="$fg[magenta]${PROGRAM##*/}$reset_color"
     local message="$fg_bold[normal]$fg_no_bold[normal]$msg$reset_color"
     local -i returncode
 
@@ -153,7 +153,7 @@ ckreq reqck() {
     err=0
     for v in $req; do
         [[ "${(P)v}" = "" ]] && {
-            warn "required setting is blank: $v"
+            warn "${fun[(ws: :)1]}(): required setting is blank: $v"
             err=1
         }
     done
@@ -370,13 +370,12 @@ EOF
     zmodload zsh/net/tcp
 
     function restful.put() {
+        fn "restful.put $*"
+
         # $1 = hostname
         # $2 = port
         # $3 = path
-        # $4 = key
-        # $5 = value
-
-        fn "restful.put $*"
+        # value from stdin |
 
         # to check if the http service is running is up to the caller
 
@@ -433,18 +432,15 @@ EOF
 
     }
 
-    restful.get() {
+    function restful.get() {
         fn "restful.get $*"
 
         _host=${1}
         _port=${2}
         _path=${3}
-        _k=$4 # key name
 
-        req=(_host _k)
+        req=(_host _port)
         ckreq || return $?
-
-        _k=$1
 
         ztcp $_host $_port || {
             zerr
@@ -456,7 +452,7 @@ EOF
         # TODO: work out various parsers, this one works with consul.io
 
         cat <<EOF >& $_fd
-GET ${_path}${_k} HTTP/1.1
+GET ${_path} HTTP/1.1
 User-Agent: Zuper/$zuper_version
 Host: $_host:$_port
 Accept: */*

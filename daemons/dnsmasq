@@ -27,10 +27,10 @@ dnsmasq-conf() {
     ckreq
 
     cat <<EOF
-address=/$hostname/$dowse
-address=/$hostname.$lan/$dowse
-# address=/.i2p/$dowse
-# address=/.onion/$dowse
+address=/$hostname/$address
+address=/$hostname.$lan/$address
+# address=/.i2p/$address
+# address=/.onion/$address
 bogus-priv
 cache-size=300
 dhcp-range=$dowse_guests
@@ -38,12 +38,15 @@ addn-hosts=$R/run/hosts
 dhcp-leasefile=$R/run/leases
 domain-needed
 domain=$lan
+no-resolv
+local=/$lan/
+local=$dns
 expand-hosts
 edns-packet-max=4096
 interface=$interface
-listen-address=$dowse,127.0.0.1
-local=//127.0.0.1#53
-local=/$lan/
+listen-address=$address,127.0.0.1
+# local=//127.0.0.1#53
+# local=/$lan/
 user=$dowse_uid
 group=$dowse_gid
 EOF
@@ -58,7 +61,7 @@ EOF
     func "Fixing entries for known peers"
     rm -f $R/run/dnsmasq.network
     # this is basically a dnsmasq host configuration file
-    print "dhcp-option=option:router,$dowse" > $R/run/dnsmasq.network
+    print "dhcp-option=option:router,$address" > $R/run/dnsmasq.network
 
     # this is our generated hosts file
     func "Generating hosts file"

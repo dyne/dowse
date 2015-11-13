@@ -23,7 +23,7 @@ socket-timeout 300
 handle-as-empty-doc-returns-ok 1
 
 # pass through i2p for urls.i2p
-# forward .i2p $dowse:4444
+# forward .i2p $address:4444
 # forward .i2p 127.0.0.1:4444
 
 # direct access
