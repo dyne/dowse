@@ -10,13 +10,13 @@ dowse_mod_version=0.1
 
 
 
-[[ isfound iptables ]] || {
-    warning "iptables not found."
-    zerr }
-
-
 # configure the layer 3 firewall rules
 # (excluding the nat which is in dowse core)
+
+iptables() {
+    func "iptables $*"
+    /sbin/iptables $*
+}
 
 module-setup() {
 
@@ -26,8 +26,8 @@ module-setup() {
 
 module-start() {
    # This table allow all established connections and related traffic
-   # through the firewall without further filtering. 
-      
+   # through the firewall without further filtering.
+
    # Create and flush the table.
    iptables -N ASSURED
    iptables -F ASSURED
@@ -37,12 +37,12 @@ module-start() {
    iptables -A ASSURED -m conntrack --ctstate RELATED -j ACCEPT
 
    # Set conditions in which the tables will be traversed.
-   iptables -A INPUT -j ASSURED 
-   iptables -A OUTPUT -j ASSURED 
-   iptables -A FORWARD -j ASSURED 
+   iptables -A INPUT -j ASSURED
+   iptables -A OUTPUT -j ASSURED
+   iptables -A FORWARD -j ASSURED
 
    # Create and flush the table.
-   iptables -N TCP 
+   iptables -N TCP
    iptables -F TCP
 
    # Help to prevent sequence number prediction attacks. This rule
@@ -69,18 +69,18 @@ module-start() {
    # combinations.  This also helps prevent some port scans.
    iptables -A TCP -p tcp --tcp-option 128                    -j DROP
    iptables -A TCP -p tcp --tcp-option 64                     -j DROP
-   iptables -A TCP -p tcp --tcp-flags ACK,FIN FIN             -j DROP 
-   iptables -A TCP -p tcp --tcp-flags ACK,PSH PSH             -j DROP 
-   iptables -A TCP -p tcp --tcp-flags ACK,URG URG             -j DROP 
-   iptables -A TCP -p tcp --tcp-flags FIN,RST FIN,RST         -j DROP 
-   iptables -A TCP -p tcp --tcp-flags SYN,ACK,FIN,RST RST     -j DROP 
-   iptables -A TCP -p tcp --tcp-flags SYN,FIN SYN,FIN         -j DROP 
-   iptables -A TCP -p tcp --tcp-flags SYN,RST SYN,RST         -j DROP 
-   iptables -A TCP -p tcp --tcp-flags ALL ALL                 -j DROP 
-   iptables -A TCP -p tcp --tcp-flags ALL NONE                -j DROP 
-   iptables -A TCP -p tcp --tcp-flags ALL FIN,PSH,URG         -j DROP 
-   iptables -A TCP -p tcp --tcp-flags ALL SYN,FIN,PSH,URG     -j DROP 
-   iptables -A TCP -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP 
+   iptables -A TCP -p tcp --tcp-flags ACK,FIN FIN             -j DROP
+   iptables -A TCP -p tcp --tcp-flags ACK,PSH PSH             -j DROP
+   iptables -A TCP -p tcp --tcp-flags ACK,URG URG             -j DROP
+   iptables -A TCP -p tcp --tcp-flags FIN,RST FIN,RST         -j DROP
+   iptables -A TCP -p tcp --tcp-flags SYN,ACK,FIN,RST RST     -j DROP
+   iptables -A TCP -p tcp --tcp-flags SYN,FIN SYN,FIN         -j DROP
+   iptables -A TCP -p tcp --tcp-flags SYN,RST SYN,RST         -j DROP
+   iptables -A TCP -p tcp --tcp-flags ALL ALL                 -j DROP
+   iptables -A TCP -p tcp --tcp-flags ALL NONE                -j DROP
+   iptables -A TCP -p tcp --tcp-flags ALL FIN,PSH,URG         -j DROP
+   iptables -A TCP -p tcp --tcp-flags ALL SYN,FIN,PSH,URG     -j DROP
+   iptables -A TCP -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
 
    # Limit potential Xmas scans.
    iptables -A TCP -p tcp --tcp-flags ALL FIN,URG,PSH \
@@ -101,11 +101,11 @@ module-start() {
    iptables -A TCP -p tcp -m tcp --tcp-flags RST RST -j DROP
 
    # Set conditions in which the table will be traversed.
-   iptables -A INPUT -p tcp -j TCP 
-   iptables -A FORWARD -p tcp -j TCP 
+   iptables -A INPUT -p tcp -j TCP
+   iptables -A FORWARD -p tcp -j TCP
 
    # Create and flush the table.
-   iptables -N ICMP 
+   iptables -N ICMP
    iptables -F ICMP
 
    #    0 = Echo Reply, what gets sent back after a type 8 is received here
@@ -129,26 +129,26 @@ module-start() {
 
    # Allow certain icmp types.
    iptables -A ICMP -p icmp --icmp-type 0  -j ACCEPT
-   iptables -A ICMP -p icmp --icmp-type 3  -j ACCEPT 
-   iptables -A ICMP -p icmp --icmp-type 4  -j ACCEPT 
-   iptables -A ICMP -p icmp --icmp-type 5  -j ACCEPT 
+   iptables -A ICMP -p icmp --icmp-type 3  -j ACCEPT
+   iptables -A ICMP -p icmp --icmp-type 4  -j ACCEPT
+   iptables -A ICMP -p icmp --icmp-type 5  -j ACCEPT
 
    # Limit echo reply traffic to protect against ping floods.
    iptables -A ICMP -p icmp --icmp-type 8 -m limit --limit 1/second --limit-burst 2 -j ACCEPT
    iptables -A ICMP -p icmp --icmp-type 8 -j DROP
 
    # Allow more icmp types.
-   iptables -A ICMP -p icmp --icmp-type 9  -j ACCEPT 
-   iptables -A ICMP -p icmp --icmp-type 11 -j ACCEPT 
-   iptables -A ICMP -p icmp --icmp-type 12 -j ACCEPT 
+   iptables -A ICMP -p icmp --icmp-type 9  -j ACCEPT
+   iptables -A ICMP -p icmp --icmp-type 11 -j ACCEPT
+   iptables -A ICMP -p icmp --icmp-type 12 -j ACCEPT
 
    # Drop all other icmp traffic.
-   iptables -A ICMP -p icmp -j DROP 
+   iptables -A ICMP -p icmp -j DROP
 
    # Set conditions in which the table will be traversed.
    iptables -A INPUT -p icmp -j ICMP
 
-    
+
 }
 
 module-stop() {
@@ -157,9 +157,9 @@ module-stop() {
     # iptables -X ASSURED
 
     iptables -F TCP
-    # iptables -X TCP 
+    # iptables -X TCP
 
     iptables -F ICMP
-    # iptables -X ICMP 
+    # iptables -X ICMP
 
 }

@@ -383,10 +383,9 @@ EOF
         _host=${1} # ip address
         _port=${2}
         _path=${3}
-        _k="$4" # key name
-        _v="$5" # value
+        sysread _v
 
-        req=(_host _k _v)
+        req=(_host)
         ckreq || return $?
 
         if ztcp $_host $_port; then
@@ -397,7 +396,7 @@ EOF
             _fd=$REPLY
             #    func "tcp open on fd $fd"
             cat <<EOF >& $_fd
-PUT ${_path}${_k} HTTP/1.1
+PUT ${_path} HTTP/1.1
 User-Agent: Zuper/$zuper_version
 Host: ${_host}:${_port}
 Accept: */*
@@ -415,8 +414,10 @@ EOF
 
             [[ "$_res" =~ "true" ]] || {
                 warn "failed PUT on restful key/value"
-                warn "endpoint: ${_host}:${_port}${_path}"
-                warn "resource: $_k = $_v"
+                warn "host: ${_host}"
+                warn "port: ${_port}"
+                warn "path: ${_path}"
+                warn "value: $_v"
                 print - "$_res"
                 zerr
                 return 1

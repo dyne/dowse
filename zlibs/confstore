@@ -9,8 +9,13 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 # and perhaps querying with one call using ?recursive
 
 # wrapper to communicate to our local consul
-.put() { restful.put $dowse 8500 /v1/kv $* }
-.get() { restful.get $dowse 8500 /v1/kv $* }
+.put() {
+    _host=$1
+    shift 1
+    restful.put $_host 8500 $* }
+.get() { _host=$1
+         shift 1
+         restful.get $_host 8500 $* }
 
 
 conf-load() {
@@ -23,21 +28,21 @@ conf-load() {
 
         # read configurations from consul if running
         [[ -r $R/run/consul.pid ]] && {
-            [[ -z $dowse ]]     || .put /configuration/address   $dowse
-            [[ -z $interface ]] || .put /configuration/interface $interface
-            [[ -z $hostname ]]  || .put /configuration/hostname  $hostname
-            [[ -z $wan ]]       || .put /configuration/wan       $wan
-            [[ -z $lan ]]       || .put /configuration/lan       $lan
-            [[ -z $firewall ]]  || .put /configuration/firewall  $firewall
+            [[ -z $dowse ]]     || print "$dowse"     | .put $dowse /v1/kv/configuration/address
+            [[ -z $interface ]] || print "$interface" | .put $dowse /v1/kv/configuration/interface
+            [[ -z $hostname ]]  || print "$hostname"  | .put $dowse /v1/kv/configuration/hostname
+            [[ -z $wan ]]       || print "$wan"       | .put $dowse /v1/kv/configuration/wan
+            [[ -z $lan ]]       || print "$lan"       | .put $dowse /v1/kv/configuration/lan
+            [[ -z $firewall ]]  || print "$firewall"  | .put $dowse /v1/kv/configuration/firewall
             # dowse_uid=proxy
             # dowse_gid=proxy
-            
+
             # what network range we choose for our LAN (class C)
             # dowse_net=10.0.0.0/24
-            
+
             # which netmask to be applied (default is class C)
             # netmask=255.255.0.0
-            
+
             # ip range reserved for guests (first,last,leasetime)
             # dowse_guests=10.0.0.101,10.0.0.199,48h
         }
@@ -46,11 +51,11 @@ conf-load() {
 
     [[ -r $R/run/consul.pid ]] && {
         # gather settings from consul's key/value store
-        dowse=`.get /configuration/address`
-        interface=`.get /configuration/interface`
-        hostname=`.get /configuration/hostname`
-        wan=`.get /configuration/wan`
-        lan=`.get /configuration/lan`
-        firewall=`.get /configuration/firewall`
+        dowse=`.get $dowse /configuration/address`
+        interface=`.get $dowse /configuration/interface`
+        hostname=`.get $dowse /configuration/hostname`
+        wan=`.get $dowse /configuration/wan`
+        lan=`.get $dowse /configuration/lan`
+        firewall=`.get $dowse /configuration/firewall`
     }
 }

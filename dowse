@@ -148,7 +148,7 @@ dowse-check() {
 #        require $req || return 1
 #    done
 
-    
+
     root=1
     [[ "$UID" = "0" ]] || unset root
     if [[ "$root" = "" ]]; then
@@ -175,7 +175,7 @@ dowse-check() {
         # setup dirs
         chmod go-rwx $R/log
         chown -R $dowse_uid:$dowse_gid $R/log
-        
+
         chmod go-rwx $R/run
         chown -R $dowse_uid:$dowse_gid $R/run
     }
@@ -214,9 +214,9 @@ dowse-modules-setup() {
 
     for i in ${(f)enabled}; do
         [[ -r $i/dowse ]] || continue
-        
+
         mods+=($i)
-        
+
         source $i/dowse
         notice "Setup module: ::1 name::" $dowse_mod_name
         act "$dowse_mod_desc"
@@ -263,7 +263,7 @@ dowse-modules-start() {
         popd
 
         func "announcing modules"
-        .put /modules/$dowse_mod_name "
+        cat <<EOF | .put $dowse /v1/kv/modules/$dowse_mod_name
 $dowse_mod_desc
 
 type: $dowse_mod_type
@@ -271,9 +271,10 @@ ports: $dowse_mod_ports
 depends: $dowse_mod_deps
 authors: $dowse_mod_authors
 version: $dowse_mod_version"
+EOF
 
     done
-    
+
     consul reload
 
 }
@@ -287,7 +288,7 @@ dowse-modules-stop() {
         [[ -r $i/dowse ]] || continue
 
         source $i/dowse
-        
+
         pushd $R
         module-stop
         popd
@@ -318,17 +319,17 @@ dowse-start() {
         [[ "$PGL" = "" ]] || {
             act "PeerGuardian found running, will restart it accordingly"
             pglcmd stop }
-        
+
         act "set up $interface interface"
         ifconfig $interface $dowse netmask $netmask up
         route add default gw $wan
-        
+
         func "enable masquerading"
         modprobe nf_conntrack_ipv4
         sysctl net.netfilter.nf_conntrack_acct=1
         # strenghten and optimize a bit the system for networking
         sysctl-setup
-        
+
         func "enable ip forwarding"
         print 1 >> /proc/sys/net/ipv4/ip_forward
 
@@ -340,19 +341,19 @@ dowse-start() {
         [[ "$firewall" = "no" ]] || {
             ebtables-stop
             iptables-stop
-        }        
+        }
 
         [[ "$firewall" = "yes" ]] && {
             ebtables-start
             iptables-start
         }
-                
+
         # generate dnsmasq configuration
         # start the dnsmasq daemon
         rm -f $R/run/dnsmasq.conf
         dnsmasq-conf > $R/run/dnsmasq.conf
         dnsmasq-start $R/run/dnsmasq.conf
-        
+
         # if PeerGuardian was running, start it again
         [[ "$PGL" = "" ]] || { pglcmd start }
 
@@ -366,12 +367,12 @@ dowse-start() {
 
     notice "Dowse succesfully started, web interface up on:"
     act "http://${dowse}:8500/"
-    
+
 }
 
 dowse-stop() {
     fn "dowse-stop"
- 
+
     dowse-check || zerr
 
     dowse-modules-stop
@@ -431,16 +432,21 @@ dowse-status() {
         if [[ "$known[$i]" == "known" ]]; then
 
             yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-            .set things_known/$host[$i] "status: $ping[$i]
+
+            cat <<EOF | restful.put $dowse 8500 /v1/kv/things_known/$host[$i]
+status: $ping[$i]
 ip: $ip[$i]
-mac: $mac[$i]"
+mac: $mac[$i]
+EOF
 
         else
 
             no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-            .set things_unknown/$host[$i] "status: $ping[$i]
+            cat <<EOF | restful.put $dowse 8500 /v1/kv/things_unknown/$host[$i]
+status: $ping[$i]
 ip: $ip[$i]
-mac: $mac[$i]"
+mac: $mac[$i]
+EOF
 
         fi
     done
@@ -453,11 +459,11 @@ dowse-scan() {
     for s in {0..${#mac}}; do
         [[ $mac[$s] == "" ]] && { continue }
         grep "${mac[$s]}" $R/conf/network > /dev/null
-	    [[ $? == 1 ]] && { # unknown
-	        act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
+        [[ $? == 1 ]] && { # unknown
+            act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
             func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""
             nmap -A -F -sT -Pn -T5 -n "${ip[$s]}"
-	        print
+            print
         }
     done
 
