@@ -80,8 +80,9 @@ print "Installing Dowse on `hostname`"
 print
 
 # list of programs to be installed:
-daemons=(dnsmasq privoxy squid3 polipo tor)
-pkgs=(daemontools iptables ebtables gettext-base procps net-tools libssl-dev libbind-dev libpcap-dev)
+daemons=(dnsmasq privoxy squid3 tor)
+pkgs=(daemontools iptables ebtables gettext-base procps net-tools libssl-dev libbind-dev libpcap-dev unzip wget)
+pkgs=(gcc make)
 
 install_policy
 
