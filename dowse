@@ -84,6 +84,7 @@ source $R/daemons/dnsmasq
 source $R/daemons/squid3
 source $R/daemons/privoxy
 source $R/daemons/polipo
+source $R/daemons/dnscap
 
 # conclude initialization
 if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then

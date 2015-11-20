@@ -14,13 +14,13 @@ module-setup() {
     rm -f $R/run/squid.conf
     squid-conf > $R/run/squid.conf
     cat <<EOF >> $R/run/squid.conf
-http_port $dowse:3128 transparent
+http_port $address:3128 transparent
 pid_filename $R/run/squid.pid
 cache_log $R/log/squid_cache.log
 access_log /dev/null
 # access_log $R/log/squid_access.log squid
 # pass through privoxy
-cache_peer $dowse parent 8118 0 default no-query no-digest no-netdb-exchange proxy-only
+cache_peer $address parent 8118 0 default no-query no-digest no-netdb-exchange proxy-only
 EOF
 
     rm -f $R/run/privoxy.conf
