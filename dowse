@@ -33,7 +33,10 @@ helper=1
 
 R=${DOWSE_PATH:-`pwd`}
 
-source $R/zlibs/zuper
+# load development libraries if there
+if [[ -r $R/zlibs/zuper-dev/zuper ]]; then
+    source $R/zlibs/zuper-dev/zuper
+else source $R/zlibs/zuper; fi
 
 # For gettext
 TEXTDOMAIN=dowse
@@ -83,7 +86,10 @@ source $R/daemons/privoxy
 source $R/daemons/polipo
 
 # conclude initialization
-source $R/zlibs/zuper.init
+if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
+    source $R/zlibs/zuper-dev/zuper.init
+else source $R/zlibs/zuper.init; fi
+
 
 consul_conf=()
 consul_watch=()
@@ -354,6 +360,9 @@ dowse-start() {
         dnsmasq-conf > $R/run/dnsmasq.conf
         dnsmasq-start $R/run/dnsmasq.conf
 
+        # start dnscap
+        dnscap-start
+
         # if PeerGuardian was running, start it again
         [[ "$PGL" = "" ]] || { pglcmd start }
 
@@ -380,6 +389,7 @@ dowse-stop() {
     [[ -r $R/run/consul.pid ]] && consul-stop
 
     [[ -z $root ]] || {
+        dnscap-stop
         dnsmasq-stop
         iptables-stop
         ebtables-stop

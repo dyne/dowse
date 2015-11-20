@@ -1,0 +1,442 @@
+.Dd April 25, 2007
+.Dt DNSCAP 1
+.Os
+.Sh NAME
+.Nm dnscap
+.Nd DNS network traffic capture utility
+.Sh SYNOPSIS
+.Nm
+.Op Fl pd1g?6fT
+.Op Fl i Ar if ...
+.Op Fl r Ar file ...
+.Op Fl l Ar vlan ...
+.Op Fl L Ar vlan ...
+.Op Fl x Ar pat ...
+.Op Fl X Ar pat ...
+.Oo
+.Fl m
+.Op qun
+.Oc
+.Oo
+.Fl s
+.Op ir
+.Oc
+.Oo
+.Fl h
+.Op ir
+.Oc
+.Oo
+.Fl e
+.Op nytfsxir
+.Oc
+.Op Fl a Ar host ...
+.Op Fl z Ar host ...
+.Op Fl A Ar host ...
+.Op Fl Z Ar host ...
+.Op Fl Y Ar host ...
+.Op Fl u Ar port
+.Oo
+.Fl w
+.Ar base
+.Op Fl k Ar cmd
+.Oc
+.Op Fl t Ar lim
+.Op Fl c Ar lim
+.Sh DESCRIPTION
+.Nm
+is a network capture utility designed specifically for DNS traffic.  It
+normally produces binary data in
+.Xr pcap 3
+format, either on standard output or in successive dump files
+(based on the
+.Fl w
+command line option).  This utility is similar to
+.Xr tcpdump 1 ,
+but has finer grained packet recognition tailored to DNS transactions and
+protocol options.
+.Nm
+is expected to be used for gathering continuous research or audit traces.
+.Pp
+The following options are available:
+.Bl -tag -width 10n
+.It Fl p
+Asks that the interface not be put into promiscuous mode.  Note that even
+without this option, the interface could be in promiscuous mode for some other
+reason.
+.It Fl d
+Tells a verbose story of options and patterns chosen, files opened, and so on.
+(Multiple
+.Fl d
+options can be given to increase verbosity and frequency of trace messages.)
+.It Fl 1
+Flush the
+.Xr pcap 3
+packet dump after every packet.  Mostly this is useful when the
+packet dump is standard output, and has been piped to
+.Xr tcpdump 1 .
+.It Fl g
+Produce output on diagnostic output, showing the presentation form of DNS
+messages which passed through all of the filters.  If
+.Fl w
+is also used, then every message will be dumped in both binary and
+presentation form.
+.It Fl ?
+Prints some text to stdout describing the command line options, so that you
+won't have to refer back to this man page as often.  Probably you will have
+to say "-\\?" to get this option past your shell.
+.It Fl 6
+Suppress the use of packet filter patterns that are known (as of 2007) to
+cause problems when processing IPv6 packets.  Recommended when IPv6 traffic is
+expected to be present.
+.It Fl f
+Selects fragments (which could include unrelated flows since fragments do not
+contain port numbers), and includes fragments in the binary output.  Necessary
+if you intend to do IP Reassembly.  Note that all fragments will be collected,
+not just those using the DNS port number, since fragments don't have port
+numbers.  Beware this option if you also handle a lot of NFS traffic.
+.It Fl T
+Selects TCP packets.
+SYN, FIN, and RST packets are collected if they pass the layer 2, port, and
+host filters (although hosts need not be in the correct direction); they are
+not tested against filter options that require a DNS header such as
+.Fl m ,
+.Fl s ,
+and
+.Fl e .
+The first DNS header in the stream is captured if it passes all filter
+options.
+All subsequent non-empty packets in the stream, regardless of DNS message
+boundaries, will be captured if and only if the first DNS header passed all
+filter options.
+TCP packets will usually not be printable with
+.Fl g .
+.It Fl i Ar if
+Select an interface to be monitored.  On BSD systems, the default is the first
+interface that was configured at system boot time.  On Linux systems, the
+default is to monitor all interfaces.  More than one interface may be selected
+which will cause output to be interleaved from all selected interfaces.
+.It Fl r Ar file
+Select an offline
+.Xr pcap 3
+file produced by this utility or by
+.Xr tcpdump 1
+as the input packet source.  Can be given as "-" to indicate standard input.
+.It Fl l Ar vlan
+Captures only 802.1Q encapsulated packets, and selects specific vlans to be
+monitored.  Can be specified more than once to select multiple vlans.
+.Fl l Ar 4095
+means "all vlans".
+.It Fl L Ar vlan
+Captures 802.1Q encapsulated packets matching the specified vlans AND
+packets without VLAN tags. Can be specified more than one to select
+multiple vlans.
+.Fl L Ar 4095
+means "all vlans".
+.It Fl u Ar port
+Capture only packets on this UDP port, and treat as DNS traffic.  The default
+port is 53.  Note that there is no way to select multiple UDP ports, as would
+be necessary to capture both DNS (port 53) and mDNS (port 5353) traffic.
+.It Fl x Ar pat
+If one or more
+.Fl x
+options are provided, then DNS messages will only be selected if the
+printable representation of the QNAME or any RR matches at least one of the
+provided
+.Ar pat
+patterns.  See
+.Xr regex 3
+and
+.Xr re_format 7
+for more information about extended regular expression syntax.
+.It Fl X Ar pat
+If one or more
+.Fl X
+options are provided, then DNS messages matching these patterns will not
+be selected.  See the description of
+.Fl x
+above.
+.Pp
+NOTE: for reasons lost to the mists of time, it seems that
+.Fl X
+only takes effect when
+.Fl x
+is also used.  If you use
+.Fl X
+alone, you'll get no output.  Thus, you should at least use "-x ."
+to initially match all queries and then exclude certain patterns with
+.Fl X.
+Users of the
+.Fl X
+option should be advised that this behavior could change in future versions.
+.It Fl m Op qun
+Capture only messages of designated types (query, update, and notify).
+Default is query.
+.It Fl s Op ir
+Select messages which are initiations and/or responses.  Default is both.
+.It Fl h Op ir
+Hide initiator or responder of each captured transaction.  Hiding an initiator
+means wiping out the address and port number.  Hiding a responder means to wipe
+out the address only.  This wiping occurs on the copy of the packet sent to the
+.Xr pcap 3
+dump output, and both the IP and UDP checksums will be recomputed in that case.
+.It Fl e Op nytfsxir
+Among responses, consider nonzero DNS TC or DNS RCODE to indicate an error,
+and select only responses which do not have (n), or which have (y), these
+conditions.  The default is to only select nonerrors among responses.  If
+both nonerror and error responses are to be selected, specify both the
+.Ar n
+and
+.Ar y
+options here.
+To be more specific, use one or more condition-specific options, as follows:
+.sp
+.Bl -tag -width indent -offset indent -compact
+.It Va n
+no error
+.It Va y
+some error
+.It Va t
+truncated response (TC bit)
+.It Va f
+format error (rcode 1)
+.It Va s
+server failure (rcode 2)
+.It Va x
+no such name (rcode 3)
+.It Va i
+not implemented (rcode 4)
+.It Va r
+refusal (rcode 5)
+.El
+.It Fl a Ar host
+Capture only transactions having these initiators.  Can be specified more than
+once to select multiple initiators.  If a host name is used, then all of that
+host's addresses whether IPv4 or IPv6 are added to the recognition pattern.
+.It Fl z Ar host
+Capture only transactions having these responders.  Can be specified more than
+once to select multiple responders.  If a host name is used, then all of that
+host's addresses whether IPv4 or IPv6 are added to the recognition pattern.
+.It Fl A Ar host
+Capture only transactions NOT having these initiators.
+.It Fl Z Ar host
+Capture only transactions NOT having these responders.
+.It Fl Y Ar host
+Drop responses having these responders.  Similar to
+.Fl Z
+in spirit.  However,
+.Fl Y
+applies only to responses and does not cause any additions to the BPF filter
+string.
+.It Fl w Ar base
+Dump the captured packets to successive binary files in
+.Xr pcap 3
+format with DLT_RAW datalink type.
+Each file will have a name like "%s.%u.%06u" where %s is
+.Ar base ,
+%u is the time in seconds, and %06u is the time in microseconds.  The argument
+"-" may be given to send the binary output to standard output.  In that case,
+the
+.Fl c
+and
+.Fl t
+options affect the total duration of the capture, and not merely the size and
+time limits of each individual dump file.
+.It Fl k Ar cmd
+After each dump file specified by
+.Fl w
+is closed, this command will be executed in a nonblocking subprocess with the
+file name as its one argument.  It's expected that this command will be a shell
+script that submits the finished file to a batch processing analytics system.
+Note that without
+.Fl k ,
+the program will exit at the first output closure due to
+.Fl c
+or
+.Fl t .
+.It Fl t Ar lim
+By default,
+.Nm
+will close its packet dump file only when interrupted.  A time limit can be
+specified with the
+.Fl t
+option.  
+When writing to a file, the packet dump file will be closed when time() %
+.Ar lim
+is zero and the first file will usually be shorter than
+.Ar lim
+seconds.
+If the packet dump file is standard output, then after closing this
+file,
+.Nm
+exits.  This option is inclusive with
+.Fl c .
+.It Fl c Ar lim
+By default,
+.Nm
+will close its packet dump file only when interrupted.  A dump file size,
+measured in packets, can be specified with the
+.Fl c
+option.  If the packet dump file is standard output, then after closing this
+file,
+.Nm
+exits.  This option is inclusive with
+.Fl t .
+.It Fl B Ar datetime
+When using
+.Fl w ,
+the
+.Fl B
+option tells
+.Nm
+to start collecting at a specific time.
+.Ar datetime
+should be specified as YYYY-MM-DD HH:MM:SS.  The program will
+.Xr sleep 3
+until the start time, and then begin capturing packets.
+.It Fl E Ar datetime
+When using
+.Fl w
+and
+.Fl t ,
+the
+.Fl E
+option tells
+.Nm
+to stop collecting at a specific time.
+.Ar datetime
+should be specified as YYYY-MM-DD HH:MM:SS.  The program will exit
+when it sees a packet with timestamp greater than
+.Ar datetime .
+.It Fl S
+Causes
+.Nm
+to print pcap_stats() counters on stderr when
+.Fl t
+or
+.Fl c
+limits are reached.
+.El
+.Pp
+If started with no options,
+.Nm
+will exit with a complaint that without either the
+.Fl w
+or
+.Fl g
+options, it's pointless to run the program at all.  In its simplest form,
+the output can be piped to
+.Xr tcpdump 1
+as in:
+.Bd -literal -offset indent
+dnscap -w - | tcpdump -r -
+.Ed
+.Pp
+You can safely add the
+.Fl d
+option since the output resulting from
+.Fl d
+goes to diagnostic output rather than standard output.  And since everybody
+who's anybody always uses the
+.Fl n
+option to
+.Xr tcpdump 1 ,
+the minimum useful incantation is probably:
+.Bd -literal -offset indent
+dnscap -w - | tcpdump -r - -n
+.Ed
+.Pp
+The more interesting use for
+.Nm
+is long term or continuous data collection.  Assuming a shell script called
+.Ar dnscap-upload
+whose function is to transfer a
+.Xr pcap 3 -
+format file to an analytics system and then remove the local copy of it, then
+a name server operating system startup could invoke
+.Nm
+for continuous DNS auditing using a command like:
+.Bd -literal -offset indent
+dnscap -m qun -h i -r f.root-servers.net \\
+       -b /var/local/dnscaps/f-root -t 1800 \\
+       -k /usr/local/sbin/dnscap-upload
+.Ed
+.Pp
+A bizarre but actual example which combines almost all features of
+.Nm
+is:
+.Bd -literal -offset indent
+dnscap -d -w - -1 -i em0 -l 0 -x ^7 | \\
+       dnscap -d -r - -X spamhaus -g -l 0
+.Ed
+.Pp
+Here, we're looking for all messages having a QNAME or RR beginning with the
+decimal digit "7", but we don't want to see anything containing "spamhaus".
+The interface is tagged, and since only one interface is selected, the output
+stream from the first
+.Nm
+will also be tagged, thus we need
+.Fl l Ar 0
+on both
+.Nm
+commands.
+.Sh "COMPATIBILITY NOTES"
+If
+.Nm dnscap
+produces no output, it's probably due to some kind of bug in your kernel's
+.Xr bpf 4
+module or in your
+.Xr pcap 3
+library.  You may need the
+.Fl 6
+or
+.Fl l Ar 0
+options.  To diagnose your way out of "no output" hell, use the
+.Fl d
+and
+.Fl g
+options to find out what BPF program is being internally generated, and
+then cut/paste this BPF program onto a
+.Xr tcpdump 1
+command line to see if it likewise produces no output.
+.Sh DIAGNOSTICS
+.Ex -std
+.Sh SEE ALSO
+.Xr tcpdump 1 ,
+.Xr ncaptool 1 ,
+.Xr pcap 3 ,
+.Xr bpf 4
+.Sh HISTORY
+.Nm
+was written by Paul Vixie (ISC) with help from Duane Wessels,
+Kevin Brintnall, and others too numerous to mention.
+.Sh BUGS
+Ought to handle fragmented UDP.
+.Pp
+Ought to be re-implented as a
+.Xr ncap
+client.
+.Pp
+Too many design botches within
+.Xr bpf 4
+and
+.Xr pcap 3
+are made visible to the user of this utility.
+.Pp
+.Fl X
+doesn't necessarily work without an "enclosing"
+.Fl x
+option.
+.Sh LICENSE
+Copyright (c) 2007 by Internet Systems Consortium, Inc. ("ISC")
+.Pp
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+.Pp
+THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.

@@ -62,14 +62,14 @@ vars+=(cluster_addr)
             [[ -r consul ]] || { # no consul binary found
                 act "downloading consul binary"
                 # using wget because cloudfront does redirects unsupported by curl
-                wget "https://dl.bintray.com/mitchellh/consul/0.5.0_linux_amd64.zip"
+                wget "https://dl.bintray.com/mitchellh/consul/0.5.2_linux_amd64.zip"
                 unzip 0.5.0_linux_amd64.zip # unzipped is just 'consul'
             }
             ;;
         i686|i586|i486|i386)
             act "detected 32bit binary architecture"
             [[ -r consul ]] || { # no consul binary found
-                wget "https://dl.bintray.com/mitchellh/consul/0.5.0_linux_386.zip"
+                wget "https://dl.bintray.com/mitchellh/consul/0.5.2_linux_386.zip"
                 unzip 0.5.0_linux_386.zip # unzipped is just 'consul'
             }
 
@@ -91,13 +91,6 @@ vars+=(cluster_addr)
     conf=$R/run/consul.json
     rm -f $conf || zerr
     touch $conf || zerr
-
-    # jsh=''
-    # for c in ${(k)consul_conf}; do
-    #     jsh+=" -s $c -i ${consul_conf[$c]} "
-    # done
-    # print "{}" | jshon ${=jsh}
-
 
 
     sep="{"
