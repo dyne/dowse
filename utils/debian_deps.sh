@@ -65,7 +65,7 @@ no_start_policy() {
         print "error: no_start_policy called without arguments"
         return 1 }
 
-    print "NO_START_SERVICES=1" > /etc/policy-rc.d/$1.conf
+    print "NO_START_SERVICES=1" > /etc/policy-rc.d/$1
 }
 
 
