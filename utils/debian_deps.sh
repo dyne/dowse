@@ -32,12 +32,12 @@ install_policy() {
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=804018#35
 
 # doc
-#  either "echo DEBIAN_NO_START_SERVICES=1 > /etc/policy-rc.conf"
-#  or "echo DEBIAN_NO_START_SERVICES=1 > /etc/policy-rc.d/\$service"
+#  either "echo NO_START_SERVICES=1 > /etc/policy-rc.conf"
+#  or "echo NO_START_SERVICES=1 > /etc/policy-rc.d/\$service"
 #  or FORCE_NO_START_SERVICES=1 dpkg -i ...
 
 NAME=policy-rc
-DEBIAN_NO_START_SERVICES=0
+NO_START_SERVICES=0
 
 # load system settings
 [ ! -f /etc/\${NAME}.conf ] || . /etc/\${NAME}.conf
@@ -45,7 +45,7 @@ DEBIAN_NO_START_SERVICES=0
 # load package specific settings
 [ ! -f /etc/\${NAME}.d/\$1 ] || . /etc/\${NAME}.d/\$1
 
-if [ \${DEBIAN_NO_START_SERVICES} -eq 1 ] && [ -n "\${DPKG_RUNNING_VERSION}" ]; then
+if [ \${NO_START_SERVICES} -eq 1 ] && [ -n "\${DPKG_RUNNING_VERSION}" ]; then
   exit 101
 elif [ -n "\${FORCE_NO_START_SERVICES}" ]; then
   exit 101
@@ -56,7 +56,7 @@ EOF
     chmod a+x /usr/sbin/policy-rc.d
     mkdir -p /etc/policy-rc.d
 
-    print "DEBIAN_NO_START_SERVICES=0" > /etc/policy-rc.conf
+    print "NO_START_SERVICES=0" > /etc/policy-rc.conf
 }
 
 no_start_policy() {
@@ -65,7 +65,7 @@ no_start_policy() {
         print "error: no_start_policy called without arguments"
         return 1 }
 
-    print "DEBIAN_NO_START_SERVICES=0" > /etc/policy-rc.d/$1.conf
+    print "NO_START_SERVICES=1" > /etc/policy-rc.d/$1.conf
 }
 
 
