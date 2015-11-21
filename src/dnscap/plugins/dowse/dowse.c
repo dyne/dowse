@@ -172,6 +172,7 @@ void load_domainlist(const char *path) {
         }
         fclose(fp);
     }
+    closedir(listdir);
 }
 
 int
@@ -217,10 +218,7 @@ dowse_stop() {
 
     if(fileout) fclose(fileout);
 
-    if(listdir) {
-        closedir(listdir);
-        hashmap_free(domainlist);
-    }
+    if(listdir) hashmap_free(domainlist);
 
     // TODO free all the elements in map
     /* for(c=MAP_OK; c!=MAP_MISSING; */
@@ -398,11 +396,13 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
             // what domain is being looked up
             extracted = extract_domain(resolved);
 
-            res = hashmap_get(visited, extracted, (void**)(&sval));
+            res = hashmap_get(visited, extracted, (void**)(&val));
             switch(res) {
 
             case MAP_MISSING : // never visited
-                res = hashmap_put(visited, strdup(domain), strdup(tld));
+                val = malloc(sizeof(int));
+                *val = 1; // just a placeholder for now
+                res = hashmap_put(visited, strdup(extracted), val);
                 break;
 
             case MAP_OK: // already visited
