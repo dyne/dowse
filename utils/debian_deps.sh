@@ -80,8 +80,8 @@ print
 
 # list of programs to be installed:
 daemons=(dnsmasq privoxy squid3 tor)
-pkgs=(daemontools iptables ebtables gettext-base procps net-tools libssl-dev libbind-dev libpcap-dev unzip wget)
-pkgs=(gcc make)
+pkgs=(daemontools iptables ebtables gettext-base procps net-tools libssl-dev libbind-dev libpcap-dev unzip wget gcc make)
+
 
 install_policy
 
