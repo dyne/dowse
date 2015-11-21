@@ -74,6 +74,7 @@ zmodload zsh/sched
 zmodload zsh/system
 zmodload zsh/net/tcp
 
+source $R/zlibs/modules
 source $R/zlibs/processes
 source $R/zlibs/iptables
 source $R/zlibs/ebtables
@@ -198,130 +199,6 @@ dowse-check() {
     act "all requirements in place"
 
     return 0
-}
-
-# }}}
-
-
-# {{{ MODULES
-
-load-module() {
-    fn load-module
-    mod="$1"
-    # main module file is called dowse
-    # skip module if not present
-    freq=($mod/dowse)
-    ckreq || return 1
-
-    command -v module-setup >/dev/null && unset -f module-setup
-    command -v module-start >/dev/null && unset -f module-start
-    command -v module-stop >/dev/null && unset -f module-stop        
-    unset dowse_mod_name
-    unset dowse_mod_desc
-    unset dowse_mod_type
-    unset dowse_mod_ports
-    unset dowse_mod_deps
-    unset dowse_mod_authors
-    unset dowse_mod_version
-
-    source ${mod}/dowse
-
-    command -v module-setup > /dev/null && \
-        command -v module-start > /dev/null && \
-        command -v module-stop > /dev/null || {
-            warning "invalid module: $i"
-            return 1 }
-
-    # TODO check also header variables
-
-    return 0
-}
-
-dowse-modules-setup() {
-    fn dowse-module-setup
-    freq=($R/modules/enabled)
-    ckreq || return $?
-
-    mods=()
-    enabled=`find -L $R/modules/enabled -maxdepth 1 -type d | tail -1`
-
-    # remove all service definitions for modules from consul
-    consmods=`find $R/run/consul.d -maxdepth 1 -type f -name 'module-*.json'`
-    for m in ${(f)consmods}; do
-        rm -f $m
-    done
-
-    for i in ${(f)enabled}; do
-
-        load-module $i || continue
-
-        mods+=($i)
-
-        notice "Setup module: ::1 name::" $dowse_mod_name
-        act "$dowse_mod_desc"
-
-        pushd $R
-        module-setup
-        popd
-
-        [[ ${#dowse_mod_ports} -gt 0 ]] && consul-add-service
-
-    done
-}
-
-dowse-modules-start() {
-    fn dowse-module-start
-    freq=($R/modules/enabled)
-    ckreq
-
-    [[ ${#mods} = 0 ]] && {
-        act "no modules activated"
-        return 0
-    }
-
-    for i in $mods; do
-
-        # execute the module-start()
-        source $i/dowse
-        notice "Start module: ::1 name::" $dowse_mod_name
-        act "$dowse_mod_desc"
-
-        pushd $R
-        module-start
-        popd
-
-        func "announcing modules"
-        cat <<EOF | .put $address /v1/kv/modules/$dowse_mod_name
-$dowse_mod_desc
-
-type: $dowse_mod_type
-ports: $dowse_mod_ports
-depends: $dowse_mod_deps
-authors: $dowse_mod_authors
-version: $dowse_mod_version"
-EOF
-
-    done
-
-    consul reload
-
-}
-
-dowse-modules-stop() {
-    fn dowse-module-stop
-
-    enabled=`find -L $R/modules/enabled -maxdepth 1 -type d`
-    for i in ${(f)enabled}; do
-
-        [[ -r $i/dowse ]] || continue
-
-        source $i/dowse
-
-        pushd $R
-        module-stop
-        popd
-
-    done
 }
 
 # }}}
