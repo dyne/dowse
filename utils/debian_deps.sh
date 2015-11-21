@@ -33,22 +33,21 @@ install_policy() {
 
 # doc
 #  either "echo DEBIAN_NO_START_SERVICES=1 > /etc/policy-rc.conf"
-#  or "echo DEBIAN_NO_START_SERVICES=1 > /etc/policy-rc.d/$service"
+#  or "echo DEBIAN_NO_START_SERVICES=1 > /etc/policy-rc.d/\$service"
 #  or FORCE_NO_START_SERVICES=1 dpkg -i ...
 
 NAME=policy-rc
 DEBIAN_NO_START_SERVICES=0
 
 # load system settings
-[ ! -f /etc/${NAME}.conf ] || source /etc/${NAME}.conf
+[ ! -f /etc/\${NAME}.conf ] || . /etc/\${NAME}.conf
 
 # load package specific settings
-[ ! -f /etc/${NAME}.d/$1 ] || source /etc/${NAME}.d/$1
+[ ! -f /etc/\${NAME}.d/\$1 ] || . /etc/\${NAME}.d/\$1
 
-if [ ${DEBIAN_NO_START_SERVICES} -eq 1 ] && [ -n 
-"${DPKG_RUNNING_VERSION}" ]; then
+if [ \${DEBIAN_NO_START_SERVICES} -eq 1 ] && [ -n "\${DPKG_RUNNING_VERSION}" ]; then
   exit 101
-elif [ -n "${FORCE_NO_START_SERVICES}" ]; then
+elif [ -n "\${FORCE_NO_START_SERVICES}" ]; then
   exit 101
 else
   exit 104

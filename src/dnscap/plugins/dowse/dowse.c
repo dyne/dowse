@@ -54,6 +54,16 @@ static FILE *fileout = 0;
 
 static int console = 1;
 
+
+#define MAX_QUERY 512
+#define MAX_DOMAIN 256
+#define MAX_TLD 32
+static char query[MAX_QUERY]; // incoming query
+static char domain[MAX_DOMAIN]; // domain part parsed (2nd last dot)
+static char tld[MAX_TLD]; // tld (domain extension, 1st dot)
+
+static char hostname[MAX_DOMAIN];
+
 output_t dowse_output;
 
 // hash map of visited domains
@@ -130,6 +140,40 @@ size_t trim(char *out, size_t len, const char *str)
 }
 #define MAX_LINE 512
 
+void load_domainlist(const char *path) {
+    char line[MAX_LINE];
+    char trimmed[MAX_LINE];
+
+    domainlist = hashmap_new();
+
+    // parse all files in directory
+    logerr("Parsing domain-list: %s\n", path);
+    listdir = opendir(path);
+    if(!listdir) {
+        perror(path);
+        exit(1); }
+
+    // read file by file
+    while (dp = readdir (listdir)) {
+        char fullpath[MAX_LINE];
+        snprintf(fullpath,MAX_LINE,"%s/%s",path,dp->d_name);
+        // open and read line by line
+        fp = fopen(fullpath,"r");
+        if(!fp) {
+            perror(fullpath);
+            continue; }
+        while(fgets(line,MAX_LINE, fp)) {
+            // save lines in hashmap with filename as value
+            if(line[0]=='#') continue; // skip comments
+            trim(trimmed, strlen(line), line);
+            if(trimmed[0]=='\0') continue; // skip blank lines
+            // logerr("(%u) %s\t%s", trimmed[0], trimmed, dp->d_name);
+            hashmap_put(domainlist, strdup(trimmed), strdup(dp->d_name));
+        }
+        fclose(fp);
+    }
+}
+
 int
 dowse_start(logerr_t *a_logerr) {
     /*
@@ -139,8 +183,6 @@ dowse_start(logerr_t *a_logerr) {
      * it should save the a_logerr pointer passed from the
      * parent code.
      */
-    char line[MAX_LINE];
-    char trimmed[MAX_LINE];
 
     logerr = a_logerr;
     if (filepfx) {
@@ -152,40 +194,14 @@ dowse_start(logerr_t *a_logerr) {
         }
     }
 
+    // get own hostname
+    gethostname(hostname,(size_t)MAX_DOMAIN);
+
     visited = hashmap_new();
 
-    if(listpath) { // parse a domain-list path
+    // load the domain-list path if there
+    if(listpath) load_domainlist(listpath);
 
-        domainlist = hashmap_new();
-
-        // parse all files in directory
-        logerr("Parsing domain-list: %s\n", listpath);
-        listdir = opendir(listpath);
-        if(!listdir) {
-            perror(listpath);
-            exit(1); }
-        
-        // read file by file
-        while (dp = readdir (listdir)) {
-            char fullpath[MAX_LINE];
-            snprintf(fullpath,MAX_LINE,"%s/%s",listpath,dp->d_name);
-            // open and read line by line
-            fp = fopen(fullpath,"r");
-            if(!fp) {
-                perror(fullpath);
-                continue; }
-            while(fgets(line,MAX_LINE, fp)) {
-                // save lines in hashmap with filename as value
-                if(line[0]=='#') continue; // skip comments
-                trim(trimmed, strlen(line), line);
-                if(trimmed[0]=='\0') continue; // skip blank lines
-                // logerr("(%u) %s\t%s", trimmed[0], trimmed, dp->d_name);
-                hashmap_put(domainlist, strdup(trimmed), strdup(dp->d_name));
-            }
-            fclose(fp);
-
-        }
-    }
     return 0;
 }
 
@@ -239,13 +255,6 @@ dowse_close(my_bpftimeval ts) {
 }
 
 
-#define MAX_QUERY 512
-#define MAX_DOMAIN 256
-#define MAX_TLD 32
-static char query[MAX_QUERY]; // incoming query
-static char domain[MAX_DOMAIN]; // domain part parsed (2nd last dot)
-static char tld[MAX_TLD]; // tld (domain extension, 1st dot)
-
 static inline int is_ip(char *in) {
     // is it a numeric IPv4?
     int numip[4];
@@ -264,7 +273,7 @@ static char *ia_resolv(iaddr ia) {
 
     if(err==0) { // all fine, no error
 
-        if( is_ip(query) ) return(query); 
+        if( is_ip(query) ) return(query);
 
         // is it an hostname?
         char *name = strtok(query,".");
@@ -273,7 +282,7 @@ static char *ia_resolv(iaddr ia) {
         return(name);
 
     } else { // TODO: here check for errors
-        
+
         // however we try harder to return the ip
         (void) inet_ntop(ia.af, &ia.u, query, sizeof query);
         return (&query[0]);
@@ -321,7 +330,7 @@ static char *extract_domain(char *address) {
     // logerr("extracted: %s (%p) (dots: %u)", domain+c+1, domain+c+1, dots);
 
     return(domain+c+1);
-}       
+}
 
 
 #define MAX_OUTPUT 512
@@ -330,7 +339,7 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
               const u_char *pkt_copy, unsigned olen,
               const u_char *dnspkt, unsigned dnslen) {
     /* dnspkt may be NULL if IP packet does not contain a valid DNS message */
-    
+
     char output[MAX_OUTPUT];
 
     if (dnspkt) {
@@ -347,19 +356,19 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
         char *from;
         int res;
         char action = 'A';
-        
+
         char from_color[16];
 
         ns_initparse(dnspkt, dnslen, &msg);
         if (!ns_msg_getflag(msg, ns_f_qr)) return;
 
-        /* 
+        /*
          * -- flags --
          * 0    1                5    6    7    8           11               15
          * +----+----------------+----+----+----+-----------+----------------+
          * | QR | Operation Code | AA | TC | RA |   Zero    |    Recode      |
          * +----+----------------+----+----+----+-----------+----------------+
-         * 
+         *
          * Question/Response          : ns_f_qr
          * Operation code             : ns_f_opcode
          * Authoritative Answer       : ns_f_aa
@@ -375,8 +384,11 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
         qdcount = ns_msg_count(msg, ns_s_qd);
         if (qdcount > 0 && 0 == ns_parserr(&msg, ns_s_qd, 0, &rr)) {
 
-            // where the query comes from 
+            // where the query comes from
             from = ia_resolv(to);
+
+            // if its from ourselves omit it
+            if(strncmp(from,hostname,MAX_DOMAIN)==0) return;
 
             // not reverse resolved means not known by Dowse, code RED
             if(is_ip(from)) strcpy(from_color,"#FF0000");
@@ -391,7 +403,6 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
 
             case MAP_MISSING : // never visited
                 res = hashmap_put(visited, strdup(domain), strdup(tld));
-                // TODO error check if not MAP_OK
                 break;
 
             case MAP_OK: // already visited
@@ -426,7 +437,7 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
                 /* render only the domain in root category */
                 snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s",
                          ts.tv_sec, from, action, tld, extracted);
-    
+
 
 
             /* write to file */

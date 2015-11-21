@@ -41,7 +41,8 @@ dnscap-start() {
 
     start-stop-daemon \
         --background --pidfile $pid --start --exec /usr/local/bin/dnscap \
-        --make-pidfile -- -p -1 -i $interface -x . -X in-addr.arpa -P $R/run/dowse.so \
+        --make-pidfile -- -p -1 -i $interface -x . -X in-addr.arpa \
+        -P $R/run/dowse.so \
         -o $R/log/dnscap.log -l $R/src/domain-list/data -q
     
     [[ $? = 0 ]] || {
@@ -58,8 +59,6 @@ dnscap-stop() {
 
     act "Stopping dnscap ($pid)"
     start-stop-daemon --stop --pidfile $pidfile
-    [[ $? = 0 ]] && {
-        waitpid $pid
-    }
+    [[ $? = 0 ]] && waitpid $pid
     rm -f $pid
 }
