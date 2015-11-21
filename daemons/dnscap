@@ -42,7 +42,7 @@ dnscap-start() {
     start-stop-daemon \
         --background --pidfile $pid --start --exec /usr/local/bin/dnscap \
         --make-pidfile -- -p -1 -i $interface -x . -X in-addr.arpa \
-        -P $R/run/dowse.so \
+        -P $R/src/dnscap/plugins/dowse/dowse.so \
         -o $R/log/dnscap.log -l $R/src/domain-list/data -q
     
     [[ $? = 0 ]] || {

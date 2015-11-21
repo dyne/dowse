@@ -60,7 +60,7 @@ dowse-modules-setup() {
     ckreq || return $?
 
     mods=()
-    enabled=`find -L $R/modules/enabled -maxdepth 1 -type d | tail -1`
+    enabled=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$`
 
     # remove all service definitions for modules from consul
     consmods=`find $R/run/consul.d -maxdepth 1 -type f -name 'module-*.json'`

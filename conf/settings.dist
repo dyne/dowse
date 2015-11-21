@@ -4,7 +4,7 @@
 # In fact this is a shell script.
 
 # which addresses we take for dowse
-dowse=10.0.0.254
+address=10.0.0.254
 
 # which interface is connected to the network
 interface=eth0

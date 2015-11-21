@@ -149,13 +149,9 @@ dowse-check() {
     ckreq || return $?
 
     act "checking requirements to run dowse..."
-    # this is a check on binaries present in PATH
-    # if not found, Dowse will abort.
-    # for each found, Dowse will load zlibs/$.sh if present
-#    for req in setuidgid dnsmasq iptables ebtables; do
-#        require $req || return 1
-#    done
 
+    mkdir -p $R/log
+    mkdir -p $R/run
 
     root=1
     [[ "$UID" = "0" ]] || unset root
@@ -177,8 +173,6 @@ dowse-check() {
         $dowse_uid $dowse_gid $TTY
 
     act "daemons running as user and group $dowse_uid:$dowse_gid"
-    mkdir -p $R/log
-    mkdir -p $R/run
     [[ -z $root ]] || {
         # setup dirs
         chmod go-rwx $R/log
@@ -202,6 +196,7 @@ dowse-check() {
 }
 
 # }}}
+
 
 # {{{ MAIN
 

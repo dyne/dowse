@@ -15,9 +15,6 @@ R=`pwd`
 }
 
 [[ -r $R/src/dnscap/plugins/dowse/dowse.so ]] || {
-    pushd $R/src/dnscap/plugins/dowse
-    make
-    cp dowse.so $R/run
-    popd
+    make -C $R/src/dnscap/plugins/dowse
 }
 
