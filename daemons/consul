@@ -27,7 +27,9 @@
 GOMAXPROCS=10
 
 
-vars+=(cluster_addr)
+vars+=(cluster_addr consul_config consul_running)
+consul_running=0
+consul_config=""
 
 .consul-init() {
     fn ".consul-init $*"
@@ -288,13 +290,20 @@ consul-start() {
         # if root then run as server, else as client
 
         if [[ -z $root ]]; then
+
             act "launching consul as client"
+            join="$1"
+            [[ "$join" = "" ]] && {
+                error "usage: consul-start address_of_server"
+                return 1 }
+
             $R/consul/consul agent \
                 -config-file $R/run/consul.json \
                 -config-dir $R/run/consul.d \
                 -ui-dir $R/consul/web \
                 -pid-file $R/run/consul.pid \
-                -client $address -bind $address -dc dowse1 \
+                -client $address -bind $address \
+                -dc dowse1 -join $join \
                 2>&1 >> $R/log/consul.log &
 
         else # running as root
@@ -313,8 +322,22 @@ consul-start() {
 
     fi
 
-    # wait for leadership to be settled
-    sleep 3
+    # # wait for leadership to be settled
+    # sleep 3
+    # consul_configuration=`restful.get $address 8500 /v1/agent/self`
+    # for l in "${(f)consul_configuration}"; do
+    #     if [[ "$l" = "No known Consul server" ]]; then
+    #         error "Consul agent startup failed"
+    #         return 1
+    #     else
+    #         consul_running=1
+    #     fi
+
+    # done
+
+    #         sysread -i $_fd -o 1 | awk -F: '
+    # /"Value":/ { gsub(/"|}]/,"",$7) ; print $7 }' | base64 -d
+
 }
 
 consul-stop() {

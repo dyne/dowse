@@ -27,8 +27,11 @@ load-module() {
     mod="$1"
     # main module file is called dowse
     # skip module if not present
-    freq=($mod/dowse)
-    ckreq || return 1
+    core_script="$1/dowse"
+    [[ -r "$core_script" ]] || {
+        core_script="$R/modules/enabled/$1/dowse"
+        [[ -r "$core_script" ]] || return 1
+    }
 
     command -v module-setup >/dev/null && unset -f module-setup
     command -v module-start >/dev/null && unset -f module-start
@@ -41,71 +44,52 @@ load-module() {
     unset dowse_mod_authors
     unset dowse_mod_version
 
-    source ${mod}/dowse
+    # read all the module, instantiate functions
+    source $core_script
 
+    # check at least these 3 functions are declared
     command -v module-setup > /dev/null && \
         command -v module-start > /dev/null && \
         command -v module-stop > /dev/null || {
             warning "invalid module: $i"
             return 1 }
 
+    notice "Loading module: $dowse_mod_name (${dowse_mod_type})"
+    act "$dowse_mod_desc"
+
+    for dep in $dowse_mod_deps; do
+        isfound $dep || {
+            warning "daemon not found: $dep"
+            warning "$dowse_mod_name depends from this daemon, cannot proceed loading"
+            return 1 }
+
+    done
+
+    func "all dependencies satisfied: ${dowse_mod_deps}"
+    func "ports opened: $dowse_mod_ports"
+    func "author: ${dowse_mod_authors} version: $dowse_mod_version"
+
     # TODO check also header variables
 
     return 0
 }
 
-dowse-modules-setup() {
-    fn dowse-module-setup
-    freq=($R/modules/enabled)
-    ckreq || return $?
+setup-module() {
+    fn setup-module
 
-    mods=()
-    enabled=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$`
-
-    # remove all service definitions for modules from consul
-    consmods=`find $R/run/consul.d -maxdepth 1 -type f -name 'module-*.json'`
-    for m in ${(f)consmods}; do
-        rm -f $m
-    done
-
-    for i in ${(f)enabled}; do
-
-        load-module $i || continue
-
-        mods+=($i)
-
-        notice "Setup module: ::1 name::" $dowse_mod_name
-        act "$dowse_mod_desc"
-
-        pushd $R
-        module-setup
-        popd
-
-        [[ ${#dowse_mod_ports} -gt 0 ]] && consul-add-service
-
-    done
+    pushd $R
+    module-setup || {
+        warning "cannot setup module: $dowse_mod_name"
+        popd; return 1 }
+    popd
 }
 
-dowse-modules-start() {
-    fn dowse-module-start
-    freq=($R/modules/enabled)
-    ckreq
+start-module() {
+    fn start-module
 
-    [[ ${#mods} = 0 ]] && {
-        act "no modules activated"
-        return 0
-    }
-
-    for i in $mods; do
-
-        # execute the module-start()
-        source $i/dowse
-        notice "Start module: ::1 name::" $dowse_mod_name
-        act "$dowse_mod_desc"
-
-        pushd $R
-        module-start
-        popd
+    notice "Starting module $dowse_mod_name"
+    
+    if module-start; then
 
         func "announcing modules"
         cat <<EOF | .put $address /v1/kv/modules/$dowse_mod_name
@@ -118,26 +102,27 @@ authors: $dowse_mod_authors
 version: $dowse_mod_version"
 EOF
 
-    done
+        # add service listing on consul
+        [[ ${#dowse_mod_deps} -gt 0 ]] && consul-add-service
 
-    consul reload
-
+        consul reload
+    else
+        warning "cannot start module $dowse_mod_name"
+        return 1
+    fi
 }
 
-dowse-modules-stop() {
-    fn dowse-module-stop
+stop-module() {
+    fn stop-module
 
-    enabled=`find -L $R/modules/enabled -maxdepth 1 -type d`
-    for i in ${(f)enabled}; do
+    act "stopping module: $dowse_mod_name"
 
-        [[ -r $i/dowse ]] || continue
-
-        source $i/dowse
-
-        pushd $R
-        module-stop
-        popd
-
-    done
+    if module-stop; then
+        [[ -r "$R/run/consul.d/module-${1}.js" ]] && {
+            rm "$R/run/consul.d/module-${1}.js"
+            consul-reload
+        }
+    else
+        warning "problems stopping module: $dowse_mod_name"
+    fi
 }
-

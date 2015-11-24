@@ -29,12 +29,13 @@ dowse_release_date="Mar/2015"
 
 zkv=1
 restful=1
-helper=1
+helpers=1
 
 R=${DOWSE_PATH:-`pwd`}
 
 # load development libraries if there
 if [[ -r $R/zlibs/zuper-dev/zuper ]]; then
+    func "Zuper loaded from development symlink"
     source $R/zlibs/zuper-dev/zuper
 else source $R/zlibs/zuper; fi
 
@@ -113,6 +114,53 @@ cat <<EOF
 
 EOF
 
+fn dowse-check
+freq=($R/conf $R/conf/settings $R/conf/network)
+ckreq || return $?
+
+act "checking requirements to run dowse..."
+
+mkdir -p $R/log
+mkdir -p $R/run
+
+root=1
+[[ "$UID" = "0" ]] || unset root
+if [[ "$root" = "" ]]; then
+    warn "no root privileges, limited functionality"
+else
+    act "root privileges granted"
+fi
+
+func "reading configuration in conf/settings"
+# zlibs/confstore
+conf-load
+
+dowse_uid=${dowse_uid:-`id -un`}
+dowse_gid=${dowse_gid:-`id -gn`}
+
+_verbose "Dowse command: ::1 commands::" "$*"
+_verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
+         $dowse_uid $dowse_gid $TTY
+
+act "daemons running as user and group $dowse_uid:$dowse_gid"
+[[ -z $root ]] || {
+    # setup dirs
+    chmod go-rwx $R/log
+    chown -R $dowse_uid:$dowse_gid $R/log
+
+    chmod go-rwx $R/run
+    chown -R $dowse_uid:$dowse_gid $R/run
+}
+
+func "::1 dir:: directory writable by ::2 uid::" run $dowse_uid
+if touch $R/run/test; then rm -f $R/run/test; else return 1; fi
+
+func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
+if touch $R/log/test; then rm -f $R/log/test; else return 1; fi
+
+act "all requirements in place"
+
+fn dowse-running
 # }}}
 
 # {{{ SYSTEM SETUP
@@ -143,57 +191,7 @@ net.ipv4.tcp_timestamps = 0
 EOF
 }
 
-dowse-check() {
-    fn dowse-check
-    freq=($R/conf $R/conf/settings $R/conf/network)
-    ckreq || return $?
 
-    act "checking requirements to run dowse..."
-
-    mkdir -p $R/log
-    mkdir -p $R/run
-
-    root=1
-    [[ "$UID" = "0" ]] || unset root
-    if [[ "$root" = "" ]]; then
-        warn "no root privileges, limited functionality"
-    else
-        act "root privileges granted"
-    fi
-
-    func "reading configuration in conf/settings"
-    # zlibs/confstore
-    conf-load
-
-    dowse_uid=${dowse_uid:-`id -un`}
-    dowse_gid=${dowse_gid:-`id -gn`}
-
-    _verbose "Dowse command: ::1 commands::" "$*"
-    _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
-        $dowse_uid $dowse_gid $TTY
-
-    act "daemons running as user and group $dowse_uid:$dowse_gid"
-    [[ -z $root ]] || {
-        # setup dirs
-        chmod go-rwx $R/log
-        chown -R $dowse_uid:$dowse_gid $R/log
-
-        chmod go-rwx $R/run
-        chown -R $dowse_uid:$dowse_gid $R/run
-    }
-
-    func "::1 dir:: directory writable by ::2 uid::" run $dowse_uid
-    touch $R/run/test || return $?
-    rm -f $R/run/test
-
-    func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
-    touch $R/log/test || return $?
-    rm -f $R/log/test
-
-    act "all requirements in place"
-
-    return 0
-}
 
 # }}}
 
@@ -210,8 +208,6 @@ dowse-start() {
         return 0
     }
     notice "Starting Dowse"
-
-    dowse-check || zerr
 
     [[ -z $root ]] || {
 
@@ -263,10 +259,14 @@ dowse-start() {
     }
 
     consul-start || return $?
+    mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
+    for m in "${(f)mods}"; do
 
-    dowse-modules-setup
+        load-module $m || continue
+        setup-module || continue
+        start-module || continue
 
-    dowse-modules-start
+    done
 
     notice "Dowse succesfully started, web interface up on:"
     act "http://${address}:8500/"
@@ -278,7 +278,13 @@ dowse-stop() {
 
     dowse-check || zerr
 
-    dowse-modules-stop
+    mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
+    for m in "${(f)mods}"; do
+
+        load-module $m || continue
+        stop-module
+
+    done
 
     [[ -r $R/run/consul.pid ]] && consul-stop
 
@@ -292,6 +298,21 @@ dowse-stop() {
     # consul-stop
 
     notice "Dowse is not running."
+
+}
+
+dowse-reload() {
+    fn dowse-reload
+
+    dowse-check || zerr
+
+    mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
+    for m in "${(f)mods}"; do
+        load-module || continue
+        stop-module || continue
+        setup-module || continue
+        start-module || continue
+    done
 
 }
 

@@ -15,7 +15,13 @@ vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
     restful.put $_host 8500 $* }
 .get() { _host=$1
          shift 1
-         restful.get $_host 8500 $* }
+         restful.get $_host 8500 $* \
+             | awk -F: '
+/"Value":/ { gsub(/"|}]/,"",$7)
+             print $7 }
+' | base64 -d
+
+ }
 
 
 conf-load() {
