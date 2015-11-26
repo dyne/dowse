@@ -1,0 +1,57 @@
+---
+- name: Build a Dowse machine
+
+  hosts: leader
+  remote_user: root
+
+  tasks:
+
+    - name: Running update on pkg repositories
+      apt: update_cache=yes
+      run_once: true
+
+    - name: Installing Dowse dependencies
+      apt: name={{ item }} state=latest force=yes
+      with_items:
+        - daemontools
+        - iptables
+        - ebtables
+        - gettext-base
+        - procps
+        - net-tools
+        - libssl-dev
+        - libbind-dev
+        - libpcap-dev
+        - unzip
+        - wget
+        - gcc
+        - make
+        - git
+        - zsh
+
+    # - name: Cloning Dowse source from dyne.org git repository
+    #   git:
+    #     repo=https://github.com/dyne/dowse
+    #     dest=/opt/dowse
+    #     #version=v0.8
+
+    - shell: mkdir -p /opt/dowse
+    - name: Cloning Dowse source from host git repository
+      synchronize: src=../ dest=/opt/dowse/
+        archive=yes
+
+    - name: Compiling Dowse source code
+      shell: ./src/compile.sh > compile.log
+        chdir=/opt/dowse
+
+    - name: Installing Dowse and its daemons on system
+      shell: ./utils/debian_deps.sh > install.log
+        chdir=/opt/dowse
+
+    # change this script for configs
+    - name: Configuring Dowse
+      script: dowse_setup.sh
+
+    - name: Starting Dowse
+      shell: ./start.sh
+        chdir=/opt/dowse

@@ -34,14 +34,14 @@ EOF
 
 module-start() {
 
-    [[ -z $root ]] || {
+    [[ $EUID = 0 ]] && {
         notice "setup transparent proxy to squid"
         iptables -t nat -A PREROUTING -i $interface -s $dowse_net \
             -p tcp --dport 80 -j REDIRECT --to-port 3128
     }
 
     privoxy-start $R/run/privoxy.conf
-    
+
     squid-start $R/run/squid.conf
 
 }

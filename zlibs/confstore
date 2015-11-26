@@ -34,6 +34,13 @@ conf-load() {
 
         # cover defaults
         dns=${dns:-$wan}
+        dowse_uid=${dowse_uid:-privoxy}
+        dowse_gid=${dowse_gid:-privoxy}
+        dowse_net=${dowse_net:-10.0.0.0/24}
+        netmask=${netmask:-255.255.255.0}
+        dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
+    }
+}
 
         # # read configurations from consul if running
         # [[ -r $R/run/consul.pid ]] && {
@@ -57,8 +64,6 @@ conf-load() {
         #     # dowse_guests=10.0.0.101,10.0.0.199,48h
         # }
 
-    }
-
     # [[ -r $R/run/consul.pid ]] && {
     #     # gather settings from consul's key/value store
     #     address=`.get $address /v1/kv/configuration/address`
@@ -68,4 +73,3 @@ conf-load() {
     #     lan=`.get $address /v1/kv/configuration/lan`
     #     firewall=`.get $address /v1/kv/configuration/firewall`
     # }
-}

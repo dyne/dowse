@@ -35,7 +35,7 @@ load-module() {
 
     command -v module-setup >/dev/null && unset -f module-setup
     command -v module-start >/dev/null && unset -f module-start
-    command -v module-stop >/dev/null && unset -f module-stop        
+    command -v module-stop >/dev/null && unset -f module-stop
     unset dowse_mod_name
     unset dowse_mod_desc
     unset dowse_mod_type
@@ -88,24 +88,26 @@ start-module() {
     fn start-module
 
     notice "Starting module $dowse_mod_name"
-    
+
     if module-start; then
 
-        func "announcing modules"
-        cat <<EOF | .put $address /v1/kv/modules/$dowse_mod_name
-$dowse_mod_desc
+        act "$dowse_mod_name started succesfully"
 
-type: $dowse_mod_type
-ports: $dowse_mod_ports
-depends: $dowse_mod_deps
-authors: $dowse_mod_authors
-version: $dowse_mod_version"
-EOF
+#         func "announcing modules"
+#         cat <<EOF | .put $address /v1/kv/modules/$dowse_mod_name
+# $dowse_mod_desc
 
-        # add service listing on consul
-        [[ ${#dowse_mod_deps} -gt 0 ]] && consul-add-service
+# type: $dowse_mod_type
+# ports: $dowse_mod_ports
+# depends: $dowse_mod_deps
+# authors: $dowse_mod_authors
+# version: $dowse_mod_version"
+# EOF
 
-        consul reload
+        # # add service listing on consul
+        # [[ ${#dowse_mod_deps} -gt 0 ]] && consul-add-service
+
+        # consul reload
     else
         warning "cannot start module $dowse_mod_name"
         return 1
@@ -118,10 +120,11 @@ stop-module() {
     act "stopping module: $dowse_mod_name"
 
     if module-stop; then
-        [[ -r "$R/run/consul.d/module-${1}.js" ]] && {
-            rm "$R/run/consul.d/module-${1}.js"
-            consul-reload
-        }
+        act "$dowse_mod_name stopped"
+        # [[ -r "$R/run/consul.d/module-${1}.js" ]] && {
+        #     rm "$R/run/consul.d/module-${1}.js"
+        #     consul-reload
+        # }
     else
         warning "problems stopping module: $dowse_mod_name"
     fi

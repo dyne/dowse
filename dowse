@@ -24,8 +24,8 @@
 
 # {{{ GLOBALS
 
-dowse_version=0.7
-dowse_release_date="Mar/2015"
+dowse_version=0.8
+dowse_release_date="Nov/2015"
 
 zkv=1
 restful=1
@@ -203,7 +203,7 @@ dowse-start() {
     freq=($R/conf/settings $R/conf/network)
     ckreq || return $?
 
-    [[ -r $R/run/consul.pid ]] && {
+    [[ -r $R/run/dnsmasq.pid ]] && {
         warn "Dowse is already running"
         return 0
     }
@@ -258,7 +258,8 @@ dowse-start() {
 
     }
 
-    consul-start || return $?
+    # consul-start || return $?
+
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
 
@@ -268,15 +269,13 @@ dowse-start() {
 
     done
 
-    notice "Dowse succesfully started, web interface up on:"
-    act "http://${address}:8500/"
+    notice "Dowse succesfully started" # , web interface up on:"
+    # act "http://${address}:8500/"
 
 }
 
 dowse-stop() {
     fn "dowse-stop"
-
-    dowse-check || zerr
 
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
@@ -286,7 +285,7 @@ dowse-stop() {
 
     done
 
-    [[ -r $R/run/consul.pid ]] && consul-stop
+    # [[ -r $R/run/consul.pid ]] && consul-stop
 
     [[ -z $root ]] || {
         dnscap-stop
@@ -304,12 +303,11 @@ dowse-stop() {
 dowse-reload() {
     fn dowse-reload
 
-    dowse-check || zerr
-
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
+    func "modules enabled: $mods"
     for m in "${(f)mods}"; do
-        load-module || continue
-        stop-module || continue
+        load-module $m || continue
+        stop-module
         setup-module || continue
         start-module || continue
     done
@@ -334,7 +332,6 @@ END {
 
 dowse-status() {
     fn dowse-status
-    conf-load
 
     req=(address)
     freq=($R/run/leases)
@@ -361,20 +358,20 @@ dowse-status() {
 
             yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
 
-            cat <<EOF | restful.put $address 8500 /v1/kv/things_known/$host[$i]
-status: $ping[$i]
-ip: $ip[$i]
-mac: $mac[$i]
-EOF
+#             cat <<EOF | restful.put $address 8500 /v1/kv/things_known/$host[$i]
+# status: $ping[$i]
+# ip: $ip[$i]
+# mac: $mac[$i]
+# EOF
 
         else
 
             no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-            cat <<EOF | restful.put $address 8500 /v1/kv/things_unknown/$host[$i]
-status: $ping[$i]
-ip: $ip[$i]
-mac: $mac[$i]
-EOF
+#             cat <<EOF | restful.put $address 8500 /v1/kv/things_unknown/$host[$i]
+# status: $ping[$i]
+# ip: $ip[$i]
+# mac: $mac[$i]
+# EOF
 
         fi
     done
