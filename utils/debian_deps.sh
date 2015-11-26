@@ -12,7 +12,7 @@ is_deb_installed() {
 
     dpkg-query -W --showformat '${Status}' "$deb" \
                2>/dev/null >/dev/null
-    
+
     return $?
 }
 
@@ -20,7 +20,7 @@ am_i_root() {
     [[ $EUID = 0 ]] && return 0
     return 1
 }
-        
+
 install_policy() {
     # deactivate start at boot
     # since Dowse will control daemons
@@ -51,7 +51,7 @@ elif [ -n "\${FORCE_NO_START_SERVICES}" ]; then
   exit 101
 else
   exit 104
-fi 
+fi
 EOF
     chmod a+x /usr/sbin/policy-rc.d
     mkdir -p /etc/policy-rc.d
@@ -67,7 +67,6 @@ no_start_policy() {
 
     print "NO_START_SERVICES=1" > /etc/policy-rc.d/$1
 }
-
 
 ### MAIN()
 
@@ -87,10 +86,11 @@ install_policy
 
 # installation process for daemons
 # (deactivates start at boot)
-for i in $daemons; do    
+for i in $daemons; do
     is_deb_installed "$i" || {
         no_start_policy $i
         apt-get install -y $i
+        update-rc.d -f $i remove
     }
 done
 
