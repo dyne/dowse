@@ -23,8 +23,8 @@
 
 dnsmasq-conf() {
     fn "dnsmasq-conf"
-    freq=(conf/network)
-    ckreq
+#    freq=(conf/network)
+#    ckreq
 
     cat <<EOF
 address=/$hostname/$address
@@ -50,63 +50,65 @@ listen-address=$address,127.0.0.1
 user=$dowse_uid
 group=$dowse_gid
 EOF
-    # read the network configuration of known hosts
-    known=`cat $R/conf/network`
-    act "$R/conf/network (${#known} bytes parsed)"
-    # for i in ${(f)known}; do
-    #     func "$i"
-    # done
 
-    # DNSMasq LAN resolution
-    func "Fixing entries for known peers"
-    rm -f $R/run/dnsmasq.network
-    # this is basically a dnsmasq host configuration file
-    print "dhcp-option=option:router,$address" > $R/run/dnsmasq.network
+    [[ -r $R/conf/network ]] && {
+        # read the network configuration of known hosts
+        known=`cat $R/conf/network`
+        act "$R/conf/network (${#known} bytes parsed)"
+        # for i in ${(f)known}; do
+        #     func "$i"
+        # done
 
-    # this is our generated hosts file
-    func "Generating hosts file"
-    rm -f $R/run/hosts
-    print "127.0.0.1 localhost" > $R/run/hosts
+        # DNSMasq LAN resolution
+        func "Fixing entries for known peers"
+        rm -f $R/run/dnsmasq.network
+        # this is basically a dnsmasq host configuration file
+        print "dhcp-option=option:router,$address" > $R/run/dnsmasq.network
 
-    typeset -aU known_network
-    # pass via an array to remove duplicates
-    for i in ${(f)known}; do known_network+=($i); done
+        # this is our generated hosts file
+        func "Generating hosts file"
+        rm -f $R/run/hosts
+        print "127.0.0.1 localhost" > $R/run/hosts
 
-    for i in ${known_network}; do
-        [[ "${i[1]}" = "#" ]] && continue
+        typeset -aU known_network
+        # pass via an array to remove duplicates
+        for i in ${(f)known}; do known_network+=($i); done
 
-        if [[ "$i" -regex-match '^..:..:..:..:..:..' ]]; then
-#       if [ $? = 0 ]; then # mac address is first
-            host=${i[(w)2]}
-            ip=${i[(w)3]}
-        else # no mac address specified
-            host=${i[(w)1]}
-            ip=${i[(w)2]}
-        fi
-        [[ "$host" = "ignore" ]] || {
-            # add a line to the hosts list
-            print "$ip $host" >> $R/run/hosts }
-    done
+        for i in ${known_network}; do
+            [[ "${i[1]}" = "#" ]] && continue
 
-    func "generating dnsmask.network"
-    rm -f $R/run/dnsmasq.network
-    # TODO: first entry about self
-    touch $R/run/dnsmasq.network
-    for i in ${known_network}; do
-        [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
-            func "$i"
-            # gather configuration into variables, line by line
-            mac=${i[(w)1]}
-            host=${i[(w)2]}
-            ip=${i[(w)3]}
-            # add a line to the dnsmasq host list
-            print "dhcp-host=$mac, $host, $ip" >> $R/run/dnsmasq.network
+            if [[ "$i" -regex-match '^..:..:..:..:..:..' ]]; then
+                #       if [ $? = 0 ]; then # mac address is first
+                host=${i[(w)2]}
+                ip=${i[(w)3]}
+            else # no mac address specified
+                host=${i[(w)1]}
+                ip=${i[(w)2]}
+            fi
+            [[ "$host" = "ignore" ]] || {
+                # add a line to the hosts list
+                print "$ip $host" >> $R/run/hosts }
+        done
+
+        func "generating dnsmask.network"
+        rm -f $R/run/dnsmasq.network
+        # TODO: first entry about self
+        touch $R/run/dnsmasq.network
+        for i in ${known_network}; do
+            [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
+                func "$i"
+                # gather configuration into variables, line by line
+                mac=${i[(w)1]}
+                host=${i[(w)2]}
+                ip=${i[(w)3]}
+                # add a line to the dnsmasq host list
+                print "dhcp-host=$mac, $host, $ip" >> $R/run/dnsmasq.network
             }
-    done
+        done
 
-    # append network settings to dnsmasq conf
-    cat $R/run/dnsmasq.network
-
+        # append network settings to dnsmasq conf
+        cat $R/run/dnsmasq.network
+    }
 }
 
 dnsmasq-start() {

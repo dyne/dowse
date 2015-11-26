@@ -63,6 +63,7 @@ static char domain[MAX_DOMAIN]; // domain part parsed (2nd last dot)
 static char tld[MAX_TLD]; // tld (domain extension, 1st dot)
 
 static char hostname[MAX_DOMAIN];
+char *own_ipv4 = NULL;
 
 output_t dowse_output;
 
@@ -77,6 +78,8 @@ void dowse_usage() {
             "\t-q         don't output anything to console\n"
             "\t-o <arg>   prefix for the output filenames\n"
             "\t-l <arg>   path to domain-list for categories\n"
+            "\t-4 <arg>   own IPv4 address\n"
+            "\t-i <arg>   network interface\n"
         );
 }
 
@@ -86,7 +89,7 @@ dowse_getopt(int *argc, char **argv[]) {
      * The "getopt" function will be called from the parent to
      * process plugin options. */
     int c;
-    while ((c = getopt(*argc, *argv, "qo:l:")) != EOF) {
+    while ((c = getopt(*argc, *argv, "qo:l:4:i:")) != EOF) {
         switch(c) {
         case 'q':
             console=0;
@@ -96,6 +99,9 @@ dowse_getopt(int *argc, char **argv[]) {
             break;
         case 'l':
             listpath = strdup(optarg);
+            break;
+        case '4':
+            own_ipv4 = strdup(optarg);
             break;
         default:
             dowse_usage();
@@ -387,7 +393,7 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
 
             // if its from ourselves omit it
             if(strncmp(from,hostname,MAX_DOMAIN)==0) return;
-
+            if(own_ipv4) if(strncmp(from,own_ipv4,MAX_DOMAIN)==0) return;
             // not reverse resolved means not known by Dowse, code RED
             if(is_ip(from)) strcpy(from_color,"#FF0000");
 

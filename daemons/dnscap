@@ -41,9 +41,11 @@ dnscap-start() {
 
     start-stop-daemon \
         --background --pidfile $pid --start --exec /usr/local/bin/dnscap \
-        --make-pidfile -- -1 -i $interface -x . -X in-addr.arpa \
+        --make-pidfile -- -1 -i $interface \
+        -x . -X in-addr.arpa \
         -P $R/src/dnscap/plugins/dowse/dowse.so \
-        -o $R/log/dnscap.log -l $R/src/domain-list/data -q
+        -o $R/log/dnscap.log -l $R/src/domain-list/data \
+        -4 $address -q
 
     [[ $? = 0 ]] || {
         error "problem starting dnscap"

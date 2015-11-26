@@ -15,6 +15,7 @@ module-setup() {
     squid-conf > $R/run/squid.conf
     cat <<EOF >> $R/run/squid.conf
 http_port $address:3128 transparent
+http_port 3129
 pid_filename $R/run/squid.pid
 cache_log $R/log/squid_cache.log
 access_log /dev/null
@@ -38,6 +39,8 @@ module-start() {
         notice "setup transparent proxy to squid"
         iptables -t nat -A PREROUTING -i $interface -s $dowse_net \
             -p tcp --dport 80 -j REDIRECT --to-port 3128
+        iptables -A INPUT -p tcp --dport 3128 -j ACCEPT
+
     }
 
     privoxy-start $R/run/privoxy.conf

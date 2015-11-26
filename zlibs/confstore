@@ -28,9 +28,9 @@ conf-load() {
     fn conf-load
 
     # conf/settings override all
-    [[ -r $R/conf/settings ]] && {
-        act "loading configuration from conf/settings"
-        source $R/conf/settings
+    [[ -r $dowserc ]] && {
+        act "loading configuration from $dowserc"
+        source $dowserc
 
         # cover defaults
         dns=${dns:-$wan}

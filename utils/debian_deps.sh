@@ -78,7 +78,7 @@ print "Installing Dowse on `hostname`"
 print
 
 # list of programs to be installed:
-daemons=(dnsmasq privoxy squid3 tor)
+daemons=(dnsmasq privoxy squid3) # tor etc.
 pkgs=(daemontools iptables ebtables gettext-base procps net-tools libssl-dev libbind-dev libpcap-dev unzip wget gcc make)
 
 

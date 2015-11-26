@@ -43,7 +43,7 @@ else source $R/zlibs/zuper; fi
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(R address_loaded debug quiet script fun)
+vars+=(R address_loaded debug quiet script fun dowserc)
 vars+=(last_notice last_act last_func)
 vars+=(root)
 arrs+=(mods)
@@ -54,8 +54,14 @@ DEBUG=${DEBUG:-0}
 QUIET=${QUIET:-0}
 LOG=${LOG:-""}
 
-# uid/git
+
+# configuration
+vars+=(interface hostname dns lan firewall)
+# uid/gid
 vars+=(dowse_uid dowse_gid)
+# network
+vars+=(wan address dowse_net netmask dowse_guests)
+
 
 # globals filled by lease parser
 arrs+=(host mac ip)
@@ -114,11 +120,23 @@ cat <<EOF
 
 EOF
 
-fn dowse-check
-freq=($R/conf $R/conf/settings $R/conf/network)
-ckreq || return $?
+# fn dowse-check one arg
+arg=${1:-conf/settings}
+# conf is global
+dowserc="$R/$arg"
+
+freq=($R/conf $dowserc)
+
+func "reading configurations in $R/conf"
+ckreq && conf-load
 
 act "checking requirements to run dowse..."
+
+[[ "$address" = "" ]] && {
+    error "Invalid config file"
+    zdump
+    return 1
+}
 
 mkdir -p $R/log
 mkdir -p $R/run
@@ -131,9 +149,6 @@ else
     act "root privileges granted"
 fi
 
-func "reading configuration in conf/settings"
-# zlibs/confstore
-conf-load
 
 dowse_uid=${dowse_uid:-`id -un`}
 dowse_gid=${dowse_gid:-`id -gn`}
@@ -200,8 +215,8 @@ EOF
 
 dowse-start() {
     fn dowse-start
-    freq=($R/conf/settings $R/conf/network)
-    ckreq || return $?
+    # freq=($R/conf/settings $R/conf/network)
+    # ckreq || return $?
 
     [[ -r $R/run/dnsmasq.pid ]] && {
         warn "Dowse is already running"
@@ -248,6 +263,12 @@ dowse-start() {
         # start the dnsmasq daemon
         rm -f $R/run/dnsmasq.conf
         dnsmasq-conf > $R/run/dnsmasq.conf
+        mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
+        cat <<EOF > /etc/resolv.conf
+nameserver 127.0.0.1
+# domain $lan
+# search $lan
+EOF
         dnsmasq-start $R/run/dnsmasq.conf
 
         # start dnscap
@@ -292,6 +313,11 @@ dowse-stop() {
         dnsmasq-stop
         iptables-stop
         ebtables-stop
+    }
+
+    # restore backup if present
+    [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
+        mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
     }
 
     # consul-stop
