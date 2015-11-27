@@ -1,3 +1,15 @@
+# 0.8
+## November 2015
+### Fixes and cleanups, DNS graphic visualization
+
+Dnscap is adopted on top of libpcap for DNS traffic analysis and
+visualization with a first implementation supporting Gource's
+format. The code is being tested in various environments with the
+result of fixing instabilities, also a devops setup is now available
+to simulate a test LAN using vagrant and ansible. The Consul (GOSSIP)
+functionality is suspended until a use case arises. This development
+is informed by the Dowse design study kindly sponsored by NLNET.
+
 # 0.7
 ## June 2015
 ### Refactoring, GOSSIP networking via Consul
