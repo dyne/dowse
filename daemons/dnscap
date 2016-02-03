@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 #
-# Copyright (C) 2015 Dyne.org Foundation
+# Copyright (C) 2015-2016 Dyne.org Foundation
 #
 # Dowse is designed, written and maintained by Denis Roio <jaromil@dyne.org>
 #
@@ -45,7 +45,7 @@ dnscap-start() {
         -x . -X in-addr.arpa \
         -P $R/src/dnscap/plugins/dowse/dowse.so \
         -o $R/log/dnscap.log -l $R/src/domain-list/data \
-        -4 $address -q
+        -4 -q
 
     [[ $? = 0 ]] || {
         error "problem starting dnscap"
