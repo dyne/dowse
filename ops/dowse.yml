@@ -28,6 +28,7 @@
         - make
         - git
         - zsh
+        - nmap
 
     # - name: Cloning Dowse source from dyne.org git repository
     #   git:

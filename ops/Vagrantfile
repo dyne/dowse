@@ -6,6 +6,9 @@ Vagrant.configure(2) do |config|
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.network :public_network
 
+  config.vm.network "forwarded_port", guest: 67, host: 67, protocol: 'udp'
+  config.vm.network "forwarded_port", guest: 68, host: 68, protocol: 'udp'
+
   config.vm.define "leader", primary: true do |leader|
    leader.vm.network "private_network", ip: "192.168.0.254", auto_config: false
     leader.vm.provision "ansible" do |ansible|
@@ -15,7 +18,7 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.define "client" do |client|
-   client.vm.network "private_network", ip: "192.168.0.101", auto_config: false
-    client.vm.provision :shell, inline: 'route del default gw 10.0.2.2 && dhclient -v eth1'
+   client.vm.network "private_network", ip: "192.168.0.250", auto_config: false
+   client.vm.provision :shell, inline: 'route del default eth0 && rm -f /var/lib/dhcp/dhclient.eth2.leases && dhclient eth2'
   end
 end

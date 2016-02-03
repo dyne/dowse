@@ -6,6 +6,8 @@
 
 		   a digital rod for local area network rabdomancy
 
+[![software by Dyne.org](https://www.dyne.org/wp-content/uploads/2015/12/software_by_dyne.png)](http://www.dyne.org)
+
 Updates: http://dowse.eu
 
 Whitepaper: https://files.dyne.org/dowse/dowse_whitepaper.pdf
