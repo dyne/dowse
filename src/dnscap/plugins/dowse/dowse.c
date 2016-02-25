@@ -1,4 +1,4 @@
-/*  DNSCap plugin for Dowse visualization
+/*  DNSCap plugin for Dowse visualization (gource custom log)
  *
  *  (c) Copyright 2015 Dyne.org foundation, Amsterdam
  *  Written by Denis Roio aka jaromil <jaromil@dyne.org>
@@ -179,6 +179,7 @@ void load_domainlist(const char *path) {
         fclose(fp);
     }
     closedir(listdir);
+    logerr("Size of parsed domain-list: %u\n", hashmap_length(domainlist));
 }
 
 int
@@ -212,8 +213,13 @@ dowse_start(logerr_t *a_logerr) {
     return 0;
 }
 
-void
-dowse_stop() {
+
+int free_domainlist_f(any_t arg, any_t element) {
+    free(element);
+    return MAP_OK;
+}
+
+void dowse_stop() {
     /*
      * The "start" function is called once, when the program
      * is exiting normally.  It might be used to clean up state,
@@ -224,13 +230,10 @@ dowse_stop() {
 
     if(fileout) fclose(fileout);
 
-    if(listdir) hashmap_free(domainlist);
-
-    // TODO free all the elements in map
-    /* for(c=MAP_OK; c!=MAP_MISSING; */
-    /*     c=hashmap_get_one(visited,e,1)) */
-    /*     free(e); */
-    // hashmap_get_one is in header but not in implementation
+    if(listdir) {
+        hashmap_iterate(domainlist, free_domainlist_f, NULL);
+        hashmap_free(domainlist);
+    }
 
     // free the map
     hashmap_free(visited);
@@ -285,12 +288,17 @@ static char *ia_resolv(iaddr ia) {
         if(name==NULL) name=&query[0];
         return(name);
 
-    } else { // TODO: here check for errors
-
+    } else { // check for errors and try to overcome them
+        fprintf(stderr,"Error in getnameinfo: %s\n",
+                strerror(errno));
         // however we try harder to return the ip
-        (void) inet_ntop(ia.af, &ia.u, query, sizeof query);
+        err = inet_ntop(ia.af, &ia.u, query, sizeof query);
+        if(err==NULL) {
+            fprintf(stderr,"Error in inet_ntop: %s\n",
+                    strerror(errno));
+            return NULL;
+        }
         return (&query[0]);
-
     }
     // this never gets here
 }
