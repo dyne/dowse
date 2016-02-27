@@ -413,9 +413,33 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
             res = hashmap_get(visited, extracted, (void**)(&val));
             switch(res) {
 
+                // TODO: fix malloc and strdup here as they grow as a leak on long term
             case MAP_MISSING : // never visited
+
+                /* ==13150== 992 bytes in 248 blocks are definitely lost in loss record 45 of 49 */
+                /*     ==13150==    at 0x4C28C20: malloc (vg_replace_malloc.c:296) */
+                /*     ==13150==    by 0x5C3D326: dowse_output (dowse.c:417) */
+                /*     ==13150==    by 0x404CAB: output (dnscap.c:2201) */
+                /*     ==13150==    by 0x406779: network_pkt (dnscap.c:2164) */
+                /*     ==13150==    by 0x407065: dl_pkt (dnscap.c:1608) */
+                /*     ==13150==    by 0x503F5E9: ??? (in /usr/lib/x86_64-linux-gnu/libpcap.so.1.6.2) */
+                /*     ==13150==    by 0x5043783: ??? (in /usr/lib/x86_64-linux-gnu/libpcap.so.1.6.2) */
+                /*     ==13150==    by 0x4037E0: poll_pcaps (dnscap.c:1344) */
+                /*     ==13150==    by 0x4037E0: main (dnscap.c:406) */
                 val = malloc(sizeof(int));
                 *val = 1; // just a placeholder for now
+
+                /* ==13150== 3,069 bytes in 248 blocks are definitely lost in loss record 47 of 49 */
+                /*       ==13150==    at 0x4C28C20: malloc (vg_replace_malloc.c:296) */
+                /*       ==13150==    by 0x5511A69: strdup (strdup.c:42) */
+                /*       ==13150==    by 0x5C3D34D: dowse_output (dowse.c:419) */
+                /*       ==13150==    by 0x404CAB: output (dnscap.c:2201) */
+                /*       ==13150==    by 0x406779: network_pkt (dnscap.c:2164) */
+                /*       ==13150==    by 0x407065: dl_pkt (dnscap.c:1608) */
+                /*       ==13150==    by 0x503F5E9: ??? (in /usr/lib/x86_64-linux-gnu/libpcap.so.1.6.2) */
+                /*       ==13150==    by 0x5043783: ??? (in /usr/lib/x86_64-linux-gnu/libpcap.so.1.6.2) */
+                /*       ==13150==    by 0x4037E0: poll_pcaps (dnscap.c:1344) */
+                /*       ==13150==    by 0x4037E0: main (dnscap.c:406) */
                 res = hashmap_put(visited, strdup(extracted), val);
                 break;
 
