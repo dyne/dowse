@@ -52,11 +52,11 @@ iptables-start() {
 
 
 
-    func "defend the network from ipv6"
+    func "Open the network to ipv6"
     ip6tables -F
-    ip6tables -P INPUT DROP
-    ip6tables -P FORWARD DROP
-    ip6tables -P OUTPUT DROP
+    ip6tables -P INPUT ACCEPT
+    ip6tables -P FORWARD ACCEPT
+    ip6tables -P OUTPUT ACCEPT
 
 }
 
