@@ -241,8 +241,7 @@ AS_IF([test "x$with_qt4" = "xyes"],
 AC_CONFIG_FILES([Makefile
     docs/Makefile
     pgld/Makefile
-    pglcmd/Makefile
-    pglgui/Makefile])
+    pglcmd/Makefile])
 
 ## finally substitute several variables
 AC_SUBST([QT_SUB]) # ref in Makefile.am

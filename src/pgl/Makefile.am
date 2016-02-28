@@ -13,8 +13,7 @@ DISTCHECK_CONFIGURE_FLAGS = \
 SUBDIRS = \
 	docs \
 	pglcmd \
-	pgld \
-	$(QT_SUB)
+	pgld
 
 # All other docs are added automatically distributed by automake:
 dist_doc_DATA = \
@@ -23,35 +22,7 @@ dist_doc_DATA = \
 	README.dbus
 
 EXTRA_DIST = \
-	autogen.sh \
-	debian/changelog \
-	debian/compat \
-	debian/control \
-	debian/copyright \
-	debian/gbp.conf \
-	debian/pglcmd.config \
-	debian/pglcmd.dirs \
-	debian/pglcmd.install \
-	debian/pglcmd.links \
-	debian/pglcmd.maintscript \
-	debian/pglcmd.postinst.in \
-	debian/pglcmd.templates \
-	debian/pgld-dbg.maintscript \
-	debian/pgld.dirs \
-	debian/pgld.docs \
-	debian/pgld.examples \
-	debian/pgld.install \
-	debian/pgld.manpages \
-	debian/pglgui-dbg.maintscript \
-	debian/pglgui.install \
-	debian/pglgui.links \
-	debian/pglgui.maintscript \
-	debian/po/POTFILES.in \
-	debian/po/templates.pot \
-	debian/README.Debian \
-	debian/rules \
-	debian/source/format \
-	debian/watch
+	autogen.sh
 
 # do not recreate existent directories
 # this would also mess up custom permissions if present

@@ -1,7 +1,14 @@
-all: deps compile
+all: dnsmasq pgl dnscap
 
-compile:
-	./src/compile.sh
+pgl:
+	./src/compile.sh pgl
 
-deps:
-	./utils/debian_deps.sh
+dnscap:
+	./src/compile.sh dnscap
+
+dnsmasq:
+	./src/import.sh dnsmasq
+
+clean:
+	rm -rf run
+	./src/compile.sh clean

@@ -1,4 +1,0 @@
-etc/pgl/blocklists.local
-var/lib/pgl
-var/log/pgl
-var/spool/pgl
