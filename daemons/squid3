@@ -26,7 +26,7 @@ squid-extract() {
     act "squid3 binaries imported"
     func "`ls $R/tmp`"
 
-#    rm -rf $R/tmp
+    rm -rf $R/tmp
 
     func "`file $R/run/squid3`"
 }
@@ -143,7 +143,7 @@ squid-start() {
     freq=($conf)
     ckreq || return 0
 
-    act "launching squid3"
+    act "launching squid"
 
     # # populate the volatile cache
     # setuidgid $dowseuid squid3 -z -f "$1"

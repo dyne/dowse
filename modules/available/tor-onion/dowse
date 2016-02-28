@@ -1,0 +1,30 @@
+#!/usr/bin/env zsh
+
+dowse_mod_name=tor
+dowse_mod_desc="Tor gateway using squid-privoxy module"
+dowse_mod_type=(proxy anon)
+dowse_mod_ports=(9050 9051)
+dowse_mod_deps=(tor privoxy)
+dowse_mod_authors=(jaromil)
+dowse_mod_version=0.2
+
+module-setup() {
+
+    tor-conf > $R/run/tor.conf
+
+    # add the forward for .onion urls
+    # privoxy-conf > $R/run/privoxy.conf
+    cat <<EOF >> $R/run/privoxy.conf
+# pass .onion urls directly through tor
+forward-socks4a .onion 127.0.0.1:9050 .
+EOF
+}
+
+module-start() {
+    tor-start $R/run/tor.conf
+    # tor drops privileges to uid set in config
+}
+
+module-stop() {
+    tor-stop $R/run/tor.pid
+}

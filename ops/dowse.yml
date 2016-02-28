@@ -23,6 +23,7 @@
         - libbind-dev
         - libpcap-dev
         - libnetfilter-queue-dev
+        - libseccomp2
         - unzip
         - wget
         - gcc

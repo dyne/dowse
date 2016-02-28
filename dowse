@@ -95,6 +95,7 @@ source $R/daemons/privoxy
 source $R/daemons/polipo
 source $R/daemons/dnscap
 source $R/daemons/pgl
+source $R/daemons/tor
 
 
 # conclude initialization
@@ -289,11 +290,13 @@ EOF
 
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
-
         load-module $m || continue
         setup-module || continue
-        start-module || continue
+    done
 
+    for m in "${(f)mods}"; do
+        load-module $m || continue
+        start-module || continue
     done
 
     notice "Dowse succesfully started" # , web interface up on:"
@@ -341,8 +344,16 @@ dowse-reload() {
     for m in "${(f)mods}"; do
         load-module $m || continue
         stop-module
-        setup-module || continue
-        start-module || continue
+    done
+
+    for m in "${(f)mods}"; do
+        load-module $m || continue
+        setup-module
+    done
+
+    for m in "${(f)mods}"; do
+        load-module $m || continue
+        start-module
     done
 
 }
