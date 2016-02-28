@@ -14,14 +14,14 @@ deb-download() {
 
     pushd $R/tmp > /dev/null
 
-    debfile=`apt-get -q download $deb | awk '
-/^Get/ { print $4 "_" $6 "_" $5 ".deb" }'`
+    apt-get -q download $deb
+    [[ $? = 0 ]] || {
+        error "error downloading $deb"
+        return 1 }
+
+    debfile=`find . -name "${deb}_*.deb"`
 
     popd > /dev/null
-
-    [[ "$debfile" = "" ]] && {
-        error "$deb already downloaded"
-        return 1 }
 
     freq=($R/tmp/$debfile)
     ckreq || return 1
