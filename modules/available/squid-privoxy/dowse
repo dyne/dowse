@@ -3,17 +3,14 @@
 dowse_mod_name=squid-privoxy
 dowse_mod_desc="Transparent http proxy pipeline chaining squid to privoxy"
 dowse_mod_type=(http proxy)
-dowse_mod_ports=(squid3/3128 privoxy/8118)
-dowse_mod_deps=(squid3 privoxy)
+dowse_mod_ports=(squid/3128 privoxy/8118)
+dowse_mod_deps=(squid privoxy)
 dowse_mod_authors=(Jaromil)
 dowse_mod_version=0.1
 
 # setup a transparent proxy on port 80
 # using squid and privoxy
 module-setup() {
-
-    squid-extract
-    privoxy-extract
 
     rm -f $R/run/squid.conf
     squid-conf > $R/run/squid.conf

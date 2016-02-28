@@ -58,12 +58,11 @@ load-module() {
     act "$dowse_mod_desc"
 
     for dep in $dowse_mod_deps; do
-        [[ -x $R/run/$dep ]] || {
-#        isfound $dep || {
-            warning "daemon not found: $dep"
-            warning "$dowse_mod_name depends from this daemon, cannot proceed loading"
+        $dep-extract
+        [[ $? = 0 ]] || {
+            error "failed importing $dep"
+            error "$dowse_mod_name depends from this daemon, cannot proceed loading"
             return 1 }
-
     done
 
     func "all dependencies satisfied: ${dowse_mod_deps}"
