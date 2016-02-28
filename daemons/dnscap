@@ -40,7 +40,7 @@ dnscap-start() {
     # -m [qun] Capture only messages of designated types (query, update, and notify).  Default is query.
 
     start-stop-daemon \
-        --background --pidfile $pid --start --exec /usr/local/bin/dnscap \
+        --background --pidfile $pid --start --exec $R/src/dnscap/dnscap \
         --make-pidfile -- -1 -i $interface \
         -x . -X in-addr.arpa \
         -P $R/src/dnscap/plugins/dowse/dowse.so \

@@ -1,9 +1,41 @@
 #!/usr/bin/env zsh
 
+
+squid-extract() {
+    fn extract-squid
+
+    [[ -r $R/run/squid3 ]] && return 0
+
+    deb-download squid3
+    deb-download squid3-common
+    deb-download libecap2
+
+    cp $R/tmp/usr/sbin/squid3 $R/run \
+        && cp $R/tmp/usr/lib/libecap.so.2.0.0       $R/run/libecap.so.2 \
+        && cp $R/tmp/usr/share/squid3/mime.conf     $R/run/squid.mime \
+        && cp $R/tmp/usr/lib/squid3/unlinkd         $R/run/squid.unlinkd \
+        && cp $R/tmp/usr/lib/squid3/log_file_daemon $R/run/squid.logfiled \
+        && cp -r $R/tmp/usr/share/squid3/icons      $R/run/squid.icons \
+            || {
+            error "squid3 binaries not found"
+            return 1 }
+
+    act "squid3 binaries imported"
+    func "`ls $R/tmp`"
+
+    rm -rf $R/tmp
+
+    func "`file $R/run/squid3`"
+}
+
 squid-conf() {
     # Squid2 configuration template
     func "generating base configuration for squid3"
     cat <<EOF
+mime_table $R/run/squid.mime
+unlinkd_program $R/run/squid.unlinkd
+logfile_daemon $R/run/squid.logfiled
+icon_directory $R/run/squid.icons
 cache_effective_user $dowse_uid
 cache_store_log none
 
@@ -92,6 +124,11 @@ never_direct allow all
 
 EOF
 
+    [[ $DEBUG = 0 ]] || {
+        cat <<EOF
+debug_options rotate=9 ALL,3
+EOF
+    }
 }
 
 squid-start() {
@@ -107,9 +144,10 @@ squid-start() {
     # setuidgid $dowseuid squid3 -z -f "$1"
     # launch the squid
     if [[ -z $root ]]; then
-        squid3 -f $conf $*
+        LD_LIBRARY_PATH=$R/run $R/run/squid3 -f $conf $*
     else
-        setuidgid $dowse_uid squid3 -f $conf $*
+        LD_LIBRARY_PATH=$R/run setuidgid $dowse_uid $R/run/squid3 -f $conf $*
+#        LD_LIBRARY_PATH=$R/run $R/run/squid3 -f $conf $*
     fi
 
 }
@@ -123,9 +161,10 @@ squid-stop() {
     pid=`cat $pidfile`
     act "Stopping squid ($pid)"
     if [[ -z $root ]]; then
-        squid3 -f $R/run/squid.conf -k kill
+        LD_LIBRARY_PATH=$R/run $R/run/squid3 -f $R/run/squid.conf -k kill
     else
-        setuidgid $dowse_uid squid3 -f $R/run/squid.conf -k kill
+        LD_LIBRARY_PATH=$R/run setuidgid $dowse_uid $R/run/squid3 -f $R/run/squid.conf -k kill
+#        LD_LIBRARY_PATH=$R/run $R/run/squid3 -f $R/run/squid.conf -k kill
     fi
 
     waitpid $pid

@@ -11,6 +11,10 @@ dowse_mod_version=0.1
 # setup a transparent proxy on port 80
 # using squid and privoxy
 module-setup() {
+
+    squid-extract
+    privoxy-extract
+
     rm -f $R/run/squid.conf
     squid-conf > $R/run/squid.conf
     cat <<EOF >> $R/run/squid.conf
@@ -18,7 +22,7 @@ http_port $address:3128 transparent
 http_port 3129
 pid_filename $R/run/squid.pid
 cache_log $R/log/squid_cache.log
-access_log /dev/null
+access_log stdio:/dev/null
 # access_log $R/log/squid_access.log squid
 # pass through privoxy
 cache_peer $address parent 8118 0 default no-query no-digest no-netdb-exchange proxy-only

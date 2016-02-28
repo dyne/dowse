@@ -1,5 +1,25 @@
 #!/usr/bin/env zsh
 
+privoxy-extract() {
+    fn privoxy-extract
+
+    # check if already imported
+    [[ -r $R/run/privoxy ]] && return 0
+
+    deb-download privoxy
+
+    cp $R/tmp/usr/sbin/privoxy $R/run || {
+        error "privoxy binary not found"
+        return 1 }
+
+    act "privoxy binary imported"
+    func "`ls $R/tmp`"
+
+    rm -rf $R/tmp
+
+    func "`file $R/run/privoxy`"
+}
+
 privoxy-conf() {
     # Privoxy configuration template
     func "generating privoxy configuration"
@@ -51,9 +71,9 @@ privoxy-start() {
 
     act "starting privoxy: $conf"
     if [[ -z $root ]]; then
-        privoxy --pidfile $pidfile $conf.real
+        $R/run/privoxy --pidfile $pidfile $conf.real
     else
-        privoxy --user $dowse_uid --pidfile $pidfile $conf.real
+        $R/run/privoxy --user $dowse_uid --pidfile $pidfile $conf.real
     fi
 
 }

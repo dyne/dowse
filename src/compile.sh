@@ -9,8 +9,6 @@ R=`pwd`
 pushd $R/src/dnscap
 ./configure
 make
-make install
+make -C plugins/dowse
+# make install
 popd
-
-make -C $R/src/dnscap/plugins/dowse
-

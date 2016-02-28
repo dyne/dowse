@@ -1,0 +1,36 @@
+#!/usr/bin/env zsh
+
+deb-download() {
+    fn deb-download $*
+    deb="$1"
+    req=(deb)
+
+    ckreq || return 1
+
+    mkdir -p $R/tmp
+    [[ $? = 0 ]] || {
+        error "cannot create $R/tmp"
+        return 1 }
+
+    pushd $R/tmp > /dev/null
+
+    debfile=`apt-get -q download $deb | awk '
+/^Get/ { print $4 "_" $6 "_" $5 ".deb" }'`
+
+    popd > /dev/null
+
+    [[ "$debfile" = "" ]] && {
+        error "$deb already downloaded"
+        return 1 }
+
+    freq=($R/tmp/$debfile)
+    ckreq || return 1
+
+    act "extracting $R/tmp/$debfile"
+    dpkg -x $R/tmp/$debfile $R/tmp
+    [[ $? = 0 ]] || {
+        error "error extracting $R/tmp/$debfile"
+        return 1 }
+
+    return 0
+}

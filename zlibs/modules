@@ -58,7 +58,8 @@ load-module() {
     act "$dowse_mod_desc"
 
     for dep in $dowse_mod_deps; do
-        isfound $dep || {
+        [[ -x $R/run/$dep ]] || {
+#        isfound $dep || {
             warning "daemon not found: $dep"
             warning "$dowse_mod_name depends from this daemon, cannot proceed loading"
             return 1 }

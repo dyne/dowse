@@ -21,6 +21,26 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
+dnsmasq-extract() {
+    fn dnsmasq-extract
+
+    # check if already imported
+    [[ -r $R/run/dnsmasq ]] && return 0
+
+    deb-download dnsmasq-base
+
+    cp $R/tmp/usr/sbin/dnsmasq $R/run || {
+        error "dnsmasq binary not found"
+        return 1 }
+
+    act "dnsmasq binary imported"
+    func "`ls $R/tmp`"
+
+    rm -rf $R/tmp
+
+    func "`file $R/run/dnsmasq`"
+}
+
 dnsmasq-conf() {
     fn "dnsmasq-conf"
 #    freq=(conf/network)
@@ -121,7 +141,7 @@ dnsmasq-start() {
     act "launching dnsmasq"
 
     func "dnsmasq -x $pid -C $conf"
-    dnsmasq -x $pid -C $conf
+    $R/run/dnsmasq -x $pid -C $conf
 
     return $?
 }
