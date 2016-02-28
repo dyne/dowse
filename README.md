@@ -1,10 +1,6 @@
-			oooo
-	   ooooo888   ooooooo  oooo  o  oooo oooooooo8   ooooooooo8
-	 888    888 888     888 888 888 888 888ooooooo  888oooooo8
-	 888    888 888     888  888888888          888 888
-	   88ooo888o  88ooo88     88   88   88oooooo88    88oooo888
+[![Dowse logo](http://dowse.equipment/dowse-logo.png)](http://dowse.eu)
 
-		   a digital rod for local area network rabdomancy
+A digital rod for local area network rabdomancy
 
 [![software by Dyne.org](https://www.dyne.org/wp-content/uploads/2015/12/software_by_dyne.png)](http://www.dyne.org)
 
@@ -46,6 +42,9 @@ https://www.youtube.com/watch?v=vquh3IXcduc
   HTTP traffic (TCP port 80) can be filtered through a transparent
   proxy using an application layer chain of Squid2 and Privoxy.
 
+  All IP traffic is filtered using configurable blocklists to keep out
+  malware, spyware and known bad peers, using Peerguardian2 and Iptables.
+
   All DNS traffic (UDP port 53) is filtered through Dnscap and
   analysed to render a graphical representation of traffic. It is also
   possible to tunnel it via DNSCrypt-proxy, encrypting all traffic
@@ -67,29 +66,32 @@ Installation and activation takes a few steps and needs root:
 
 	git clone https://github.com/dyne/dowse /usr/src/dowse
 
-2. Install ZSh, needed to run all scripts in Dowse: apt-get zsh
-   then go into the dowse directory ( cd /usr/src/dowse in example)
+2. Install all requirements, here below the list of packages:
 
-3. Run `make` as root, it fires up some commands: `apt-get`,
-   `update-rc.d` and `invoke-rc.d` to install dependencies like
-   `dnsmasq`, `privoxy` and `squid3`, but also `gcc` to compile
-   `dnscap` and our own plugin for it.
+```
+zsh daemontools iptables ebtables gettext-base procps net-tools
+libssl-dev libbind-dev libpcap-dev unzip wget gcc make
+libnetfilter-queue-dev
+```
+
+3. Run `make`
 
 4. Configure the files in the `conf/` folder: settings and network
    The files are plain text and include documentation in comments.
 
-5. Fire up the startup script as root: `sudo ./start.sh` If you are
-   root and using the ZSh shell then it may be also practical to
-   `source dowse conf/settings` (or another custom config file) and
-   then proceed in the interactive shell launching commands prefixes
-   with `dowse-` (tab completion available)
+5. Fire up the startup script **as root**: `sudo ./start.sh`
+
+5.1 Please note that if you are root and inside a ZSh shell, then an
+   interactive console is available: do `source dowse conf/settings`
+   (or another custom config file) and then proceed launching commands
+   prefixed with `dowse-` (tab completion available)
 
 6. Remember to deactivate the DHCP service (Automatic IP
    configuration) on any other object on the network, typically your
    ADSL router.
 
 If all went well now one should be able to connect any device to the
-internet as you did before.
+internet as you did before, via Dowse.
 
 # Visualization
 
@@ -99,7 +101,7 @@ connected to a network managed by Dowse running on IP `192.168.0.254`,
 then from another PC one can do
 
 ```
-ssh 192.168.0.254 cat /opt/dowse/log/dnscat.log | gource --log-format custom - 
+ssh 192.168.0.254 cat /opt/dowse/log/dnscat.log | gource --log-format custom -
 ```
 
 To quickly render all the logged DNS activity found in that file. For
@@ -108,8 +110,10 @@ arguments, it is also easy to render all into a video file.
 
 # Development
 
-In the `ops` directory an Ansible recipe is found along a ready to use
-Vagrant configuration to build two virtual machines (leader and
+The main development repository is on https://github.com/dyne/dowse
+
+Inside the `ops` directory an Ansible recipe is found along a ready to
+use Vagrant configuration to build two virtual machines (leader and
 client) that simulate a LAN to do further testing of Dowse.
 
 ```
@@ -117,7 +121,10 @@ cd ops
 vagrant up
 ```
 
-Plus the usual vagrant commands. This build of Dowse is based on Devuan.
+Plus the usual vagrant commands. The devops in Dowse is based on
+http://Devuan.org and will run two virtual machines connected to each
+other, one "leader" running Dowse and serving DHCP, one "client"
+connected to it and to the Internet via the leader.
 
 Help with development is welcome, manuals on how to write new modules
 and daemons are in the making and there is a sister project to
@@ -126,9 +133,7 @@ welcomes contributions: https://github.com/dyne/domain-list
 
 # Disclaimer
 
-Dowse is Copyright (C) 2012-2015 by the Dyne.org Foundation
-
-Dowse is written by Denis Roio <jaromil@dyne.org>
+Dowse is Copyright (C) 2012-2016 by the Dyne.org Foundation
 
 	This source code is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Public License as published
