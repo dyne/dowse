@@ -1,0 +1,55 @@
+pgl is an open-source project. We like many authors contributing their work to
+this project. This is an attempt to list all authors and contributors.
+
+Authors:
+    jre <jre-phoenix@users.sourceforge.net>, created pglcmd, based on his
+        previous blockcontrol, previously moblock-control. Based on init &
+        update script for peerguardnf from the forum at methlabs.org
+        (predecessor of phoenixlabs.org). Debian packager. Project coordinator.
+    Morpheus <ebutera@users.berlios.de>, created the original MoBlock.
+    Dimitris Palyvos-Giannas <jimaras@gmail.com>, created mobloquer.
+        Reimplemented dbus in pgld.
+    Jindrich Makovicka <makovick@gmail.com>, wrote original nfblockd, based on
+        MoBlock.
+    jpv, initially created dbus support for nfblock.
+    Cader <cade.robinson@gmail.com>, heavily modified nfblockd, so that it
+        became pgld. Also worked on pglcmd and previously much other stuff.
+    freemind <fr33mind@users.sourceforge.net>, wrote pglgui, based on mobloquer.
+    hasufell <julian.ospald@googlemail.com>, added autotools support.
+
+Contributors:
+    Pierre Buard (Gilrain): AUR maintainer, contributed systemd files.
+    godmachine81: slackware packager.
+    Santiago M. Mola: nfblock build fixes and cleanups.
+    uljanow <uljanow@users.sourceforge.net>: author of iplist
+        (iplist.sourceforge.net). Both moblock (especially the marking feature)
+        and blockcontrol (a complete patch for "test") did profit from his
+        knowledge and *active* help. Seeing the author of another program
+        helping, shows that he got the spirit of opensource. Thank you and all
+        the best wishes.
+    sloter <laurent at sloter.org>: initial man page for moblock and
+        moblock-control, initial moblock-control test function.
+    David Walluck: contributor to MoBlock, porter of listtools (libp2p/
+        mergep2p) from peerguardian.sourceforge.com (not yet integrated in
+        pgl), worked on RPM packaging.
+    lestlest <clessing@users.sourceforge.net>: original Debian packaging, some
+        parts of the scripts, moblock logfile rotation patches, moblock pid
+        file creation.
+    JFM, /meth/usr and probably others from the forum at methlabs.org: made the
+        first steps for the init & update script.
+
+    ... and many more. To be continued ...
+
+
+3rd party:
+
+pglgui is using the Crystal Project Icons.
+        Some icons may have been modified.
+        More information:
+        http://www.everaldo.com/
+        http://web.archive.org/web/20101122171453/http://everaldo.com/crystal/
+        License: LGPL
+
+pglcmd.lib is using a modified version of the Debian LSB init-functions.
+        Copyright 2002-08 Chris Lawrence - All rights reserved.
+        License: BSD-3-clause

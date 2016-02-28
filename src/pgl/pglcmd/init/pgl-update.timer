@@ -1,0 +1,10 @@
+[Unit]
+Description=PeerGuardian Linux - daily blocklists update
+
+[Timer]
+OnCalendar=daily
+AccuracySec=12h
+Persistent=true
+
+[Install]
+WantedBy=multi-user.target

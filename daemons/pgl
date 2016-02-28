@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+
+pgl-conf() {
+    fn pgl-conf
+
+    cat <<EOF
+LOCAL_BLOCKLIST_DIR="$R/conf/blocklists"
+BLOCKLISTS_LIST=""
+ALLOW_IN="$R/conf/whitelist.p2p"
+ALLOW_OUT="$R/conf/whitelist.p2p"
+EOF
+
+}
+
+pgl-start() {
+    fn pgl-start
+    $R/run/pgl/bin/pglcmd start
+}
+
+pgl-stop() {
+    fn pgl-stop
+    $R/run/pgl/bin/pglcmd stop
+}

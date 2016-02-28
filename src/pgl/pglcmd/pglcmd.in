@@ -1,0 +1,326 @@
+#!/bin/sh
+# pglcmd - pgl command line interface
+#
+# Copyright (C) 2005 - 2015 jre <jre-phoenix@users.sourceforge.net>
+# Parts and ideas 2005 - 2007 by JFM, /meth/usr, lestlest (clessing), Morpheus
+# and perhaps others. More Info: http://forums.phoenixlabs.org
+#
+# This file is part of pgl.
+#
+# pgl is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pgl is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with pgl.  If not, see <http://www.gnu.org/licenses/>.
+
+
+################################################################################
+# The following code is common between pglcmd, pglcmd.wd,
+# cron.daily, init and debian/pglcmd.postinst.
+
+# if-up is similar, but exits successfully if CONTROL_MAIN is not there, yet.
+# This can happen in early boot stages before local file systems are mounted.
+
+# CONTROL_MAIN has to be set correctly in all just mentioned files.
+# Except for debian/pglcmd.postinst, this is done automatically on "make" based
+# on the "configure" options.
+CONTROL_MAIN="/usr/lib/pgl/pglcmd.main"
+
+# Configure pglcmd and load functions.
+if [ -f "$CONTROL_MAIN" ] ; then
+    . $CONTROL_MAIN || { echo "$0 Error: Failed to source $CONTROL_MAIN although this file exists."; exit 1; }
+else
+    echo "$0 Error 7: Missing file $CONTROL_MAIN."
+    exit 7
+fi
+
+# End of the common code between pglcmd, pglcmd.wd,
+# cron.daily, (if-up), init and debian/postinst.
+################################################################################
+
+RETVAL=0
+
+# Set a trap on exit for commands with log_end_msg.
+# Then on exit do log_end_msg. Fixes output for failed commands.
+case "$1" in
+    'email_stats'|\
+        'force-reload'|\
+        'force-update'|\
+        'reload'|\
+        'reset_stats'|\
+        'restart'|\
+        'start'|\
+        'start_wd'|\
+        'stats'|\
+        'stop'|\
+        'stop_quick'|\
+        'stop_wd'|\
+        'update'\
+    )
+        test_root
+        # Define an exit function for trapped signals
+        onexit () {
+            RETVAL="$?"
+            [ "$VERBOSE" -gt 0 ] && log_end_msg $RETVAL
+            exit $RETVAL
+        }
+
+        trap onexit EXIT
+        ;;
+esac
+
+
+# And now, make this script usable:
+case "$1" in
+    'start')
+        test_CMD_LOG
+        [ "$VERBOSE" -gt 0 ] && log_daemon_msg "Starting $DESC" "$NAME"
+        date +%F" "%X" "%Z" Begin: $(basename $0) $1" >> $CMD_LOG 2>&1
+        do_start >> $CMD_LOG 2>&1
+        date +%F" "%X" "%Z" End: $(basename $0) $1" >> $CMD_LOG 2>&1
+        [ "$VERBOSE" -gt 0 ] && log_end_msg $RETVAL
+        ;;
+    'stop'|'stop_quick')
+        test_CMD_LOG
+        [ "$VERBOSE" -gt 0 ] && log_daemon_msg "Stopping $DESC" "$NAME"
+        date +%F" "%X" "%Z" Begin: $(basename $0) $1" >> $CMD_LOG 2>&1
+        do_stop_wd >> $CMD_LOG 2>&1
+        do_${1} >> $CMD_LOG 2>&1
+        date +%F" "%X" "%Z" End: $(basename $0) $1" >> $CMD_LOG 2>&1
+        [ "$VERBOSE" -gt 0 ] && log_end_msg $RETVAL
+        ;;
+    'start_wd')
+        test_CMD_LOG
+        [ "$VERBOSE" -gt 0 ] && log_daemon_msg "Starting $CMD_NAME watchdog" "$(basename $WD_PATHNAME)"
+        date +%F" "%X" "%Z" Begin: $(basename $0) $1" >> $CMD_LOG 2>&1
+        do_start_wd >> $CMD_LOG 2>&1
+        date +%F" "%X" "%Z" End: $(basename $0) $1" >> $CMD_LOG 2>&1
+        [ "$VERBOSE" -gt 0 ] && log_end_msg $RETVAL
+        ;;
+    'stop_wd')
+        test_CMD_LOG
+        [ "$VERBOSE" -gt 0 ] && log_daemon_msg "Stopping $CMD_NAME watchdog" "$(basename $WD_PATHNAME)"
+        date +%F" "%X" "%Z" Begin: $(basename $0) $1" >> $CMD_LOG 2>&1
+        do_stop_wd >> $CMD_LOG 2>&1
+        date +%F" "%X" "%Z" End: $(basename $0) $1" >> $CMD_LOG 2>&1
+        [ "$VERBOSE" -gt 0 ] && log_end_msg $RETVAL
+        ;;
+    'restart'|'force-restart')
+        test_CMD_LOG
+        [ "$VERBOSE" -gt 0 ] && log_daemon_msg "Restarting $DESC" "$NAME"
+        date +%F" "%X" "%Z" Begin: $(basename $0) $1" >> $CMD_LOG 2>&1
+        do_stop_wd >> $CMD_LOG 2>&1
+        do_restart >> $CMD_LOG 2>&1
+        date +%F" "%X" "%Z" End: $(basename $0) $1" >> $CMD_LOG 2>&1
+        [ "$VERBOSE" -gt 0 ] && log_end_msg $RETVAL
+        ;;
+    'restart_not_wd')
+        test_CMD_LOG
+        [ "$VERBOSE" -gt 0 ] && log_daemon_msg "Restarting only $DESC" "$NAME"
+        echo
+        date +%F" "%X" "%Z" Begin: $(basename $0) $1" >> $CMD_LOG 2>&1
+        do_restart >> $CMD_LOG 2>&1
+        date +%F" "%X" "%Z" End: $(basename $0) $1" >> $CMD_LOG 2>&1
+        [ "$VERBOSE" -gt 0 ] && log_end_msg $RETVAL
+        ;;
+    'reload'|'force-reload')
+        test_CMD_LOG
+        [ "$VERBOSE" -gt 0 ] && log_daemon_msg "Reloading $DESC" "$NAME"
+        date +%F" "%X" "%Z" Begin: $(basename $0) $1" >> $CMD_LOG 2>&1
+        do_reload >> $CMD_LOG 2>&1
+        date +%F" "%X" "%Z" End: $(basename $0) $1" >> $CMD_LOG 2>&1
+        [ "$VERBOSE" -gt 0 ] && log_end_msg $RETVAL
+        ;;
+    'update'|'force-update')
+        test_CMD_LOG
+        [ "$VERBOSE" -gt 0 ] && log_daemon_msg "Updating blocklists and reloading $DESC" "$NAME"
+        date +%F" "%X" "%Z" Begin: $(basename $0) $1" >> $CMD_LOG 2>&1
+        if [ "$1" = "force-update" ] ; then
+            echo -n "Forcing update of all lists. Removing $BLOCKLISTS_DIR" >> $CMD_LOG
+            rm -rf $BLOCKLISTS_DIR >> $CMD_LOG 2>&1 \
+                || { log_failure_msg " Error: rm exited with $?" >> $CMD_LOG ; exit 1; }
+            echo "." >> $CMD_LOG
+        fi
+        update_blocklists >> $CMD_LOG 2>&1
+        do_reload >> $CMD_LOG 2>&1
+        date +%F" "%X" "%Z" End: $(basename $0) $1" >> $CMD_LOG 2>&1
+        if [ "$VERBOSE" -gt 0 ] ; then
+            log_end_msg $RETVAL
+            IFS=";"
+            if [ -n "$UPDATE_FAIL" ] ; then
+                echo ""
+                echo "The following lists failed to update but have old usable versions:"
+                for i in $UPDATE_FAIL ; do
+                    echo "$i"
+                done
+            fi
+            if [ -n "$UPDATE_SUCCESS" ] ; then
+                echo ""
+                echo "The following lists were updated:"
+                for i in $UPDATE_SUCCESS ; do
+                    echo "$i"
+                done
+            fi
+            if [ -n "$UPDATE_403" ] ; then
+                echo ""
+                echo "The access for the following lists was denied, but they have old usable versions:"
+                for i in $UPDATE_403 ; do
+                    echo "$i"
+                done
+            fi
+            if [ -n "$UPDATE_SUCCESS_NA" ] ; then
+                echo ""
+                echo "For the following lists there was no update available:"
+                for i in $UPDATE_SUCCESS_NA ; do
+                    echo "$i"
+                done
+            fi
+            IFS=$STDIFS
+        fi
+        ;;
+    'status')
+        if [ "$(id -ru)" -eq 0 ] ; then
+            echo "Current IPv4 iptables rules (this may take a while):"
+            echo
+            test_external iptables || {
+                log_failure_msg "Error $E_XEXTERNAL: iptables not installed."
+                exit $E_XEXTERNAL
+            }
+            iptables -L -nv
+            if lsmod | grep -Eq "ipv?6" ; then
+                echo
+                echo "Current IPv6 iptables rules (this may take a while):"
+                echo
+                ip6tables -L -nv
+            fi
+            echo
+            echo "Please check if the above printed iptables rules are correct!"
+            echo
+        else
+            echo "Run \"status\" as root to verify your iptables settings!"
+            echo ""
+        fi
+        status_of_proc $DAEMON $NAME
+        RETVAL="$?"
+        if [ "$RETVAL" -eq 0 ] ; then
+            echo "PID: $(cat $PIDFILE)    CMD: $(ps -o cmd -p $(cat $PIDFILE) | tail -1)"
+            echo
+        fi
+
+        status_of_proc $WD_PATHNAME $(basename $WD_PATHNAME)
+        if [ "$?" -eq 0 ] ; then
+            echo "PID: $(cat $WD_PID)    CMD: $(ps -o cmd -p $(cat $WD_PID) | tail -1)"
+            echo
+        fi
+        ;;
+    'stats')
+        status_of_proc $DAEMON $NAME > /dev/null 2>&1
+        if [ "$?" -eq 0 ] ; then
+            echo "Dumping stats..."
+            dump_stats
+        fi
+        ;;
+    'email_stats')
+        status_of_proc $DAEMON $NAME > /dev/null 2>&1
+        if [ "$?" -eq 0 ] ; then
+            email_stats
+        fi
+        ;;
+    'reset_stats')
+        status_of_proc $DAEMON $NAME > /dev/null 2>&1
+        if [ "$?" -eq 0 ] ; then
+            echo "Dumping stats and resetting..."
+            reset_stats
+        fi
+        ;;
+    'show_config')
+        echo "$(basename $0) current settings:"
+        # Read all variables that are defined in CMD_DEFAULTS
+        VARIABLES="$(grep -Ev "^[[:space:]]*#" $CMD_DEFAULTS | grep "=" | sed "s|=.*||" | sort -u)"
+        for VAR in $VARIABLES ; do
+            eval VALUE=\$$VAR
+            # This gives the actually used value of the variable
+            # (not necessarily that which is set in CMD_DEFAULTS).
+            echo ${VAR}=\"$VALUE\"
+        done
+        echo
+        if [ -f "$LSB" ] ; then
+            if head -n 1 "$LSB" | grep -q Debian > /dev/null 2>&1 ; then
+                echo "Using Debian LSB init-functions: ${LSB}:"
+            elif head -n 5 "$LSB" | grep -q redhat > /dev/null 2>&1 ; then
+                echo "Using Redhat LSB init-functions: ${LSB}."
+            else
+                echo "Using LSB init-functions: $LSB."
+            fi
+            # Show some information from the header (not shebang or empty lines)
+            cat "$LSB" | grep "^#" | grep -v -e "^#\!" -e "^# *$" | head -n 2
+        else
+            echo "Using internal LSB init-functions."
+        fi
+        if test_external start-stop-daemon ; then
+            echo "Using start-stop-daemon."
+        else
+            echo "Not using start-stop-daemon."
+        fi
+        echo
+        echo "The following blocklists are configured to be used:"
+        set_LISTS_URL
+        set_BLOCKLISTS_LOCAL
+        for LIST in $LISTS_URL $BLOCKLISTS_LOCAL ; do
+            echo "$LIST"
+        done
+        ;;
+    'test')
+        test_ipblocking
+        RETVAL=$?
+        ;;
+    'search')
+        [ "$#" -eq 2 ] || {
+            echo "Usage: $(basename $0) search SEARCHPATTERN"
+            exit $E_BADARGS
+            }
+        SEARCHPATTERN="$2"
+        search
+        RETVAL=$?
+        ;;
+    *)
+        echo "$DESC $VERSION"
+        echo
+        echo "pgl is licensed under the GNU General Public License v3, or (at your option)"
+        echo "any later version. This program comes with ABSOLUTELY NO WARRANTY. This is"
+        echo "free software, and you are welcome to modify and/or redistribute it."
+        echo
+        echo "Usage: $(basename $0) OPTION"
+        echo "Options:"
+        echo "    start"
+        echo "    stop"
+        echo "    start_wd"
+        echo "    stop_wd"
+        echo "    stop_quick"
+        echo "    restart"
+        echo "    reload"
+        echo "    update"
+        echo "    force-restart"
+        echo "    force-reload"
+        echo "    force-update"
+        echo "    status"
+        echo "    test"
+        echo "    stats"
+        echo "    reset_stats"
+        echo "    email_stats"
+        echo "    show_config"
+        echo "    search"
+        exit $E_BADARGS
+        ;;
+esac
+
+# Reset the trap on exit
+trap - EXIT
+exit $RETVAL

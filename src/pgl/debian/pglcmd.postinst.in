@@ -1,0 +1,179 @@
+#!/bin/sh
+# postinst script for pglcmd
+# see: dh_installdeb(1)
+#
+# Copyright (C) 2008 - 2015 jre <jre-phoenix@users.sourceforge.net>
+#
+# This file is part of pgl.
+#
+# pgl is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pgl is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with pgl.  If not, see <http://www.gnu.org/licenses/>.
+
+
+set -e
+
+# summary of how this script can be called:
+#   * <postinst> `configure' <most-recently-configured-version>
+#   * <old-postinst> `abort-upgrade' <new version>
+#   * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#     <new-version>
+#   * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#     <failed-install-package> <version> `removing'
+#     <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+# Note: Some of the following code is normally placed in debian/config and some
+# would need to be present in both files.
+# TODO: Bring it back there, but make sure that
+# - purge cleans debconf db
+# - configuration works (http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=352697)
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+db_version 2.0 || ( echo $? ; true )
+
+# This (deb)conf script is capable of backing up
+db_capb backup || ( echo $? ; true )
+
+case "$1" in
+    configure|reconfigure)
+        true    # continue below
+        ;;
+    abort-upgrade|abort-remove|abort-deconfigure)
+        exit 0
+        ;;
+    *)
+        echo "postinst called with unknown argument \"$1\"" >&2
+        exit 1
+        ;;
+esac
+
+################################################################################
+# The following code is common between pglcmd, pglcmd.wd,
+# cron.daily, init and debian/pglcmd.postinst.
+
+# if-up is similar, but exits successfully if CONTROL_MAIN is not there, yet.
+# This can happen in early boot stages before local file systems are mounted.
+
+# CONTROL_MAIN has to be set correctly in all just mentioned files.
+# Except for debian/pglcmd.postinst, this is done automatically on "make" based
+# on the "configure" options.
+CONTROL_MAIN="/usr/lib/@DEB_HOST_MULTIARCH@/pgl/pglcmd.main"
+
+# Configure pglcmd and load functions.
+if [ -f "$CONTROL_MAIN" ] ; then
+    . $CONTROL_MAIN || { echo "$0 Error: Failed to source $CONTROL_MAIN although this file exists."; exit 1; }
+else
+    echo "$0 Error 7: Missing file $CONTROL_MAIN."
+    exit 7
+fi
+
+# End of the common code between pglcmd, pglcmd.wd,
+# cron.daily, (if-up), init and debian/postinst.
+
+###############################################################################
+
+# Store values from configuration files into debconf db.
+
+for VAR in INIT CRON ; do
+    # We don't need to check if the variable is set, because we also source
+    # pglcmd.defaults, where all variables are set.
+    # TODO: This has to be changed if the debconf part is moved to config again
+    # (then it can run, before any variable is set).
+    eval VALUE=\$$VAR
+    case "$VALUE" in
+        '0')
+            db_set pglcmd/$VAR false
+            ;;
+        '1')
+            db_set pglcmd/$VAR true
+            ;;
+        *)
+            echo "WARNING: unknown value (\"$VALUE\") for $VAR. Ignoring."
+            ;;
+    esac
+done
+
+###############################################################################
+
+# Ask debconf's questions.
+db_input critical pglcmd/INIT || true
+db_input medium pglcmd/CRON || true
+db_go
+
+###############################################################################
+
+# Substitute in the values from the debconf db.
+# See `man debconf-devel`
+# Non-default values will be set in pglcmd.conf
+# Default values will be set in pglcmd.conf if they were set there already,
+# otherwise nothing has to be done.
+
+for VAR in INIT CRON ; do
+    db_get pglcmd/${VAR}
+    # If the value is set in pglcmd.conf, then set it there:
+    if [ -f "$CMD_CONF" ] && grep -Eq "^[[:space:]]*${VAR}=" $CMD_CONF ; then
+        CONFFILE=$CMD_CONF
+    else
+        CONFFILE=$CMD_DEFAULTS
+    fi
+    case "$RET" in
+    'false')
+        if [ "$CONFFILE" = "$CMD_CONF" ] ; then
+            sed -i -r "s|^[[:space:]]*${VAR}=.*|${VAR}=\"0\"|" $CMD_CONF
+        else
+            echo "${VAR}=\"0\"" >> $CMD_CONF
+        fi
+        ;;
+    'true') # Default
+        if [ "$CONFFILE" = "$CMD_CONF" ] ; then
+            sed -i -r "s|^[[:space:]]*${VAR}=.*|${VAR}=\"1\"|" $CMD_CONF
+        fi
+        ;;
+    esac
+done
+
+# done with debconf...
+db_stop
+
+# End of substitute in the values from the debconf db.
+
+###############################################################################
+
+if [ "$INIT" -ne 0 ] && [ -x "/etc/init.d/pgl" ] ; then
+    # dh_installdeb inserts code to execute init "start".
+    echo
+    echo "$NAME will soon be started ..."
+    echo "If any blocklists are missing, they will be downloaded. This may take several"
+    echo "minutes. Please be patient and don't abort. If you want to follow the update"
+    echo "process, then do in another terminal a"
+    echo " tail -f $CMD_LOG"
+    echo "The lists are saved to $BLOCKLISTS_DIR/."
+    echo "The installation of $CMD_NAME will fail, if starting $NAME fails. So if"
+    echo "downloading the blocklists fails temporarily, the installation will fail. In"
+    echo "this case you may turn the automatic starting off by setting in"
+    echo "$CMD_CONF:"
+    echo " INIT=\"0\""
+    echo "Then complete the installation and turn the automatic start on again:"
+    echo " sudo dpkg-reconfigure --force pglcmd"
+    echo "Please be patient ..."
+fi
+
+# dh_installdeb will replace this with shell code automatically
+# generated by other debhelper scripts.
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,75 @@
+#!/bin/sh
+# cron - update the blocklists with pglcmd
+#
+# Copyright (C) 2005 - 2015 jre <jre-phoenix@users.sourceforge.net>
+#
+# This file is part of pgl.
+#
+# pgl is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pgl is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with pgl.  If not, see <http://www.gnu.org/licenses/>.
+
+
+################################################################################
+# The following code is common between pglcmd, pglcmd.wd,
+# cron.daily, init and debian/pglcmd.postinst.
+
+# if-up is similar, but exits successfully if CONTROL_MAIN is not there, yet.
+# This can happen in early boot stages before local file systems are mounted.
+
+# CONTROL_MAIN has to be set correctly in all just mentioned files.
+# Except for debian/pglcmd.postinst, this is done automatically on "make" based
+# on the "configure" options.
+CONTROL_MAIN="/usr/lib/pgl/pglcmd.main"
+
+# Configure pglcmd and load functions.
+if [ -f "$CONTROL_MAIN" ] ; then
+    . $CONTROL_MAIN || { echo "$0 Error: Failed to source $CONTROL_MAIN although this file exists."; exit 1; }
+else
+    echo "$0 Error 7: Missing file $CONTROL_MAIN."
+    exit 7
+fi
+
+# End of the common code between pglcmd, pglcmd.wd,
+# cron.daily, (if-up), init and debian/postinst.
+################################################################################
+
+test_CRON
+test_VERBOSE
+test_CMD_PATHNAME
+
+case "$CRON" in
+    # Automatic update is off:
+    0)
+        if [ "$VERBOSE" -eq 1 ] ; then
+            log_warning_msg "$(basename $0) is configured not to update the blocklists automatically."
+            log_warning_msg "To change this edit the CRON entry in $CMD_CONF."
+            log_warning_msg "If you don't want to see this message set VERBOSE=\"2\" there."
+        fi
+        ;;
+    # Automatic update is on:
+    1)
+        if [ $CRON_MAILTO ] && test_sendmail ; then
+            cat<<EOF | $SENDMAIL -t
+To: $CRON_MAILTO
+Subject: Results of $CMD_NAME blocklist update
+
+"$($CMD_PATHNAME update || echo "$0 exited with return code $?.")"
+
+EOF
+        else
+            $CMD_PATHNAME update > /dev/null
+        fi
+        ;;
+esac
+
+exit $?

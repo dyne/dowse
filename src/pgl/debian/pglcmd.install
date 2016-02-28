@@ -1,0 +1,8 @@
+etc/pgl/allow.p2p
+etc/pgl/blocklists.list
+etc/pgl/pglcmd.conf
+usr/bin/pglcmd
+usr/lib/*/pgl/pglcmd.defaults
+usr/lib/*/pgl/pglcmd.lib
+usr/lib/*/pgl/pglcmd.main
+usr/sbin/pglcmd.wd

@@ -1,0 +1,33 @@
+pgl 2.3.0 New default blocklists and MARKing for everyone
+
+  [jre]
+  * The default blocklist setup changed to a lighter one with Bluetack lists:
+    TBG has been dropped because it isn't updated on iblocklist anymore. Search
+    the web to learn how to continue to get them.
+    Instead we are back to some Bluetack lists, although probably with a less
+    paranoid selection.
+    Everybody is strongly encouraged to do his own research on the quality of
+    the several blocklist providers. Then you can select the correct blocklists
+    based on your own personal needs.
+    Comments welcome!
+  * removed the (non-default) feature to directly DROP and ACCEPT packets
+    (as in MoBlock 0.8), instead of using the (default) MARKing feature.
+    Reason:
+    ACCEPTing/DROPing packets directly was only needed for kernel/netfilter
+    not supporting MARKing. Probably it was also a bit more efficient than
+    MARKing.
+    But ACCEPTing packets directly breaks other iptables setups - this has
+    always been documented, but wasn't known to all users. So in order to
+    avoid misconfigurations I decided to drop this feature.
+    DROPing directly should not yield any drawbacks, but I decided to also
+    remove it in order to make the code simpler.
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sat, 24 Jan 2015 14:25:28 +0000
+
+
+pgl 2.2.0 The autotools release
+
+  * our new Gentoo maintainer hasufell added a real buildsystem (GNU autotools)
+  * renamed pgl-gui to pglgui
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Thu, 07 Jun 2012 21:59:44 +0200

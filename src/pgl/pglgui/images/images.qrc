@@ -1,0 +1,29 @@
+<RCC>
+  <qresource prefix="/images">
+    <file>list_add.png</file>
+    <file>list_remove.png</file>
+    <file>backup.png</file>
+    <file>blocklist.png</file>
+    <file>cancel.png</file>
+    <file>editdelete.png</file>
+    <file>error.png</file>
+    <file>exit.png</file>
+    <file>forward.png</file>
+    <file>incoming.png</file>
+    <file>info.png</file>
+    <file>log.png</file>
+    <file>pglgui.png</file>
+    <file>ok.png</file>
+    <file>outgoing.png</file>
+    <file>play.png</file>
+    <file>reload.png</file>
+    <file>restart.png</file>
+    <file>run.png</file>
+    <file>save.png</file>
+    <file>settings.png</file>
+    <file>stop.png</file>
+    <file>tray.png</file>
+    <file>tray_disabled.png</file>
+    <file>warning.png</file>
+  </qresource>
+</RCC>

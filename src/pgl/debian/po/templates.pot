@@ -1,0 +1,70 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: peerguardian-devel@lists.sourceforge.net\n"
+"POT-Creation-Date: 2014-06-12 18:23+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../pglcmd.templates:1001
+msgid "Turn on automatic start? This may block the complete network access!"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../pglcmd.templates:1001
+msgid "Configuration variable: INIT"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../pglcmd.templates:1001
+msgid ""
+"pgl blocks traffic to and from all IPs that are listed in your blocklists. "
+"This may block much more than what you want - including your own LAN, "
+"gateway and DNS server, many webpages, services like eMail, instant "
+"messaging or the \"weather applet\" and even remote access to this machine."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../pglcmd.templates:1001
+msgid ""
+"To prevent this, you can change the blocklist selection, and you can allow "
+"certain traffic (whitelisting). So first configure pgl correctly, before you "
+"turn the automatic start on!"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../pglcmd.templates:2001
+msgid "Turn on automatic blocklist update?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../pglcmd.templates:2001
+msgid "Configuration variable: CRON"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../pglcmd.templates:2001
+msgid ""
+"This sets if the daily cron job updates the blocklists. With the default "
+"settings this causes up to 10 MB traffic per day. You can configure which "
+"blocklists are used in /etc/pgl/blocklists.list."
+msgstr ""

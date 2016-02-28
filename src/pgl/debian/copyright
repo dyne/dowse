@@ -1,0 +1,158 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: PeerGuardian Linux (pgl)
+Source: http://sourceforge.net/projects/peerguardian/
+
+Files:     *
+Copyright: Parts and ideas 2005-2007 by JFM, /meth/usr, lestlest (clessing),
+           Morpheus and perhaps others. More Info: http://forums.phoenixlabs.org
+           2004 Morpheus <ebutera@users.berlios.de>
+           2005-2015 jre <jre-phoenix@users.sourceforge.net>
+           2006-2009 sloter <laurent at sloter.org>
+           2007-2011 Dimitris Palyvos-Giannas <jimaras@gmail.com>
+           2008-2010 Jindrich Makovicka <makovick@gmail.com>
+           2008 jpv <jpv950@gmail.com>
+           2009-2014 Cader <cade.robinson@gmail.com>
+           2011-2014 Carlos Pais <fr33mind@users.sourceforge.net>
+           2012-2013 hasufell <julian.ospald@googlemail.com>
+           2014 Gilrain <gilrain+libre@castelmo.re>
+License:   GPL-3.0+
+ This file is part of pgl.
+ .
+ pgl is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ pgl is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with pgl.  If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ Version 3 can be found in `/usr/share/common-licenses/GPL-3'.
+
+Files:     pglcmd/pglcmd.lsb.lib
+Copyright: 2002-2008 Chris Lawrence
+           2005-2015 jre <jre-phoenix@users.sourceforge.net>
+License:   BSD-3-Clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ 3. Neither the name of the author nor the names of other contributors
+ may be used to endorse or promote products derived from this software
+ without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Files:     pglgui/images/*.png
+Copyright: 2006-2007 Everaldo Coelho
+License:   LGPL-2.1+
+ On Debian systems, the complete text of the GNU Lesser General Public License
+ Version 2.1 can be found in `/usr/share/common-licenses/LGPL-2.1'.
+Upstream-Name: Crystal Project Icons
+Upstream-Contact: http://everaldo.com/
+Source:    http://web.archive.org/web/20101122171453/http://everaldo.com/crystal
+           /crystal_project.tar.gz
+Comment:   The source doesn't specify any license, but as per
+ http://kde-look.org/content/show.php/Crystal+Project?content=60475
+ the license is "LGPL". (LGPL 2.1 is the first released version of the Lesser
+ GPL, and was the current version when the readme was created.)
+ .
+ The files were copied/derived from:
+ backup.png        crystal_project/32x32/actions/help.png
+ blocklist.png     crystal_project/32x32/actions/mail_new.png
+ cancel.png        crystal_project/32x32/actions/cancel.png
+ editdelete.png    crystal_project/32x32/actions/editdelete.png
+ error.png         crystal_project/32x32/actions/stop.png
+ exit.png          crystal_project/32x32/actions/exit.png
+ forward.png       crystal_project/32x32/actions/forward.png
+ incoming.png      crystal_project/32x32/actions/agt_upgrade_misc.png
+ info.png          crystal_project/32x32/actions/info.png
+ list_add.png      crystal_project/32x32/actions/edit_add.png
+ list_remove.png   crystal_project/32x32/actions/edit_remove.png
+ log.png           crystal_project/32x32/actions/toggle_log.png
+ ok.png            crystal_project/32x32/actions/ok.png
+ outgoing.png      crystal_project/32x32/actions/agt_uninstall_product.png
+ pglgui.png        crystal_project/128x128/apps/web.png
+ play.png          crystal_project/32x32/actions/player_play.png
+ reload.png        crystal_project/32x32/actions/switchuser.png
+ restart.png       crystal_project/32x32/actions/reload.png
+ run.png           crystal_project/32x32/actions/run.png
+ save.png          crystal_project/32x32/actions/save_all.png
+ settings.png      crystal_project/32x32/actions/utilities.png
+ stop.png          crystal_project/32x32/actions/player_stop.png
+ tray_disabled.png crystal_project/32x32/apps/package_network.png [derived]
+ tray.png          crystal_project/32x32/apps/package_network.png
+ warning.png       crystal_project/32x32/actions/messagebox_warning.png
+
+Files:     pglcmd/init/pgl.gentoo.in
+Copyright: 1999-2012, Gentoo Foundation
+License:   GPL-2
+ On Debian systems, the complete text of the GNU General Public License
+ Version 2 can be found in `/usr/share/common-licenses/GPL-2'.
+
+Files:     ar-lib
+           aclocal.m4
+           compile
+           config.guess
+           config.h.in
+           config.sub
+           configure
+           depcomp
+           docs/Makefile.in
+           install-sh
+           ltmain.sh
+           m4/libtool.m4
+           m4/ltoptions.m4
+           m4/ltsugar.m4
+           m4/ltversion.m4
+           m4/lt~obsolete.m4
+           missing
+           Makefile.in
+           pglcmd/Makefile.in
+           pgld/Makefile.in
+           pglgui/Makefile.in
+Copyright: 1992-2015 Free Software Foundation, Inc.
+           1994 X Consortium
+License:   __AUTO_PERMISSIVE__
+ Auto-generated file under the permissive license.
+Comment:   Entry generated with "debmake -cc".
+ Manually added ar-lib and config.h.in.
+ See http://www.gnu.org/licenses/exceptions.html
+
+Files:     m4/qt4.m4
+Copyright: 2004, 2007-2009, Juergen Heinemann, http://www.hjcms.de
+License:   GPL-2+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ Version 2 can be found in `/usr/share/common-licenses/GPL-2'.

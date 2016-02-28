@@ -94,6 +94,8 @@ source $R/daemons/squid3
 source $R/daemons/privoxy
 source $R/daemons/polipo
 source $R/daemons/dnscap
+source $R/daemons/pgl
+
 
 # conclude initialization
 if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
@@ -230,7 +232,7 @@ dowse-start() {
         PGL=`pidof pgld`
         [[ "$PGL" = "" ]] || {
             act "PeerGuardian found running, will restart it accordingly"
-            pglcmd stop }
+            pgl-stop }
 
         act "set up $interface interface"
         ifconfig $interface $address netmask $netmask up
@@ -277,7 +279,9 @@ EOF
         dnscap-start
 
         # if PeerGuardian was running, start it again
-        [[ "$PGL" = "" ]] || { pglcmd start }
+        pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
+        pgl-start
+#        [[ "$PGL" = "" ]] || { pglcmd start }
 
     }
 
@@ -313,6 +317,7 @@ dowse-stop() {
     [[ -z $root ]] || {
         dnscap-stop
         dnsmasq-stop
+        pgl-stop
         iptables-stop
         ebtables-stop
     }

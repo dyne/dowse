@@ -22,6 +22,7 @@
         - libssl-dev
         - libbind-dev
         - libpcap-dev
+        - libnetfilter-queue-dev
         - unzip
         - wget
         - gcc

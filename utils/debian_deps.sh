@@ -78,7 +78,9 @@ print "Installing Dowse on `hostname`"
 print
 
 # list of programs to be installed:
-pkgs=(daemontools iptables ebtables gettext-base procps net-tools libssl-dev libbind-dev libpcap-dev unzip wget gcc make)
+pkgs=(daemontools iptables ebtables gettext-base procps net-tools)
+pkgs+=(libssl-dev libbind-dev libpcap-dev unzip wget gcc make)
+pkgs+=(libnetfilter-queue-dev)
 
 
 #install_policy
