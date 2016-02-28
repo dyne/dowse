@@ -32,14 +32,12 @@ EOF
 
     cat <<EOF
 PidFile $R/run/tor.pid
-SocksPort 127.0.0.1:9050
 SocksPolicy accept 127.0.0.1
 SocksPolicy accept $address
 SocksPolicy reject *
 Log notice file $R/log/tor.log
 RunAsDaemon 1
 DataDirectory $R/run
-ControlPort 9051
 CookieAuthentication 1
 ExitPolicy reject *:*
 EOF

@@ -26,7 +26,6 @@ privoxy-conf() {
     cat <<EOF
 user-manual /usr/share/doc/privoxy/user-manual
 confdir /etc/privoxy
-listen-address  0.0.0.0:8118
 toggle  1
 enable-remote-toggle  0
 enable-remote-http-toggle  0

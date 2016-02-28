@@ -4,7 +4,7 @@ dowse_mod_name=iptables-default
 dowse_mod_desc="Default iptables rules for basic protection"
 dowse_mod_type=(firewall)
 dowse_mod_ports=()
-dowse_mod_deps=(iptables)
+dowse_mod_deps=(root)
 dowse_mod_authors=(Jaromil)
 dowse_mod_version=0.1
 
