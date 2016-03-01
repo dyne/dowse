@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 #
-# Copyright (C) 2012-2015 Dyne.org Foundation
+# Copyright (C) 2012-2016 Dyne.org Foundation
 #
-# Dowse is designed, written and maintained by Denis Roio <jaromil@dyne.org>
+# Designed, written and maintained by Denis Roio <jaromil@dyne.org>
 #
 # This source code is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Public License
@@ -24,8 +24,8 @@
 
 # {{{ GLOBALS
 
-dowse_version=0.8
-dowse_release_date="Nov/2015"
+dowse_version=0.9
+dowse_release_date="Mar/2016"
 
 zkv=1
 restful=1
@@ -96,6 +96,7 @@ source $R/daemons/polipo
 source $R/daemons/dnscap
 source $R/daemons/pgl
 source $R/daemons/tor
+source $R/daemons/redis
 
 
 # conclude initialization
@@ -207,6 +208,7 @@ net.ipv4.tcp_keepalive_intvl = 10
 net.ipv4.tcp_keepalive_probes = 3
 net.ipv4.ip_local_port_range = 1025 65530
 net.ipv4.tcp_timestamps = 0
+vm.overcommit_memory = 1
 EOF
 }
 
@@ -282,21 +284,29 @@ EOF
         # if PeerGuardian was running, start it again
         pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
         pgl-start
-#        [[ "$PGL" = "" ]] || { pglcmd start }
 
     }
+
+
+    redis-conf > $R/conf/redis.conf
+    cat <<EOF >> $R/conf/redis.conf
+pidfile $R/run/redis.pid
+logfile $R/log/redis.log
+port 6379
+EOF
+    redis-start  $R/conf/redis.conf
 
     # consul-start || return $?
 
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
-        load-module $m || continue
-        setup-module || continue
+        dowse-module-load $m || continue
+        dowse-module-setup || continue
     done
 
     for m in "${(f)mods}"; do
-        load-module $m || continue
-        start-module || continue
+        dowse-module-load $m || continue
+        dowse-module-start || continue
     done
 
     notice "Dowse succesfully started" # , web interface up on:"
@@ -310,16 +320,18 @@ dowse-stop() {
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
 
-        load-module $m || continue
-        stop-module
+        dowse-module-load $m || continue
+        dowse-module-stop
 
     done
 
     # [[ -r $R/run/consul.pid ]] && consul-stop
 
+    redis-stop $R/run/redis.pid
+
     [[ -z $root ]] || {
-        dnscap-stop
-        dnsmasq-stop
+        dnscap-stop  $R/run/dnscap.pid
+        dnsmasq-stop $R/run/dnsmasq.pid
         pgl-stop
         iptables-stop
         ebtables-stop

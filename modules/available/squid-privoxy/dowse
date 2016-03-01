@@ -2,9 +2,9 @@
 
 dowse_mod_name=squid-privoxy
 dowse_mod_desc="Transparent http proxy pipeline chaining squid to privoxy"
-dowse_mod_type=(http proxy)
-dowse_mod_ports=(squid/3128 privoxy/8118)
-dowse_mod_deps=(squid privoxy)
+dowse_mod_tags=(http proxy)
+dowse_mod_ports=(squid:3128 privoxy:8118)
+dowse_mod_daemons=(squid privoxy)
 dowse_mod_authors=(Jaromil)
 dowse_mod_version=0.1
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
 
-dowse_mod_name=tor
+dowse_mod_name=tor-privoxy
 dowse_mod_desc="Tor gateway using privoxy"
-dowse_mod_type=(proxy anon)
-dowse_mod_ports=(9050 9051 9119)
-dowse_mod_deps=(tor privoxy)
+dowse_mod_tags=(proxy anon)
+dowse_mod_ports=(tor:9050 tor:9051 privoxy:9119)
+dowse_mod_daemons=(tor privoxy)
 dowse_mod_authors=(jaromil)
 dowse_mod_version=0.2
 

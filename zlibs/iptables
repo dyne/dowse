@@ -18,24 +18,24 @@ iptables-start() {
     iptables -A INPUT -s 127.0.0.1 -j ACCEPT
     iptables -A INPUT -d 127.0.0.1 -j ACCEPT
 
-# Allow packets from private subnets
+    # Allow packets from private subnets
     iptables -A FORWARD -i lo -j ACCEPT
     iptables -A FORWARD -i ${interface} -s ${dowse_net} -j ACCEPT
 
-# Allow DNS service
+    # Allow DNS service
     iptables -A INPUT -i ${interface} -p udp --dport 53 -j ACCEPT
 
-# Allow DHCP service
+    # Allow DHCP service
     iptables -A INPUT -i ${interface} -p udp --sport 67:68 --dport 67:68 -j ACCEPT
 
-# Allow incoming pings (can be disabled)
+    # Allow incoming pings (can be disabled)
     iptables -A INPUT -i ${interface} -p icmp --icmp-type echo-request -j ACCEPT
 
-# Allow services such as www and ssh (can be disabled)
+    # Allow services such as www and ssh (can be disabled)
     iptables -A INPUT -p tcp --dport http -j ACCEPT
     iptables -A INPUT -p tcp --dport ssh -j ACCEPT
 
-# Keep state of connections from local machine and private subnets
+    # Keep state of connections from local machine and private subnets
     iptables -A OUTPUT  -m state --state NEW -o ${interface} -j ACCEPT
     iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT
     iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -45,7 +45,7 @@ iptables-start() {
     notice "Setting up masquerading (NAT)"
     func "setup route towards wired network"
     iptables --table nat --append POSTROUTING \
-    --out-interface ${interface} -j SNAT --to ${address}
+             --out-interface ${interface} -j SNAT --to ${address}
     # Testing with dreamer lead to use of -j MASQUERADE without
     # destination and out-interface as external to ADSL router WAN
     # SNAT has better detection of open connections, beware.

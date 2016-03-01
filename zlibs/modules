@@ -22,25 +22,30 @@
 # 02139, USA.
 
 
-load-module() {
-    fn load-module
+dowse-module-load() {
+    fn dowse-module-load
     mod="$1"
+
+    func "Loading module: $1"
+
     # main module file is called dowse
     # skip module if not present
     core_script="$1/dowse"
     [[ -r "$core_script" ]] || {
+        # check also relative path, reason we don't use ckreq
         core_script="$R/modules/enabled/$1/dowse"
         [[ -r "$core_script" ]] || return 1
     }
 
+    # reset all variables that may be set by a  preceeding module
     command -v module-setup >/dev/null && unset -f module-setup
     command -v module-start >/dev/null && unset -f module-start
     command -v module-stop >/dev/null && unset -f module-stop
     unset dowse_mod_name
     unset dowse_mod_desc
-    unset dowse_mod_type
+    unset dowse_mod_tags
     unset dowse_mod_ports
-    unset dowse_mod_deps
+    unset dowse_mod_daemons
     unset dowse_mod_authors
     unset dowse_mod_version
 
@@ -54,38 +59,36 @@ load-module() {
             warning "invalid module: $i"
             return 1 }
 
-    notice "Loading module: $dowse_mod_name (${dowse_mod_type})"
-    act "$dowse_mod_desc"
-
-    for dep in $dowse_mod_deps; do
-        $dep-extract
-        [[ $? = 0 ]] || {
-            error "failed importing $dep"
-            error "$dowse_mod_name depends from this daemon, cannot proceed loading"
-            return 1 }
-    done
-
-    func "all dependencies satisfied: ${dowse_mod_deps}"
-    func "ports opened: $dowse_mod_ports"
-    func "author: ${dowse_mod_authors} version: $dowse_mod_version"
-
     # TODO check also header variables
 
     return 0
 }
 
-setup-module() {
-    fn setup-module
+dowse-module-setup() {
+    fn dowse-module-setup
 
-    pushd $R
+    notice "Setup module: $dowse_mod_name (${dowse_mod_tags})"
+    act "$dowse_mod_desc"
+
+    for dep in $dowse_mod_daemons; do
+        ${dep}-extract
+        [[ $? = 0 ]] || {
+            error "failed importing $dep"
+            error "$dowse_mod_name depends on this daemon, cannot proceed loading"
+            return 1 }
+    done
+
+    func "all daemons found: ${dowse_mod_daemons}"
+    func "ports opened: $dowse_mod_ports"
+    func "author: ${dowse_mod_authors} version: $dowse_mod_version"
+
     module-setup || {
         warning "cannot setup module: $dowse_mod_name"
-        popd; return 1 }
-    popd
+        return 1 }
 }
 
-start-module() {
-    fn start-module
+dowse-module-start() {
+    fn dowse-module-start
 
     notice "Starting module $dowse_mod_name"
 
@@ -114,8 +117,8 @@ start-module() {
     fi
 }
 
-stop-module() {
-    fn stop-module
+dowse-module-stop() {
+    fn dowse-module-stop
 
     act "stopping module: $dowse_mod_name"
 

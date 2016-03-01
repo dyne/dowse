@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 
 ebtables-start() {
-    require ebtables
-    { test $? = 0 } || { func "ebtables not found, skipping"; return 1 }
+
+    command -v ebtables > /dev/null || { warning "ebtables not found, skipping"; return 1 }
 
     notice "Setting up ebtables rules (layer 2 firewall)"
     ebtables -P FORWARD DROP
@@ -42,7 +42,7 @@ ebtables-start() {
 }
 
 ebtables-stop() {
-    require ebtables
+
 
     act "flushing ebtables (layer 2 firewall)"
     ebtables -P FORWARD ACCEPT

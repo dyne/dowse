@@ -60,6 +60,7 @@ EOF
 privoxy-start() {
     fn privoxy-start
     conf=${1:-$R/run/privoxy.conf}
+    shift 1
     freq=($conf)
     ckreq || return 1
 
@@ -70,11 +71,12 @@ privoxy-start() {
 
     act "starting privoxy: $conf"
     if [[ -z $root ]]; then
-        $R/run/privoxy --pidfile $pidfile $conf.real
+        $R/run/privoxy --pidfile $pidfile $* $conf.real
     else
-        $R/run/privoxy --user $dowse_uid --pidfile $pidfile $conf.real
+        $R/run/privoxy --user $dowse_uid --pidfile $pidfile $* $conf.real
     fi
 
+    return $?
 }
 
 # $1 arg is path to pid
@@ -89,4 +91,5 @@ privoxy-stop() {
     kill $pid
     waitpid $pid
 
+    return 0
 }
