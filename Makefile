@@ -1,13 +1,15 @@
-all: dnsmasq pgl dnscap
+all: pgl dnscap
+	@echo
+	@echo "Dowse is compiled and ready to run"
+	@echo "setup use conf/settings and launch ./start.sh"
+	@echo "or use the interactive zshell with source dowse"
+	@echo
 
 pgl:
 	./src/compile.sh pgl
 
 dnscap:
 	./src/compile.sh dnscap
-
-dnsmasq:
-	./src/import.sh dnsmasq
 
 clean:
 	rm -rf run

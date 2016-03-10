@@ -224,7 +224,7 @@ dowse-start() {
     # freq=($R/conf/settings $R/conf/network)
     # ckreq || return $?
 
-    [[ -r $R/run/dnsmasq.pid ]] && {
+    [[ -r $R/run/redis.pid ]] && {
         warn "Dowse is already running"
         return 0
     }
@@ -265,10 +265,10 @@ dowse-start() {
             iptables-start
         }
 
-        # generate dnsmasq configuration
+        # download and extract the dnsmasq binary if necessary
         dnsmasq-extract
-        # start the dnsmasq daemon
-        rm -f $R/run/dnsmasq.conf
+
+        # generate the dnsmasq configuration
         dnsmasq-conf > $R/run/dnsmasq.conf
         mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
         cat <<EOF > /etc/resolv.conf
@@ -276,12 +276,13 @@ nameserver 127.0.0.1
 # domain $lan
 # search $lan
 EOF
+        # launch the dnsmasq daemon
         dnsmasq-start $R/run/dnsmasq.conf
 
         # start dnscap
         dnscap-start
 
-        # if PeerGuardian was running, start it again
+        # start peerguardian
         pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
         pgl-start
 
