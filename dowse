@@ -355,18 +355,18 @@ dowse-reload() {
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     func "modules enabled: $mods"
     for m in "${(f)mods}"; do
-        load-module $m || continue
-        stop-module
+        dowse-module-load $m || continue
+        dowse-module-stop
     done
 
     for m in "${(f)mods}"; do
-        load-module $m || continue
-        setup-module
+        dowse-module-load $m || continue
+        dowse-module-setup
     done
 
     for m in "${(f)mods}"; do
-        load-module $m || continue
-        start-module
+        dowse-module-load $m || continue
+        dowse-module-start
     done
 
 }

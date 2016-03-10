@@ -40,6 +40,7 @@
 #include "hashmap.h"
 
 #include "../../dnscap_common.h"
+#include <database.h>
 
 static logerr_t *logerr;
 /* static int opt_f = 0; */

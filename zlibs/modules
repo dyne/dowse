@@ -110,6 +110,10 @@ dowse-module-start() {
         # # add service listing on consul
         # [[ ${#dowse_mod_deps} -gt 0 ]] && consul-add-service
 
+        # add service listing on redis
+        cat <<EOF | redis-cli
+LPUSH $mod
+EOF
         # consul reload
     else
         warning "cannot start module $dowse_mod_name"

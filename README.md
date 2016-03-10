@@ -71,7 +71,8 @@ Installation and activation takes a few steps and needs root:
 ```
 zsh daemontools iptables ebtables gettext-base procps net-tools
 libssl-dev libbind-dev libpcap-dev unzip wget gcc make
-libnetfilter-queue-dev libjemalloc-dev libseccomp2
+libnetfilter-conntrack3 libnetfilter-queue-dev libjemalloc-dev
+zlibseccomp2
 ```
 
 3. Run `make`
