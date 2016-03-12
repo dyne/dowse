@@ -304,6 +304,7 @@ EOF
     dnscrypt-proxy-start
 
     # start the redis daemon (core k/v service)
+    redis-extract
     redis-conf > $R/conf/redis.conf
     cat <<EOF >> $R/conf/redis.conf
 pidfile $R/run/redis.pid
@@ -344,7 +345,7 @@ dowse-stop() {
     # [[ -r $R/run/consul.pid ]] && consul-stop
 
     # stop the dns crypto tunnel
-    dnscrypt-proxy-start
+    dnscrypt-proxy-stop
 
     redis-stop $R/run/redis.pid
 
