@@ -5,7 +5,8 @@ _dnscrypt() {
     setuidgid $dowse_uid \
               $R/run/dnscrypt-proxy --local-address 127.0.0.1:53443 \
               -p $R/run/dnscrypt-proxy.pid -l $R/log/dnscrypt.log \
-              -r "$1" -k "$2" -N "$3" -d
+              -r "$1" -k "$2" -N "$3" -d \
+              -m 4 # log only warning conditions
 }
 
 

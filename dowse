@@ -274,8 +274,12 @@ dowse-start() {
 
         # tunnel dnsmasq across dnscrypt-proxy
         cat <<EOF >> $R/run/dnsmasq.conf
-        server=127.0.0.1#53443
+server=127.0.0.1#53443
 EOF
+        # and all dns queries across local dnsmasq
+        iptables -t nat -A PREROUTING -i $interface -s $dowse_net \
+                 -p udp --dport 53 -j REDIRECT --to-port 53
+
 
         # make sure the dowse host uses his own dns
         mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
