@@ -7,6 +7,18 @@ R=`pwd`
 }
 
 case $1 in
+    dnscrypt-proxy)
+        [[ -r $R/run/dnscrypt-proxy ]] || {
+            pushd $R/src/dnscrypt-proxy
+            ./configure --without-systemd \
+                && \
+                make
+            cp $R/src/dnscrypt-proxy/src/proxy/dnscrypt-proxy \
+               $R/run
+            popd
+        }
+        ;;
+
     pgl)
         [[ -r $R/run/pgl ]] || {
             pushd $R/src/pgl
@@ -42,6 +54,9 @@ case $1 in
 
         make -C $R/src/dnscap clean
         rm $R/run/dnscap $R/run/dowse.so
+
+        make -C $R/src/dnscrypt-proxy clean
+        rm $R/run/dnscrypt-proxy
 
         rm -rf $R/run/pgl
         make -C $R/src/pgl    clean

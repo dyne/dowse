@@ -23,6 +23,9 @@
         - libbind-dev
         - libpcap-dev
         - libnetfilter-queue-dev
+        - libnetfilter-conntrack3
+        - libjemalloc-dev
+        - libsodium-dev
         - libseccomp2
         - unzip
         - wget
