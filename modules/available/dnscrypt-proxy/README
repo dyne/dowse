@@ -1,5 +1,0 @@
-This is a module to run all external DNS queries over dnscrypt
-
-which basically encrypts all traffic using elliptic curve
-
-most distros will need one to compile dnscrypt-proxy by hand

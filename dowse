@@ -97,6 +97,7 @@ source $R/daemons/dnscap
 source $R/daemons/pgl
 source $R/daemons/tor
 source $R/daemons/redis
+source $R/daemons/dnscrypt-proxy
 
 
 # conclude initialization
@@ -270,6 +271,13 @@ dowse-start() {
 
         # generate the dnsmasq configuration
         dnsmasq-conf > $R/run/dnsmasq.conf
+
+        # tunnel dnsmasq across dnscrypt-proxy
+        cat <<EOF >> $R/run/dnsmasq.conf
+        server=127.0.0.1#53443
+EOF
+
+        # make sure the dowse host uses his own dns
         mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
         cat <<EOF > /etc/resolv.conf
 nameserver 127.0.0.1
@@ -288,7 +296,10 @@ EOF
 
     }
 
+    # start the dns encrypted tunneling
+    dnscrypt-proxy-start
 
+    # start the redis daemon (core k/v service)
     redis-conf > $R/conf/redis.conf
     cat <<EOF >> $R/conf/redis.conf
 pidfile $R/run/redis.pid
@@ -327,6 +338,9 @@ dowse-stop() {
     done
 
     # [[ -r $R/run/consul.pid ]] && consul-stop
+
+    # stop the dns crypto tunnel
+    dnscrypt-proxy-start
 
     redis-stop $R/run/redis.pid
 

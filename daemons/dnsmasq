@@ -52,7 +52,7 @@ address=/$hostname.$lan/$address
 # address=/.i2p/$address
 # address=/.onion/$address
 bogus-priv
-cache-size=300
+cache-size=2048
 dhcp-range=$dowse_guests
 addn-hosts=$R/run/hosts
 dhcp-leasefile=$R/run/leases
