@@ -144,7 +144,8 @@ libdbus_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @DBUSMAKE_TRUE@am_libdbus_la_rpath = -rpath $(libdbusdir)
 PROGRAMS = $(sbin_PROGRAMS)
 am_pgld_OBJECTS = src/pgld.$(OBJEXT) src/stream.$(OBJEXT) \
-	src/blocklist.$(OBJEXT) src/parser.$(OBJEXT)
+	src/blocklist.$(OBJEXT) src/parser.$(OBJEXT) \
+	../../redis.$(OBJEXT)
 pgld_OBJECTS = $(am_pgld_OBJECTS)
 pgld_DEPENDENCIES =
 AM_V_P = $(am__v_P_@AM_V@)
@@ -391,9 +392,9 @@ pgld_SOURCES = \
 	       src/pgld.c src/pgld.h \
 	       src/stream.c src/stream.h \
 	       src/blocklist.c src/blocklist.h \
-	       src/parser.c src/parser.h
+	       src/parser.c src/parser.h ../../redis.c
 
-pgld_LDADD = @PGLD_LIBS@
+pgld_LDADD = @PGLD_LIBS@ -lhiredis
 @DBUSMAKE_TRUE@libdbusdir = $(libdir)/$(PACKAGE_NAME)
 @DBUSMAKE_TRUE@libdbus_LTLIBRARIES = libdbus.la
 @DBUSMAKE_TRUE@libdbus_la_SOURCES = src/dbus.c src/dbus.h
@@ -538,6 +539,14 @@ src/blocklist.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/parser.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+../../$(am__dirstamp):
+	@$(MKDIR_P) ../..
+	@: > ../../$(am__dirstamp)
+../../$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../../$(DEPDIR)
+	@: > ../../$(DEPDIR)/$(am__dirstamp)
+../../redis.$(OBJEXT): ../../$(am__dirstamp) \
+	../../$(DEPDIR)/$(am__dirstamp)
 
 pgld$(EXEEXT): $(pgld_OBJECTS) $(pgld_DEPENDENCIES) $(EXTRA_pgld_DEPENDENCIES) 
 	@rm -f pgld$(EXEEXT)
@@ -545,12 +554,14 @@ pgld$(EXEEXT): $(pgld_OBJECTS) $(pgld_DEPENDENCIES) $(EXTRA_pgld_DEPENDENCIES)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../../*.$(OBJEXT)
 	-rm -f src/*.$(OBJEXT)
 	-rm -f src/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@../../$(DEPDIR)/redis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/blocklist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/dbus.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/parser.Po@am__quote@
@@ -745,6 +756,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../../$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../../$(am__dirstamp)
 	-rm -f src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/$(am__dirstamp)
 
@@ -757,7 +770,7 @@ clean-am: clean-generic clean-libdbusLTLIBRARIES clean-libtool \
 	clean-sbinPROGRAMS mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf src/$(DEPDIR)
+	-rm -rf ../../$(DEPDIR) src/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -804,7 +817,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf src/$(DEPDIR)
+	-rm -rf ../../$(DEPDIR) src/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

@@ -8,6 +8,8 @@ LOCAL_BLOCKLIST_DIR="$R/conf/blocklists"
 BLOCKLISTS_LIST=""
 ALLOW_IN="$R/conf/whitelist.p2p"
 ALLOW_OUT="$R/conf/whitelist.p2p"
+LOGDIR="$R/log"
+DAEMON_LOG="\${LOGDIR}/pgld.log"
 EOF
 
 }

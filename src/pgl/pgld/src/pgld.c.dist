@@ -22,9 +22,6 @@
 // along with pgl.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "../../../database.h"
-#include "../../../redis.h"
-
 #include "pgld.h"
 
 static unsigned int accept_mark = 0, reject_mark = 0, use_syslog = 0, queue_length = 0, opt_merge = 0, blockfile_count = 0;
@@ -50,17 +47,6 @@ struct nfq_q_handle *nfqueue_qh = 0;
 
 // General logging function
 void do_log(int priority, const char *format, ...) {
-
-    if (redis) {
-        char message[512];
-        va_list ap;
-        va_start(ap, format);
-        vsnprintf(message, 512, format, ap);
-        reply = redisCommand(redis, "PUBLISH pgl_info_channel %s", message);
-        freeReplyObject(reply);
-        va_end(ap);
-    }
-
     if (use_syslog) {
         va_list ap;
         va_start(ap, format);
@@ -694,9 +680,6 @@ int main(int argc, char *argv[]) {
         CHECK_OOM(pidfile_name);
         strcpy(pidfile_name,PIDFILE);
     }
-
-    // open redis connection
-    connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
     // open logfile
     if (logfile_name != NULL) {

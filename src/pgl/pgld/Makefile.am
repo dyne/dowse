@@ -11,8 +11,8 @@ pgld_SOURCES = \
 	       src/pgld.c src/pgld.h \
 	       src/stream.c src/stream.h \
 	       src/blocklist.c src/blocklist.h \
-	       src/parser.c src/parser.h
-pgld_LDADD = @PGLD_LIBS@
+	       src/parser.c src/parser.h ../../redis.c
+pgld_LDADD = @PGLD_LIBS@ -lhiredis
 sbin_PROGRAMS = pgld
 
 # build dbus library for --enable-dbus
@@ -33,4 +33,3 @@ if LOGROTATEMAKE
 logdir = $(sysconfdir)/logrotate.d
 dist_log_DATA = logrotate/pgld
 endif
-

@@ -303,10 +303,6 @@ EOF
         # launch the dnsmasq daemon
         dnsmasq-start $R/run/dnsmasq.conf
 
-        # start peerguardian
-        pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
-        pgl-start
-
     }
 
     # start the dns encrypted tunneling
@@ -325,9 +321,16 @@ EOF
     print "flushdb" | redis-cli -n $db[runtime]
     print "flushdb" | redis-cli -n $db[dynamic]
 
+    # these are root programs that need redis to be running
     [[ -z $root ]] || {
         # start dnscap
         dnscap-start
+
+        # start peerguardian
+        pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
+        cat $R/run/pgl/etc/pgl/pglcmd.conf
+        pgl-start
+
     }
 
     # consul-start || return $?
