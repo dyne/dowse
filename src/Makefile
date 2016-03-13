@@ -14,3 +14,4 @@ dns-to-osc: dns-to-osc.o redis.o
 
 clean:
 	rm -f *.o
+	rm -f dns-to-osc dns-to-gource

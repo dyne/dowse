@@ -13,7 +13,7 @@ Inside the dynamic database the following channels are present:
 As the listener API shapes up, this namespace may change in the close
 future. Here below some examples for commandline use:
 
-## DNS
+## DNS (dns-query-channel)
 
 To subscribe to DNS events from CLI, do from the dowse source root:
 
@@ -24,7 +24,7 @@ SUBSCRIBE dns_query_channel
 EOF
 ```
 
-## PGL (pgl_info_channel)
+## PGL (pgl-info-channel)
 
 To subscribe to PeerGuardian's events from CLI:
 
@@ -34,3 +34,8 @@ cat <<EOF | redis-cli -n $db --raw
 SUBSCRIBE pgl_info_channel
 EOF
 ```
+
+
+# Modules
+
+# Daemons

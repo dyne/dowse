@@ -29,9 +29,7 @@ dnscap-start() {
     conf=${1:-/dev/null}
     pid=${2:-$R/run/dnscap.pid}
 
-    [[ "$EUID" = 0 ]] || return 1
-
-    act "launching dnscap"
+    [[ -z $root ]] && return 1
 
     # -p Asks that the interface not be put into promiscuous mode.
     # -1 Flush the pcap(3) packet dump after every packet.
@@ -62,6 +60,8 @@ dnscap-start() {
         return 1
     }
 
+    savepid dnscap $pid
+
 }
 
 dnscap-stop() {
@@ -69,8 +69,7 @@ dnscap-stop() {
     pidfile=${1:-$R/run/dnscap.pid}
     pid=`cat $pidfile`
 
-    act "Stopping dnscap ($pid)"
     start-stop-daemon --stop --pidfile $pidfile
     [[ $? = 0 ]] && waitpid $pid
-    rm -f $pid
+    rm -f $pidfile
 }

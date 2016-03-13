@@ -124,7 +124,7 @@ fi
 
 cat <<EOF
 
- Copyright (C) 2012-2015 Dyne.org Foundation, License GNU GPL v3+
+ Copyright (C) 2012-2016 Dyne.org Foundation, License GNU GPL v3+
  This is free software: you are free to change and redistribute it
  For more informations see http://www.dyne.org/software/dowse
 
@@ -192,42 +192,16 @@ act "all requirements in place"
 fn dowse-running
 # }}}
 
-# {{{ SYSTEM SETUP
-
-sysctl-setup() {
-    [[ -z $root ]] && {
-        warn "no super user privileges: skipping sysctl settings"
-        return 0
-    }
-
-    cat <<EOF | sysctl -p - >/dev/null
-net.ipv4.tcp_syncookies = 1
-net.ipv4.icmp_echo_ignore_broadcasts = 1
-net.ipv4.conf.all.accept_redirects = 0
-net.ipv4.icmp_ignore_bogus_error_responses = 1
-net.core.rmem_max = 33554432
-net.core.wmem_max = 33554432
-net.ipv4.tcp_fin_timeout = 4
-vm.min_free_kbytes = 65536
-net.netfilter.nf_conntrack_tcp_timeout_established = 7200
-net.netfilter.nf_conntrack_checksum = 0
-net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15
-net.ipv4.tcp_keepalive_time = 60
-net.ipv4.tcp_keepalive_intvl = 10
-net.ipv4.tcp_keepalive_probes = 3
-net.ipv4.ip_local_port_range = 1025 65530
-net.ipv4.tcp_timestamps = 0
-vm.overcommit_memory = 1
-EOF
-}
-
-
-
-# }}}
 
 
 # {{{ MAIN
 
+# Here is most of the hard-coded logic of dowse when starting up
+# eventually some of this need to interact, acknowledge or even
+# be moved into modules, depending from future developments.
+# Meanwhile, special care is taken to keep this readable and
+# transparent (avoid wrapping when possible), documenting choices
+# with references.
 dowse-start() {
     fn dowse-start
     # freq=($R/conf/settings $R/conf/network)
@@ -239,45 +213,51 @@ dowse-start() {
     }
     notice "Starting Dowse"
 
+    # start the redis daemon (core k/v service)
+    redis-extract
+    redis-conf > $R/conf/redis.conf
+    cat <<EOF >> $R/conf/redis.conf
+pidfile $R/run/redis.pid
+logfile $R/log/redis.log
+port 6379
+EOF
+    start redis $R/conf/redis.conf
+
     [[ -z $root ]] || {
+
 
         PGL=`pidof pgld`
         [[ "$PGL" = "" ]] || {
             act "PeerGuardian found running, will restart it accordingly"
             pgl-stop }
 
-        if [[ "$wan" = "127.0.0.1" ]]; then
-            act "dry run on localhost only"
-        else
-            act "set up $interface interface"
-            ifconfig $interface $address netmask $netmask up
-            route add default gw $wan
-        fi
-
-        func "enable masquerading"
-        modprobe nf_conntrack_ipv4
-        sysctl net.netfilter.nf_conntrack_acct=1
-        # strenghten and optimize a bit the system for networking
-        sysctl-setup
-
-        func "enable ip forwarding"
-        print 1 >> /proc/sys/net/ipv4/ip_forward
-
-        func "bugfix for routing table weirdness in Linux >3.1"
-        # see https://lkml.org/lkml/2011/11/18/191
-        # and http://www.spinics.net/lists/netdev/msg179687.html
-        print 0 >>/proc/sys/net/ipv4/conf/$interface/accept_redirects
-
-        [[ "$firewall" = "no" ]] || {
-            ebtables-stop
-            iptables-stop
-        }
-
+        # for the firewall stuff see: zlibs/iptables and zlibs/ebtables
         [[ "$firewall" = "yes" ]] && {
-            ebtables-start
-            iptables-start
-        }
 
+            ebtables-stop
+            ebtables-start
+
+            iptables-stop
+            iptables-start
+
+            iptables-base-protection
+
+            loopback-on
+            if loopback-only; then
+                act "dry run on localhost only"
+            else
+                loopback-isolate
+
+                act "set up $interface interface with ip $address"
+                ifconfig $interface $address netmask $netmask up
+
+                act "set $wan as default gateway"
+                route add default gw $wan
+
+                act "setup snat trasversal"
+                iptables-snat-on
+            fi
+        }
         # download and extract the dnsmasq binary if necessary
         dnsmasq-extract
 
@@ -288,10 +268,6 @@ dowse-start() {
         cat <<EOF >> $R/run/dnsmasq.conf
 server=127.0.0.1#53443
 EOF
-        # and all dns queries across local dnsmasq
-        iptables -t nat -A PREROUTING -i $interface -s $dowse_net \
-                 -p udp --dport 53 -j DNAT --to-destination $address:53
-
 
         # make sure the dowse host uses his own dns
         mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
@@ -301,39 +277,16 @@ nameserver 127.0.0.1
 # search $lan
 EOF
         # launch the dnsmasq daemon
-        dnsmasq-start $R/run/dnsmasq.conf
+        start dnsmasq $R/run/dnsmasq.conf
 
     }
 
     # start the dns encrypted tunneling
-    dnscrypt-proxy-start
-
-    # start the redis daemon (core k/v service)
-    redis-extract
-    redis-conf > $R/conf/redis.conf
-    cat <<EOF >> $R/conf/redis.conf
-pidfile $R/run/redis.pid
-logfile $R/log/redis.log
-port 6379
-EOF
-    redis-start  $R/conf/redis.conf
-    # blank volatile databases
-    print "flushdb" | redis-cli -n $db[runtime]
-    print "flushdb" | redis-cli -n $db[dynamic]
+    start dnscrypt
 
     # these are root programs that need redis to be running
-    [[ -z $root ]] || {
-        # start dnscap
-        dnscap-start
+    [[ -z $root ]] || start dnscap
 
-        # start peerguardian
-        pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
-        cat $R/run/pgl/etc/pgl/pglcmd.conf
-        pgl-start
-
-    }
-
-    # consul-start || return $?
 
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
@@ -346,13 +299,19 @@ EOF
         dowse-module-start || continue
     done
 
+    [[ -z $root ]] || {
+        # start peerguardian (must be at end, after any other iptables setting)
+        pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
+        start pgl
+    }
+
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
 
 }
 
 dowse-stop() {
-    fn "dowse-stop"
+    fn dowse-stop
 
     for m in `dowse-module-list`; do
 
@@ -364,22 +323,23 @@ dowse-stop() {
     # [[ -r $R/run/consul.pid ]] && consul-stop
 
     # stop the dns crypto tunnel
-    dnscrypt-proxy-stop
+    stop dnscrypt
 
     [[ -z $root ]] || {
-        dnscap-stop  $R/run/dnscap.pid
-        dnsmasq-stop $R/run/dnsmasq.pid
+        stop dnscap
+        stop dnsmasq
+
         pgl-stop
+        iptables-snat-off
         iptables-stop
         ebtables-stop
+        # restore backup if present
+        [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
+            mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
+        }
     }
 
-    redis-stop $R/run/redis.pid
-
-    # restore backup if present
-    [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
-        mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
-    }
+    stop redis
 
     # consul-stop
 
@@ -389,6 +349,8 @@ dowse-stop() {
 
 dowse-reload() {
     fn dowse-reload
+    freq=($R/modules/enabled $R/run/redis-server.pid)
+    ckreq || return 1
 
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     func "modules enabled: $mods"
@@ -488,6 +450,10 @@ dowse-status() {
 }
 
 dowse-scan() {
+    fn dowse-scan
+    freq=($R/run/leases)
+    ckreq || return $?
+
     notice "Scanning unknown network objects"
     eval `dowse-parse-leases`
 

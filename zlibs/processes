@@ -1,16 +1,102 @@
 #!/usr/bin/env zsh
 
+start() {
+    fn start $*
+    _daemon="$1"
+    shift
+    req=(_daemon)
+    ckreq || return $?
+
+    act "starting daemon: $_daemon $*"
+    command -v $_daemon-start > /dev/null && {
+        $_daemon-start $*
+        return $?
+    }
+}
+
+stop() {
+    fn stop $*
+    _daemon="$1"
+    req=(_daemon)
+    ckreq || return $?
+
+    _pid=`getpid $_daemon`
+
+    if [[ "$_pid" = "" ]]; then
+        return 1
+    else
+        act "stopping $_daemon ($_pid)"
+        if command -v $_daemon-stop > /dev/null; then
+            $_daemon-stop
+        else
+            killpid $_pid
+            waitpid $_pid || {
+                error "$_daemon: could not stop pid $_pid"
+                return 1 }
+        fi
+    fi
+    # TODO: kill -9
+    return 0
+}
+
+savepid() {
+    fn savepid $*
+
+    _daemon="$1"
+    _pid="$2"
+    req=(_daemon _pid)
+    ckreq || return $?
+
+    print "SET daemon-${_daemon}-pid \"`cat $_pid`\"" \
+          | redis-cli -n ${db[runtime]} > /dev/null
+
+}
+
+getpid() {
+    fn getpid $*
+    _daemon="$1"
+    req=(_daemon)
+    ckreq || return $?
+
+    unset _pid
+
+    [[ -r $R/run/redis.pid ]] && {
+        _pid=`print "GET daemon-${_daemon=}-pid" | redis-cli -n ${db[runtime]} --raw` }
+
+    [[ "$_pid" = "" ]] && [[ -r $R/run/${_daemon}.pid ]] && {
+        _pid=`cat $R/run/${_daemon}.pid` }
+
+    [[ "$_pid" = "" ]] && {
+        func "$_daemon: pid not found"
+        return 1 }
+
+    print $_pid
+    return 0
+}
+
+killpid() {
+    fn killpid $*
+    _daemon="$1"
+    req=(_daemon)
+    ckreq || return $?
+
+    func "killing pid $_pid"
+    ps -p $_pid > /dev/null && kill $_pid
+    rm -f $R/run/${_daemon}.pid
+
+}
+
 waitpid() {
-    fn waitpid
+    fn waitpid $*
     _pid="$1"
+    _timeout=${2:-60}
     req=(_pid)
     ckreq || return $?
 
     local lastnewline=0
-    while true; do
+    for c in {1..$_timeout}; do
         # here check if pid its running
-        ps -p $_pid > /dev/null
-        if [[ $? = 0 ]]; then
+        if ps -p $_pid > /dev/null; then
             print -n . ; lastnewline=1
             sleep 1
         else
@@ -18,8 +104,12 @@ waitpid() {
         fi
         # todo: timeout with kill -9
     done
-
     # this because we care to look good on the console
     [[ $lastnewline = 1 ]] && print
 
+    [[ $c = $_timeout ]] && {
+        warning "operation timed out, pid($_pid) still running."
+        return 1 }
+
+    return 0
 }

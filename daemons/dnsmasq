@@ -132,31 +132,16 @@ EOF
 }
 
 dnsmasq-start() {
-    fn dnsmasq-start
+    fn dnsmasq-start $*
     conf=${1:-$R/run/dnsmasq.conf}
     pid=${2:-$R/run/dnsmasq.pid}
     freq=($conf)
     ckreq || return $?
 
-    act "launching dnsmasq"
-
     func "dnsmasq -x $pid -C $conf"
     $R/run/dnsmasq -x $pid -C $conf
 
+    savepid dnsmasq $pid
+
     return $?
-}
-
-dnsmasq-stop() {
-    fn dnsmasq-stop
-    pidfile=${1:-$R/run/dnsmasq.pid}
-    freq=($pidfile)
-    ckreq || return 0
-
-    pid=`cat $pidfile`
-
-    act "Stopping dnsmasq ($pid)"
-    kill $pid
-    waitpid $pid
-#    rm -f $pidfile
-
 }

@@ -117,23 +117,16 @@ redis-start() {
     freq=($conf)
     ckreq || return 1
 
-    act "launching redis"
-    func "redis $conf $*"
+    pidfile=`awk '/pidfile/ { print $2 }' $conf`
+    func "redis $conf $* (pidfile: $pidfile)"
+
     $R/run/redis-server $conf $*
 
+    act "blank volatile databases"
+    print "flushdb" | redis-cli -n $db[runtime] > /dev/null
+    print "flushdb" | redis-cli -n $db[dynamic] > /dev/null
+
+    savepid redis $pidfile
+
     return $?
-}
-
-redis-stop() {
-    fn redis-stop
-    pidfile=${1:-$R/run/redis-server.pid}
-    freq=($pidfile)
-    ckreq || return 0
-
-    pid=`cat $pidfile`
-
-    act "Stopping redis ($pid)"
-
-    kill $pid
-    waitpid $pid
 }
