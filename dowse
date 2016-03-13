@@ -321,6 +321,9 @@ logfile $R/log/redis.log
 port 6379
 EOF
     redis-start  $R/conf/redis.conf
+    # blank volatile databases
+    print "flushdb" | redis-cli -n $db[runtime]
+    print "flushdb" | redis-cli -n $db[dynamic]
 
     [[ -z $root ]] || {
         # start dnscap
@@ -348,8 +351,7 @@ EOF
 dowse-stop() {
     fn "dowse-stop"
 
-    mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
-    for m in "${(f)mods}"; do
+    for m in `dowse-module-list`; do
 
         dowse-module-load $m || continue
         dowse-module-stop
@@ -426,11 +428,13 @@ dowse-dump() {
     freq=($R/run/redis.pid)
     ckreq || return $?
 
-    notice "Dumping all Dowse variables saved in Redis"
-    for section in ${(k)db}; do
-        act "$section"
-        print - "KEYS *" | redis-cli -n ${db[$section]}
-    done
+    notice "Dumping variables in Redis"
+    act "Runtime:"
+    print - "KEYS *" | redis-cli -n ${db[runtime]}
+    act "Storage:"
+    print - "KEYS *" | redis-cli -n ${db[storage]}
+    act "Dynamic:"
+    print - "KEYS *" | redis-cli -n ${db[dynamic]}
 }
 
 dowse-status() {

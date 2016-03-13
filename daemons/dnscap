@@ -39,18 +39,22 @@ dnscap-start() {
     # -i interface
     # -m [qun] Capture only messages of designated types (query, update, and notify).  Default is query.
     if [[ $DEBUG = 1 ]]; then
-        $R/src/dnscap/dnscap -1 -i $interface \
-                             -x . -X in-addr.arpa \
-                             -P $R/src/dnscap/plugins/dowse/dowse.so \
-                             -l $R/src/domain-list/data -4 $address
-
+        start-stop-daemon \
+            --background --pidfile $pid --start --exec $R/src/dnscap/dnscap \
+            --make-pidfile -- -1 -i $interface \
+            -x . -X in-addr.arpa \
+            -P $R/src/dnscap/plugins/dowse/dowse.so \
+            -o $R/log/dnscap.log \
+            -l $R/src/domain-list/data \
+            -4 $address
     else
         start-stop-daemon \
             --background --pidfile $pid --start --exec $R/src/dnscap/dnscap \
             --make-pidfile -- -1 -i $interface \
             -x . -X in-addr.arpa \
             -P $R/src/dnscap/plugins/dowse/dowse.so \
-            -o $R/log/dnscap.log -l $R/src/domain-list/data \
+            -o $R/log/dnscap.log \
+            -l $R/src/domain-list/data \
             -4 $address -q
     fi
     [[ $? = 0 ]] || {

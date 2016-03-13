@@ -1,4 +1,4 @@
-all: database pgl dnscap dnscrypt-proxy
+all: database pgl dnscap dnscrypt-proxy listeners
 	@echo
 	@echo "Dowse is compiled and ready to run"
 	@echo "setup use conf/settings and launch ./start.sh"
@@ -17,6 +17,9 @@ pgl:
 
 dnscap:
 	./src/compile.sh dnscap
+
+listeners:
+	make -C src
 
 clean:
 	rm -rf run

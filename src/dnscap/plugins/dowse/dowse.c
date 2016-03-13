@@ -1,6 +1,6 @@
 /*  DNSCap plugin for Dowse visualization (gource custom log)
  *
- *  (c) Copyright 2015 Dyne.org foundation, Amsterdam
+ *  (c) Copyright 2015-2016 Dyne.org foundation, Amsterdam
  *  Written by Denis Roio aka jaromil <jaromil@dyne.org>
  *
  * This source code is free software; you can redistribute it and/or
@@ -46,8 +46,8 @@
 
 #define REDIS_HOST "localhost"
 #define REDIS_PORT 6379
-redisContext *redis = NULL;
-redisReply *rreply = NULL;
+redisContext *redis  = NULL;
+redisReply   *rreply = NULL;
 
 
 static logerr_t *logerr;
@@ -207,8 +207,8 @@ void connect_redis() {
             }
     }
     // select the dnsqueries log database
-    rreply = redisCommand(redis, "SELECT %u", db_dnsqueries);
-    logerr("SELECT: %s\n", rreply->str);
+    rreply = redisCommand(redis, "SELECT %u", db_dynamic);
+    // logerr("SELECT: %s\n", rreply->str);
     freeReplyObject(rreply);
 
 }
@@ -527,10 +527,8 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
             }
 
             if(redis) {
-                puts("LPUSH");
-                fflush(stdout);
-                rreply = redisCommand(redis, "LPUSH fifo %s", output);
-                logerr("LPUSH: %s\n", rreply->str);
+                rreply = redisCommand(redis, "PUBLISH dns_query_channel %s", output);
+                logerr("PUBLISH dns_query_channel: %s\n", rreply->str);
                 freeReplyObject(rreply);
             }
 

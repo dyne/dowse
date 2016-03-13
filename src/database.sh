@@ -6,13 +6,20 @@
 # compile time, so any change of it requires a recompilation.
 
 
-dbcodes='
-1 conf
-2 leases
-3 modules
-4 daemons
-5 domains
-6 dnsqueries
+### db keys namespace
+#
+# static : conf_ modules_ daemons_
+#
+# dynamic: obj_ dns_
+# |___dns: dns_query_channel dns_query_fifo
+# |___obj: obj_add_channel obj_add_fifo
+# |        obj_rem_channel obj_rem_fifo
+# X
+
+dbindex='
+1 runtime
+2 dynamic
+3 storage
 '
 
 modcodes='
@@ -39,7 +46,8 @@ source $R/zlibs/zuper.init
 ### Database index
 
 # save databases for the shell scripts
-for i in ${(f)dbcodes}; do
+for i in ${(f)dbindex}; do
+    # this is reverse order: names are the indexes
     db+=( ${i[(w)2]} ${i[(w)1]} )
 done
 zkv.save db $R/src/database.zkv

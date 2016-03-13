@@ -3,7 +3,7 @@
 redis-extract() {
     fn redis-extract
 
-    [[ -r $R/run/redis ]] && return 0
+    [[ -r $R/run/redis-server ]] && return 0
 
     deb-download redis-server
     deb-download redis-tools

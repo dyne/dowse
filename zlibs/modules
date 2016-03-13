@@ -52,6 +52,9 @@ dowse-module-load() {
 
     # read all the module, instantiate functions
     source $core_script
+    # save the id which is the directory name with underscores
+    dowse_mod[id]=`basename "$1"`
+    dowse_mod[id]="${dowse_mod[id]//-/_}"
 
     # check at least these 3 functions are declared
     command -v module-setup > /dev/null && \
@@ -69,7 +72,7 @@ dowse-module-load() {
 dowse-module-setup() {
     fn dowse-module-setup
 
-    notice "Setup module: $dowse_mod[name] (${dowse_mod[tags]})"
+    notice "Setup module: $dowse_mod[name] (${dowse_mod[id]})"
     act "$dowse_mod[desc]"
 
     for dep in $dowse_mod_daemons; do
@@ -94,41 +97,49 @@ dowse-module-setup() {
 dowse-module-start() {
     fn dowse-module-start
 
-    notice "Starting module ${dowse_mod[name]}"
+    modname=${dowse_mod[id]}
+
+    [[ "$modname" = "" ]] && {
+        error "Module has no id: ${(k)dowse_mod}"
+        return 1
+    }
+
+    notice "Starting module: $dowse_mod[name]"
 
     if module-start; then
 
-        act "${dowse_mod[name]} started succesfully"
+        act "$dowse_mod[name] started succesfully"
 
         # add service listing to redis database
-        redis_command="SET ${dowse_mod[name]} \""
+        redis_command="LPUSH mod-index \"$modname\"\n"
         # iterate through all fields (set in src/database.sh)
         for c in {2..${#mod}}; do
-            redis_command+="${dowse_mod[${mod[$c]}]};"
+            local key=${mod[$c]}
+            local value=${dowse_mod[${mod[$c]}]}
+            redis_command+="SET mod-${modname}-${key} \"${value}\"\n"
         done
-        redis_command+="\"\n"
         # add service listing on redis
         func "$redis_command"
         # -n sets the database number (set in src/database.sh)
-        print - $redis_command | redis-cli -n $db[modules]
+        print - $redis_command | redis-cli -n ${db[runtime]}
 
     else
-        warning "cannot start module ${dowse_mod[name]}"
+        warning "cannot start module $modname"
         return 1
     fi
+}
+
+dowse-module-list() {
+    print "LRANGE mod-index 0 -1" | redis-cli -n $db[runtime] --raw
 }
 
 dowse-module-stop() {
     fn dowse-module-stop
 
-    act "stopping module: $dowse_mod[name]"
+    notice "Stopping module: $dowse_mod[name]"
 
     if module-stop; then
-        act "$dowse_mod[name] stopped"
-        # [[ -r "$R/run/consul.d/module-${1}.js" ]] && {
-        #     rm "$R/run/consul.d/module-${1}.js"
-        #     consul-reload
-        # }
+        act "$dowse_mod[name] stopped succesfully"
     else
         warning "problems stopping module: $dowse_mod[name]"
     fi
