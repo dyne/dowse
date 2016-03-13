@@ -1,4 +1,4 @@
-/*  Dowse - Gource listener for DNS query events
+/*  Dowse - Open Sound Control listener for DNS query events
  *
  *  (c) Copyright 2016 Dyne.org foundation, Amsterdam
  *  Written by Denis Roio aka jaromil <jaromil@dyne.org>
@@ -17,14 +17,15 @@
  * this source code; if not, write to:
  * Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * TODO: trap signals for clean quit, catch more redis errors
- * and most importantly establish an internal data structure for dns query
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+
+// liblo
+#include <lo/lo.h>
 
 #include "redis.h"
 #include "database.h"
@@ -37,23 +38,44 @@ void ctrlc(int sig) {
     done = 1;
 }
 
-
 int main(int argc, char **argv) {
+
+    int err;
+    lo_address osc;
+
+    if(argv[1] == NULL) {
+        fprintf(stderr, "usage: dns-to-osc osc.URL (i.e: osc.udp://localhost:666/pd)\n");
+        exit(0);
+    }
+
+    osc = lo_address_new_from_url( argv[1] );
+    lo_address_set_ttl(osc, 1); // subnet scope
 
     connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
-    signal(SIGINT, ctrlc);
 
     reply = redisCommand(redis,"SUBSCRIBE dns_query_channel");
     freeReplyObject(reply);
+
+    signal(SIGINT, ctrlc);
+
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
         if(done) break;
 
-        fprintf(stdout,"%s\n",reply->element[2]->str);
+        // TODO: use a more refined lo_send with low-latency flags
+        err = lo_send(osc, "/dowse/dns", "s", reply->element[2]->str);
+        if(err == -1)
+            fprintf(stderr,"OSC send error: %s\n",lo_address_errstr(osc));
+        // just for console debugging
+        else
+            fprintf(stderr,"/dowse/dns %s\n",reply->element[2]->str);
+
         fflush(stdout);
 
         freeReplyObject(reply);
     }
+
+    lo_address_free(osc);
 
     exit(0);
 }

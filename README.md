@@ -70,9 +70,9 @@ Installation and activation takes a few steps and needs root:
 
 ```
 zsh daemontools iptables ebtables gettext-base procps net-tools
-libssl-dev libbind-dev libpcap-dev unzip wget gcc make
+libssl-dev libbind-dev libpcap-dev unzip wget gcc make liblo
 libnetfilter-conntrack3 libnetfilter-queue-dev libjemalloc-dev
-libseccomp2 libsodium-dev
+libseccomp2 libsodium-dev libhiredis-dev
 ```
 
 3. Run `make`
@@ -114,14 +114,7 @@ apt-get install devuan-keyring
 apt-get update
 ```
 
-And then proceed with installing all the dependencies indicated above
-
-```
-apt-get install zsh daemontools iptables ebtables gettext-base procps \
-net-tools libssl-dev libbind-dev libpcap-dev unzip wget gcc make \
-libnetfilter-conntrack3 libnetfilter-queue-dev libjemalloc-dev \
-libseccomp2 libsodium-dev
-```
+And then proceed with installing all the dependencies indicated above.
 
 When compilation is completed then it is possible to run `make` and
 build Dowse also on ARM devices, thanks to http://Devuan.org

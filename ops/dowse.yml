@@ -27,6 +27,8 @@
         - libjemalloc-dev
         - libsodium-dev
         - libseccomp2
+        - libhiredis-dev
+        - liblo-dev
         - unzip
         - wget
         - gcc
