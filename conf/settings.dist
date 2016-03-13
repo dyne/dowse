@@ -3,25 +3,29 @@
 # comments are prefixed with hashes, just like this.
 # In fact this is a shell script.
 
+# This is a default configuration running for localhost only
+# it may be changed with different values for $address and $wan
+# then Dowse will serve an entire subnet.
+
 # which addresses we take for dowse
-address=10.0.0.254
+address=127.0.0.1
 
 # which interface is connected to the network
-interface=eth0
+interface=lo
 
 # hostname by which dowse will be known to the network
 hostname=$(hostname)
 
 # what connects us to the internet (i.e. adsl router)
 # make sure dhcp is deactivated there, we will give it!
-wan=10.0.0.1
+wan=127.0.0.1
 
 # upstream DNS to query for unknown hostnames
 # by default this is the same as the wan gateway
 dns=$wan
 
 # what is the domain name of the internal network
-lan=home.net
+lan=dowse.it
 
 # should we setup a firewall, flush it or don't touch?
 firewall=yes # yes, no or flush (blank open)

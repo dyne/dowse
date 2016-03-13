@@ -192,9 +192,12 @@ void load_domainlist(const char *path) {
 }
 
 void connect_redis() {
-    struct timeval timeout = { 1, 500000 };
+
     logerr("Connecting to redis on %s port %u\n", REDIS_HOST, REDIS_PORT);
+    struct timeval timeout = { 1, 500000 };
     redis = redisConnectWithTimeout(REDIS_HOST, REDIS_PORT, timeout);
+    /* redis = redisConnect(REDIS_HOST, REDIS_PORT); */
+
     if (redis == NULL || redis->err) {
             if (redis) {
                 logerr("Connection error: %s\n", redis->errstr);

@@ -361,8 +361,6 @@ dowse-stop() {
     # stop the dns crypto tunnel
     dnscrypt-proxy-stop
 
-    redis-stop $R/run/redis.pid
-
     [[ -z $root ]] || {
         dnscap-stop  $R/run/dnscap.pid
         dnsmasq-stop $R/run/dnsmasq.pid
@@ -370,6 +368,8 @@ dowse-stop() {
         iptables-stop
         ebtables-stop
     }
+
+    redis-stop $R/run/redis.pid
 
     # restore backup if present
     [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
