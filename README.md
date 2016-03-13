@@ -94,6 +94,38 @@ libseccomp2 libsodium-dev
 If all went well now one should be able to connect any device to the
 internet as you did before, via Dowse.
 
+## Embedded ARM devices
+
+If you are using an ARM device, for instance a RaspberryPi box, then
+you are probably running Raspian or a derivative, which lacks many of
+the packages needed to compile and run Dowse.
+
+In order to get these packages, one can add the Devuan.org repository
+to `/etc/apt/sources.list.d/devuan.list` with one line:
+
+```
+deb http://packages.devuan.org/merged/ jessie main
+```
+
+Then import the Devuan developers keys and update the repositories:
+
+```
+apt-get install devuan-keyring
+apt-get update
+```
+
+And then proceed with installing all the dependencies indicated above
+
+```
+apt-get install zsh daemontools iptables ebtables gettext-base procps \
+net-tools libssl-dev libbind-dev libpcap-dev unzip wget gcc make \
+libnetfilter-conntrack3 libnetfilter-queue-dev libjemalloc-dev \
+libseccomp2 libsodium-dev
+```
+
+When compilation is completed then it is possible to run `make` and
+build Dowse also on ARM devices, thanks to http://Devuan.org
+
 # Visualization
 
 The DNs visualization log is produced in `log/dnscap.log` in a custom

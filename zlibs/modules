@@ -21,11 +21,10 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
+maps+=(dowse_mod)
 
 dowse-module-load() {
     fn dowse-module-load
-    mod="$1"
-
     func "Loading module: $1"
 
     # main module file is called dowse
@@ -41,13 +40,15 @@ dowse-module-load() {
     command -v module-setup >/dev/null && unset -f module-setup
     command -v module-start >/dev/null && unset -f module-start
     command -v module-stop >/dev/null && unset -f module-stop
-    unset dowse_mod_name
-    unset dowse_mod_desc
-    unset dowse_mod_tags
-    unset dowse_mod_ports
-    unset dowse_mod_daemons
-    unset dowse_mod_authors
-    unset dowse_mod_version
+
+    dowse_mod=()
+    #  dowse_mod_name
+    #  dowse_mod_desc
+    #  dowse_mod_tags
+    #  dowse_mod_ports
+    #  dowse_mod_daemons
+    #  dowse_mod_authors
+    #  dowse_mod_version
 
     # read all the module, instantiate functions
     source $core_script
@@ -59,6 +60,7 @@ dowse-module-load() {
             warning "invalid module: $i"
             return 1 }
 
+    func "loaded module: $1"
     # TODO check also header variables
 
     return 0
@@ -67,10 +69,12 @@ dowse-module-load() {
 dowse-module-setup() {
     fn dowse-module-setup
 
-    notice "Setup module: $dowse_mod_name (${dowse_mod_tags})"
-    act "$dowse_mod_desc"
+    notice "Setup module: $dowse_mod[name] (${dowse_mod[tags]})"
+    act "$dowse_mod[desc]"
 
     for dep in $dowse_mod_daemons; do
+
+        func "automatically call ${dep}-extract from the daemons config directive"
         ${dep}-extract
         [[ $? = 0 ]] || {
             error "failed importing $dep"
@@ -78,9 +82,9 @@ dowse-module-setup() {
             return 1 }
     done
 
-    func "all daemons found: ${dowse_mod_daemons}"
-    func "ports opened: $dowse_mod_ports"
-    func "author: ${dowse_mod_authors} version: $dowse_mod_version"
+    func "all daemons found: ${dowse_mod[daemons]}"
+    func "ports opened: $dowse_mod[ports]"
+    func "author: ${dowse_mod[authors]} version: $dowse_mod[version]"
 
     module-setup || {
         warning "cannot setup module: $dowse_mod_name"
@@ -90,33 +94,26 @@ dowse-module-setup() {
 dowse-module-start() {
     fn dowse-module-start
 
-    notice "Starting module $dowse_mod_name"
+    notice "Starting module ${dowse_mod[name]}"
 
     if module-start; then
 
-        act "$dowse_mod_name started succesfully"
+        act "${dowse_mod[name]} started succesfully"
 
-#         func "announcing modules"
-#         cat <<EOF | .put $address /v1/kv/modules/$dowse_mod_name
-# $dowse_mod_desc
-
-# type: $dowse_mod_type
-# ports: $dowse_mod_ports
-# depends: $dowse_mod_deps
-# authors: $dowse_mod_authors
-# version: $dowse_mod_version"
-# EOF
-
-        # # add service listing on consul
-        # [[ ${#dowse_mod_deps} -gt 0 ]] && consul-add-service
-
+        # add service listing to redis database
+        redis_command="SET ${dowse_mod[name]} \""
+        # iterate through all fields (set in src/database.sh)
+        for c in {2..${#mod}}; do
+            redis_command+="${dowse_mod[${mod[$c]}]};"
+        done
+        redis_command+="\"\n"
         # add service listing on redis
-        cat <<EOF | redis-cli
-LPUSH $mod
-EOF
-        # consul reload
+        func "$redis_command"
+        # -n sets the database number (set in src/database.sh)
+        print - $redis_command | redis-cli -n $db[modules]
+
     else
-        warning "cannot start module $dowse_mod_name"
+        warning "cannot start module ${dowse_mod[name]}"
         return 1
     fi
 }
@@ -124,15 +121,15 @@ EOF
 dowse-module-stop() {
     fn dowse-module-stop
 
-    act "stopping module: $dowse_mod_name"
+    act "stopping module: $dowse_mod[name]"
 
     if module-stop; then
-        act "$dowse_mod_name stopped"
+        act "$dowse_mod[name] stopped"
         # [[ -r "$R/run/consul.d/module-${1}.js" ]] && {
         #     rm "$R/run/consul.d/module-${1}.js"
         #     consul-reload
         # }
     else
-        warning "problems stopping module: $dowse_mod_name"
+        warning "problems stopping module: $dowse_mod[name]"
     fi
 }

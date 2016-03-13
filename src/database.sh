@@ -7,22 +7,22 @@
 
 
 dbcodes='
-0 conf
-1 leases
-2 modules
-3 daemons
-4 domains
-5 dnsqueries
+1 conf
+2 leases
+3 modules
+4 daemons
+5 domains
+6 dnsqueries
 '
 
 modcodes='
-0 name
-1 desc
-2 tags
-3 ports
-4 daemons
-5 authors
-6 version
+1 name
+2 desc
+3 tags
+4 ports
+5 daemons
+6 authors
+7 version
 '
 
 R=`pwd`
@@ -36,33 +36,43 @@ source $R/zlibs/zuper
 maps=(db mod)
 source $R/zlibs/zuper.init
 
+### Database index
+
+# save databases for the shell scripts
 for i in ${(f)dbcodes}; do
     db+=( ${i[(w)2]} ${i[(w)1]} )
 done
-
-# save it for the shell scripts
 zkv.save db $R/src/database.zkv
 
-for i in ${(f)modcodes}; do
-    mod+=( ${i[(w)2]} ${i[(w)1]} )
-done
-
-# save it for the shell scripts
-zkv.save mod $R/src/module.zkv
-
-
-# save it for the C code
+# save databases for the C code
 rm -rf $R/src/database.h
 touch  $R/src/database.h
 for i in ${(k)db}; do
     print "#define db_$i ${db[$i]}" >> $R/src/database.h
 done
 
-# save it for the C code
+
+
+### Modules index
+
+# save modules for the shell scripts
+mod=()
+for i in ${(f)modcodes}; do
+    mod+=( ${i[(w)2]} ${i[(w)1]} )
+done
+
+# save modules for the C code
 rm -rf $R/src/module.h
 touch  $R/src/module.h
 for i in ${(k)mod}; do
     print "#define mod_$i ${mod[$i]}" >> $R/src/module.h
 done
+
+mod=()
+for i in ${(f)modcodes}; do
+    mod+=( ${i[(w)1]} ${i[(w)2]} )
+done
+zkv.save mod $R/src/module.zkv
+
 
 print "Database indexes generated"

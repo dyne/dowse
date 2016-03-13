@@ -67,12 +67,16 @@ vars+=(wan address dowse_net netmask dowse_guests)
 arrs+=(host mac ip)
 
 # globals used when loading modules
-vars+=(dowse_mod_name dowse_mod_desc dowse_mod_version)
-arrs+=(dowse_mod_type dowse_mod_ports dowse_mod_deps)
-arrs+=(dowse_mod_authors dowse_mod_tags)
+# vars+=(dowse_mod_name dowse_mod_desc dowse_mod_version)
+# arrs+=(dowse_mod_type dowse_mod_ports dowse_mod_deps)
+# arrs+=(dowse_mod_authors dowse_mod_tags)
+maps+=(dowse_mod)
 
 # consul's configuration map
-maps+=(consul_conf consul_watch)
+# maps+=(consul_conf consul_watch)
+
+# redis database indexes
+maps+=(db mod)
 
 zmodload zsh/system
 zmodload zsh/mapfile
@@ -99,15 +103,15 @@ source $R/daemons/tor
 source $R/daemons/redis
 source $R/daemons/dnscrypt-proxy
 
-
 # conclude initialization
 if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
     source $R/zlibs/zuper-dev/zuper.init
 else source $R/zlibs/zuper.init; fi
 
-
-consul_conf=()
-consul_watch=()
+db=()
+mod=()
+# consul_conf=()
+# consul_watch=()
 
 if [[ $dowse_loaded = 1 ]]; then
     act "Dowse CLI reloaded ::1::" $dowse_version
@@ -179,6 +183,10 @@ if touch $R/run/test; then rm -f $R/run/test; else return 1; fi
 func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
 if touch $R/log/test; then rm -f $R/log/test; else return 1; fi
 
+func "load redis indexes"
+zkv.load $R/src/database.zkv
+zkv.load $R/src/module.zkv
+
 act "all requirements in place"
 
 fn dowse-running
@@ -238,9 +246,13 @@ dowse-start() {
             act "PeerGuardian found running, will restart it accordingly"
             pgl-stop }
 
-        act "set up $interface interface"
-        ifconfig $interface $address netmask $netmask up
-        route add default gw $wan
+        if [[ "$wan" = "127.0.0.1" ]]; then
+            act "dry run on localhost only"
+        else
+            act "set up $interface interface"
+            ifconfig $interface $address netmask $netmask up
+            route add default gw $wan
+        fi
 
         func "enable masquerading"
         modprobe nf_conntrack_ipv4
@@ -291,9 +303,6 @@ EOF
         # launch the dnsmasq daemon
         dnsmasq-start $R/run/dnsmasq.conf
 
-        # start dnscap
-        dnscap-start
-
         # start peerguardian
         pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
         pgl-start
@@ -312,6 +321,11 @@ logfile $R/log/redis.log
 port 6379
 EOF
     redis-start  $R/conf/redis.conf
+
+    [[ -z $root ]] || {
+        # start dnscap
+        dnscap-start
+    }
 
     # consul-start || return $?
 
@@ -404,6 +418,19 @@ END {
   printf "ip=("; for(i=0;i<c;i++) { printf "%s ", ip[i] }; printf ")\n"
   printf "host=("; for(i=0;i<c;i++) { printf "%s ", host[i] }; printf ")\n"
 }' $R/run/leases
+}
+
+dowse-dump() {
+    fn dowse-dump
+
+    freq=($R/run/redis.pid)
+    ckreq || return $?
+
+    notice "Dumping all Dowse variables saved in Redis"
+    for section in ${(k)db}; do
+        act "$section"
+        print - "KEYS *" | redis-cli -n ${db[$section]}
+    done
 }
 
 dowse-status() {

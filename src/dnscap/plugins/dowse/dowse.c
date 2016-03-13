@@ -37,10 +37,18 @@
 
 #include <dirent.h>
 
+#include <hiredis/hiredis.h>
+
 #include "hashmap.h"
 
 #include "../../dnscap_common.h"
 #include <database.h>
+
+#define REDIS_HOST "localhost"
+#define REDIS_PORT 6379
+redisContext *redis = NULL;
+redisReply *rreply = NULL;
+
 
 static logerr_t *logerr;
 /* static int opt_f = 0; */
@@ -183,6 +191,25 @@ void load_domainlist(const char *path) {
     logerr("Size of parsed domain-list: %u\n", hashmap_length(domainlist));
 }
 
+void connect_redis() {
+    struct timeval timeout = { 1, 500000 };
+    logerr("Connecting to redis on %s port %u\n", REDIS_HOST, REDIS_PORT);
+    redis = redisConnectWithTimeout(REDIS_HOST, REDIS_PORT, timeout);
+    if (redis == NULL || redis->err) {
+            if (redis) {
+                logerr("Connection error: %s\n", redis->errstr);
+                redisFree(redis);
+            } else {
+                logerr("Connection error: can't allocate redis context\n");
+            }
+    }
+    // select the dnsqueries log database
+    rreply = redisCommand(redis, "SELECT %u", db_dnsqueries);
+    logerr("SELECT: %s\n", rreply->str);
+    freeReplyObject(rreply);
+
+}
+
 int
 dowse_start(logerr_t *a_logerr) {
     /*
@@ -211,6 +238,8 @@ dowse_start(logerr_t *a_logerr) {
     // load the domain-list path if there
     if(listpath) load_domainlist(listpath);
 
+    connect_redis();
+
     return 0;
 }
 
@@ -238,6 +267,8 @@ void dowse_stop() {
 
     // free the map
     hashmap_free(visited);
+
+    redisFree(redis);
 }
 
 int
@@ -490,6 +521,14 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
             if(console) {
                 puts(output);
                 fflush(stdout);
+            }
+
+            if(redis) {
+                puts("LPUSH");
+                fflush(stdout);
+                rreply = redisCommand(redis, "LPUSH fifo %s", output);
+                logerr("LPUSH: %s\n", rreply->str);
+                freeReplyObject(rreply);
             }
 
         }
