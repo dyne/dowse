@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
 
-    reply = redisCommand(redis,"SUBSCRIBE dns_query_channel");
+    reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
 
     signal(SIGINT, ctrlc);

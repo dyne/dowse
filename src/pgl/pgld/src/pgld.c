@@ -56,7 +56,7 @@ void do_log(int priority, const char *format, ...) {
         va_list ap;
         va_start(ap, format);
         vsnprintf(message, 512, format, ap);
-        reply = redisCommand(redis, "PUBLISH pgl_info_channel %s", message);
+        reply = redisCommand(redis, "PUBLISH pgl-info-channel %s", message);
         freeReplyObject(reply);
         va_end(ap);
     }

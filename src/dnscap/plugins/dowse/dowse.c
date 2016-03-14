@@ -527,8 +527,8 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
             }
 
             if(redis) {
-                rreply = redisCommand(redis, "PUBLISH dns_query_channel %s", output);
-                logerr("PUBLISH dns_query_channel: %s\n", rreply->str);
+                rreply = redisCommand(redis, "PUBLISH dns-query-channel %s", output);
+                logerr("PUBLISH dns-query-channel: %s\n", rreply->str);
                 freeReplyObject(rreply);
             }
 

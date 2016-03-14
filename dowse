@@ -313,10 +313,12 @@ EOF
         dowse-module-start || continue
     done
 
-    [[ -z $root ]] || {
-        # start peerguardian (must be at end, after any other iptables setting)
-        pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
-        start pgl
+    [[ "$firewall" = "yes" ]] && {
+        [[ -z $root ]] || {
+            # start peerguardian (must be at end, after any other iptables setting)
+            pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
+            start pgl
+        }
     }
 
     notice "Dowse succesfully started" # , web interface up on:"
