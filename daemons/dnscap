@@ -40,18 +40,16 @@ dnscap-start() {
         start-stop-daemon \
             --background --pidfile $pid --start --exec $R/src/dnscap/dnscap \
             --make-pidfile -- -1 -i $interface \
-            -x . -X in-addr.arpa \
+            -x . -X in-addr.arpa -p \
             -P $R/src/dnscap/plugins/dowse/dowse.so \
-            -o $R/log/dnscap.log \
             -l $R/src/domain-list/data \
             -4 $address
     else
         start-stop-daemon \
             --background --pidfile $pid --start --exec $R/src/dnscap/dnscap \
             --make-pidfile -- -1 -i $interface \
-            -x . -X in-addr.arpa \
+            -x . -X in-addr.arpa -p \
             -P $R/src/dnscap/plugins/dowse/dowse.so \
-            -o $R/log/dnscap.log \
             -l $R/src/domain-list/data \
             -4 $address -q
     fi
