@@ -29,7 +29,7 @@ daemonize yes
 
 tcp-backlog 511
 
-bind $address
+bind 127.0.0.1
 
 maxclients 100
 
