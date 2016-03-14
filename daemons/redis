@@ -124,8 +124,8 @@ redis-start() {
     $R/run/redis-server $conf $*
 
     act "blank volatile databases"
-    print "flushdb" | redis-cli -n $db[runtime] > /dev/null
-    print "flushdb" | redis-cli -n $db[dynamic] > /dev/null
+    print "flushdb" | $R/run/redis-cli -n $db[runtime] > /dev/null
+    print "flushdb" | $R/run/redis-cli -n $db[dynamic] > /dev/null
 
     savepid redis $pidfile
 

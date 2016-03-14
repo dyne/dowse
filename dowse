@@ -408,11 +408,11 @@ dowse-dump() {
 
     notice "Dumping variables in Redis"
     act "Runtime:"
-    print - "KEYS *" | redis-cli -n ${db[runtime]} --raw | sort
+    print - "KEYS *" | $R/run/redis-cli -n ${db[runtime]} --raw | sort
     act "Storage:"
-    print - "KEYS *" | redis-cli -n ${db[storage]} --raw | sort
+    print - "KEYS *" | $R/run/redis-cli -n ${db[storage]} --raw | sort
     act "Dynamic:"
-    print - "KEYS *" | redis-cli -n ${db[dynamic]} --raw | sort
+    print - "KEYS *" | $R/run/redis-cli -n ${db[dynamic]} --raw | sort
 }
 
 dowse-status() {

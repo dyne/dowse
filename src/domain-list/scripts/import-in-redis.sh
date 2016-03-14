@@ -22,7 +22,7 @@ for list in "${(f)$(find $R/data -type f)}"; do
         [[ "${(w)entry[1]}" = " " ]] && continue
 
         value=`basename $list`
-        print "SET ${entry:l} ${value:l}" | redis-cli 1> /dev/null
+        print "SET ${entry:l} ${value:l}" | $R/run/redis-cli 1> /dev/null
         [[ $? = 0 ]] || {
             print "Error: redis-cli returns $?"
             return 1 }
