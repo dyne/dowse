@@ -76,7 +76,10 @@ maps+=(dowse_mod)
 # maps+=(consul_conf consul_watch)
 
 # redis database indexes
-maps+=(db mod)
+maps+=(db)
+
+# dataset indexes
+arrs+=(mod)
 
 zmodload zsh/system
 zmodload zsh/mapfile
@@ -108,10 +111,23 @@ if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
     source $R/zlibs/zuper-dev/zuper.init
 else source $R/zlibs/zuper.init; fi
 
+
+func "load dataset indexes"
 db=()
-mod=()
-# consul_conf=()
-# consul_watch=()
+zkv.load $R/src/database.zkv
+
+# module fields
+mod=(
+    name
+    desc
+    tags
+    ports
+    webgui
+    daemons
+    authors
+    version
+)
+
 
 if [[ $dowse_loaded = 1 ]]; then
     act "Dowse CLI reloaded ::1::" $dowse_version
@@ -183,9 +199,6 @@ if touch $R/run/test; then rm -f $R/run/test; else return 1; fi
 func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
 if touch $R/log/test; then rm -f $R/log/test; else return 1; fi
 
-func "load redis indexes"
-zkv.load $R/src/database.zkv
-zkv.load $R/src/module.zkv
 
 act "all requirements in place"
 
@@ -215,13 +228,13 @@ dowse-start() {
 
     # start the redis daemon (core k/v service)
     redis-extract
-    redis-conf > $R/conf/redis.conf
-    cat <<EOF >> $R/conf/redis.conf
+    redis-conf > $R/run/dowse-redis.conf
+    cat <<EOF >> $R/run/dowse-redis.conf
 pidfile $R/run/redis.pid
 logfile $R/log/redis.log
 port 6379
 EOF
-    start redis $R/conf/redis.conf
+    start redis $R/run/dowse-redis.conf
 
     [[ -z $root ]] || {
 
@@ -395,11 +408,11 @@ dowse-dump() {
 
     notice "Dumping variables in Redis"
     act "Runtime:"
-    print - "KEYS *" | redis-cli -n ${db[runtime]}
+    print - "KEYS *" | redis-cli -n ${db[runtime]} --raw | sort
     act "Storage:"
-    print - "KEYS *" | redis-cli -n ${db[storage]}
+    print - "KEYS *" | redis-cli -n ${db[storage]} --raw | sort
     act "Dynamic:"
-    print - "KEYS *" | redis-cli -n ${db[dynamic]}
+    print - "KEYS *" | redis-cli -n ${db[dynamic]} --raw | sort
 }
 
 dowse-status() {

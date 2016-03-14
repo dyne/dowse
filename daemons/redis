@@ -27,7 +27,7 @@ redis-conf() {
     cat <<EOF
 daemonize yes
 
-tcp-backlog 511
+# tcp-backlog 511
 
 bind 127.0.0.1
 
@@ -80,7 +80,7 @@ slowlog-log-slower-than 10000
 
 slowlog-max-len 128
 
-latency-monitor-threshold 0
+# latency-monitor-threshold 0
 
 notify-keyspace-events ""
 
@@ -95,7 +95,7 @@ set-max-intset-entries 512
 zset-max-ziplist-entries 128
 zset-max-ziplist-value 64
 
-hll-sparse-max-bytes 3000
+# hll-sparse-max-bytes 3000
 
 activerehashing yes
 
@@ -111,11 +111,12 @@ EOF
 
 redis-start() {
     fn redist-start
-    conf=${1:-$R/run/redis-server.conf}
-    shift 1
+    conf=${1:-$R/run/redis.conf}
     req=(conf)
     freq=($conf)
     ckreq || return 1
+
+    [[ "$1" = "" ]] || shift 1
 
     pidfile=`awk '/pidfile/ { print $2 }' $conf`
     func "redis $conf $* (pidfile: $pidfile)"

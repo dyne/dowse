@@ -114,8 +114,9 @@ dowse-module-start() {
         redis_command="LPUSH mod-index \"$modname\"\n"
         # iterate through all fields (set in src/database.sh)
         for c in {2..${#mod}}; do
-            local key=${mod[$c]}
             local value=${dowse_mod[${mod[$c]}]}
+            [[ "$value" = "" ]] && continue
+            local key=${mod[$c]}
             redis_command+="SET mod-${modname}-${key} \"${value}\"\n"
         done
         # add service listing on redis

@@ -1,20 +1,31 @@
 * Wanted
 
 implementations wishes for new daemons and modules
+** Listeners
+*** TODO mosquitto (MQTT)
+*** TODO webdis (websockets)
+*** DONE liblo (OSC)
+*** DONE gource (realtime)
+
+** Modules
+
+*** proper tor module
+*** move dnscrypt back to a module
 
 ** Daemons
 
-- e2guardian
-- polipo (no cache)
-- i2p (java)
-- i2p (c++)
-- ipfs
-- transmission (web)
-- unbound (dnssec)
-- dnscrypt-proxy (new, include source)
-- oops 1.5.24 (website down, consider maint.)
-- nsd (advanced dns server + dnssec))
-- credns (external zone verifier)
+*** e2guardian
+*** polipo (no cache)
+*** i2p (java)
+*** i2p (c++)
+*** ipfs
+*** transmission (web)
+*** mopidy (web / music)
+*** unbound (dnssec)
+*** dnscrypt-proxy (new, include source)
+*** oops 1.5.24 (website down, consider maint.)
+*** nsd (advanced dns server + dnssec))
+*** credns (external zone verifier)
 
 * domain filtering and categorization
 
@@ -26,7 +37,7 @@ implementations wishes for new daemons and modules
   make a dnscrypt-proxy plugin to filter domains
 
   use lists in the dnscap plugin for visualizations
-  
+
   top500 domains: https://moz.com/top500
   some categories: http://traffikd.com/social-media-websites/
 
@@ -91,5 +102,3 @@ Watchdog to restart processess if they crash
 (a la restartd)
 
 DDOS protection (when used as DMZ)
-
-

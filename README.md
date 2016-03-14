@@ -62,7 +62,7 @@ https://www.youtube.com/watch?v=vquh3IXcduc
 
 Installation and activation takes a few steps and needs root:
 
-1. Download dowse on a GNU/Linux box (we use Debian 7)
+1. Download dowse on a GNU/Linux box (we use Devuan Jessie)
 
 	git clone https://github.com/dyne/dowse /usr/src/dowse
 
@@ -70,7 +70,7 @@ Installation and activation takes a few steps and needs root:
 
 ```
 zsh daemontools iptables ebtables gettext-base procps net-tools
-libssl-dev libbind-dev libpcap-dev unzip wget gcc make liblo
+libssl-dev libbind-dev libpcap-dev unzip wget gcc make liblo-dev
 libnetfilter-conntrack3 libnetfilter-queue-dev libjemalloc-dev
 libseccomp2 libsodium-dev libhiredis-dev
 ```

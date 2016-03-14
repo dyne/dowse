@@ -22,16 +22,6 @@ dbindex='
 3 storage
 '
 
-modcodes='
-1 name
-2 desc
-3 tags
-4 ports
-5 daemons
-6 authors
-7 version
-'
-
 R=`pwd`
 [[ -r $R/src ]] || {
     print "error: database.sh must be run from the source base dir"
@@ -63,24 +53,24 @@ done
 
 ### Modules index
 
-# save modules for the shell scripts
-mod=()
-for i in ${(f)modcodes}; do
-    mod+=( ${i[(w)2]} ${i[(w)1]} )
-done
+# # save modules for the shell scripts
+# mod=()
+# for i in ${(f)modcodes}; do
+#     mod+=( ${i[(w)2]} ${i[(w)1]} )
+# done
 
-# save modules for the C code
-rm -rf $R/src/module.h
-touch  $R/src/module.h
-for i in ${(k)mod}; do
-    print "#define mod_$i ${mod[$i]}" >> $R/src/module.h
-done
+# # save modules for the C code
+# rm -rf $R/src/module.h
+# touch  $R/src/module.h
+# for i in ${(k)mod}; do
+#     print "#define mod_$i ${mod[$i]}" >> $R/src/module.h
+# done
 
-mod=()
-for i in ${(f)modcodes}; do
-    mod+=( ${i[(w)1]} ${i[(w)2]} )
-done
-zkv.save mod $R/src/module.zkv
+# mod=()
+# for i in {1..${(f)#modfields}}; do
+#     mod+=( $i ${modfields[$i]} )
+# done
+# zkv.save mod $R/src/module.zkv
 
 
 print "Database indexes generated"
