@@ -1,0 +1,13 @@
+#!/usr/bin/zsh
+
+
+redis() {
+    fn redis $*
+    _db="${db[$1]}"
+    req=(_db)
+    ckreq || return 1
+
+    cat | $R/run/redis-cli -n $_db --raw
+    [[ $? = 0 ]] || error "error sending commands via redis-cli"
+
+}

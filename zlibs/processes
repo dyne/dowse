@@ -48,7 +48,7 @@ savepid() {
     ckreq || return $?
 
     print "SET daemon-${_daemon}-pid \"`cat $_pid`\"" \
-          | $R/run/redis-cli -n ${db[runtime]} > /dev/null
+          | redis runtime > /dev/null
 
 }
 
@@ -61,7 +61,7 @@ getpid() {
     unset _pid
 
     [[ -r $R/run/redis.pid ]] && {
-        _pid=`print "GET daemon-${_daemon=}-pid" | $R/run/redis-cli -n ${db[runtime]} --raw` }
+        _pid=`print "GET daemon-${_daemon=}-pid" | redis runtime` }
 
     [[ "$_pid" = "" ]] && [[ -r $R/run/${_daemon}.pid ]] && {
         _pid=`cat $R/run/${_daemon}.pid` }

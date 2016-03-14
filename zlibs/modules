@@ -122,7 +122,7 @@ dowse-module-start() {
         # add service listing on redis
         func "$redis_command"
         # -n sets the database number (set in src/database.sh)
-        print - $redis_command | $R/run/redis-cli -n ${db[runtime]} > /dev/null
+        print - $redis_command | redis runtime > /dev/null
 
     else
         warning "cannot start module $modname"
@@ -132,7 +132,7 @@ dowse-module-start() {
 
 dowse-module-list() {
     if [[ -r $R/run/redis.pid ]]; then
-        print "LRANGE mod-index 0 -1" | $R/run/redis-cli -n $db[runtime] --raw
+        print "LRANGE mod-index 0 -1" | redis runtime
     else
         for i in `find $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`; do
             basename $i

@@ -94,6 +94,7 @@ source $R/zlibs/iptables
 source $R/zlibs/ebtables
 source $R/zlibs/confstore
 source $R/zlibs/apt
+source $R/zlibs/redis
 
 source $R/daemons/consul
 source $R/daemons/dnsmasq
@@ -408,11 +409,11 @@ dowse-dump() {
 
     notice "Dumping variables in Redis"
     act "Runtime:"
-    print - "KEYS *" | $R/run/redis-cli -n ${db[runtime]} --raw | sort
+    print - "KEYS *" | redis runtime | sort
     act "Storage:"
-    print - "KEYS *" | $R/run/redis-cli -n ${db[storage]} --raw | sort
+    print - "KEYS *" | redis storage | sort
     act "Dynamic:"
-    print - "KEYS *" | $R/run/redis-cli -n ${db[dynamic]} --raw | sort
+    print - "KEYS *" | redis dynamic | sort
 }
 
 dowse-status() {
