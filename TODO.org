@@ -1,6 +1,10 @@
 * Wanted
 
 implementations wishes for new daemons and modules
+** Web frontend
+*** TODO Kore.io (HTTP server)
+*** TODO Flate (HTML templating)
+
 ** Listeners
 *** TODO mosquitto (MQTT)
 *** TODO webdis (websockets)

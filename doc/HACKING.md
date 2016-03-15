@@ -1,22 +1,24 @@
 # Data format
 
-Internal data formats are geared towards performance and simplicity:
-they are omma separated strings where position is semantically
+Internal data formats are geared towards performance and simplicity.
+
+They are comma separated strings (csv) where position is semantically
 relevant depending from the data type.
 
 Fixed positions:
 ```
-TYPE,IP,ACTION,TIME,...
+{TYPE},IP,ACTION,EPOC,...
+
+TYPE: { DNS | OBJ | PGL | CMD }
 ```
 
-1- `TYPE`: The data type
+ 1. `TYPE`: The data type
 
-2- `IP`: The originating object IP
+ 2. `IP`: The originating object IP
 
-3- `ACTION`: The action performed (type dependent)
+ 3. `ACTION`: The action performed (type dependent)
 
-4- `TIME`: The time at which the event occurs, in seconds since the Epoch
-
+ 4. `EPOCH`: The time at which the event occurs, in seconds since the Epoch
 
 Below is an updated list of existing types and their actions.
 
@@ -25,17 +27,19 @@ Below is an updated list of existing types and their actions.
 Represents the event of a dns query by an object on the net.
 
 ```
-DNS,IP,ACTION,EPOCH,DOMAIN,TLD[,GROUP]
+DNS,IP,{ACTION},EPOCH,DOMAIN,TLD[,GROUP]
+
+ACTION: { NEW | KNOWN }
 ```
 
 Actions:
-- NEW: the domain is visited for the first time
-- KNOWN: the domain is known and has been visited before
+- `NEW`: the domain is visited for the first time
+- `KNOWN`: the domain is known and has been visited before
 
 Arguments:
-- DOMAIN: is the domain string to be resolved
-- TLD: is the last string of the domain, i.e: .org, .com, .net etc.
-- GROUP: optionally, a group the domain belongs (see domain-list)
+- `DOMAIN`: is the domain string to be resolved
+- `TLD`: is the last string of the domain, i.e: .org, .com, .net etc.
+- `GROUP`: optionally, a group the domain belongs (see domain-list)
 
 Sources:
 - dnscap (dowse plugin)
@@ -55,7 +59,7 @@ Arguments:
 - `HOSTNAME`: the hostname announced by the network object
 - `NEW | KNOWN`: wether the object is new or already known
 - `DEVICE`: the type of device we guess the object is:
-  - `COMPUTER | MOBILE | SENSOR | TV`
+  - `COMPUTER | MOBILE | SENSOR | TV ..`
 - `OS`: the operating system we guess is running on the object
 
 Sources
@@ -69,14 +73,31 @@ DOWSE network from connecting to known malware sources. It emits
 events every time an object tries to connect to a blocked IP
 
 ```
-PGL,IP,BLOCK,EPOCH,BLOCKEDIP
+PGL,IP,BLOCK,EPOCH,IPBLOCKED
 ```
 
 Actions: `BLOCK`
 
-
 Sources
 - pgl (peerguardian blocklist firewall)
+
+## CMD
+
+Command is a request for operations that can be executed on
+request. Commands end up in a FIFO pipe which functions as Closure of
+function calls during runtime: the worker thread will then take out
+the commands and execute them one by one, treating the results
+accordingly.
+
+```
+CMD,IP,{ACTION},EPOCH[,ARGS..]
+
+ACTION: SCAN
+```
+
+Sources
+- web interface
+- rest api
 
 # Event channels
 

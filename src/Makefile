@@ -1,17 +1,17 @@
 CC = gcc
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -Os -O2
 
-all: dns-to-gource dns-to-osc
+all: dowse-to-gource dowse-to-osc
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
-dns-to-gource: dns-to-gource.o redis.o
+dowse-to-gource: dowse-to-gource.o redis.o epoch.o
 	$(CC) $(CFLAGS) -o $@ $^ -lhiredis
 
-dns-to-osc: dns-to-osc.o redis.o
+dowse-to-osc: dowse-to-osc.o redis.o epoch.o
 	$(CC) $(CFLAGS) -o $@ $^ -lhiredis -llo
 
 clean:
 	rm -f *.o
-	rm -f dns-to-osc dns-to-gource
+	rm -f dowse-to-osc dowse-to-gource

@@ -498,18 +498,21 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
                 case MAP_OK:
                     /* render with the category in front of domain */
                     snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s/%s",
-                             ts.tv_sec, from, action, tld, sval, extracted);
+                             ts2epoch(ts,NULL), // from our epoch.c
+                             from, action, tld, sval, extracted);
                     break;
                 default:
                     /* render only the domain in root category */
                     snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s",
-                             ts.tv_sec, from, action, tld, extracted);
+                             ts2epoch(ts,NULL), // from our epoch.c
+                             from, action, tld, extracted);
                     break;
                 }
             } else
                 /* render only the domain in root category */
                 snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s",
-                         ts.tv_sec, from, action, tld, extracted);
+                         ts2epoch(ts,NULL), // from our epoch.c
+                         from, action, tld, extracted);
 
 
 

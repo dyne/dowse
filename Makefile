@@ -26,4 +26,3 @@ clean:
 	./src/compile.sh clean
 	make -C src clean
 	rm -f src/database.h src/database.zkv
-	rm -f src/module.h src/module.zkv

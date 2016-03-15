@@ -6,20 +6,12 @@
 # compile time, so any change of it requires a recompilation.
 
 
-### db keys namespace
-#
-# static : conf_ modules_ daemons_
-#
-# dynamic: obj_ dns_
-# |___dns: dns_query_channel dns_query_fifo
-# |___obj: obj_add_channel obj_add_fifo
-# |        obj_rem_channel obj_rem_fifo
-# X
+# for the db keys namespace see doc/HACKING.md
 
 dbindex='
+0 dynamic
 1 runtime
-2 dynamic
-3 storage
+2 storage
 '
 
 R=`pwd`
