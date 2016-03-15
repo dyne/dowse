@@ -446,20 +446,9 @@ dowse-status() {
 
             yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
 
-#             cat <<EOF | restful.put $address 8500 /v1/kv/things_known/$host[$i]
-# status: $ping[$i]
-# ip: $ip[$i]
-# mac: $mac[$i]
-# EOF
-
         else
 
             no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-#             cat <<EOF | restful.put $address 8500 /v1/kv/things_unknown/$host[$i]
-# status: $ping[$i]
-# ip: $ip[$i]
-# mac: $mac[$i]
-# EOF
 
         fi
     done
