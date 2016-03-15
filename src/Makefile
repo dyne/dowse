@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Os -O2
+CFLAGS = -Wall -fPIC -Os -O2
 
 all: dowse-to-gource dowse-to-osc
 

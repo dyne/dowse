@@ -42,7 +42,9 @@
 #include "hashmap.h"
 
 #include "../../dnscap_common.h"
+
 #include <database.h>
+#include <epoch.h>
 
 #define REDIS_HOST "localhost"
 #define REDIS_PORT 6379
@@ -169,7 +171,8 @@ void load_domainlist(const char *path) {
         exit(1); }
 
     // read file by file
-    while (dp = readdir (listdir)) {
+    dp = readdir (listdir);
+    while (dp) {
         char fullpath[MAX_LINE];
         snprintf(fullpath,MAX_LINE,"%s/%s",path,dp->d_name);
         // open and read line by line
@@ -186,6 +189,7 @@ void load_domainlist(const char *path) {
             hashmap_put(domainlist, strdup(trimmed), strdup(dp->d_name));
         }
         fclose(fp);
+        dp = readdir (listdir);
     }
     closedir(listdir);
     logerr("Size of parsed domain-list: %u\n", hashmap_length(domainlist));
@@ -258,8 +262,6 @@ void dowse_stop() {
      * is exiting normally.  It might be used to clean up state,
      * free memory, etc.
      */
-    int c;
-    any_t *e = NULL;
 
     if(fileout) fclose(fileout);
 
@@ -309,8 +311,6 @@ static inline int is_ip(char *in) {
 
 static char *ia_resolv(iaddr ia) {
     int err;
-
-    char *name;
     err = getnameinfo((struct sockaddr*)&ia,sizeof(ia),query,sizeof(query),0,0,0);
 
     if(err==0) { // all fine, no error
@@ -327,8 +327,7 @@ static char *ia_resolv(iaddr ia) {
         fprintf(stderr,"Error in getnameinfo: %s\n",
                 strerror(errno));
         // however we try harder to return the ip
-        err = inet_ntop(ia.af, &ia.u, query, sizeof query);
-        if(err==NULL) {
+        if(inet_ntop(ia.af, &ia.u, query, sizeof query)==NULL) {
             fprintf(stderr,"Error in inet_ntop: %s\n",
                     strerror(errno));
             return NULL;
@@ -498,20 +497,20 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
                 case MAP_OK:
                     /* render with the category in front of domain */
                     snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s/%s",
-                             ts2epoch(ts,NULL), // from our epoch.c
+                             ts2epoch(&ts,NULL), // from our epoch.c
                              from, action, tld, sval, extracted);
                     break;
                 default:
                     /* render only the domain in root category */
                     snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s",
-                             ts2epoch(ts,NULL), // from our epoch.c
+                             ts2epoch(&ts,NULL), // from our epoch.c
                              from, action, tld, extracted);
                     break;
                 }
             } else
                 /* render only the domain in root category */
                 snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s",
-                         ts2epoch(ts,NULL), // from our epoch.c
+                         ts2epoch(&ts,NULL), // from our epoch.c
                          from, action, tld, extracted);
 
 

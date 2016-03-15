@@ -60,7 +60,6 @@ int main(int argc, char **argv) {
     signal(SIGINT, ctrlc);
 
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
-        if(done) break;
 
         // TODO: use a more refined lo_send with low-latency flags
         err = lo_send(osc, "/dowse/dns", "s", reply->element[2]->str);
@@ -70,9 +69,10 @@ int main(int argc, char **argv) {
         else
             fprintf(stderr,"/dowse/dns %s\n",reply->element[2]->str);
 
-        fflush(stdout);
+        fflush(stderr);
 
         freeReplyObject(reply);
+        if(done) break;
     }
 
     lo_address_free(osc);

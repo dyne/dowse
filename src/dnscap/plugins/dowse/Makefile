@@ -1,11 +1,11 @@
 #CC=colorgcc
 CC=gcc
-CFLAGS=-O3 -fPIC -I../../../
+CFLAGS=-Wall -Os -O2 -fPIC -I../../../
 
 all: dowse.so
 
 dowse.so: hashmap.o dowse.o
-	$(CC) -fPIC -shared -o $@ dowse.o hashmap.o -lhiredis
+	$(CC) -fPIC -shared -o $@ dowse.o hashmap.o ../../../epoch.o -lhiredis
 
 clean:
 	rm -f *o
