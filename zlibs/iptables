@@ -197,7 +197,7 @@ sysctl-setup() {
     req=(root)
     ckreq || return 0
 
-    cat <<EOF | sysctl -p - >/dev/null
+    cat <<EOF | ${execmap[sysctl]} -p - >/dev/null
 net.ipv4.tcp_syncookies = 1
 net.ipv4.icmp_echo_ignore_broadcasts = 1
 net.ipv4.conf.all.accept_redirects = 0

@@ -13,6 +13,9 @@ zlibs/zuper-dev
 *.la
 .deps
 .libs
+*.dirstamp
+*configure
+*aclocal.m4
 config.h
 config.status
 stamp-h1

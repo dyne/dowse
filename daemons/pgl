@@ -1,5 +1,9 @@
 #!/usr/bin/env zsh
 
+# also see:
+# $R/run/pgl/lib/pgl/pglcmd.defaults
+# $R/run/pgl/lib/pgl/pglcmd.main
+
 pgl-conf() {
     fn pgl-conf
 
@@ -10,16 +14,17 @@ ALLOW_IN="$R/conf/whitelist.p2p"
 ALLOW_OUT="$R/conf/whitelist.p2p"
 LOGDIR="$R/log"
 DAEMON_LOG="\${LOGDIR}/pgld.log"
+WD="0"
 EOF
 
 }
 
-pgl-start() {
+pgl-exec() {
     fn pgl-start
     $R/run/pgl/bin/pglcmd start
 }
 
-pgl-stop() {
+pgl-kill() {
     fn pgl-stop
     $R/run/pgl/bin/pglcmd stop
 }

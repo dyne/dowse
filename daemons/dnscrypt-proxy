@@ -1,26 +1,22 @@
 #!/usr/bin/env zsh
 
 
-_dnscrypt() {
-    setuidgid $dowse_uid \
-              $R/run/dnscrypt-proxy --local-address 127.0.0.1:53443 \
-              -p $R/run/dnscrypt.pid -l $R/log/dnscrypt.log \
-              -r "$1" -k "$2" -N "$3" -d \
-              -m 4 # log only warning conditions
-}
 
-
-dnscrypt-start() {
-    fn dnscrypt-proxy-start
-    freq=($R/run/dnscrypt-proxy)
+dnscrypt-exec() {
+    fn dnscrypt-exec
+    exe=${1:-$R/run/dnscrypt-proxy}
+    req=(exe)
+    freq=($exe)
     ckreq || return 1
 
-    # DNSCrypt.EU (Netherlands)
-    _dnscrypt 176.56.237.171:443 \
-              67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66 \
-              2.dnscrypt-cert.resolver1.dnscrypt.eu
+    setuidgid $dowse_uid $exe --local-address 127.0.0.1:53443 \
+              -p $pid -l $R/log/dnscrypt.log \
+              -r "176.56.237.171:443" \
+              -k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
+              -N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
+              -d -m 4 # log only warning conditions
 
-    savepid dnscrypt $R/run/dnscrypt.pid
+    savepid dnscrypt $pid
 
     # TODO: offer a list of hosts from the csv list provided in dnscrypt source
 }

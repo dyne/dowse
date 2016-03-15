@@ -81,6 +81,13 @@ maps+=(db)
 # dataset indexes
 arrs+=(mod)
 
+# daemons exec paths (OS dependent)
+maps+=(execmap)
+vars+=(execpath)
+
+# default daemons conf and pids
+vars+=(pid conf)
+
 zmodload zsh/system
 zmodload zsh/mapfile
 zmodload zsh/regex
@@ -115,7 +122,9 @@ else source $R/zlibs/zuper.init; fi
 
 func "load dataset indexes"
 db=()
+execmap=()
 zkv.load $R/src/database.zkv
+zkv.load $R/src/execmap.zkv
 
 # module fields
 mod=(
@@ -221,7 +230,7 @@ dowse-start() {
     # freq=($R/conf/settings $R/conf/network)
     # ckreq || return $?
 
-    [[ -r $R/run/redis.pid ]] && {
+    [[ -r $R/run/redis-server.pid ]] && {
         warn "Dowse is already running"
         return 0
     }
@@ -229,13 +238,13 @@ dowse-start() {
 
     # start the redis daemon (core k/v service)
     redis-extract
-    redis-conf > $R/run/dowse-redis.conf
-    cat <<EOF >> $R/run/dowse-redis.conf
-pidfile $R/run/redis.pid
-logfile $R/log/redis.log
+    redis-conf > $R/run/redis-server.conf
+    cat <<EOF >> $R/run/redis-server.conf
+pidfile $R/run/redis-server.pid
+logfile $R/log/redis-server.log
 port 6379
 EOF
-    start redis $R/run/dowse-redis.conf
+    start redis-server
 
     [[ -z $root ]] || {
 
@@ -291,7 +300,7 @@ nameserver 127.0.0.1
 # search $lan
 EOF
         # launch the dnsmasq daemon
-        start dnsmasq $R/run/dnsmasq.conf
+        start dnsmasq
 
     }
 
@@ -336,8 +345,6 @@ dowse-stop() {
 
     done
 
-    # [[ -r $R/run/consul.pid ]] && consul-stop
-
     # stop the dns crypto tunnel
     stop dnscrypt
 
@@ -345,7 +352,7 @@ dowse-stop() {
         stop dnscap
         stop dnsmasq
 
-        pgl-stop
+        pgl-kill
         iptables-snat-off
         iptables-stop
         ebtables-stop
@@ -355,11 +362,11 @@ dowse-stop() {
         }
     }
 
-    stop redis
+    stop redis-server
 
     # consul-stop
 
-    notice "Dowse is not running."
+    notice "Dowse has stopped running."
 
 }
 

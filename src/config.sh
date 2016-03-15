@@ -6,6 +6,18 @@
 # compile time, so any change of it requires a recompilation.
 
 
+R=`pwd`
+[[ -r $R/src ]] || {
+    print "error: config.sh must be run from the root"
+    return 1
+}
+
+zkv=1
+source $R/zlibs/zuper
+maps=(db mod execmap)
+source $R/zlibs/zuper.init
+
+
 # for the db keys namespace see doc/HACKING.md
 
 dbindex='
@@ -14,16 +26,36 @@ dbindex='
 2 storage
 '
 
-R=`pwd`
-[[ -r $R/src ]] || {
-    print "error: database.sh must be run from the source base dir"
-    return 1
+# defaults for Devuan
+execmap=(
+    dnscrypt      $R/run/dnscrypt-proxy
+    dnsmasq       $R/run/dnsmasq
+    dnscap        $R/src/dnscap/dnscap
+    redis-cli     $R/run/redis-cli
+    redis-server  $R/run/redis-server
+    iptables      $R/run/iptables
+    ebtables      $R/run/ebtables
+    sysctl        $R/run/sysctl
+)
+
+
+# check if on Gentoo
+command -v emerge >/dev/null && {
+
+    execmap=(
+        dnscrypt      /usr/sbin/dnscrypt-proxy
+        dnscap        $R/src/dnscap/dnscap
+        dnsmasq       /usr/sbin/dnsmasq
+        redis-cli     /usr/bin/redis-cli
+        redis-server  /usr/sbin/redis-server
+        iptables      /sbin/iptables
+        ebtables      /sbin/ebtables
+        sysctl        /usr/sbin/sysctl
+    )
 }
 
-zkv=1
-source $R/zlibs/zuper
-maps=(db mod)
-source $R/zlibs/zuper.init
+zkv.save execmap $R/src/execmap.zkv
+
 
 ### Database index
 
@@ -40,6 +72,9 @@ touch  $R/src/database.h
 for i in ${(k)db}; do
     print "#define db_$i ${db[$i]}" >> $R/src/database.h
 done
+
+
+
 
 
 
@@ -65,4 +100,4 @@ done
 # zkv.save mod $R/src/module.zkv
 
 
-print "Database indexes generated"
+print "Compile-time configuration generated"

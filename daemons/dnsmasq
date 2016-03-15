@@ -131,15 +131,14 @@ EOF
     }
 }
 
-dnsmasq-start() {
-    fn dnsmasq-start $*
-    conf=${1:-$R/run/dnsmasq.conf}
-    pid=${2:-$R/run/dnsmasq.pid}
-    freq=($conf)
+dnsmasq-exec() {
+    fn dnsmasq-exec $*
+    exe=${1:-$R/run/dnsmasq}
+    freq=($conf $exe)
     ckreq || return $?
 
-    func "dnsmasq -x $pid -C $conf"
-    $R/run/dnsmasq -x $pid -C $conf
+    func "${execpath} -x $pid -C $conf"
+    ${exe} -x $pid -C $conf
 
     savepid dnsmasq $pid
 

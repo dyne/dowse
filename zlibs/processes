@@ -1,8 +1,16 @@
 #!/usr/bin/env zsh
 
+
+# high-level daemon starter, synopsis:
+#
+# start daemon-name [ pidfile configfile ]
+#
 start() {
     fn start $*
     _daemon="$1"
+    pid=${2:-$R/run/$_daemon.pid}
+    conf=${3:-$R/run/$_daemon.conf}
+
     shift
     req=(_daemon)
     ckreq || return $?
@@ -15,11 +23,17 @@ start() {
     esac
 
     act "starting daemon: $_daemon $*"
-    command -v $_daemon-start > /dev/null && {
+    execpath=${execmap[$_daemon]}
+    func "execpath: $execpath"
+
+    if command -v $_daemon-exec > /dev/null; then
         # we preload jemalloc for better memory handling
-        LD_PRELOAD=$lib/libjemalloc.so.1 $_daemon-start $*
+        LD_PRELOAD=$lib/libjemalloc.so.1 $_daemon-exec $execpath
         return $?
-    }
+    else
+        warning "daemon executable not found: $execpath"
+        return 1
+    fi
 }
 
 stop() {
@@ -34,8 +48,8 @@ stop() {
         return 1
     else
         act "stopping $_daemon ($_pid)"
-        if command -v $_daemon-stop > /dev/null; then
-            $_daemon-stop
+        if command -v $_daemon-kill > /dev/null; then
+            $_daemon-kill
         else
             killpid $_pid
             waitpid $_pid || {

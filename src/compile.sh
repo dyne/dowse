@@ -41,7 +41,7 @@ case $1 in
                 && \
                 make \
                 && \
-                cp $R/src/dnscap/dnscap $R/run \
+                cp $R/src/dnscap/dnscap $R/run
             popd
         }
         ;;

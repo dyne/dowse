@@ -109,11 +109,11 @@ aof-rewrite-incremental-fsync yes
 EOF
 }
 
-redis-start() {
-    fn redist-start
-    conf=${1:-$R/run/redis.conf}
-    req=(conf)
-    freq=($conf)
+redis-server-exec() {
+    fn redis-server-exec $*
+    exe=${1:-$R/run/redis-server}
+    req=(conf exe)
+    freq=($conf $exe)
     ckreq || return 1
 
     [[ "$1" = "" ]] || shift 1
@@ -121,7 +121,7 @@ redis-start() {
     pidfile=`awk '/pidfile/ { print $2 }' $conf`
     func "redis $conf $* (pidfile: $pidfile)"
 
-    $R/run/redis-server $conf $*
+    $exe $conf $*
 
     act "blank volatile databases"
     print "flushdb" | redis runtime > /dev/null

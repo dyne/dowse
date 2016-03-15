@@ -24,10 +24,10 @@
 
 dnscap-conf() { return 0; }
 
-dnscap-start() {
-    fn dnscap-start
-    conf=${1:-/dev/null}
-    pid=${2:-$R/run/dnscap.pid}
+dnscap-exec() {
+    fn dnscap-exec $*
+    exe=${1:-$R/src/dnscap/dnscap}
+    freq=($exe)
 
     [[ -z $root ]] && return 1
 
@@ -39,7 +39,7 @@ dnscap-start() {
     if [[ $DEBUG = 1 ]]; then
         # start-stop-daemon \
         #     --background --pidfile $pid --start --make-pidfile --exec \
-        $R/src/dnscap/dnscap \
+        $exe \
             -1 -i $interface \
             -x . -X in-addr.arpa -p \
             -P $R/src/dnscap/plugins/dowse/dowse.so \
@@ -47,7 +47,7 @@ dnscap-start() {
             -4 $address
     else
         start-stop-daemon \
-            --background --pidfile $pid --start --exec $R/src/dnscap/dnscap \
+            --background --pidfile $pid --start --exec $exe \
             --make-pidfile -- -1 -i $interface \
             -x . -X in-addr.arpa -p \
             -P $R/src/dnscap/plugins/dowse/dowse.so \

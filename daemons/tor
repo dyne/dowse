@@ -44,18 +44,20 @@ EOF
 
 }
 
-tor-start() {
-    fn tor-start
+tor-exec() {
+    fn tor-exec $*
+    execpath=${1:-$R/run/tor}
     conf=$1
+    req=(execpath)
     freq=($conf)
     ckreq || return 0
 
     act "launching tor"
 
-    $R/run/tor -f $conf
+    $execpath -f $conf
 }
 
-tor-stop() {
+tor-kill() {
     fn tor-stop
     pidfile=$1
     freq=($pidfile)
