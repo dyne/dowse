@@ -41,11 +41,7 @@ case $1 in
                 && \
                 make \
                 && \
-                make -C plugins/dowse \
-                && \
                 cp $R/src/dnscap/dnscap $R/run \
-                && \
-                cp $R/src/dnscap/plugins/dowse/dowse.so $R/run
             popd
         }
         ;;
