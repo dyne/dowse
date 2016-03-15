@@ -7,9 +7,17 @@ start() {
     req=(_daemon)
     ckreq || return $?
 
+
+    case `uname -m` in
+        arm*)   lib=/usr/lib/arm-linux-gnueabihf ;;
+        x86_64) lib=/usr/lib/x86_64-linux-gnu    ;;
+        *) lib=/usr/lib ;;
+    esac
+
     act "starting daemon: $_daemon $*"
     command -v $_daemon-start > /dev/null && {
-        $_daemon-start $*
+        # we preload jemalloc for better memory handling
+        LD_PRELOAD=$lib/libjemalloc.so.1 $_daemon-start $*
         return $?
     }
 }

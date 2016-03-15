@@ -38,6 +38,7 @@
 #include <dirent.h>
 
 #include <hiredis/hiredis.h>
+#include <jemalloc/jemalloc.h>
 
 #include "hashmap.h"
 

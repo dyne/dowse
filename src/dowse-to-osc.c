@@ -27,6 +27,9 @@
 // liblo
 #include <lo/lo.h>
 
+// jemalloc
+#include <jemalloc/jemalloc.h>
+
 #include "redis.h"
 #include "database.h"
 
