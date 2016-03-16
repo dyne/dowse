@@ -1,27 +1,19 @@
-all: config src pgl dnscap dnscrypt-proxy
+all: sources
 	@echo
 	@echo "Dowse is compiled and ready to run"
-	@echo "setup use conf/settings and launch ./start.sh"
-	@echo "or use the interactive zshell with source dowse"
+	@echo "setup conf/settings and launch ./start.sh"
+	@echo "or use interactive zsh mode:"
+	@echo "source dowse"
+	@echo "dowse-start"
+	@echo "dowse-[tab] for completion of other commands"
 	@echo
 
-config:
-	./src/config.sh
 
-dnscrypt-proxy:
-	./src/compile.sh dnscrypt-proxy
-
-pgl:
-	./src/compile.sh pgl
-
-dnscap:
-	./src/compile.sh dnscap
-
-src:
+sources:
 	make -C src
 
 clean:
-	rm -rf run
-	./src/compile.sh clean
 	make -C src clean
-	rm -f src/database.h src/database.zkv
+
+#	rm -f src/database.h src/database.zkv
+#	rm -rf run

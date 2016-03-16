@@ -121,18 +121,33 @@ build Dowse also on ARM devices, thanks to http://Devuan.org
 
 # Visualization
 
-The DNs visualization log is produced in `log/dnscap.log` in a custom
-format which can be easily processed by `gource`. Assuming one is
-connected to a network managed by Dowse running on IP `192.168.0.254`,
-then from another PC one can do
+The DNS visualization is produced in a custom format which can be
+easily processed by `gource`. This is the best way to "see dowse
+running": if you are running it locally, then install `gource` and do:
 
 ```
-ssh 192.168.0.254 cat /opt/dowse/log/dnscat.log | gource --log-format custom -
+./src/dowse-to-gource | gource --log-format custom -
 ```
 
-To quickly render all the logged DNS activity found in that file. For
-a realtime visualization is possible to experiment with gource
-arguments, it is also easy to render all into a video file.
+This will live render all the DNS activity occurring on your
+computer. Our utility subscribes to DNS events (reading from Redis,
+which listens only on localhost by default) and draws the sort of
+animation that is also showcased on our website.
+
+One can also experiment with gource arguments and render all into a
+video file.
+
+# Experimentation
+
+Open Sound Control (OSC) messaging is implemented to interface
+low-latency devices that are running on the same network. To start it
+one must know the IP address of the device, then do:
+
+```
+./src/dowse-to-osc osc.udp://10.0.0.2:999
+```
+
+This will start sending OSC messages over UDP to IP 10.0.0.2 port 999
 
 # Development
 

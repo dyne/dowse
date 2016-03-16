@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-R=`pwd`
+R=`pwd`/..
 [[ -r $R/src ]] || {
     print "error: compile.sh must be run from the source base dir"
     return 1

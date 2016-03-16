@@ -186,28 +186,28 @@ else
 fi
 
 
-dowse_uid=${dowse_uid:-`id -un`}
-dowse_gid=${dowse_gid:-`id -gn`}
+dowse_uid=`id -un`
+dowse_gid=`id -gn`
 
 _verbose "Dowse command: ::1 commands::" "$*"
 _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
          $dowse_uid $dowse_gid $TTY
 
 act "daemons running as user and group $dowse_uid:$dowse_gid"
-[[ -z $root ]] || {
-    # setup dirs
-    chmod go-rwx $R/log
-    chown -R $dowse_uid:$dowse_gid $R/log
+# [[ -z $root ]] || {
+#     # setup dirs
+#     chmod go-rwx $R/log
+#     chown -R $dowse_uid:$dowse_gid $R/log
 
-    chmod go-rwx $R/run
-    chown -R $dowse_uid:$dowse_gid $R/run
-}
+#     chmod go-rwx $R/run
+#     chown -R $dowse_uid:$dowse_gid $R/run
+# }
 
-func "::1 dir:: directory writable by ::2 uid::" run $dowse_uid
-if touch $R/run/test; then rm -f $R/run/test; else return 1; fi
+# func "::1 dir:: directory writable by ::2 uid::" run $dowse_uid
+# if touch $R/run/test; then rm -f $R/run/test; else return 1; fi
 
-func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
-if touch $R/log/test; then rm -f $R/log/test; else return 1; fi
+# func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
+# if touch $R/log/test; then rm -f $R/log/test; else return 1; fi
 
 
 act "all requirements in place"
@@ -237,7 +237,6 @@ dowse-start() {
     notice "Starting Dowse"
 
     # start the redis daemon (core k/v service)
-    redis-extract
     redis-conf > $R/run/redis-server.conf
     cat <<EOF >> $R/run/redis-server.conf
 pidfile $R/run/redis-server.pid
@@ -281,8 +280,6 @@ EOF
                 iptables-snat-on
             fi
         }
-        # download and extract the dnsmasq binary if necessary
-        dnsmasq-extract
 
         # generate the dnsmasq configuration
         dnsmasq-conf > $R/run/dnsmasq.conf
@@ -362,7 +359,7 @@ dowse-stop() {
         }
     }
 
-    stop redis-server
+    stop redis
 
     # consul-stop
 

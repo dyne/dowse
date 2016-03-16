@@ -1,26 +1,5 @@
 #!/usr/bin/env zsh
 
-tor-extract() {
-    fn tor-extract
-
-    # check if already imported
-    [[ -r $R/run/tor ]] && return 0
-
-    deb-download tor
-
-    cp $R/tmp/usr/bin/tor $R/run \
-        || {
-        erorro "tor binary not found"
-        return 1 }
-
-    act "tor binary imported"
-    func "`ls $R/tmp`"
-
-    rm -rf $R/tmp
-
-    func "`file $R/run/tor`"
-}
-
 tor-conf() {
     fn tor-conf
 

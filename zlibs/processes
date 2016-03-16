@@ -25,6 +25,9 @@ start() {
     act "starting daemon: $_daemon $*"
     execpath=${execmap[$_daemon]}
     func "execpath: $execpath"
+    [[ "$execpath" = "" ]] && {
+        error "$_daemon not found in src/paths.sh: add and recompile"
+        return 1 }
 
     if command -v $_daemon-exec > /dev/null; then
         # we preload jemalloc for better memory handling
@@ -82,11 +85,11 @@ getpid() {
 
     unset _pid
 
-    [[ -r $R/run/redis.pid ]] && {
+    print QUIT | redis runtime && {
         _pid=`print "GET daemon-${_daemon=}-pid" | redis runtime` }
 
-    [[ "$_pid" = "" ]] && [[ -r $R/run/${_daemon}.pid ]] && {
-        _pid=`cat $R/run/${_daemon}.pid` }
+    # [[ "$_pid" = "" ]] && [[ -r $R/run/${_daemon}.pid ]] && {
+    #     _pid=`cat $R/run/${_daemon}.pid` }
 
     [[ "$_pid" = "" ]] && {
         func "$_daemon: pid not found"

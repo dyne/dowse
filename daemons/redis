@@ -1,26 +1,5 @@
 #!/usr/bin/env zsh
 
-redis-extract() {
-    fn redis-extract
-
-    [[ -r $R/run/redis-server ]] && return 0
-
-    deb-download redis-server
-    deb-download redis-tools
-
-    cp $R/tmp/usr/bin/redis-server     $R/run \
-        && cp $R/tmp/usr/bin/redis-cli $R/run \
-            || {
-            error "redis binaries not found"
-            return 1 }
-
-    act "redis binary imported"
-    func "`find $R/tmp`"
-#    rm -rf $R/tmp
-    func "`file $R/run/redis-server`"
-
-}
-
 redis-conf() {
     fn redis-conf
 

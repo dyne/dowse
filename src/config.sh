@@ -6,17 +6,55 @@
 # compile time, so any change of it requires a recompilation.
 
 
-R=`pwd`
+R=`pwd`/..
 [[ -r $R/src ]] || {
-    print "error: config.sh must be run from the root"
+    print "error: config.sh must be run from the src"
     return 1
 }
 
+mkdir -p $R/run
+
 zkv=1
 source $R/zlibs/zuper
-maps=(db mod execmap)
+vars=(tmp)
+maps=(db mod execmap execsums execrules)
 source $R/zlibs/zuper.init
 
+source paths.sh
+
+
+deb-download() {
+    fn deb-download $*
+    deb="$1"
+    req=(deb tmp)
+    ckreq || return 1
+
+    [[ $? = 0 ]] || {
+        error "cannot create temporary directory"
+        return 1 }
+
+    pushd $tmp > /dev/null
+
+    apt-get -q download $deb
+    [[ $? = 0 ]] || {
+        error "error downloading $deb"
+        return 1 }
+
+    debfile=`find . -name "${deb}_*.deb"`
+
+    popd > /dev/null
+
+    freq=($tmp/$debfile)
+    ckreq || return 1
+
+    act "extracting $R/tmp/$debfile"
+    dpkg -x $tmp/$debfile $tmp
+    [[ $? = 0 ]] || {
+        error "error extracting $tmp/$debfile"
+        return 1 }
+
+    return 0
+}
 
 # for the db keys namespace see doc/HACKING.md
 
@@ -26,35 +64,38 @@ dbindex='
 2 storage
 '
 
-# defaults for Devuan
-execmap=(
-    dnscrypt      $R/run/dnscrypt-proxy
-    dnsmasq       $R/run/dnsmasq
-    dnscap        $R/src/dnscap/dnscap
-    redis-cli     $R/run/redis-cli
-    redis-server  $R/run/redis-server
-    iptables      $R/run/iptables
-    ebtables      $R/run/ebtables
-    sysctl        $R/run/sysctl
-)
+# Check if Apt based
+command -v apt-get >/dev/null && {
+    notice "Importing binary packages from apt repositories..."
+    tmp=`mktemp -d`
 
 
-# check if on Gentoo
-command -v emerge >/dev/null && {
+    [[ -r $execmap[dnsmasq] ]] || {
+        act "fetching dnsmasq"
+        deb-download dnsmasq-base
+        cp -v $tmp/usr/sbin/dnsmasq $R/run
+    }
 
-    execmap=(
-        dnscrypt      /usr/sbin/dnscrypt-proxy
-        dnscap        $R/src/dnscap/dnscap
-        dnsmasq       /usr/sbin/dnsmasq
-        redis-cli     /usr/bin/redis-cli
-        redis-server  /usr/sbin/redis-server
-        iptables      /sbin/iptables
-        ebtables      /sbin/ebtables
-        sysctl        /usr/sbin/sysctl
-    )
+    [[ -r $execmap[redis-server] ]] || {
+        act "fetching redis server"
+        deb-download redis-server
+        cp $tmp/usr/bin/redis-server $R/run }
+
+    [[ -r $execmap[redis-cli] ]] || {
+        act "fetching redis tools"
+        deb-download redis-tools
+        cp $tmp/usr/bin/redis-cli $R/run
+    }
+
+    [[ -r $execmap[tor] ]] || {
+        act "fetching tor"
+        deb-download tor
+        cp $tmp/usr/bin/tor $R/run
+    }
+
+    rm -rf $tmp
+
 }
-
-zkv.save execmap $R/src/execmap.zkv
 
 
 ### Database index
@@ -100,4 +141,4 @@ done
 # zkv.save mod $R/src/module.zkv
 
 
-print "Compile-time configuration generated"
+print "# Compile-time configuration generated"

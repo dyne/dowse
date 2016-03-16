@@ -75,15 +75,17 @@ dowse-module-setup() {
     notice "Setup module: $dowse_mod[name] (${dowse_mod[id]})"
     act "$dowse_mod[desc]"
 
-    for dep in $dowse_mod_daemons; do
+    # for dep in $dowse_mod_daemons; do
 
-        func "automatically call ${dep}-extract from the daemons config directive"
-        ${dep}-extract
-        [[ $? = 0 ]] || {
-            error "failed importing $dep"
-            error "$dowse_mod_name depends on this daemon, cannot proceed loading"
-            return 1 }
-    done
+    #     func "automatically call ${dep}-extract from the daemons config directive"
+    #     ${dep}-extract
+    #     [[ $? = 0 ]] || {
+    #         error "failed importing $dep"
+    #         error "$dowse_mod_name depends on this daemon, cannot proceed loading"
+    #         return 1 }
+    # done
+
+    # TODO: check if daemon is present in src/path.sh
 
     func "all daemons found: ${dowse_mod[daemons]}"
     func "ports opened: $dowse_mod[ports]"
