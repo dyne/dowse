@@ -31,7 +31,7 @@ start() {
 
     if command -v $_daemon-exec > /dev/null; then
         # we preload jemalloc for better memory handling
-        LD_PRELOAD=$lib/libjemalloc.so.1 $_daemon-exec $execpath
+        LD_PRELOAD=${execmap[libjemalloc]} $_daemon-exec $execpath
         return $?
     else
         warning "daemon executable not found: $execpath"

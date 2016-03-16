@@ -22,6 +22,7 @@ execmap=(
     ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
     pgl           $R/run/pgl/bin/pglcmd
+    libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so.1
 
 )
 
@@ -37,5 +38,7 @@ command -v emerge >/dev/null && {
         iptables      /sbin/iptables
         ebtables      /sbin/ebtables
         sysctl        /usr/sbin/sysctl
+        pgl           $R/run/pgl/bin/pglcmd
+        libjemalloc   /usr/lib64/libjemalloc.so.2
     )
 }
