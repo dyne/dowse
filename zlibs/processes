@@ -54,10 +54,14 @@ stop() {
         if command -v $_daemon-kill > /dev/null; then
             $_daemon-kill
         else
-            killpid $_pid
-            waitpid $_pid || {
-                error "$_daemon: could not stop pid $_pid"
-                return 1 }
+            killpid $_pid && {
+                waitpid $_pid || {
+                    error "$_daemon: could not stop pid $_pid"
+                    return 1 }
+                [[ "$_daemon" = "redis-server" ]] || {
+                    print "DEL daemon-$_daemon-pid" | redis runtime
+                }
+            }
         fi
     fi
     # TODO: kill -9
@@ -86,14 +90,17 @@ getpid() {
     unset _pid
 
     print QUIT | redis runtime && {
-        _pid=`print "GET daemon-${_daemon=}-pid" | redis runtime` }
+        _pid=`print "GET daemon-${_daemon}-pid" | redis runtime` }
 
     # [[ "$_pid" = "" ]] && [[ -r $R/run/${_daemon}.pid ]] && {
     #     _pid=`cat $R/run/${_daemon}.pid` }
 
-    [[ "$_pid" = "" ]] && {
+    if [[ "$_pid" = "" ]]; then
         func "$_daemon: pid not found"
-        return 1 }
+        return 1
+    else
+        func "$_daemon pid found: $_pid"
+    fi
 
     print $_pid
     return 0
@@ -101,13 +108,22 @@ getpid() {
 
 killpid() {
     fn killpid $*
-    _daemon="$1"
-    req=(_daemon)
+    _pid="$1"
+    req=(_pid)
     ckreq || return $?
 
-    func "killing pid $_pid"
-    ps -p $_pid > /dev/null && kill $_pid
-    rm -f $R/run/${_daemon}.pid
+
+    ps -p $_pid > /dev/null || {
+        warning "pid not running: $_pid"
+        return 0 }
+
+    func "killing $_daemon pid($_pid)"
+    if [[ "$execrules[$_daemon]" = "root" ]]; then
+        func "root daemon, using sup to kill"
+        $R/run/sup kill $_pid
+    else
+        kill $_pid
+    fi
 
 }
 

@@ -29,8 +29,6 @@ dnscap-exec() {
     exe=${1:-$R/src/dnscap/dnscap}
     freq=($exe)
 
-    [[ -z $root ]] && return 1
-
     # -p Asks that the interface not be put into promiscuous mode.
     # -1 Flush the pcap(3) packet dump after every packet.
     # -6 recommended for ipv6
@@ -39,27 +37,35 @@ dnscap-exec() {
     if [[ $DEBUG = 1 ]]; then
         # start-stop-daemon \
         #     --background --pidfile $pid --start --make-pidfile --exec \
-        $exe \
+        $R/run/sup $exe \
             -1 -i $interface \
             -x . -X in-addr.arpa -p \
             -P $R/src/dnscap/plugins/dowse/dowse.so \
             -l $R/src/domain-list/data \
             -4 $address
     else
-        start-stop-daemon \
-            --background --pidfile $pid --start --exec $exe \
-            --make-pidfile -- -1 -i $interface \
-            -x . -X in-addr.arpa -p \
-            -P $R/src/dnscap/plugins/dowse/dowse.so \
-            -l $R/src/domain-list/data \
-            -4 $address -q
+        ztmp
+        $R/run/sup -d -p $ztmpfile \
+                   $exe -1 -i $interface \
+                   -x . -X in-addr.arpa -p \
+                   -P $R/src/dnscap/plugins/dowse/dowse.so \
+                   -l $R/src/domain-list/data \
+                   -4 $address -q 2> /dev/null
+
+        # start-stop-daemon \
+        #     --background --pidfile $pid --start --exec $R/run/sup \
+        #     --make-pidfile -- $exe -1 -i $interface \
+        #     -x . -X in-addr.arpa -p \
+        #     -P $R/src/dnscap/plugins/dowse/dowse.so \
+        #     -l $R/src/domain-list/data \
+        #     -4 $address -q
     fi
     [[ $? = 0 ]] || {
         error "problem starting dnscap"
         return 1
     }
 
-    savepid dnscap $pid
+    savepid dnscap $ztmpfile
 
 }
 

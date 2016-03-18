@@ -2,11 +2,13 @@ CC = gcc
 CFLAGS = -Wall -fPIC -Os -O2
 LIBS = -ljemalloc -lhiredis
 
-all: config dowse-to-gource dowse-to-osc dowse-dnscap-plugin
+all: config dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh pgl
 	@./compile.sh dnscap
 	@./checksum.sh
+	@./compile.sh sup
+
 
 config:
 	./config.sh
@@ -30,3 +32,4 @@ clean:
 	rm -f database.h execrules.h
 	rm -f dowse-to-osc dowse-to-gource
 	rm -f dnscap/plugins/dowse/*.o
+	make -C sup clean

@@ -21,11 +21,21 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
+iptables() {
+    fn iptables $*
+
+    if [[ "$execmap[xtables-multi]" = "/sbin/xtables-multi" ]]; then
+        func "iptables using xtables-multi"
+        $R/run/sup xtables-multi iptables $*
+        return $?
+    else
+        $R/run/sup $execmap[iptables] $*
+        return $?
+    fi
+}
 
 iptables-base-protection() {
     fn iptables-base-protection
-    req=(root)
-    ckreq || return 0
 
    # This table allow all established connections and related traffic
    # through the firewall without further filtering.
@@ -162,8 +172,6 @@ loopback-only() {
 
 loopback-isolate() {
     fn loopback_isolate
-    req=(root)
-    ckreq || return 0
 
     # rules that do not apply if we are running on the loopback device
 
@@ -176,8 +184,6 @@ loopback-isolate() {
 
 loopback-on() {
     fn loopback_on
-    req=(root)
-    ckreq || return 0
 
     # rules that do not apply if we are running on the loopback device
     func "allow local loopbacks"
@@ -194,8 +200,6 @@ loopback-on() {
 
 sysctl-setup() {
     fn sysctl-setup
-    req=(root)
-    ckreq || return 0
 
     cat <<EOF | ${execmap[sysctl]} -p - >/dev/null
 net.ipv4.tcp_syncookies = 1
@@ -220,8 +224,6 @@ EOF
 
 iptables-snat-on() {
     fn iptables-snat-on
-    req=(root)
-    ckreq || return 0
 
     notice "Setting up masquerading (NAT)"
     modprobe nf_conntrack_ipv4
@@ -251,8 +253,6 @@ iptables-snat-on() {
 
 iptables-snat-off() {
     fn snat_off
-    req=(root)
-    ckreq || return 0
 
     iptables -t nat -F
     iptables -t nat -X
@@ -261,8 +261,6 @@ iptables-snat-off() {
 
 iptables-start() {
     fn iptables-start
-    req=(root)
-    ckreq || return 0
 
     notice "Setting up iptables firewall rules"
 

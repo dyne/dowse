@@ -106,7 +106,7 @@ redis-server-exec() {
     print "flushdb" | redis runtime > /dev/null
     print "flushdb" | redis dynamic > /dev/null
 
-    savepid redis $pidfile
+    savepid redis-server $pidfile
 
     return $?
 }

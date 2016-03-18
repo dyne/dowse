@@ -117,10 +117,10 @@ dnsmasq-exec() {
     freq=($conf $exe)
     ckreq || return $?
 
-    func "${execpath} -x $pid -C $conf"
-    ${exe} -x $pid -C $conf
-
-    savepid dnsmasq $pid
+    ztmp
+    func "${execpath} -x $ztmpfile -C $conf"
+    $R/run/sup ${exe} -x $ztmpfile -C $conf
+    savepid dnsmasq $ztmpfile
 
     return $?
 }

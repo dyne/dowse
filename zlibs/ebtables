@@ -1,5 +1,16 @@
 #!/usr/bin/env zsh
 
+ebtables() {
+    fn ebtables $*
+    _bin=$execmap[ebtables]
+    req=(_bin)
+    freq=($_bin)
+    ckreq || return 1
+
+    $R/run/sup $_bin $*
+
+}
+
 ebtables-start() {
 
     command -v ebtables > /dev/null || { warning "ebtables not found, skipping"; return 1 }

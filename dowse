@@ -82,7 +82,7 @@ maps+=(db)
 arrs+=(mod)
 
 # daemons exec paths (OS dependent)
-maps+=(execmap)
+maps+=(execmap execrules)
 vars+=(execpath)
 
 # default daemons conf and pids
@@ -100,7 +100,6 @@ source $R/zlibs/processes
 source $R/zlibs/iptables
 source $R/zlibs/ebtables
 source $R/zlibs/confstore
-source $R/zlibs/apt
 source $R/zlibs/redis
 
 source $R/daemons/consul
@@ -119,12 +118,12 @@ if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
     source $R/zlibs/zuper-dev/zuper.init
 else source $R/zlibs/zuper.init; fi
 
-
 func "load dataset indexes"
 db=()
-execmap=()
 zkv.load $R/src/database.zkv
-zkv.load $R/src/execmap.zkv
+
+func "load paths and execmaps"
+source $R/src/paths.sh
 
 # module fields
 mod=(
@@ -176,15 +175,6 @@ act "checking requirements to run dowse..."
 
 mkdir -p $R/log
 mkdir -p $R/run
-
-root=1
-[[ "$UID" = "0" ]] || unset root
-if [[ "$root" = "" ]]; then
-    warn "no root privileges, limited functionality"
-else
-    act "root privileges granted"
-fi
-
 
 dowse_uid=`id -un`
 dowse_gid=`id -gn`
@@ -245,67 +235,65 @@ port 6379
 EOF
     start redis-server
 
-    [[ -z $root ]] || {
+    PGL=`pidof pgld`
+    [[ "$PGL" = "" ]] || {
+        func "PeerGuardian found running, will restart it accordingly"
+        pglcmd-kill }
 
+    [[ "$firewall" = "yes" ]] && {
 
-        PGL=`pidof pgld`
-        [[ "$PGL" = "" ]] || {
-            act "PeerGuardian found running, will restart it accordingly"
-            pgl-stop }
+        ebtables-stop
+        ebtables-start
 
-        # for the firewall stuff see: zlibs/iptables and zlibs/ebtables
-        [[ "$firewall" = "yes" ]] && {
+        iptables-stop
+        iptables-start
 
-            ebtables-stop
-            ebtables-start
+        iptables-base-protection
 
-            iptables-stop
-            iptables-start
+        loopback-on
+        if loopback-only; then
+            act "dry run on localhost only"
+        else
+            loopback-isolate
 
-            iptables-base-protection
+            act "set up $interface interface with ip $address"
+            $R/run/sup ifconfig $interface $address netmask $netmask up
 
-            loopback-on
-            if loopback-only; then
-                act "dry run on localhost only"
-            else
-                loopback-isolate
+            act "set $wan as default gateway"
+            $R/run/sup route add default gw $wan
 
-                act "set up $interface interface with ip $address"
-                ifconfig $interface $address netmask $netmask up
+            act "setup snat trasversal"
+            iptables-snat-on
 
-                act "set $wan as default gateway"
-                route add default gw $wan
+            # make sure the dowse host uses his own dns
+#             mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
+#             cat <<EOF > /etc/resolv.conf
+# nameserver 127.0.0.1
+# # domain $lan
+# # search $lan
+# EOF
+            # this is problematic, we cannot sup mv or cat or tee
+            # so perhaps take another approach: fw rule to redirect
+            # all traffic to configured dns to our own until is up?
+        fi
+    }
 
-                act "setup snat trasversal"
-                iptables-snat-on
-            fi
-        }
+    # generate the dnsmasq configuration
+    dnsmasq-conf > $R/run/dnsmasq.conf
 
-        # generate the dnsmasq configuration
-        dnsmasq-conf > $R/run/dnsmasq.conf
-
-        # tunnel dnsmasq across dnscrypt-proxy
-        cat <<EOF >> $R/run/dnsmasq.conf
+    # tunnel dnsmasq across dnscrypt-proxy
+    cat <<EOF >> $R/run/dnsmasq.conf
 server=127.0.0.1#53443
 EOF
 
-        # make sure the dowse host uses his own dns
-        mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
-        cat <<EOF > /etc/resolv.conf
-nameserver 127.0.0.1
-# domain $lan
-# search $lan
-EOF
-        # launch the dnsmasq daemon
-        start dnsmasq
-
-    }
+    # launch the dnsmasq daemon
+    start dnsmasq
 
     # start the dns encrypted tunneling
     start dnscrypt
 
     # these are root programs that need redis to be running
-    [[ -z $root ]] || start dnscap
+    start dnscap
 
 
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
@@ -320,11 +308,10 @@ EOF
     done
 
     [[ "$firewall" = "yes" ]] && {
-        [[ -z $root ]] || {
-            # start peerguardian (must be at end, after any other iptables setting)
-            pgl-conf > $R/run/pgl/etc/pgl/pglcmd.conf
-            start pgl
-        }
+            # start peerguardian (must be at end, after any other
+            # iptables setting)
+            pglcmd-conf > $R/run/pgl/etc/pgl/pglcmd.conf
+            start pglcmd
     }
 
     notice "Dowse succesfully started" # , web interface up on:"
@@ -345,21 +332,25 @@ dowse-stop() {
     # stop the dns crypto tunnel
     stop dnscrypt
 
-    [[ -z $root ]] || {
-        stop dnscap
-        stop dnsmasq
+    # stop the dns capture daemon
+    stop dnscap
 
-        pgl-kill
-        iptables-snat-off
-        iptables-stop
-        ebtables-stop
-        # restore backup if present
-        [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
-            mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
-        }
-    }
+    # stop the dhcp server
+    stop dnsmasq
 
-    stop redis
+    pglcmd-kill
+
+    ebtables-stop
+
+    iptables-snat-off
+    iptables-stop
+
+    # restore backup if present
+    # [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
+    #     mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
+    # }
+
+    stop redis-server
 
     # consul-stop
 

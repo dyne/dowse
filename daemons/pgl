@@ -4,7 +4,7 @@
 # $R/run/pgl/lib/pgl/pglcmd.defaults
 # $R/run/pgl/lib/pgl/pglcmd.main
 
-pgl-conf() {
+pglcmd-conf() {
     fn pgl-conf
 
     cat <<EOF
@@ -19,12 +19,12 @@ EOF
 
 }
 
-pgl-exec() {
+pglcmd-exec() {
     fn pgl-start
-    $R/run/pgl/bin/pglcmd start
+    $R/run/sup $R/run/pgl/bin/pglcmd start
 }
 
-pgl-kill() {
+pglcmd-kill() {
     fn pgl-stop
-    $R/run/pgl/bin/pglcmd stop
+    $R/run/sup $R/run/pgl/bin/pglcmd stop
 }

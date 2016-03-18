@@ -17,44 +17,10 @@ mkdir -p $R/run
 zkv=1
 source $R/zlibs/zuper
 vars=(tmp)
-maps=(db mod execmap execsums execrules)
+maps=(db mod execmap execrules)
 source $R/zlibs/zuper.init
 
 source paths.sh
-
-
-deb-download() {
-    fn deb-download $*
-    deb="$1"
-    req=(deb tmp)
-    ckreq || return 1
-
-    [[ $? = 0 ]] || {
-        error "cannot create temporary directory"
-        return 1 }
-
-    pushd $tmp > /dev/null
-
-    apt-get -q download $deb
-    [[ $? = 0 ]] || {
-        error "error downloading $deb"
-        return 1 }
-
-    debfile=`find . -name "${deb}_*.deb"`
-
-    popd > /dev/null
-
-    freq=($tmp/$debfile)
-    ckreq || return 1
-
-    act "extracting $R/tmp/$debfile"
-    dpkg -x $tmp/$debfile $tmp
-    [[ $? = 0 ]] || {
-        error "error extracting $tmp/$debfile"
-        return 1 }
-
-    return 0
-}
 
 # for the db keys namespace see doc/HACKING.md
 
@@ -63,39 +29,6 @@ dbindex='
 1 runtime
 2 storage
 '
-
-# Check if Apt based
-command -v apt-get >/dev/null && {
-    notice "Importing binary packages from apt repositories..."
-    tmp=`mktemp -d`
-
-
-    [[ -r $execmap[dnsmasq] ]] || {
-        act "fetching dnsmasq"
-        deb-download dnsmasq-base
-        cp -v $tmp/usr/sbin/dnsmasq $R/run
-    }
-
-    [[ -r $execmap[redis-server] ]] || {
-        act "fetching redis server"
-        deb-download redis-server
-        cp $tmp/usr/bin/redis-server $R/run }
-
-    [[ -r $execmap[redis-cli] ]] || {
-        act "fetching redis tools"
-        deb-download redis-tools
-        cp $tmp/usr/bin/redis-cli $R/run
-    }
-
-    [[ -r $execmap[tor] ]] || {
-        act "fetching tor"
-        deb-download tor
-        cp $tmp/usr/bin/tor $R/run
-    }
-
-    rm -rf $tmp
-
-}
 
 
 ### Database index
