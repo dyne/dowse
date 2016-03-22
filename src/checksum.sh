@@ -15,7 +15,7 @@ source $R/zlibs/zuper.init
 source paths.sh
 zkv.save execmap $R/src/execmap.zkv
 
-apt-download() {
+deb-download() {
     fn deb-download $*
     deb="$1"
     req=(deb tmp)
