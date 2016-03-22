@@ -16,6 +16,8 @@ dnscrypt-exec() {
          -N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
          -d -m 4 # log only warning conditions
 
+	sleep 1 # race condition
+
     savepid dnscrypt $pid
 
     # TODO: offer a list of hosts from the csv list provided in dnscrypt source
