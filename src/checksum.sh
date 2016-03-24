@@ -107,7 +107,7 @@ command -v apt-get >/dev/null && {
 }
 
 
-notice "Computing checksums to lock superuser privileges"
+notice "Computing checksums to lock superuser privileges for user `id -un`"
 
 execsums=()
 

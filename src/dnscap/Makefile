@@ -26,7 +26,7 @@ LIBS=-ldl -lpcap -lresolv
 LDFLAGS=
 
 prog=dnscap
-prefix=/usr/local
+prefix=/usr/local/dowse
 exec_prefix=${prefix}
 bindir=${exec_prefix}/bin
 datarootdir=${prefix}/share

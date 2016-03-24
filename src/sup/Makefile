@@ -8,7 +8,7 @@ GROUP=root
 
 CFLAGS?=-Os -O2
 
-all: shared
+all: config.h shared
 
 shared: CFLAGS+=-fPIC -fPIE -Wall
 shared: LDFLAGS=-fPIC -fPIE -pie

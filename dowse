@@ -31,19 +31,29 @@ zkv=1
 restful=1
 helpers=1
 
-R=${DOWSE_PATH:-`pwd`}
+# export DOWSE_PREFIX and DOWSE_VAR to override
+R=${DOWSE_PREFIX:-/usr/local/dowse}
+V=${DOWSE_VAR:-$HOME/.dowse}
+
+[[ -r $R ]] || {
+    error "Dowse is not installed in: $R"
+    error "export DOWSE_PREFIX if installed on a different path"
+    return 1
+}
+
+mkdir -p $V
 
 # load development libraries if there
-if [[ -r $R/zlibs/zuper-dev/zuper ]]; then
+if [[ -r `pwd`/zlibs/zuper-dev/zuper ]]; then
     func "Zuper loaded from development symlink"
-    source $R/zlibs/zuper-dev/zuper
-else source $R/zlibs/zuper; fi
+    source `pwd`/zlibs/zuper-dev/zuper
+else source `pwd`/zlibs/zuper; fi
 
 # For gettext
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(R address_loaded debug quiet script fun dowserc)
+vars+=(R V address_loaded debug quiet script fun dowserc)
 vars+=(last_notice last_act last_func)
 vars+=(root)
 arrs+=(mods)
@@ -120,10 +130,13 @@ else source $R/zlibs/zuper.init; fi
 
 func "load dataset indexes"
 db=()
-zkv.load $R/src/database.zkv
+zkv.load $R/db/database.zkv
 
 func "load paths and execmaps"
-source $R/src/paths.sh
+execmap=()
+source $R/db/execmap.zkv
+execrules=()
+source $R/db/execrules.zkv
 
 # module fields
 mod=(

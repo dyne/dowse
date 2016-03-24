@@ -1,3 +1,6 @@
+# DESTDIR?=
+PREFIX?=/usr/local/dowse
+
 all: sources
 	@echo
 	@echo "Dowse is compiled and ready to run"
@@ -17,3 +20,7 @@ clean:
 
 #	rm -f src/database.h src/database.zkv
 #	rm -rf run
+
+install:
+	make -C src install
+	make -C zlibs install

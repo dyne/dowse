@@ -10,96 +10,73 @@ R=${R%/*}
 source $R/zlibs/zuper
 source $R/zlibs/zuper.init
 
+PREFIX=${PREFIX:-/usr/local/dowse}
+
 case $1 in
     sup)
-        [[ -r $R/sun/sup ]] || {
-            pushd $R/src/sup
-            make clean && make
-            if [[ -r $R/run/sup ]]; then
-                newsup=`sha256sum $R/src/sup/sup`
-                newsup=${newsup[(w)1]}
-                oldsup=`sha256sum $R/run/sup`
-                oldsup=${oldsup[(w)1]}
-                [[ "$newsup" = "$oldsup" ]] || {
-                    cp $R/src/sup/sup $R/run/ }
-            else
-                cp $R/src/sup/sup $R/run/
-            fi
+        pushd $R/src/sup
 
-            needsuid=0
-            auth=`stat -c '%a %u %g' $R/run/sup`
+        # make sure latest config.h is compiled in
+        rm -f $R/src/sup/sup.o
 
-            [[ "$auth[1]"    = "6" ]] || needsuid=$(( $needsuid + 1 ))
-            [[ "$auth[(w)2]" = "0" ]] || needsuid=$(( $needsuid + 1 ))
-            [[ "$auth[(w)3]" = "0" ]] || needsuid=$(( $needsuid + 1 ))
+        make
 
-            [[ $needsuid = 0 ]] || {
-                sudo=""; command -v sudo && sudo="sudo "
-                act ""
-                error "You need to suid the privilege escalation wrapper sup."
-                act "Please issue the following commands as root:"
-                cat <<EOF
-
-${sudo}chown root:root $R/run/sup
-${sudo}chmod +s $R/run/sup
-
-EOF
-
-                $R/run/sup -l
-            }
-        }
-
+        popd
         ;;
 
     dnscrypt-proxy)
-        [[ -r $R/run/dnscrypt-proxy ]] || {
+        [[ -x $R/src/dnscrypt-proxy/src/proxy/dnscrypt-proxy ]] || {
             pushd $R/src/dnscrypt-proxy
-            ./configure --without-systemd \
+            ./configure --without-systemd --prefix=${PREFIX} \
                 && \
                 make
-            cp $R/src/dnscrypt-proxy/src/proxy/dnscrypt-proxy \
-               $R/run
             popd
         }
         ;;
 
     pgl)
-        [[ -r $R/run/pgl ]] || {
+        [[ -x $R/src/pgl/pgld/pgld ]] || {
             pushd $R/src/pgl
             ./configure --without-qt4 --disable-dbus --enable-lowmem \
-	                --prefix $R/run/pgl --sysconfdir $R/run/pgl/etc \
-	                --with-initddir=$R/run/pgl/init.d \
+	                --prefix ${PREFIX}/pgl \
+                        --sysconfdir ${PREFIX}/pgl/etc \
+	                --with-initddir=${PREFIX}/pgl/init.d \
                 && \
-                make \
-                && \
-                make install
+                make
             # install prefix is local to dowse
             popd
         }
         ;;
 
     dnscap)
-        [[ -r $R/run/dnscap ]] || {
+        [[ -x $R/src/dnscap/dnscap ]] || {
             pushd $R/src/dnscap
-            ./configure \
+            ./configure --prefix=${PREFIX} \
                 && \
-                make \
-                && \
-                cp $R/src/dnscap/dnscap $R/run
+                make
             popd
         }
         ;;
 
+    install)
+        [[ "$UID" = "0" ]] || {
+            print
+            print "need to run make install as root"
+            print
+            return 1 }
+        pushd $R/src/pgl
+        make install
+        popd
+        ;;
+
+
     clean)
+        make -C $R/src/dnscap               clean
+        make -C $R/src/dnscap/plugins/dowse clean
+        make -C $R/src/dnscrypt-proxy       clean
+        make -C $R/src/pgl                  clean
+        make -C $R/src/sup                  clean
 
-        make -C $R/src/dnscap clean
-        rm $R/run/dnscap $R/run/dowse.so
-
-        make -C $R/src/dnscrypt-proxy clean
-        rm $R/run/dnscrypt-proxy
-
-        rm -rf $R/run/pgl
-        make -C $R/src/pgl    clean
         ;;
     *)
         print "usage; ./src/compile.sh [ pgl | dnscap | clean ]"

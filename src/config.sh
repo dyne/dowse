@@ -5,30 +5,100 @@
 # This information is used to generate code that is then included at
 # compile time, so any change of it requires a recompilation.
 
-
-R=`pwd`/..
-[[ -r $R/src ]] || {
+S=${$(pwd)%/*}
+[[ -r $S/src ]] || {
     print "error: config.sh must be run from the src"
     return 1
 }
 
-mkdir -p $R/run
 
 zkv=1
-source $R/zlibs/zuper
-vars=(tmp)
-maps=(db mod execmap execrules)
-source $R/zlibs/zuper.init
+source $S/zlibs/zuper
+maps=(db dbindex execmap execrules)
+source $S/zlibs/zuper.init
 
-source paths.sh
+fn config $*
 
-# for the db keys namespace see doc/HACKING.md
+PREFIX="$1"
+req=(PREFIX)
+ckreq || return 1
 
+
+#########
 dbindex='
 0 dynamic
 1 runtime
 2 storage
 '
+#########
+# for the db keys namespace see doc/HACKING.md
+
+# map of permissions
+execrules=(
+    dnscrypt     user
+    redis-cli    user
+    redis-server user
+    nmap         user
+
+    dnsmasq       root
+    dnscap        root
+    ifconfig      root
+    route         root
+    iptables      root
+    xtables-multi root
+    ebtables      root
+    sysctl        root
+    kill          root
+    # TODO: we shouldn't sup a shell wrapper,
+    #       rather start pgld directly ourselves.
+    pglcmd        root
+)
+zkv.save execrules $S/src/execrules.zkv
+
+
+
+# paths for Devuan
+execmap=(
+    ifconfig      /sbin/ifconfig
+    route         /sbin/route
+    dnscrypt      $PREFIX/bin/dnscrypt-proxy
+    dnsmasq       $PREFIX/bin/dnsmasq
+    dnscap        $PREFIX/bin/dnscap
+    redis-cli     $PREFIX/bin/redis-cli
+    redis-server  $PREFIX/bin/redis-server
+    tor           $PREFIX/bin/tor
+    kill          /bin/kill
+    xtables-multi /sbin/xtables-multi
+    ebtables      /sbin/ebtables
+    sysctl        /sbin/sysctl
+    pglcmd        $PREFIX/pgl/pglcmd/pglcmd
+    libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so.1
+    nmap          /usr/bin/nmap
+)
+
+# check if on Gentoo
+command -v emerge >/dev/null && {
+    execmap=(
+        dnscrypt      /usr/sbin/dnscrypt-proxy
+        dnscap        $PREFIX/src/dnscap/dnscap
+        dnsmasq       /usr/sbin/dnsmasq
+        redis-cli     /usr/bin/redis-cli
+        redis-server  /usr/sbin/redis-server
+        iptables      /sbin/iptables
+        ebtables      /sbin/ebtables
+        sysctl        /usr/sbin/sysctl
+        pgl           $PREFIX/run/pgl/bin/pglcmd
+        libjemalloc   /usr/lib64/libjemalloc.so.2
+    )
+}
+
+case `uname -m` in
+    arm*)
+        execmap[libjemalloc]=/usr/lib/arm-linux-gnueabihf/libjemalloc.so
+        ;;
+esac
+
+zkv.save execmap $S/src/execmap.zkv
 
 
 ### Database index
@@ -38,40 +108,13 @@ for i in ${(f)dbindex}; do
     # this is reverse order: names are the indexes
     db+=( ${i[(w)2]} ${i[(w)1]} )
 done
-zkv.save db $R/src/database.zkv
+zkv.save db $S/src/database.zkv
 
 # save databases for the C code
-rm -rf $R/src/database.h
-touch  $R/src/database.h
+rm -rf $S/src/database.h
+touch  $S/src/database.h
 for i in ${(k)db}; do
-    print "#define db_$i ${db[$i]}" >> $R/src/database.h
+    print "#define db_$i ${db[$i]}" >> $S/src/database.h
 done
 
-
-
-
-
-
-### Modules index
-
-# # save modules for the shell scripts
-# mod=()
-# for i in ${(f)modcodes}; do
-#     mod+=( ${i[(w)2]} ${i[(w)1]} )
-# done
-
-# # save modules for the C code
-# rm -rf $R/src/module.h
-# touch  $R/src/module.h
-# for i in ${(k)mod}; do
-#     print "#define mod_$i ${mod[$i]}" >> $R/src/module.h
-# done
-
-# mod=()
-# for i in {1..${(f)#modfields}}; do
-#     mod+=( $i ${modfields[$i]} )
-# done
-# zkv.save mod $R/src/module.zkv
-
-
-print "# Compile-time configuration generated"
+notice "Database indexes generated"
