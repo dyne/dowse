@@ -43,11 +43,11 @@ command -v emerge >/dev/null && {
     execmap=(
 		ifconfig      /bin/ifconfig
 		route         /bin/route
-        dnscrypt      $R/run/dnscrypt-proxy
-        dnscap        $R/src/dnscap/dnscap
-        dnsmasq       $R/run/dnsmasq
-        redis-cli     $R/run/redis-cli
-        redis-server  $R/run/redis-server
+		dnscrypt      $R/run/dnscrypt-proxy
+		dnscap        $R/src/dnscap/dnscap
+		dnsmasq       $R/run/dnsmasq
+		redis-cli     $R/run/redis-cli
+		redis-server  $R/run/redis-server
 		tor           $R/run/tor
 		kill          /bin/kill
 		xtables-multi /sbin/xtables-multi
