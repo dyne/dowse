@@ -34,10 +34,10 @@ case $1 in
             [[ "$auth[(w)3]" = "0" ]] || needsuid=$(( $needsuid + 1 ))
 
             [[ $needsuid = 0 ]] || {
-                sudo=""; command -v sudo && sudo="sudo "
+                sudo="(root)# "; command -v sudo && sudo="sudo "
                 act ""
                 error "You need to suid the privilege escalation wrapper sup."
-                act "Please issue the following commands as root:"
+                act "Please issue the following commands:"
                 cat <<EOF
 
 ${sudo}chown root:root $R/run/sup
@@ -67,6 +67,7 @@ EOF
         [[ -r $R/run/pgl ]] || {
             pushd $R/src/pgl
             ./configure --without-qt4 --disable-dbus --enable-lowmem \
+					--disable-networkmanager \
 	                --prefix $R/run/pgl --sysconfdir $R/run/pgl/etc \
 	                --with-initddir=$R/run/pgl/init.d \
                 && \
