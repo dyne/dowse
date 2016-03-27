@@ -9,11 +9,12 @@ R=${$(pwd)%/*}
 zkv=1
 source $R/zlibs/zuper
 vars=(tmp)
-maps=(execmap execsums execrules)
+maps=(execmap execsums execrules pkgmap)
 source $R/zlibs/zuper.init
 
 source paths.sh
 zkv.save execmap $R/src/execmap.zkv
+zkv.save pkgmap $R/src/pkgmap.zkv
 
 deb-download() {
     fn deb-download $*
@@ -48,6 +49,38 @@ deb-download() {
     return 0
 }
 
+# Build needed program from source
+source-build() {
+	fn source-build $*
+	pkg="$1"
+	req=(pkg tmp)
+	ckreq || return 1
+
+	[[ $? = 0 ]] || {
+		error "cannot create temporary directory"	
+		return 1
+	}
+
+	pushd $tmp > /dev/null
+
+	wget ${pkgmap[$pkg]}
+	[[ $? = 0 ]] || {
+		error "error downloading $pkg"	
+		return 1
+	}
+
+	tar xf $pkg-*.tar.gz && \
+	rm $pkg-*.tar.gz && \
+	pushd $pkg-*
+
+	if [[ -f configure ]]; then
+		./configure && \
+			make
+	else
+		make
+	fi
+}
+
 act "generating execution rules"
 
 builduid=`id -u`
@@ -74,8 +107,8 @@ static struct rule_t rules[] = {
 EOF
 
 
-# Check if Apt based
-command -v apt-get >/dev/null && {
+# Build needed programs
+if [[ `command -v apt-get` ]]; then
     notice "Importing binary packages from apt repositories..."
     tmp=`mktemp -d`
 
@@ -88,7 +121,8 @@ command -v apt-get >/dev/null && {
     [[ -r $execmap[redis-server] ]] || {
         act "fetching redis server"
         deb-download redis-server
-        cp $tmp/usr/bin/redis-server $R/run }
+        cp $tmp/usr/bin/redis-server $R/run 
+	}
 
     [[ -r $execmap[redis-cli] ]] || {
         act "fetching redis tools"
@@ -103,8 +137,31 @@ command -v apt-get >/dev/null && {
     }
 
     rm -rf $tmp
+else
+	notice "Downloading and building from source..."
+	tmp=`mktemp -d`
 
-}
+	[[ -r $execmap[dnsmasq] ]] || {
+		act "fetching dnsmasq"
+		source-build dnsmasq
+		cp -v $tmp/dnsmasq-*/src/dnsmasq $R/run/
+	}
+
+	[[ -r $execmap[redis-server] && -r $execmap[redis-cli] ]] || {
+		act "fetcing redis"
+		source-build redis
+		cp -v $tmp/redis-*/src/{redis-cli,redis-server} $R/run/
+	}
+
+	[[ -r $execmap[tor] ]] || {
+		act "fetching tor"	
+		source-build tor
+		cp -v $tmp/tor-*/src/or/tor $R/run/
+	}
+
+	rm -rf $tmp
+fi
+
 
 
 notice "Computing checksums to lock superuser privileges"
