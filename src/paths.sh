@@ -40,20 +40,30 @@ execmap=(
 
 # check if on Gentoo
 command -v emerge >/dev/null && {
-
     execmap=(
-        dnscrypt      /usr/sbin/dnscrypt-proxy
-        dnscap        $R/src/dnscap/dnscap
-        dnsmasq       /usr/sbin/dnsmasq
-        redis-cli     /usr/bin/redis-cli
-        redis-server  /usr/sbin/redis-server
-        iptables      /sbin/iptables
+		ifconfig      /bin/ifconfig
+		route         /bin/route
+		dnscrypt      $R/run/dnscrypt-proxy
+		dnscap        $R/src/dnscap/dnscap
+		dnsmasq       $R/run/dnsmasq
+		redis-cli     $R/run/redis-cli
+		redis-server  $R/run/redis-server
+		tor           $R/run/tor
+		kill          /bin/kill
+		xtables-multi /sbin/xtables-multi
         ebtables      /sbin/ebtables
         sysctl        /usr/sbin/sysctl
         pgl           $R/run/pgl/bin/pglcmd
         libjemalloc   /usr/lib64/libjemalloc.so.2
+		nmap          /usr/bin/nmap
     )
 }
+
+pkgmap=(
+	dnsmasq      http://www.thekelleys.org.uk/dnsmasq/dnsmasq-2.75.tar.gz
+	redis        http://download.redis.io/releases/redis-3.0.7.tar.gz
+	tor          https://www.torproject.org/dist/tor-0.2.7.6.tar.gz
+)
 
 case `uname -m` in
     arm*)
