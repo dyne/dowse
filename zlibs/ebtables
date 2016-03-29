@@ -7,7 +7,7 @@ ebtables() {
     freq=($_bin)
     ckreq || return 1
 
-    $R/run/sup $_bin $*
+    $R/bin/sup $_bin $*
 
 }
 

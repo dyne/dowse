@@ -8,11 +8,11 @@ pglcmd-conf() {
     fn pgl-conf
 
     cat <<EOF
-LOCAL_BLOCKLIST_DIR="$R/conf/blocklists"
+LOCAL_BLOCKLIST_DIR="$H/conf/blocklists"
 BLOCKLISTS_LIST=""
-ALLOW_IN="$R/conf/whitelist.p2p"
-ALLOW_OUT="$R/conf/whitelist.p2p"
-LOGDIR="$R/log"
+ALLOW_IN="$H/conf/whitelist.p2p"
+ALLOW_OUT="$H/conf/whitelist.p2p"
+LOGDIR="$H/log"
 DAEMON_LOG="\${LOGDIR}/pgld.log"
 WD="0"
 EOF
@@ -20,11 +20,11 @@ EOF
 }
 
 pglcmd-exec() {
-    fn pgl-start
-    $R/run/sup $R/run/pgl/bin/pglcmd start
+    fn pglcmd-start $*
+    $R/bin/sup $R/bin/pglcmd start
 }
 
 pglcmd-kill() {
-    fn pgl-stop
-    $R/run/sup $R/run/pgl/bin/pglcmd stop
+    fn pglcmd-stop
+    $R/bin/sup $R/bin/pglcmd stop
 }

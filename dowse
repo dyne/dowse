@@ -31,9 +31,9 @@ zkv=1
 restful=1
 helpers=1
 
-# export DOWSE_PREFIX and DOWSE_VAR to override
+# export DOWSE_PREFIX and DOWSE_HOME to override
 R=${DOWSE_PREFIX:-/usr/local/dowse}
-V=${DOWSE_VAR:-$HOME/.dowse}
+H=${DOWSE_HOME:-$HOME/.dowse}
 
 [[ -r $R ]] || {
     error "Dowse is not installed in: $R"
@@ -41,7 +41,7 @@ V=${DOWSE_VAR:-$HOME/.dowse}
     return 1
 }
 
-mkdir -p $V
+mkdir -p $H
 
 # load development libraries if there
 if [[ -r `pwd`/zlibs/zuper-dev/zuper ]]; then
@@ -53,7 +53,7 @@ else source `pwd`/zlibs/zuper; fi
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(R V address_loaded debug quiet script fun dowserc)
+vars+=(R H address_loaded debug quiet script fun dowserc)
 vars+=(last_notice last_act last_func)
 vars+=(root)
 arrs+=(mods)
@@ -171,11 +171,11 @@ EOF
 # fn dowse-check one arg
 arg=${1:-conf/settings}
 # conf is global
-dowserc="$R/$arg"
+dowserc="$H/$arg"
 
-freq=($R/conf $dowserc)
+freq=($H/conf $dowserc)
 
-func "reading configurations in $R/conf"
+func "reading configurations in $H/conf"
 ckreq && conf-load
 
 act "checking requirements to run dowse..."
@@ -186,8 +186,9 @@ act "checking requirements to run dowse..."
     return 1
 }
 
-mkdir -p $R/log
-mkdir -p $R/run
+mkdir -p $H/log
+mkdir -p $H/run
+mkdir -p $H/conf
 
 dowse_uid=`id -un`
 dowse_gid=`id -gn`
@@ -199,8 +200,8 @@ _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
 act "daemons running as user and group $dowse_uid:$dowse_gid"
 # [[ -z $root ]] || {
 #     # setup dirs
-#     chmod go-rwx $R/log
-#     chown -R $dowse_uid:$dowse_gid $R/log
+#     chmod go-rwx $H/log
+#     chown -R $dowse_uid:$dowse_gid $H/log
 
 #     chmod go-rwx $R/run
 #     chown -R $dowse_uid:$dowse_gid $R/run
@@ -210,7 +211,7 @@ act "daemons running as user and group $dowse_uid:$dowse_gid"
 # if touch $R/run/test; then rm -f $R/run/test; else return 1; fi
 
 # func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
-# if touch $R/log/test; then rm -f $R/log/test; else return 1; fi
+# if touch $H/log/test; then rm -f $H/log/test; else return 1; fi
 
 
 act "all requirements in place"
@@ -233,17 +234,17 @@ dowse-start() {
     # freq=($R/conf/settings $R/conf/network)
     # ckreq || return $?
 
-    [[ -r $R/run/redis-server.pid ]] && {
+    [[ -r $H/run/redis-server.pid ]] && {
         warn "Dowse is already running"
         return 0
     }
     notice "Starting Dowse"
 
     # start the redis daemon (core k/v service)
-    redis-conf > $R/run/redis-server.conf
-    cat <<EOF >> $R/run/redis-server.conf
-pidfile $R/run/redis-server.pid
-logfile $R/log/redis-server.log
+    redis-conf > $H/run/redis-server.conf
+    cat <<EOF >> $H/run/redis-server.conf
+pidfile $H/run/redis-server.pid
+logfile $H/log/redis-server.log
 port 6379
 EOF
     start redis-server
@@ -270,10 +271,10 @@ EOF
             loopback-isolate
 
             act "set up $interface interface with ip $address"
-            $R/run/sup ifconfig $interface $address netmask $netmask up
+            $R/bin/sup ifconfig $interface $address netmask $netmask up
 
             act "set $wan as default gateway"
-            $R/run/sup route add default gw $wan
+            $R/bin/sup route add default gw $wan
 
             act "setup snat trasversal"
             iptables-snat-on
@@ -292,10 +293,10 @@ EOF
     }
 
     # generate the dnsmasq configuration
-    dnsmasq-conf > $R/run/dnsmasq.conf
+    dnsmasq-conf > $H/run/dnsmasq.conf
 
     # tunnel dnsmasq across dnscrypt-proxy
-    cat <<EOF >> $R/run/dnsmasq.conf
+    cat <<EOF >> $H/run/dnsmasq.conf
 server=127.0.0.1#53443
 EOF
 
@@ -323,7 +324,7 @@ EOF
     [[ "$firewall" = "yes" ]] && {
             # start peerguardian (must be at end, after any other
             # iptables setting)
-            pglcmd-conf > $R/run/pgl/etc/pgl/pglcmd.conf
+            pglcmd-conf > $H/pgl/etc/pglcmd.conf
             start pglcmd
     }
 
@@ -373,7 +374,7 @@ dowse-stop() {
 
 dowse-reload() {
     fn dowse-reload
-    freq=($R/modules/enabled $R/run/redis-server.pid)
+    freq=($R/modules/enabled)
     ckreq || return 1
 
     mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
@@ -408,13 +409,13 @@ END {
   printf "mac=("; for(i=0;i<c;i++) { printf "%s ", mac[i] }; printf ")\n"
   printf "ip=("; for(i=0;i<c;i++) { printf "%s ", ip[i] }; printf ")\n"
   printf "host=("; for(i=0;i<c;i++) { printf "%s ", host[i] }; printf ")\n"
-}' $R/run/leases
+}' $H/run/leases
 }
 
 dowse-dump() {
     fn dowse-dump
 
-    freq=($R/run/redis.pid)
+    freq=($H/run/redis.pid)
     ckreq || return $?
 
     notice "Dumping variables in Redis"
@@ -430,7 +431,7 @@ dowse-status() {
     fn dowse-status
 
     req=(address)
-    freq=($R/run/leases)
+    freq=($H/run/leases)
     ckreq || return $?
 
     typeset -a mac ip host ping known
@@ -464,7 +465,7 @@ dowse-status() {
 
 dowse-scan() {
     fn dowse-scan
-    freq=($R/run/leases)
+    freq=($H/run/leases)
     ckreq || return $?
 
     notice "Scanning unknown network objects"

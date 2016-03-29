@@ -33,6 +33,8 @@ dbindex='
 #########
 # for the db keys namespace see doc/HACKING.md
 
+mkdir -p $S/build
+
 # map of permissions
 execrules=(
     dnscrypt     user
@@ -48,12 +50,11 @@ execrules=(
     xtables-multi root
     ebtables      root
     sysctl        root
+    # TODO: emit signals from sup
     kill          root
-    # TODO: we shouldn't sup a shell wrapper,
-    #       rather start pgld directly ourselves.
-    pglcmd        root
+    pgld          root
 )
-zkv.save execrules $S/src/execrules.zkv
+zkv.save execrules $S/build/execrules.zkv
 
 
 
@@ -71,7 +72,7 @@ execmap=(
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
-    pglcmd        $PREFIX/pgl/pglcmd/pglcmd
+    pgld          $PREFIX/bin/pgld
     libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so.1
     nmap          /usr/bin/nmap
 )
@@ -87,7 +88,7 @@ command -v emerge >/dev/null && {
         iptables      /sbin/iptables
         ebtables      /sbin/ebtables
         sysctl        /usr/sbin/sysctl
-        pgl           $PREFIX/run/pgl/bin/pglcmd
+        pgl           $PREFIX/bin/pgld
         libjemalloc   /usr/lib64/libjemalloc.so.2
     )
 }
@@ -98,7 +99,7 @@ case `uname -m` in
         ;;
 esac
 
-zkv.save execmap $S/src/execmap.zkv
+zkv.save execmap $S/build/execmap.zkv
 
 
 ### Database index
@@ -108,7 +109,7 @@ for i in ${(f)dbindex}; do
     # this is reverse order: names are the indexes
     db+=( ${i[(w)2]} ${i[(w)1]} )
 done
-zkv.save db $S/src/database.zkv
+zkv.save db $S/build/database.zkv
 
 # save databases for the C code
 rm -rf $S/src/database.h

@@ -22,14 +22,14 @@
 # 02139, USA.
 
 iptables() {
-    fn iptables $*
+    # fn iptables $*
 
     if [[ "$execmap[xtables-multi]" = "/sbin/xtables-multi" ]]; then
-        func "iptables using xtables-multi"
-        $R/run/sup xtables-multi iptables $*
+        # func "iptables using xtables-multi"
+        $R/bin/sup xtables-multi iptables $*
         return $?
     else
-        $R/run/sup $execmap[iptables] $*
+        $R/bin/sup $execmap[iptables] $*
         return $?
     fi
 }

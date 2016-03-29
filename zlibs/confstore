@@ -4,26 +4,6 @@
 vars+=(address interface hostname wan lan firewall)
 vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
-# there is a clear zsh optimization here in get/set kv
-# using zsh/tcp instead of spawning curl
-# and perhaps querying with one call using ?recursive
-
-# wrapper to communicate to our local consul
-.put() {
-    _host=$1
-    shift 1
-    restful.put $_host 8500 $* }
-.get() { _host=$1
-         shift 1
-         restful.get $_host 8500 $* \
-             | awk -F: '
-/"Value":/ { gsub(/"|}]/,"",$7)
-             print $7 }
-' | base64 -d
-
- }
-
-
 conf-load() {
     fn conf-load
 
@@ -41,35 +21,3 @@ conf-load() {
         dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
     }
 }
-
-        # # read configurations from consul if running
-        # [[ -r $R/run/consul.pid ]] && {
-        #     [[ -z $address ]]   || print "$address"   | .put $address /v1/kv/configuration/address
-        #     [[ -z $interface ]] || print "$interface" | .put $address /v1/kv/configuration/interface
-        #     [[ -z $hostname ]]  || print "$hostname"  | .put $address /v1/kv/configuration/hostname
-        #     [[ -z $wan ]]       || print "$wan"       | .put $address /v1/kv/configuration/wan
-        #     [[ -z $dns ]]       || print "$dns"       | .put $address /v1/kv/configuration/dns
-        #     [[ -z $lan ]]       || print "$lan"       | .put $address /v1/kv/configuration/lan
-        #     [[ -z $firewall ]]  || print "$firewall"  | .put $address /v1/kv/configuration/firewall
-        #     # dowse_uid=proxy
-        #     # dowse_gid=proxy
-
-        #     # what network range we choose for our LAN (class C)
-        #     # dowse_net=10.0.0.0/24
-
-        #     # which netmask to be applied (default is class C)
-        #     # netmask=255.255.0.0
-
-        #     # ip range reserved for guests (first,last,leasetime)
-        #     # dowse_guests=10.0.0.101,10.0.0.199,48h
-        # }
-
-    # [[ -r $R/run/consul.pid ]] && {
-    #     # gather settings from consul's key/value store
-    #     address=`.get $address /v1/kv/configuration/address`
-    #     interface=`.get $address /v1/kv/configuration/interface`
-    #     hostname=`.get $address /v1/kv/configuration/hostname`
-    #     wan=`.get $address /v1/kv/configuration/wan`
-    #     lan=`.get $address /v1/kv/configuration/lan`
-    #     firewall=`.get $address /v1/kv/configuration/firewall`
-    # }

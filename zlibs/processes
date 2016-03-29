@@ -8,8 +8,8 @@
 start() {
     fn start $*
     _daemon="$1"
-    pid=${2:-$R/run/$_daemon.pid}
-    conf=${3:-$R/run/$_daemon.conf}
+    pid=${2:-$H/run/$_daemon.pid}
+    conf=${3:-$H/run/$_daemon.conf}
 
     shift
     req=(_daemon)
@@ -92,8 +92,8 @@ getpid() {
     print QUIT | redis runtime && {
         _pid=`print "GET daemon-${_daemon}-pid" | redis runtime` }
 
-    # [[ "$_pid" = "" ]] && [[ -r $R/run/${_daemon}.pid ]] && {
-    #     _pid=`cat $R/run/${_daemon}.pid` }
+    # [[ "$_pid" = "" ]] && [[ -r $H/run/${_daemon}.pid ]] && {
+    #     _pid=`cat $H/run/${_daemon}.pid` }
 
     if [[ "$_pid" = "" ]]; then
         func "$_daemon: pid not found"
@@ -120,7 +120,7 @@ killpid() {
     func "killing $_daemon pid($_pid)"
     if [[ "$execrules[$_daemon]" = "root" ]]; then
         func "root daemon, using sup to kill"
-        $R/run/sup kill $_pid
+        $R/bin/sup kill $_pid
     else
         kill $_pid
     fi

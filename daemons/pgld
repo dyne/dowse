@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+pgld-conf() { }
+
+pglcmd-exec() {
+    fn pgld-start $*
+    $R/bin/sup $R/bin/pgld $H/blocklists/*
+}
+
+pglcmd-kill() {
+    fn pglcmd-stop
+    $R/bin/sup $R/bin/pglcmd stop
+}

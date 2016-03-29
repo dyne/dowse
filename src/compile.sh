@@ -19,65 +19,50 @@ case $1 in
         # make sure latest config.h is compiled in
         rm -f $R/src/sup/sup.o
 
-        make
+        make && install -s -p $R/src/sup/sup $R/build
 
         popd
         ;;
 
     dnscrypt-proxy)
-        [[ -x $R/src/dnscrypt-proxy/src/proxy/dnscrypt-proxy ]] || {
+        [[ -x $R/build/dnscrypt-proxy ]] || {
             pushd $R/src/dnscrypt-proxy
             ./configure --without-systemd --prefix=${PREFIX} \
                 && \
-                make
+                make && \
+                install -s -p src/proxy/dnscrypt-proxy $R/build
             popd
         }
         ;;
 
     pgl)
-        [[ -x $R/src/pgl/pgld/pgld ]] || {
+        [[ -x $R/build/pgld ]] || {
             pushd $R/src/pgl
             ./configure --without-qt4 --disable-dbus --enable-lowmem \
 	                --prefix ${PREFIX}/pgl \
-                        --sysconfdir ${PREFIX}/pgl/etc \
+                        --sysconfdir ${HOME}/.dowse/pgl/etc \
 	                --with-initddir=${PREFIX}/pgl/init.d \
                 && \
-                make
+                make src/pgl/pgld/pgld && \
+                install -s -p $R/src/pgl/pgld/pgld $R/build && \
+                install    -p $R/src/pgl/pglcmd/pglcmd $R/build
             # install prefix is local to dowse
             popd
         }
         ;;
 
     dnscap)
-        [[ -x $R/src/dnscap/dnscap ]] || {
+        [[ -x $R/build/dnscap ]] || {
             pushd $R/src/dnscap
             ./configure --prefix=${PREFIX} \
                 && \
-                make
+                make && \
+                install -s -p $R/src/dnscap/dnscap $R/build && \
+                install -s -p $R/src/dnscap/plugins/dowse/dowse.so $R/build
             popd
         }
         ;;
 
-    install)
-        [[ "$UID" = "0" ]] || {
-            print
-            print "need to run make install as root"
-            print
-            return 1 }
-        pushd $R/src/pgl
-        make install
-        popd
-        ;;
-
-
-    clean)
-        make -C $R/src/dnscap               clean
-        make -C $R/src/dnscap/plugins/dowse clean
-        make -C $R/src/dnscrypt-proxy       clean
-        make -C $R/src/pgl                  clean
-        make -C $R/src/sup                  clean
-
-        ;;
     *)
         print "usage; ./src/compile.sh [ pgl | dnscap | clean ]"
         ;;

@@ -133,7 +133,7 @@ dowse-module-start() {
 }
 
 dowse-module-list() {
-    if [[ -r $R/run/redis.pid ]]; then
+    if [[ -r $H/run/redis.pid ]]; then
         print "LRANGE mod-index 0 -1" | redis runtime
     else
         for i in `find $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`; do

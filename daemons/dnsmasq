@@ -34,8 +34,8 @@ address=/$hostname.$lan/$address
 bogus-priv
 cache-size=2048
 dhcp-range=$dowse_guests
-addn-hosts=$R/run/hosts
-dhcp-leasefile=$R/run/leases
+addn-hosts=$H/run/hosts
+dhcp-leasefile=$H/run/leases
 domain-needed
 domain=$lan
 no-resolv
@@ -51,24 +51,24 @@ user=$dowse_uid
 group=$dowse_gid
 EOF
 
-    [[ -r $R/conf/network ]] && {
+    [[ -r $H/conf/network ]] && {
         # read the network configuration of known hosts
-        known=`cat $R/conf/network`
-        act "$R/conf/network (${#known} bytes parsed)"
+        known=`cat $H/conf/network`
+        act "$H/conf/network (${#known} bytes parsed)"
         # for i in ${(f)known}; do
         #     func "$i"
         # done
 
         # DNSMasq LAN resolution
         func "Fixing entries for known peers"
-        rm -f $R/run/dnsmasq.network
+        rm -f $H/run/dnsmasq.network
         # this is basically a dnsmasq host configuration file
-        print "dhcp-option=option:router,$address" > $R/run/dnsmasq.network
+        print "dhcp-option=option:router,$address" > $H/run/dnsmasq.network
 
         # this is our generated hosts file
         func "Generating hosts file"
-        rm -f $R/run/hosts
-        print "127.0.0.1 localhost" > $R/run/hosts
+        rm -f $H/run/hosts
+        print "127.0.0.1 localhost" > $H/run/hosts
 
         typeset -aU known_network
         # pass via an array to remove duplicates
@@ -87,13 +87,13 @@ EOF
             fi
             [[ "$host" = "ignore" ]] || {
                 # add a line to the hosts list
-                print "$ip $host" >> $R/run/hosts }
+                print "$ip $host" >> $H/run/hosts }
         done
 
         func "generating dnsmask.network"
-        rm -f $R/run/dnsmasq.network
+        rm -f $H/run/dnsmasq.network
         # TODO: first entry about self
-        touch $R/run/dnsmasq.network
+        touch $H/run/dnsmasq.network
         for i in ${known_network}; do
             [[ "$i" -regex-match '^..:..:..:..:..:..' ]] && {
                 func "$i"
@@ -102,24 +102,24 @@ EOF
                 host=${i[(w)2]}
                 ip=${i[(w)3]}
                 # add a line to the dnsmasq host list
-                print "dhcp-host=$mac, $host, $ip" >> $R/run/dnsmasq.network
+                print "dhcp-host=$mac, $host, $ip" >> $H/run/dnsmasq.network
             }
         done
 
         # append network settings to dnsmasq conf
-        cat $R/run/dnsmasq.network
+        cat $H/run/dnsmasq.network
     }
 }
 
 dnsmasq-exec() {
     fn dnsmasq-exec $*
-    exe=${1:-$R/run/dnsmasq}
+    exe=${1:-${execmap[dnsmasq]}}
     freq=($conf $exe)
     ckreq || return $?
 
     ztmp
     func "${execpath} -x $ztmpfile -C $conf"
-    $R/run/sup ${exe} -x $ztmpfile -C $conf
+    $R/bin/sup ${exe} -x $ztmpfile -C $conf
     savepid dnsmasq $ztmpfile
 
     return $?

@@ -9,44 +9,11 @@ R=${$(pwd)%/*}
 zkv=1
 source $R/zlibs/zuper
 vars=(tmp)
-maps=(execmap execsums execrules)
+maps=(execmap execrules execsums)
 source $R/zlibs/zuper.init
 
-source paths.sh
-zkv.save execmap $R/src/execmap.zkv
-
-deb-download() {
-    fn deb-download $*
-    deb="$1"
-    req=(deb tmp)
-    ckreq || return 1
-
-    [[ $? = 0 ]] || {
-        error "cannot create temporary directory"
-        return 1 }
-
-    pushd $tmp > /dev/null
-
-    apt-get -q download $deb
-    [[ $? = 0 ]] || {
-        error "error downloading $deb"
-        return 1 }
-
-    debfile=`find . -name "${deb}_*.deb"`
-
-    popd > /dev/null
-
-    freq=($tmp/$debfile)
-    ckreq || return 1
-
-    act "extracting $R/tmp/$debfile"
-    dpkg -x $tmp/$debfile $tmp
-    [[ $? = 0 ]] || {
-        error "error extracting $tmp/$debfile"
-        return 1 }
-
-    return 0
-}
+zkv.load $R/build/execmap.zkv
+zkv.load $R/build/execrules.zkv
 
 act "generating execution rules"
 
@@ -73,47 +40,20 @@ cat <<EOF > $R/src/sup/config.h
 static struct rule_t rules[] = {
 EOF
 
-
-# Check if Apt based
-command -v apt-get >/dev/null && {
-    notice "Importing binary packages from apt repositories..."
-    tmp=`mktemp -d`
-
-    [[ -r $execmap[dnsmasq] ]] || {
-        act "fetching dnsmasq"
-        deb-download dnsmasq-base
-        cp -v $tmp/usr/sbin/dnsmasq $R/run
-    }
-
-    [[ -r $execmap[redis-server] ]] || {
-        act "fetching redis server"
-        deb-download redis-server
-        cp $tmp/usr/bin/redis-server $R/run }
-
-    [[ -r $execmap[redis-cli] ]] || {
-        act "fetching redis tools"
-        deb-download redis-tools
-        cp $tmp/usr/bin/redis-cli $R/run
-    }
-
-    [[ -r $execmap[tor] ]] || {
-        act "fetching tor"
-        deb-download tor
-        cp $tmp/usr/bin/tor $R/run
-    }
-
-    rm -rf $tmp
-
-}
-
-
 notice "Computing checksums to lock superuser privileges for user `id -un`"
 
 execsums=()
 
 for x in ${(k)execmap}; do
     [[ "$execrules[$x]" = "root" ]] && {
-        cksum=`sha256sum ${execmap[$x]}`
+        if [[ -r $R/build/$x ]]; then
+            cksum=`sha256sum $R/build/$x`
+        elif [[ -r ${execmap[$x]} ]]; then
+            cksum=`sha256sum ${execmap[$x]}`
+        else
+            warning "$x: binary not found in build or path (${execmap[$x]})"
+            continue
+        fi
         cksum=${cksum[(w)1]}
         [[ "$cksum" = "" ]] && {
             warning "missing checksum for: $x"
@@ -125,7 +65,7 @@ for x in ${(k)execmap}; do
 EOF
     }
 done
-zkv.save execsums $R/src/execsums.zkv
+zkv.save execsums $R/build/execsums.zkv
 
 cat <<EOF >> $R/src/sup/config.h
 { 0 },

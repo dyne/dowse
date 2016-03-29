@@ -4,7 +4,7 @@
 
 dnscrypt-exec() {
     fn dnscrypt-exec
-    exe=${1:-$R/run/dnscrypt-proxy}
+    exe=${1:-${execmap[dnscrypt]}}
     req=(exe)
     freq=($exe)
     ckreq || return 1

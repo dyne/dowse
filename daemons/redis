@@ -32,7 +32,7 @@ rdbchecksum yes
 
 dbfilename dump.rdb
 
-dir $R/run
+dir $H/run
 
 slave-serve-stale-data yes
 
@@ -90,7 +90,7 @@ EOF
 
 redis-server-exec() {
     fn redis-server-exec $*
-    exe=${1:-$R/run/redis-server}
+    exe=${1:-${execmap[redis-server]}}
     req=(conf exe)
     freq=($conf $exe)
     ckreq || return 1
