@@ -29,9 +29,9 @@ install:
 	make -C daemons install
 	install -d ${CONFDIR}
 	install -d ${CONFDIR}/blocklists
-	install -p -m 644 conf/settings     ${CONFDIR}/settings
-	install -p -m 644 conf/network      ${CONFDIR}/network
-	install -p -m 644 conf/blocklists/* ${CONFDIR}/blocklists
+	install -p -m 644 conf/settings.dist     ${CONFDIR}/settings.dist
+	install -p -m 644 conf/network.dist      ${CONFDIR}/network.dist
+	install -p -m 644 conf/blocklists/*      ${CONFDIR}/blocklists
 	@modules/install.sh ${CONFDIR}
 	install -d ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/*.zkv         ${DESTDIR}${PREFIX}/db

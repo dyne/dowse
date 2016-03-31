@@ -43,10 +43,8 @@ case $1 in
                         --sysconfdir ${HOME}/.dowse/pgl/etc \
 	                --with-initddir=${PREFIX}/pgl/init.d \
                 && \
-                make src/pgl/pgld/pgld && \
-                install -s -p $R/src/pgl/pgld/pgld $R/build && \
-                install    -p $R/src/pgl/pglcmd/pglcmd $R/build
-            # install prefix is local to dowse
+                make pgld/pgld && \
+                install -s -p $R/src/pgl/pgld/pgld $R/build
             popd
         }
         ;;
