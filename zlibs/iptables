@@ -252,6 +252,8 @@ iptables-snat-on() {
     func "route all dns queries across dnsmasq"
     iptables -t nat -A PREROUTING -i $interface -s $dowse_net \
              -p udp --dport 53 -j DNAT --to-destination $address:53
+    iptables -t nat -A OUTPUT -p udp --dport 53 -j DNAT --to $address:53
+    iptables -t nat -A OUTPUT -p tcp --dport 53 -j DNAT --to $address:53
 
     func "setup route towards wired network"
     iptables --table nat --append POSTROUTING \
