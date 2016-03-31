@@ -26,7 +26,7 @@ iptables() {
 
     if [[ "$execmap[xtables-multi]" = "/sbin/xtables-multi" ]]; then
         # func "iptables using xtables-multi"
-        $R/bin/sup xtables-multi iptables $*
+        $R/bin/sup ${execmap[xtables-multi]} iptables $*
         return $?
     else
         $R/bin/sup $execmap[iptables] $*
