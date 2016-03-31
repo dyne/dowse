@@ -5,11 +5,14 @@ CC = gcc
 CFLAGS = -Wall -fPIC -Os -O2
 LIBS = -ljemalloc -lhiredis
 
-all: config dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
+all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh pgl
 	@./compile.sh dnscap
 	@./import.sh
+	@install -s -p modprobe        ../build
+	@install -s -p dowse-to-gource ../build
+	@install -s -p dowse-to-osc    ../build
 	@./checksum.sh
 	@./compile.sh sup
 
@@ -18,6 +21,9 @@ config:
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
+
+modprobe: modprobe.o log.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
 
 dowse-to-gource: dowse-to-gource.o redis.o epoch.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
@@ -44,7 +50,7 @@ clean:
 	rm -f *.o
 	rm -f *.zkv
 	rm -f database.h execrules.h
-	rm -f dowse-to-osc dowse-to-gource
+	rm -f modprobe dowse-to-osc dowse-to-gource
 	rm -f dnscap/plugins/dowse/*.o
 	make -C sup                  clean
 	make -C dnscap               clean

@@ -74,7 +74,7 @@ execmap=(
     ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
     # TODO: sup list of authorized modules (using libkmod)
-    modprobe      /sbin/modprobe
+    modprobe      $PREFIX/bin/modprobe
     pgld          $PREFIX/bin/pgld
     libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so.1
     nmap          /usr/bin/nmap
