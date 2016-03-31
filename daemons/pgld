@@ -1,13 +1,58 @@
 #!/usr/bin/env zsh
 
-pgld-conf() { }
+pgld-conf() {
+    # required
+    # [[ -f /proc/net/ip_tables_targets ]] && \
+    #     grep -q NFQUEUE /proc/net/ip_tables_targets || {
+    modprobe -q xt_NFQUEUE
+    modprobe -q ipt_NFQUEUE
 
-pglcmd-exec() {
-    fn pgld-start $*
-    $R/bin/sup $R/bin/pgld $H/blocklists/*
+    # below is all optional
+    # [[ -f /proc/net/ip_tables_matches ]] && \
+    #     grep -q mark /proc/net/ip_tables_matches || {
+    # modprobe -q xt_mark
+    # modprobe -q ipt_mark
+
+    # [ -f /proc/net/ip_tables_targets ] && grep -q REJECT /proc/net/ip_tables_targets || {
+    # modprobe -q xt_REJECT
+    # modprobe -q ipt_REJECT
+
+    # [ -f /proc/net/ip_tables_matches ] && grep -q conntrack /proc/net/ip_tables_matches || {
+    # modprobe -q xt_conntrack
+    # modprobe -q ipt_conntrack
+
+    # [ -f /proc/net/ip_tables_matches ] && grep -q iprange /proc/net/ip_tables_matches || {
+    # modprobe -q xt_iprange
+    # modprobe -q ipt_iprange
+
+    # Cat together all single blocklists
+    cat --squeeze-blank $H/blocklists/* |
+        # Ignore comment lines
+        grep -Ev "^[[:space:]]*#" |
+        # Replace repeated whitespace with a single occurence
+        tr -s '[:space:]' |
+        # Delete everything complimentary to the following characters/regex
+        # alphanumeric
+        # space
+        # :\*.-,[]
+        # newline (return gets removed, so CR+LF gets LF)
+        tr -cd '[:alnum:][:space:]:\\\*\.\-,[]\n' |
+        # Only keep the last occurence of :
+        sed 's/.*:/&|/' | tr -d : | tr "\|" ":"
+
 }
 
-pglcmd-kill() {
-    fn pglcmd-stop
-    $R/bin/sup $R/bin/pglcmd stop
+pgld-exec() {
+    fn pgld-start $*
+    exe=${1:-${execmap[pgld]}}
+    req=(conf exe)
+    freq=($conf $exe)
+    ckreq || return 1
+
+    $R/bin/sup $R/bin/pgld -p $pid -r pgld_reject -a pgld_accept $conf
+
+    savepid pgld $pid
+
+    return $?
+
 }
