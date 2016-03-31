@@ -72,7 +72,7 @@ Installation and activation takes a few steps and needs root:
 zsh daemontools iptables ebtables gettext-base procps net-tools
 libssl-dev libbind-dev libpcap-dev unzip wget gcc make liblo-dev
 libnetfilter-conntrack3 libnetfilter-queue-dev libjemalloc-dev
-libseccomp2 libsodium-dev libhiredis-dev
+libseccomp2 libsodium-dev libhiredis-dev libkmod-dev
 ```
 
 3. Run `make`
