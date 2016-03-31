@@ -23,8 +23,6 @@
 
 dnsmasq-conf() {
     fn "dnsmasq-conf"
-#    freq=(conf/network)
-#    ckreq
 
     cat <<EOF
 address=/$hostname/$address
@@ -51,10 +49,10 @@ user=$dowse_uid
 group=$dowse_gid
 EOF
 
-    [[ -r $H/conf/network ]] && {
+    [[ -r $E/network ]] && {
         # read the network configuration of known hosts
-        known=`cat $H/conf/network`
-        act "$H/conf/network (${#known} bytes parsed)"
+        known=`cat $E/network`
+        act "$E/network (${#known} bytes parsed)"
         # for i in ${(f)known}; do
         #     func "$i"
         # done

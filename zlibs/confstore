@@ -23,6 +23,8 @@ conf-load() {
         dowse_net=${dowse_net:-127.0.0.0/24}
         netmask=${netmask:-255.255.255.0}
         dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
+
+        firewall=${firewall:-yes}
     }
 
     func "interface: $interface"
@@ -35,5 +37,5 @@ conf-load() {
     func "network: $dowse_net"
     func "netmask: $netmark"
     func "dhcp: $dowse_guests"
-
+    func "firewall: $firewall"
 }

@@ -423,7 +423,7 @@ dowse-status() {
         [[ $mac[$i] = "" ]] && { continue }
 
         known[$i]="unknown"
-        grep "${mac[$i]}" $R/conf/network > /dev/null
+        grep "${mac[$i]}" $E/network > /dev/null
         [[ $? = 0 ]] && known[$i]="known"
 
         ping[$i]="offline"
@@ -452,7 +452,7 @@ dowse-scan() {
 
     for s in {0..${#mac}}; do
         [[ $mac[$s] == "" ]] && { continue }
-        grep "${mac[$s]}" $R/conf/network > /dev/null
+        grep "${mac[$s]}" $E/network > /dev/null
         [[ $? == 1 ]] && { # unknown
             act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
             func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""

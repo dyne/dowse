@@ -50,7 +50,8 @@ execrules=(
     xtables-multi root
     ebtables      root
     sysctl        root
-    # TODO: emit signals from sup
+    modprobe      root
+    # TODO: sup list of authorized signals to emit (using killall)
     kill          root
     pgld          root
 )
@@ -72,6 +73,8 @@ execmap=(
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
+    # TODO: sup list of authorized modules (using libkmod)
+    modprobe      /sbin/modprobe
     pgld          $PREFIX/bin/pgld
     libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so.1
     nmap          /usr/bin/nmap

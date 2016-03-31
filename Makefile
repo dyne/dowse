@@ -44,7 +44,6 @@ install:
 	install -s -p -m 755 build/redis-server ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/redis-cli    ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/tor          ${DESTDIR}${PREFIX}/bin
-	install    -p -m 755 build/pglcmd       ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/pgld         ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
 # here sup is installed with suid bit. sup is a secure application we
