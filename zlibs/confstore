@@ -8,16 +8,32 @@ conf-load() {
     fn conf-load
 
     # conf/settings override all
-    [[ -r $dowserc ]] && {
-        act "loading configuration from $dowserc"
-        source $dowserc
+    [[ -r $settings ]] && {
+        act "loading configuration from $settings"
+        source $settings
 
         # cover defaults
+        interface=${interface:-lo}
+        hostname=${hostname:-`hostname`}
+        address=${address:-127.0.0.1}
+        wan=${wan:-127.0.0.1}
         dns=${dns:-$wan}
-        dowse_uid=${dowse_uid:-privoxy}
-        dowse_gid=${dowse_gid:-privoxy}
-        dowse_net=${dowse_net:-10.0.0.0/24}
+        dowse_uid=${dowse_uid:-`id -un`}
+        dowse_gid=${dowse_gid:-`id -gn`}
+        dowse_net=${dowse_net:-127.0.0.0/24}
         netmask=${netmask:-255.255.255.0}
         dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
     }
+
+    func "interface: $interface"
+    func "hostname: $hostname"
+    func "address: $address"
+    func "wan: $wan"
+    func "dns: $dns"
+    func "uid: $dowse_uid"
+    func "gid: $dowse_uid"
+    func "network: $dowse_net"
+    func "netmask: $netmark"
+    func "dhcp: $dowse_guests"
+
 }

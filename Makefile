@@ -22,13 +22,12 @@ clean:
 install:
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/bin
-	make -C src install
-	make -C zlibs install
+	make -C src     install
+	make -C zlibs   install
 	make -C daemons install
+	make -C conf    install
 	install -d ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/*.zkv         ${DESTDIR}${PREFIX}/db
-	install -d ${DESTDIR}${PREFIX}/blocklists
-	install    -p -m 644 conf/blocklists/* ${DESTDIR}${PREFIX}/blocklists
 	install -s -p -m 755 src/dowse-to-osc    ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 src/dowse-to-gource ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dnscap        ${DESTDIR}${PREFIX}/bin

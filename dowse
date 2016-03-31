@@ -53,7 +53,7 @@ else source `pwd`/zlibs/zuper; fi
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(R H address_loaded debug quiet script fun dowserc)
+vars+=(R H debug quiet script fun settings network)
 vars+=(last_notice last_act last_func)
 vars+=(root)
 arrs+=(mods)
@@ -63,14 +63,6 @@ arrs+=(mods)
 DEBUG=${DEBUG:-0}
 QUIET=${QUIET:-0}
 LOG=${LOG:-""}
-
-
-# configuration
-vars+=(interface hostname dns lan firewall)
-# uid/gid
-vars+=(dowse_uid dowse_gid)
-# network
-vars+=(wan address dowse_net netmask dowse_guests)
 
 
 # globals filled by lease parser
@@ -168,15 +160,9 @@ cat <<EOF
 
 EOF
 
-# fn dowse-check one arg
-arg=${1:-conf/settings}
-# conf is global
-dowserc="$H/$arg"
-
-freq=($H/conf $dowserc)
-
-func "reading configurations in $H/conf"
-ckreq && conf-load
+# global file path to settings
+settings=${1:-/etc/dowse/settings}
+conf-load
 
 act "checking requirements to run dowse..."
 
@@ -188,10 +174,6 @@ act "checking requirements to run dowse..."
 
 mkdir -p $H/log
 mkdir -p $H/run
-mkdir -p $H/conf
-
-dowse_uid=`id -un`
-dowse_gid=`id -gn`
 
 _verbose "Dowse command: ::1 commands::" "$*"
 _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
