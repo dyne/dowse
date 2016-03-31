@@ -1,5 +1,6 @@
 DESTDIR?=
 PREFIX?=/usr/local/dowse
+CONFDIR?=/etc/dowse
 
 all: sources
 	@echo
@@ -22,10 +23,16 @@ clean:
 install:
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/bin
+	install -p -m 644 dowse ${DESTDIR}${PREFIX}/.zshrc
 	make -C src     install
 	make -C zlibs   install
 	make -C daemons install
-	make -C conf    install
+	install -d ${CONFDIR}
+	install -d ${CONFDIR}/blocklists
+	install -p -m 644 conf/settings     ${CONFDIR}/settings
+	install -p -m 644 conf/network      ${CONFDIR}/network
+	install -p -m 644 conf/blocklists/* ${CONFDIR}/blocklists
+	@modules/install.sh ${CONFDIR}
 	install -d ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/*.zkv         ${DESTDIR}${PREFIX}/db
 	install -s -p -m 755 src/dowse-to-osc    ${DESTDIR}${PREFIX}/bin

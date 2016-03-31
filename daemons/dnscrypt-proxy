@@ -9,25 +9,13 @@ dnscrypt-exec() {
     freq=($exe)
     ckreq || return 1
 
-    if [[ "$DEBUG" = "" ]]; then
+    ${=exe} -a 127.0.0.1:53443 \
+            -p $pid -l $H/log/dnscrypt.log \
+            -r "176.56.237.171:443" \
+            -k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
+            -N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
+            -d -m 4 # log only warning conditions
 
-        ${=exe} -a 127.0.0.1:53443 \
-             -p $pid -l $H/log/dnscrypt.log \
-             -r "176.56.237.171:443" \
-             -k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
-             -N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
-             -d -m 4 # log only warning conditions
-
-    else
-        act "dnscrypt in debug mode"
-        ${=exe} -a 127.0.0.1:53443 \
-             -p $pid \
-             -r "176.56.237.171:443" \
-             -k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
-             -N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
-             -d -m 6 # log all
-
-    fi
     sleep 1 # race condition
 
     savepid dnscrypt $pid

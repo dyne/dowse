@@ -12,9 +12,10 @@ implementations wishes for new daemons and modules
 *** DONE gource (realtime)
 
 ** Modules
-
+*** performance monitoring
+    https://github.com/firehol/netdata
 *** proper tor module
-*** move dnscrypt back to a module
+
 
 ** Daemons
 

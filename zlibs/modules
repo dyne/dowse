@@ -32,7 +32,7 @@ dowse-module-load() {
     core_script="$1/dowse"
     [[ -r "$core_script" ]] || {
         # check also relative path, reason we don't use ckreq
-        core_script="$R/modules/enabled/$1/dowse"
+        core_script="$E/modules/enabled/$1/dowse"
         [[ -r "$core_script" ]] || return 1
     }
 
@@ -136,7 +136,7 @@ dowse-module-list() {
     if [[ -r $H/run/redis.pid ]]; then
         print "LRANGE mod-index 0 -1" | redis runtime
     else
-        for i in `find $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`; do
+        for i in `find $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`; do
             basename $i
         done
     fi

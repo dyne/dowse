@@ -34,6 +34,7 @@ helpers=1
 # export DOWSE_PREFIX and DOWSE_HOME to override
 R=${DOWSE_PREFIX:-/usr/local/dowse}
 H=${DOWSE_HOME:-$HOME/.dowse}
+E=${DOWSE_CONF:-/etc/dowse}
 
 [[ -r $R ]] || {
     error "Dowse is not installed in: $R"
@@ -53,7 +54,7 @@ else source `pwd`/zlibs/zuper; fi
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(R H debug quiet script fun settings network)
+vars+=(R H E debug quiet script fun settings network)
 vars+=(last_notice last_act last_func)
 vars+=(root)
 arrs+=(mods)
@@ -216,7 +217,7 @@ dowse-start() {
     # freq=($R/conf/settings $R/conf/network)
     # ckreq || return $?
 
-    [[ -r $H/run/redis-server.pid ]] && {
+    [[ "`getpid redis-server`" = "" ]] || {
         warn "Dowse is already running"
         return 0
     }
@@ -287,7 +288,7 @@ EOF
     start dnscap
 
 
-    mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
+    mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
         dowse-module-load $m || continue
         dowse-module-setup || continue
@@ -352,10 +353,10 @@ dowse-stop() {
 
 dowse-reload() {
     fn dowse-reload
-    freq=($R/modules/enabled)
+    freq=($E/modules/enabled)
     ckreq || return 1
 
-    mods=`find -L $R/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
+    mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     func "modules enabled: $mods"
     for m in "${(f)mods}"; do
         dowse-module-load $m || continue
