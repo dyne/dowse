@@ -41,6 +41,8 @@ execrules=(
     redis-cli    user
     redis-server user
     nmap         user
+    arp          user
+    ip           user
 
     dnsmasq       root
     dnscap        root
@@ -73,6 +75,8 @@ execmap=(
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
+    ip            /sbin/ip
+    arp           /usr/sbin/arp
     # TODO: sup list of authorized modules (using libkmod)
     modprobe      $PREFIX/bin/modprobe
     pgld          $PREFIX/bin/pgld

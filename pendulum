@@ -61,7 +61,7 @@ now=`date +'%s'`
 # this establishes mac addresses as indexes
 update-neigh() {
     fn update-neigh
-    for o in "${(f)$(ip neigh)}"; do
+    for o in "${(f)$(${execmap[ip]} neigh)}"; do
         obj=()
         obj[mac]="${o[(w)5]}"
         [[ "$obj[mac]" = "FAILED" ]] && continue
@@ -75,14 +75,14 @@ update-neigh() {
         obj[mac]="${o[(w)5]}"
         obj[state]="${o[(w)6]}"
         func "$obj"
-        stash_findings
+        stash-findings
     done
 }
 
 # finds out hostnames from the arp table
 update-arp() {
     fn update-arp
-    for a in "${(f)$(arp -H ether -a)}"; do
+    for a in "${(f)$(${execmap[arp]} -H ether -a)}"; do
         [[ "$a" =~ "no match found" ]] && break
         local useful=0
         obj=()
@@ -99,14 +99,14 @@ update-arp() {
 
         [[ $useful = 1 ]] && {
             # field 2 is ip between parenthesis, if needed
-            stash_findings
+            stash-findings
         }
     done
 }
 
 # stashes all findings about current object lookup
 stash-findings() {
-    fn stash_findings
+    fn stash-findings
     news=0
     redis_cmd=''
     [[ "obj[mac]" = "" ]] && {
@@ -178,7 +178,7 @@ store-findings() {
 }
 
 list-objects() {
-    fn list_objects $*
+    fn list-objects $*
     _db=${1:-storage}
 
     for o in "${(f)$(print - "keys obj_*_last" | redis ${_db})}"; do
@@ -201,14 +201,14 @@ list-objects() {
 cmd=${1:-list}
 case $cmd in
      update)
-         update_neigh
-         update_arp
-         # list_objects dynamic
-         store_findings
+         update-neigh
+         update-arp
+         # list-objects dynamic
+         store-findings
          ;;
 
      list)
-         list_objects ${2:-storage}
+         list-objects ${2:-storage}
          ;;
      "source") ;;
 esac

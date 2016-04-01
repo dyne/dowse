@@ -20,10 +20,14 @@ database using keys with 3 strings separated by underscore (_):
    - `last`: last time this object was seen (in EPOCH)
    - `age`: first time this object was seen (in EPOCH)
 
+To list stored known and unknown objects from commandline, do:
 
-db=`awk '/db_dynamic/ { print $3 }' src/database.h`
+```
+db=`awk '/db_storage/ { print $3 }' src/database.h`
 cat <<EOF | redis-cli -n $db --raw
-SUBSCRIBE dns-query-channel
+keys kno_*
+keys uno_*
+```
 
 # Events
 
