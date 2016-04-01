@@ -1,0 +1,214 @@
+#!/usr/bin/env zsh
+#
+# Copyright (C) 2016 Dyne.org Foundation
+#
+# Designed, written and maintained by Denis Roio <jaromil@dyne.org>
+#
+# This source code is free software; you can redistribute it
+# and/or modify it under the terms of the GNU Public License
+# as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# This source code is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.  Please refer to the GNU Public License for more
+# details.
+#
+# You should have received a copy of the GNU Public License
+# along with this source code; if not, write to: Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+# 02139, USA.
+
+# This standalone program runs every N seconds and gathers current
+# information on network objects, updating it in redis
+
+R=${0%/*}
+[[ "$R" = "pendulum" ]] && R=`pwd`
+[[ -r $R/zlibs ]] || {
+    print "error: no zlibs found in $R"
+    return 1 }
+
+zkv=1
+source $R/zlibs/zuper
+source $R/zlibs/redis
+source $R/zlibs/confstore
+vars+=(R V now)
+arrs+=(objidx)
+maps+=(obj db execmap)
+source $R/zlibs/zuper.init
+
+
+func "load dataset indexes"
+db=()
+zkv.load $R/build/database.zkv
+
+func "load paths and execmaps"
+execmap=()
+source $R/build/execmap.zkv
+
+objidx=(ip hostname iface state os dhcp)
+# age and last are apart
+# mac is the index
+
+settings=${settings:-/etc/dowse/settings}
+conf-load
+
+now=`date +'%s'`
+
+# finds out LAN neighbours, their mac and their state
+# this establishes mac addresses as indexes
+update-neigh() {
+    fn update-neigh
+    for o in "${(f)$(ip neigh)}"; do
+        obj=()
+        obj[mac]="${o[(w)5]}"
+        [[ "$obj[mac]" = "FAILED" ]] && continue
+
+        obj[ip]="${o[(w)1]}"
+
+        # TODO: skip ipv6 for now
+        [[ "$obj[ip]" =~ "::" ]] && continue
+
+        obj[iface]="${o[(w)3]}"
+        obj[mac]="${o[(w)5]}"
+        obj[state]="${o[(w)6]}"
+        func "$obj"
+        stash_findings
+    done
+}
+
+# finds out hostnames from the arp table
+update-arp() {
+    fn update-arp
+    for a in "${(f)$(arp -H ether -a)}"; do
+        [[ "$a" =~ "no match found" ]] && break
+        local useful=0
+        obj=()
+        obj[mac]="${a[(w)4]}"
+        [[ "$obj[mac]" = "<incomplete>" ]] && {
+            warning "$a: missing MAC"
+            continue }
+
+        obj[hostname]="${a[(w)1]}"
+        if [[ "$obj[hostname]" = "?" ]]; then
+            warning "$obj[mac] - could not resolve hostname"
+            obj[hostname]=""
+        else useful=1; fi
+
+        [[ $useful = 1 ]] && {
+            # field 2 is ip between parenthesis, if needed
+            stash_findings
+        }
+    done
+}
+
+# stashes all findings about current object lookup
+stash-findings() {
+    fn stash_findings
+    news=0
+    redis_cmd=''
+    [[ "obj[mac]" = "" ]] && {
+        warning "MAC identifier unknown, nothing to stash"
+        return 1 }
+    for i in $objidx; do
+        [[ "$obj[$i]" = "" ]] || {
+            redis_cmd+="SET obj_${obj[mac]}_$i \"$obj[$i]\"\n"
+            news=1
+        }
+    done
+    # deal with age and last seen
+    [[ $news = 1 ]] && {
+        redis_cmd+="SET obj_${obj[mac]}_last \"$now\"\n"
+        print - "$redis_cmd" | redis dynamic 1>/dev/null
+    }
+}
+
+
+# compates all old and new values, signals about changes and saves all
+# in storage
+store-findings() {
+    fn store_findings
+
+    for o_new in "${(f)$(print - 'keys obj_*_last' | redis dynamic)}"; do
+
+        o_name=${o_new%_*}
+        notice "$o_name"
+        o_status=unchanged
+        redis_cmd=''
+
+        for i in $objidx; do
+            fnew=$(print - "GET ${o_name}_$i" | redis dynamic)
+            [[ "$fnew" = "" ]] && continue
+
+            fold=$(print - "GET ${o_name}_$i" | redis storage)
+
+            if [[ "$fold" = "" ]]; then
+                act "$i new: $fnew"
+                redis_cmd+="SET ${o_name}_$i \"$fnew\"\n"
+                o_status=new
+
+            elif [[ "$fnew" = "$fold" ]]; then
+                func "$i unchanged"
+            else
+                act "$i changed: $fold -> $fnew"
+                redis_cmd+="SET ${o_name}_$i  \"$fnew\"\n"
+                o_status=changed
+            fi
+
+            print - "DEL ${o_name}_$i" | redis dynamic 1>/dev/null
+        done
+
+        case $o_status in
+            new)
+                redis_cmd+="SET ${o_name}_age \"$now\" \n"
+                redis_cmd+="SET ${o_name}_last \"$now\" \n"
+                ;;
+            changed)
+                redis_cmd+="SET ${o_name}_last \"$now\" \n"
+                ;;
+        esac
+        print - "DEL ${o_name}_last" | redis dynamic 1>/dev/null
+
+        print - $redis_cmd | redis storage 1>/dev/null
+
+    done
+
+}
+
+list-objects() {
+    fn list_objects $*
+    _db=${1:-storage}
+
+    for o in "${(f)$(print - "keys obj_*_last" | redis ${_db})}"; do
+        [[ "$o" = "" ]] && continue
+        o_name=${o%_*}
+        redis_cmd=''
+        notice "$o_name"
+        for i in ${objidx}; do
+            redis_cmd+="GET ${o_name}_$i\n"
+        done
+
+        c=1
+        for l in "${(f)$(print - $redis_cmd | redis ${_db})}"; do
+            act "${objidx[$c]}: $l"
+            c=$(($c+1))
+        done
+    done
+}
+
+cmd=${1:-list}
+case $cmd in
+     update)
+         update_neigh
+         update_arp
+         # list_objects dynamic
+         store_findings
+         ;;
+
+     list)
+         list_objects ${2:-storage}
+         ;;
+     "source") ;;
+esac

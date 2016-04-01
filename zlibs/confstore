@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 
-vars+=(address interface hostname wan lan firewall)
+vars+=(settings address interface hostname wan lan firewall)
 vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
 conf-load() {

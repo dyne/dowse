@@ -1,6 +1,33 @@
-# Data format
+# Objects
 
-Internal data formats are geared towards performance and simplicity.
+Known and unknown objects on the network are listed in the STORAGE
+database using keys with 3 strings separated by underscore (_):
+
+```
+{KNO|UNO}_HEX:MAC:ADDR:STRING_FIELD
+```
+
+ - `KNO`: Known Network Object
+ - `UNO`: Unknown Network Object
+ - `HEX:MAC:ADDR:STRING`: MAC address used as unique identifier
+ - `FIELD`: can be any string holding information (`objidx` array)
+   - `ip`: ip address
+   - `hostname`: hostname resolved and declared
+   - `iface`: interface to which this object connected last
+   - `state`: state of this object's connectivity reported by `ip neigh`
+   - `os`: operating system of this object reported by `p0f`
+   - `dhcp`: ip assigned to this object by our dhcp
+   - `last`: last time this object was seen (in EPOCH)
+   - `age`: first time this object was seen (in EPOCH)
+
+
+db=`awk '/db_dynamic/ { print $3 }' src/database.h`
+cat <<EOF | redis-cli -n $db --raw
+SUBSCRIBE dns-query-channel
+
+# Events
+
+Event data formats are geared towards performance and simplicity.
 
 They are comma separated strings (csv) where position is semantically
 relevant depending from the data type.
@@ -99,7 +126,7 @@ Sources
 - web interface
 - rest api
 
-# Event channels
+# Channels
 
 In Dowse the 'dynamic' redis database (indexed by `src/database.h`
 macros) is gathering a number of live events occurring across its
