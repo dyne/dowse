@@ -9,6 +9,7 @@ all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh pgl
 	@./compile.sh dnscap
+	@./compile.sh netdiscover
 	@./import.sh
 	@install -s -p modprobe        ../build
 	@install -s -p dowse-to-gource ../build
@@ -57,4 +58,4 @@ clean:
 	make -C dnscap/plugins/dowse clean
 	make -C dnscrypt-proxy       clean
 	make -C pgl                  clean
-	make -C sup                  clean
+	make -C netdiscover          clean
