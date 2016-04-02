@@ -48,7 +48,31 @@ struct rule_t {
 #include "sha256.h"
 #endif
 
-#define HELP "sup [-hldv] [cmd ..]"
+static const char *HEADER = "sup " VERSION " - small and beautiful superuser tool\n";
+
+static const char *COPYLEFT =
+    "copyright (C) 2016 dyne.org foundation, license GNU GPL v3+\n"
+    "this is free software: you are free to change and redistribute it\n"
+    "for the latest sourcecode go to <https://git.devuan.org/jaromil/sup>\n";
+
+static const char *LICENSE =
+    "this source code is distributed in the hope that it will be useful,\n"
+    "but without any warranty; without even the implied warranty of\n"
+    "merchantability or fitness for a particular purpose.\n"
+    "when in need please refer to <http://dyne.org/support>.\n";
+
+
+static const char *HELP =
+    "Syntax: sup [options] command [arguments...]\n"
+    "\n"
+    "Options:\n"
+    " -l     list compiled-in authorizations and flags\n"
+    " -u     set uid to this user name\n"
+    " -g     set gid to this group name\n"
+    " -d     fork command as background process (daemon)\n"
+    " -p     saves pid of background process to file (daemon)\n"
+    "\n"
+    "Please report bugs to <https://git.devuan.org/jaromil/sup/issues>\n";
 
 #define MAXCMD 512
 #define MAXFILEPATH 4096
@@ -82,28 +106,76 @@ static char *getpath(const char *str) {
     return NULL;
 }
 
+#ifdef HASH
+
+#define CHUNK 1048576 // 1MiB
+static uint32 getsha(const char *path, unsigned char *dest) {
+    static sha256_context sha;
+
+    unsigned char buf[CHUNK]; // 1 MiB
+    uint32 len, tot;
+    FILE *fd;
+
+    fd = fopen(path,"r");
+    if(!fd) error("fopen", "cannot read binary file");
+
+    sha256_starts(&sha);
+    clearerr(fd);
+    len=0;
+    tot=0;
+
+    do {
+        // read chunk of data in binary file
+        len = fread(buf, 1, CHUNK, fd);
+        if(!len) break; // NULL read
+        tot+=len;
+        if(len<CHUNK) break; // EOF reached
+
+        // compute sha256 of chunk
+        sha256_update(&sha, buf, len);
+
+    } while(len>0);
+
+    // check file descriptor for errors
+    if(ferror(fd)) {
+        fclose(fd);
+        error("fread", "error reading binary file");
+    }
+    fclose(fd);
+
+    // compute last chunk
+    if(len>0) sha256_update(&sha, buf, len);
+
+    // finish and save result in *dest
+    sha256_finish(&sha, dest);
+
+    return(tot);
+}
+
+#endif
+
 
 int main(int argc, char **argv) {
 
     static char fullcmd[MAXCMD];
     static char *cmd;
+
     struct passwd *pw;
     struct stat st;
-    int i, uid, gid;
-    int fork_daemon = 0;
+
+    static int i, uid, gid;
+    static int target_uid=0;
+    static int target_gid=0;
+
 #ifdef HASH
-    FILE *fd;
-    unsigned char *buf;
-    size_t len;
-    sha256_context sha;
     unsigned char digest[32];
     char output[65];
 #endif
 
-    char pidfile[MAXFILEPATH];
-
-    int target_uid=0;
-    int target_gid=0;
+#ifdef DAEMON
+    int fork_daemon = 0;
+    char pidfile[MAXFILEPATH] = "";
+#endif
 
     // parse commandline options
     int opt;
@@ -111,9 +183,11 @@ int main(int argc, char **argv) {
 
         switch(opt) {
 
+#ifdef DAEMON
         case 'p':
             snprintf(pidfile,MAXFILEPATH,"%s",optarg);
             break;
+#endif
 
         case 'u':
             {
@@ -136,19 +210,22 @@ int main(int argc, char **argv) {
             break;
 
         case 'h':
-            fprintf(stdout, "%s\n", HELP);
+            fprintf(stdout, "%s\n%s\n%s", HEADER, COPYLEFT, HELP);
             exit (0);
 
         case 'v':
-            fprintf(stdout, "sup %.1f - small and beautiful superuser tool\n", VERSION);
+            fprintf(stdout, "%s\n%s\n%s", HEADER, COPYLEFT, LICENSE);
+
             exit (0);
 
+#ifdef DAEMON
         case 'd':
             fork_daemon=1;
             break;
+#endif
 
         case 'l':
-            fprintf(stdout,"List of compiled in authorizations:\n\n");
+            fprintf(stdout,"%s\n%s\nList of compiled in authorizations:\n\n", HEADER, COPYLEFT);
             fprintf(stdout,"User\tUID\tGID\t%s\t\t%s\n",
                     "Command","Forced PATH");
             for (i = 0; rules[i].cmd != NULL; i++) {
@@ -169,19 +246,26 @@ int main(int argc, char **argv) {
 #else
                     "",
 #endif
-                    ENFORCE?"ENFORCE":"",
+#ifdef DAEMON
+                    DAEMON?"DAEMON":"",
+#else
+                    "",
+#endif
                     strlen(CHROOT)?"CHROOT":"",
                     strlen(CHRDIR)?"CHRDIR":"");
             exit (0);
-        }
 
-    }
+        } // switch(opt)
 
+    } // getopt
+
+    // get the called UID and GID
     uid = getuid ();
     gid = getgid ();
 
     // copy the execv argument locally
     snprintf(fullcmd,MAXCMD,"%s",argv[optind]);
+    // save a pointer to basename string in cmd
     cmd = basename(fullcmd);
 
     // get the username string from /etc/passwd
@@ -192,71 +276,73 @@ int main(int argc, char **argv) {
             cmd, pw?pw->pw_name:"", uid, gid);
 #endif
 
+    // loop over each rule
     for (i = 0; rules[i].cmd != NULL; i++) {
 
+        /// COMMAND AND PATH CHECK
+        // if command is * or matching the rule
         if (*rules[i].cmd == '*' || !strcmp (cmd, rules[i].cmd)) {
-
+            // if path is locked
             if (*rules[i].path != '*') {
-
+                // and if path is specified
                 if((fullcmd[0]=='.')||(fullcmd[0]=='/')) {
+                    // then check that path matches
                     if( strcmp(rules[i].path,fullcmd) )
                         return error("path","path not matching");
-
-                } else { // not a full path, see if getpath matches
+                // or if path is not specified
+                } else { // get the default path with our getpath()
                     snprintf(fullcmd,MAXCMD,"%s",getpath(cmd));
+                    // check if the default environment path matches
                     if( strcmp(rules[i].path,fullcmd) )
                         return error("path","path not matching");
                 }
-
-            } else // rules path is open '*'
+            // or if path is not locked
+            } else // and if path is not specified, getpath()
                 if((fullcmd[0]!='.')&&(fullcmd[0]!='/'))
                     snprintf(fullcmd,MAXCMD,"%s",getpath(cmd));
 
 #ifdef DEBUG
-            fprintf(stderr,"rule passed\n");
+            fprintf(stderr,"path check passed\n");
             fprintf(stderr,"fullcmd: %s\n",fullcmd);
             fprintf(stderr,"cmd: %s\n",cmd);
 #endif
 
+            /// COMMAND BINARY CHECK
+            // command does not exist as binary on the filesystem
             if (lstat (fullcmd, &st) == -1)
                 return error("lstat", "cannot stat program");
-
+            // command has wrong permissions (writable to others)
             if (st.st_mode & 0022)
                 return error("perm", "cannot run binaries others can write.");
-
+            // user UID is not root
             if (uid != SETUID
+                // and is not unlocked
                 && rules[i].uid != -1
+                // and is not the locked UID
                 && rules[i].uid != uid)
                 return error("uid", "user does not match");
 
+            // user GID is not root
             if (gid != SETGID
+                // and is not unlocked
                 && rules[i].gid != -1
+                // and is not the locked GID
                 && rules[i].gid != gid)
                 return error("gid", "group id does not match");
 
 
 #ifdef HASH
+            /// BINARY HASH CHECKSUM
             if( strlen(rules[i].hash) ) {
                 int c;
+                uint32 sizeread;
 
                 if(st.st_size>MAXBINSIZE)
                     error("binsize", "cannot check hash of file, size too large");
 
-                fd = fopen(fullcmd,"r");
-                if(!fd) error("fopen", "cannot read binary file");
-
-                // TODO: split the read in chunks and remove alloc
-                buf = malloc(st.st_size);
-                if(!buf) error("malloc", "cannot allocate memory");
-
-                len = fread(buf,1,st.st_size,fd);
-                if(len != st.st_size) {
-                    error("fread", "cannot read from binary file");
-                    free(buf); fclose(fd); }
-
-                sha256_starts(&sha);
-                sha256_update(&sha, buf, (uint32)len);
-                sha256_finish(&sha, digest);
+                sizeread = getsha(fullcmd, digest);
+                if(sizeread != st.st_size)
+                    error("getsha", "binary file size differs from size read");
 
                 for(c = 0; c<32; c++)
                     sprintf(output + (c * 2),"%02x",digest[c]);
@@ -288,6 +374,7 @@ int main(int argc, char **argv) {
                     return error("chdir", NULL);
 #endif
 
+#ifdef DAEMON
             if(fork_daemon) {
 
                 pid_t pid;
@@ -307,18 +394,25 @@ int main(int argc, char **argv) {
                     dup(fd); // stderr
 
                 } else {
-                    /* save the pid of the forked child. beware this
-                       does not work with some daemons that follow up
-                       with more forks. */
-                    FILE *fpid = fopen(pidfile,"w");
-                    fprintf(fpid,"%u\n",pid);
-                    fclose(fpid);
+
+                    // if pidfile is not an empty string (-p is used)
+                    if( strncmp(pidfile,"",MAXFILEPATH) ) {
+                        /* save the pid of the forked child. beware this
+                           does not work with some daemons that follow up
+                           with more forks. */
+                        FILE *fpid = fopen(pidfile,"w");
+                        if(!fpid) error("pidfile", NULL);
+                        fprintf(fpid,"%u\n",pid);
+                        fclose(fpid);
+                    }
 
                     // leave us kids alone
                     _exit(0);
                 }
             }
+#endif
 
+            // turn current process into the execution of command
             execv (fullcmd, &argv[optind]);
             // execv returns only on errors
             error("execv", NULL);

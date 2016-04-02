@@ -1,8 +1,10 @@
-// sup configuration file
+// sup's configuration file
+// need sup to be re-compiled for any change to be effective
 
+/// un/comment flags below to remove functionalities
 #define HASH 1
-
-#define ENFORCE 1
+#define DAEMON 1
+// #define DEBUG 1
 
 #ifndef FLAGSONLY
 

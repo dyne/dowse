@@ -8,7 +8,7 @@ GROUP=root
 
 CFLAGS?=-Os -O2
 
-all: config.h shared
+all: shared
 
 shared: CFLAGS+=-fPIC -fPIE -Wall
 shared: LDFLAGS=-fPIC -fPIE -pie
@@ -36,7 +36,7 @@ config.h:
 	cp config.def.h config.h
 
 .c.o:
-	$(CC) $(CFLAGS) -c $< -o $@ -DVERSION=${VERSION}
+	$(CC) $(CFLAGS) -c $< -o $@ -DVERSION=\"${VERSION}\"
 
 clean:
 	rm -f *.o sup test
