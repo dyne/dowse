@@ -22,7 +22,7 @@ buildgid=`id -g`
 # generate configuration for sup
 cat <<EOF > $R/src/sup/config.h
 
-#define ENFORCE 1
+#define DAEMON 1
 
 #define HASH 1
 
