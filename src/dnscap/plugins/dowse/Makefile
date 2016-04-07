@@ -1,6 +1,6 @@
 #CC=colorgcc
 CC = gcc
-CFLAGS = -Wall -Os -O2 -fPIC -I../../../
+CFLAGS = -Wall -Os -fPIC -I../../../
 LIBS = -ljemalloc -lhiredis
 all: dowse.so
 

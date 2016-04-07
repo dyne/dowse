@@ -11,15 +11,16 @@ source $R/zlibs/zuper
 source $R/zlibs/zuper.init
 
 PREFIX=${PREFIX:-/usr/local/dowse}
-CFLAGS="-Wall -fPIC -fPIE -Os -O2"
+CFLAGS="-Wall -fPIC -fPIE -Os"
 LDFLAGS="-fPIC -fPIE -pie"
 
 case $1 in
     netdiscover)
         [[ -x $R/build/netdiscover ]] || {
             pushd $R/src/netdiscover
-            CFLAGS="$CFLAGS" ./configure --prefix=${PREFIX} &&
-                make &&
+			autoreconf && \
+            CFLAGS="$CFLAGS" ./configure --prefix=${PREFIX} && \
+                make && \
                 install -s -p src/netdiscover $R/build
             popd
         }
@@ -51,11 +52,12 @@ case $1 in
         [[ -x $R/build/pgld ]] || {
             pushd $R/src/pgl
             ./configure --without-qt4 --disable-dbus --enable-lowmem \
+						--disable-networkmanager \
                         --prefix ${PREFIX}/pgl \
                         --sysconfdir ${HOME}/.dowse/pgl/etc \
                         --with-initddir=${PREFIX}/pgl/init.d \
                 && \
-                make pgld/pgld && \
+                make -C pgld && \
                 install -s -p $R/src/pgl/pgld/pgld $R/build
             popd
         }

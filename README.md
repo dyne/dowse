@@ -69,7 +69,7 @@ Installation and activation takes a few steps and needs root:
 2. Install all requirements, here below the list of packages:
 
 ```
-zsh iptables ebtables gettext-base procps net-tools
+zsh iptables ebtables gettext-base procps net-tools autoconf
 libssl-dev libbind-dev libpcap-dev unzip wget gcc make liblo-dev
 libnetfilter-conntrack3 libnetfilter-queue-dev libjemalloc-dev
 libseccomp2 libsodium-dev libhiredis-dev libkmod-dev

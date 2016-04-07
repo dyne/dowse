@@ -6,7 +6,7 @@ VERSION=1.1
 USER=root
 GROUP=root
 
-CFLAGS?=-Os -O2
+CFLAGS?=-Os
 
 all: shared
 
