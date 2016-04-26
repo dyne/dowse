@@ -25,20 +25,22 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 #include "redis.h"
 #include "database.h"
 
+static char output[MAX_OUTPUT];
+static int quit = 0;
 
-static int done = 0;
 void ctrlc(int sig) {
     fprintf(stderr,"\nQuit.\n");
     redisFree(redis);
-    done = 1;
+    quit = 1;
 }
 
-
 int main(int argc, char **argv) {
+
 
     connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
@@ -47,9 +49,32 @@ int main(int argc, char **argv) {
     reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
-        if(done) break;
+        char *dns, *ip, *action, *epoch, *domain, *tld, *group;
+        if(quit) break;
 
-        fprintf(stdout,"%s\n",reply->element[2]->str);
+        dns = strtok(reply->element[2]->str,",");
+        if(!dns) continue;
+        ip = strtok(NULL,",");
+        if(!ip) continue;
+        action = strtok(NULL,",");
+        if(!action) continue;
+        epoch = strtok(NULL,",");
+        if(!epoch) continue;
+        domain = strtok(NULL,",");
+        if(!domain) continue;
+        tld = strtok(NULL,",");
+        if(!tld) continue;
+        group = strtok(NULL,","); // optional
+        
+        // render
+        if(!group)
+            snprintf(output,MAX_OUTPUT,"%s|%s|%c|%s/%s",
+                     epoch,ip,(action[0]=='K')?'M':'A',tld,domain);
+        else
+            snprintf(output,MAX_OUTPUT,"%s|%s|%c|%s/%s/%s",
+                     epoch,ip,(action[0]=='K')?'M':'A',tld,group,domain);
+            
+        fprintf(stdout,"%s\n",output);
         fflush(stdout);
 
         freeReplyObject(reply);

@@ -1,7 +1,7 @@
 #CC=colorgcc
 CC = gcc
-CFLAGS = -Wall -Os -fPIC -I../../../
-LIBS = -ljemalloc -lhiredis
+CFLAGS = -Wall -Os -O2 -fPIC -I../../../
+LIBS = -ljemalloc -lhiredis ../../../redis.o
 all: dowse.so
 
 dowse.so: hashmap.o dowse.o

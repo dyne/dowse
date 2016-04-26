@@ -57,6 +57,14 @@ Below is an updated list of existing types and their actions.
 
 Represents the event of a dns query by an object on the net.
 
+Sources:
+- dnscap (dowse plugin)
+
+Channel:
+- dns-query-channel
+
+Format:
+
 ```
 DNS,IP,{ACTION},EPOCH,DOMAIN,TLD[,GROUP]
 
@@ -72,8 +80,14 @@ Arguments:
 - `TLD`: is the last string of the domain, i.e: .org, .com, .net etc.
 - `GROUP`: optionally, a group the domain belongs (see domain-list)
 
-Sources:
-- dnscap (dowse plugin)
+Test from CLI:
+```shell
+db=`awk '/db_dynamic/ { print $3 }' src/database.h`
+cat <<EOF | redis-cli -n $db --raw
+SUBSCRIBE dns-query-channel
+EOF
+```
+
 
 ## OBJ
 
@@ -147,14 +161,6 @@ future. Here below some examples for commandline use:
 
 ## DNS (dns-query-channel)
 
-To subscribe to DNS events from CLI, do from the dowse source root:
-
-```shell
-db=`awk '/db_dynamic/ { print $3 }' src/database.h`
-cat <<EOF | redis-cli -n $db --raw
-SUBSCRIBE dns-query-channel
-EOF
-```
 
 ## PGL (pgl-info-channel)
 
