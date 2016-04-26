@@ -40,7 +40,8 @@ void ctrlc(int sig) {
 }
 
 int main(int argc, char **argv) {
-
+    
+    char *dns, *ip, *action, *epoch, *domain, *tld, *group;
 
     connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
@@ -49,7 +50,6 @@ int main(int argc, char **argv) {
     reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
-        char *dns, *ip, *action, *epoch, *domain, *tld, *group;
         if(quit) break;
 
         dns = strtok(reply->element[2]->str,",");

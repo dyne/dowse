@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 // liblo
 #include <lo/lo.h>
@@ -34,17 +35,18 @@
 #include "database.h"
 
 
-static int done = 0;
+static int quit = 0;
 void ctrlc(int sig) {
     fprintf(stderr,"\nQuit.\n");
     redisFree(redis);
-    done = 1;
+    quit = 1;
 }
 
 int main(int argc, char **argv) {
 
     int err;
     lo_address osc;
+    char *dns, *ip, *action, *epoch, *domain, *tld;
 
     if(argv[1] == NULL) {
         fprintf(stderr, "usage: dns-to-osc osc.URL (i.e: osc.udp://localhost:666/pd)\n");
@@ -64,18 +66,33 @@ int main(int argc, char **argv) {
 
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
 
+        dns = strtok(reply->element[2]->str,",");
+        if(!dns) continue;
+        ip = strtok(NULL,",");
+        if(!ip) continue;
+        action = strtok(NULL,",");
+        if(!action) continue;
+        epoch = strtok(NULL,",");
+        if(!epoch) continue;
+        domain = strtok(NULL,",");
+        if(!domain) continue;
+        tld = strtok(NULL,",");
+        if(!tld) continue;
+
         // TODO: use a more refined lo_send with low-latency flags
-        err = lo_send(osc, "/dowse/dns", "s", reply->element[2]->str);
+        err = lo_send(osc, "/dowse/dns", "ssss", 
+                      ip, (action[0]=='N')?"new":"known", domain, tld);
         if(err == -1)
             fprintf(stderr,"OSC send error: %s\n",lo_address_errstr(osc));
         // just for console debugging
         else
-            fprintf(stderr,"/dowse/dns %s\n",reply->element[2]->str);
+            fprintf(stderr,"/dowse/dns %s %s %s %s\n",
+                    ip, (action[0]=='N')?"new":"known", domain, tld);
 
         fflush(stderr);
 
         freeReplyObject(reply);
-        if(done) break;
+        if(quit) break;
     }
 
     lo_address_free(osc);
