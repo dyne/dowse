@@ -32,6 +32,15 @@ implementations wishes for new daemons and modules
 *** nsd (advanced dns server + dnssec))
 *** credns (external zone verifier)
 
+* network object discovery
+
+  oui sanitized list: http://linuxnet.ca/ieee/oui/
+
+  arp-scan (most used, packaged): http://www.nta-monitor.com/wiki/index.php/Arp-scan_User_Guide
+
+  netdiscovery (passive listening): http://nixgeneration.com/~jaime/netdiscover/releases/
+
+
 * domain filtering and categorization
 
   make list importers based on redis, reachable from multiple programs

@@ -35,11 +35,7 @@ dowse-to-osc: dowse-to-osc.o redis.o epoch.o
 dowse-dnscap-plugin:
 	make -C dnscap/plugins/dowse
 
-pgl-install: PREFIX=${DESTDIR}${PREFIX}/pgl
-pgl-install:
-	make -C pgl install
-
-install: pgl-install
+install:
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/domain-list/data
 	install -p -m 644 domain-list/data/* ${DESTDIR}${PREFIX}/domain-list/data
