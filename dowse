@@ -42,6 +42,10 @@ E=${DOWSE_CONF:-/etc/dowse}
     return 1
 }
 
+# add all other dowse binaries to the path
+path+=($R/bin)
+rehash
+
 mkdir -p $H
 
 # load development libraries if there

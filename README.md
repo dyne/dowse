@@ -75,49 +75,37 @@ libnetfilter-conntrack3 libnetfilter-queue-dev libjemalloc-dev
 libseccomp2 libsodium-dev libhiredis-dev libkmod-dev
 ```
 
-3. Run `make`
+3. Choose which user should be running dowse: your own is fine, or
+   eventually create one just for that to separate filesystem
+   permissions.
 
-4. Configure the files in the `conf/` folder: settings and network
-   The files are plain text and include documentation in comments.
+4. As the user of choice, run `make`
 
-5. Fire up the startup script **as root**: `sudo ./start.sh`
+5. As root, run `make install`
 
-5.1 Please note that if you are root and inside a ZSh shell, then an
-   interactive console is available: do `source dowse conf/settings`
-   (or another custom config file) and then proceed launching commands
-   prefixed with `dowse-` (tab completion available)
 
-6. Remember to deactivate the DHCP service (Automatic IP
-   configuration) on any other object on the network, typically your
-   ADSL router.
+7. As the dowse user of choice and inside the source, fire up the
+   startup script `./start.sh`
+
+Dowse is now running, but there is no graphical interface at the
+moment. To interact and check the status there is only a console with
+commands prefixed with `dowse-` (tab completion available).
+
+To enter it run zsh without extensions and source the main script:
+first type `zsh -f` and press enter, then type `source
+/usr/local/dowse/zshrc` and press enter.
+
+If you like the dowse user to have an interactive console every time
+it logs in, then do `ln -s /usr/local/dowse/zshrc $HOME`.
+
+If necessary edit the files in the `/etc/dowse` folder, maybe with the address for the local network you like to create or the wifi you like to connect to.
 
 If all went well now one should be able to connect any device to the
 internet as you did before, via Dowse.
 
 ## Embedded ARM devices
 
-If you are using an ARM device, for instance a RaspberryPi box, then
-you are probably running Raspian or a derivative, which lacks many of
-the packages needed to compile and run Dowse.
-
-In order to get these packages, one can add the Devuan.org repository
-to `/etc/apt/sources.list.d/devuan.list` with one line:
-
-```
-deb http://packages.devuan.org/merged/ jessie main
-```
-
-Then import the Devuan developers keys and update the repositories:
-
-```
-apt-get install devuan-keyring
-apt-get update
-```
-
-And then proceed with installing all the dependencies indicated above.
-
-When compilation is completed then it is possible to run `make` and
-build Dowse also on ARM devices, thanks to http://Devuan.org
+Using https://beta.devuan.org just compile and install Dowse following the procedure above. Images are available for a several popular ARM devices including RaspberryPI2 and 3, BananaPI, Cubieboard etc.
 
 # Visualization
 
@@ -126,16 +114,21 @@ easily processed by `gource`. This is the best way to "see dowse
 running": if you are running it locally, then install `gource` and do:
 
 ```
-./src/dowse-to-gource | gource --log-format custom -
+dowse-to-gource | gource --log-format custom -
 ```
 
-This will live render all the DNS activity occurring on your
-computer. Our utility subscribes to DNS events (reading from Redis,
-which listens only on localhost by default) and draws the sort of
-animation that is also showcased on our website.
+or from remote:
 
-One can also experiment with gource arguments and render all into a
-video file.
+```
+ssh devuan@hub.dowse.it -- dowse-to-gource | gource --log-format custom - 
+```
+
+This will live render all the DNS activity occurring on your computer
+or local network, with the sort of animation that is also showcased on
+our website.
+
+One can also experiment with gource arguments and render all the
+output of dowse-to-gource into a video file.
 
 # Experimentation
 
@@ -144,7 +137,7 @@ low-latency devices that are running on the same network. To start it
 one must know the IP address of the device, then do:
 
 ```
-./src/dowse-to-osc osc.udp://10.0.0.2:999
+dowse-to-osc osc.udp://10.0.0.2:999
 ```
 
 This will start sending OSC messages over UDP to IP 10.0.0.2 port 999
