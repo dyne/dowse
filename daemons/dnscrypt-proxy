@@ -2,14 +2,10 @@
 
 
 
-dnscrypt-exec() {
+dnscrypt-proxy-exec() {
     fn dnscrypt-exec
-    exe=${1:-${execmap[dnscrypt]}}
-    req=(exe)
-    freq=($exe)
-    ckreq || return 1
 
-    ${=exe} -a 127.0.0.1:53443 \
+    launch dnscrypt-proxy -a 127.0.0.1:53443 \
             -p $pid -l $H/log/dnscrypt.log \
             -r "176.56.237.171:443" \
             -k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
@@ -18,7 +14,7 @@ dnscrypt-exec() {
 
     sleep 1 # race condition
 
-    savepid dnscrypt $pid
+    savepid dnscrypt-proxy $pid
 
     # TODO: offer a list of hosts from the csv list provided in dnscrypt source
 }

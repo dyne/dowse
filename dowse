@@ -112,6 +112,7 @@ source $R/zlibs/iptables
 source $R/zlibs/ebtables
 source $R/zlibs/confstore
 source $R/zlibs/redis
+source $R/zlibs/sql
 
 source $R/daemons/consul
 source $R/daemons/dnsmasq
@@ -290,7 +291,7 @@ EOF
     start dnsmasq
 
     # start the dns encrypted tunneling
-    start dnscrypt
+    start dnscrypt-proxy
 
     # these are root programs that need redis to be running
     start dnscap
@@ -330,7 +331,7 @@ dowse-stop() {
     done
 
     # stop the dns crypto tunnel
-    stop dnscrypt
+    stop dnscrypt-proxy
 
     # stop the dns capture daemon
     stop dnscap

@@ -1,5 +1,40 @@
 #!/usr/bin/env zsh
 
+# high-level launcher using execmap and sup when necessary
+launch() {
+    fn launch $*
+    local _cmd="$1"
+    local _path=${execmap[$_cmd]}
+    req=(_cmd _path)
+    _freq=($_path)
+    ckreq || return $?
+
+    local _ret
+    _rule=$execrules[$_cmd]
+    case $_rule in
+        user)
+            shift 1
+            func "user launch: $_path $*"
+            $_path $*
+            _ret=$?
+            func "$_cmd (user) returns $_ret"
+            return $_ret
+            ;;
+        root) 
+            shift 1
+            func "root launch: $_path $*"
+            $R/bin/sup $_path $*
+            _ret=$?
+            func "$_cmd (root) returns $_ret"
+            return $_ret
+            ;;
+        *)
+            error "unknown execrule for $_cmd to launch: $_rule"
+            return 1
+            ;;
+    esac
+}
+
 
 # high-level daemon starter, synopsis:
 #
@@ -26,7 +61,7 @@ start() {
     execpath=${execmap[$_daemon]}
     func "execpath: $execpath"
     [[ "$execpath" = "" ]] && {
-        error "$_daemon not found in src/paths.sh: add and recompile"
+        error "$_daemon not found in execpath"
         return 1 }
 
     if command -v $_daemon-exec > /dev/null; then

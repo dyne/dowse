@@ -1,15 +1,6 @@
 #!/usr/bin/env zsh
 
-ebtables() {
-    fn ebtables $*
-    _bin=$execmap[ebtables]
-    req=(_bin)
-    freq=($_bin)
-    ckreq || return 1
-
-    $R/bin/sup $_bin $*
-
-}
+ebtables() { launch ebtables $* }
 
 ebtables-start() {
 

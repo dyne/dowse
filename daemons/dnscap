@@ -26,6 +26,7 @@ dnscap-conf() { return 0; }
 
 dnscap-exec() {
     fn dnscap-exec $*
+    # not using launch here to access advanced sup functions
     exe=${1:-${execmap[dnscap]}}
     freq=($exe)
 

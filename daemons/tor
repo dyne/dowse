@@ -25,15 +25,13 @@ EOF
 
 tor-exec() {
     fn tor-exec $*
-    execpath=${1:-${execmap[tor]}}
     conf=$1
-    req=(execpath)
     freq=($conf)
     ckreq || return 0
 
     act "launching tor"
 
-    $execpath -f $conf
+    launch tor -f $conf
 }
 
 tor-kill() {

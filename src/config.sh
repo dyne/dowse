@@ -52,7 +52,7 @@ print - "$thingindex" > $S/build/thing.idx
 
 # map of permissions
 execrules=(
-    dnscrypt     user
+    dnscrypt-proxy user
     redis-cli    user
     redis-server user
     nmap         user
@@ -82,7 +82,7 @@ zkv.save execrules $S/build/execrules.zkv
 execmap=(
     ifconfig      /sbin/ifconfig
     route         /sbin/route
-    dnscrypt      $PREFIX/bin/dnscrypt-proxy
+    dnscrypt-proxy $PREFIX/bin/dnscrypt-proxy
     dnsmasq       $PREFIX/bin/dnsmasq
     dnscap        $PREFIX/bin/dnscap
     redis-cli     $PREFIX/bin/redis-cli
