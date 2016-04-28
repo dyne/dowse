@@ -425,62 +425,20 @@ dowse-status() {
     [[ -r $H/run/things.db ]] || {
         notice "Creating new things database"
         cat $R/db/thing.idx |
-            sql_create_table known |
+            sql_create_table found |
             $sql -batch $H/run/things.db
-        cat $R/db/thing.idx |
-            sql_create_table unknown |
-            $sql -batch $H/run/things.db
+        return 0
     }
 
-    notice "Known things online:"
-    local -A thing
-    for res in `print - "SELECT * from known;" | $sql -batch $H/run/things.db`; do
-        thing=(`print $res | sql_idx_parse $R/db/thing.idx`)
-        [[ "${thing[ip4]}" = "" ]] || {
-            if nmap -sn -n -oG - ${thing[ip4]} >/dev/null; then
-                act "online ${(v)thing}"
-            else
-                act "offline ${(v)thing}"
-            fi
-        }
-    done
-
-    notice "Unknown things:"
-    for res in `print - "SELECT * from unknown;" | $sql -batch $H/run/things.db`; do
-        func "$res"
-        thing=(`print $res | sql_idx_parse $R/db/thing.idx`)
-        act "${thing}"
+    notice "Things found online"
+    for res in "${(f)$(print - "SELECT * from found;" | $sql -batch $H/run/things.db)}"; do
+        # func "$res"
+        # thing=(`print $res | sql_idx_parse $R/db/thing.idx`)
+        act "${res}"
+        # TODO: parse things into cli formatting perhaps
     done
 
     return 0
-
-    # typeset -a mac ip host ping known
-    # notice "Reporting network status"
-    # eval `dowse-parse-leases`
-    # known=()
-    # ping=()
-
-    # for i in {0..${#mac}}; do
-    #     [[ $mac[$i] = "" ]] && { continue }
-
-    #     known[$i]="unknown"
-    #     grep "${mac[$i]}" $E/network > /dev/null
-    #     [[ $? = 0 ]] && known[$i]="known"
-
-    #     ping[$i]="offline"
-    #     nmap -sn -n -oG - $ip[$i] | grep -i 'status: up' > /dev/null
-    #     [[ $? = 0 ]] && ping[$i]="online"
-
-    #     if [[ "$known[$i]" == "known" ]]; then
-
-    #         yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-
-    #     else
-
-    #         no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-
-    #     fi
-    # done
 }
 
 dowse-scan() {

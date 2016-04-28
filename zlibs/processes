@@ -1,9 +1,17 @@
 #!/usr/bin/env zsh
 
+# func "load paths and execmaps"
+# maps+=(execmap execrules)
+# execmap=()
+# source $R/db/execmap.zkv
+# execrules=()
+# source $R/db/execrules.zkv
+
 # high-level launcher using execmap and sup when necessary
 launch() {
     fn launch $*
     local _cmd="$1"
+    func "command: $_cmd"
     local _path=${execmap[$_cmd]}
     req=(_cmd _path)
     _freq=($_path)

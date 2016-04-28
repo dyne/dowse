@@ -24,39 +24,29 @@
 # This standalone program runs every N seconds and gathers current
 # information on network objects, updating it in redis
 
-R=${0%/*}
-[[ "$R" = "pendulum" ]] && R=/usr/local/dowse
-[[ -r $R/zlibs ]] || {
-    print "error: no zlibs found in $R"
-    return 1 }
+vars+=(now interval)
+maps+=(obj)
+source /usr/local/dowse/zshrc
 
-zkv=1
-source $R/zlibs/zuper
-source $R/zlibs/redis
-source $R/zlibs/confstore
-source $R/zlibs/sql
-
-vars+=(R V now)
-arrs+=(objidx)
-maps+=(obj db execmap thing)
-source $R/zlibs/zuper.init
-
-func "load dataset indexes"
-db=()
-zkv.load $R/db/database.zkv
-
-func "load paths and execmaps"
-execmap=()
-source $R/db/execmap.zkv
-
-objidx=(ip hostname iface state os dhcp)
-# age and last are apart
-# mac is the index
-
-settings=${settings:-/etc/dowse/settings}
-conf-load
+# gather_network_info fills in global maps
+net_devices=()
+net.scan_devices
+net_ip4_addr=()
+net.scan_addresses
 
 now=`date +'%s'`
+interval=10 # seconds
+
+notice "Starting pendulum on `date -d @$now`"
+
+net_addr_to_network() {
+    fn net_addr_to_cclass $*
+    local _addr="$1"
+    req=(_addr)
+    ckreq || return $?
+    print "${_addr[(ws:.:)1]}.${_addr[(ws:.:)2]}.${_addr[(ws:.:)3]}.0/24"
+}
+
 
 resolve_obj_hostname() {
     fn resolve_obj_hostname $*
@@ -69,18 +59,10 @@ resolve_obj_hostname() {
 
 # finds out LAN neighbours, their mac and their state
 # this establishes mac addresses as indexes
-update-neigh() {
-    fn update-neigh $*
-    local hostname
+update_ip_neigh() {
+    fn update_ip_neigh $*
 
-
-    # for n in "${(f)$($R/bin/sup ${execmap[netdiscover]} -r $dowse_net -PN)}"; do
-    #     act "netdiscover: $n"
-    # done
-    # execute `ip neigh` and parse the output line per line
-
-    notice "Update neighbourhood on `date -d @$now`"
-    for o in "${(f)$(${execmap[ip]} neigh)}"; do
+    for o in "${(f)$(launch ip neigh)}"; do
         func "$o"
 
         # parse everything in a map
@@ -99,7 +81,7 @@ update-neigh() {
 
         resolve_obj_hostname
 
-        saved=`print - "SELECT * from unknown where
+        saved=`print - "SELECT * from found where
 macaddr=\"$obj[macaddr]\"
 and ip4=\"$obj[ip4]\"
 ;" | $sql -batch $H/run/things.db`
@@ -109,7 +91,7 @@ and ip4=\"$obj[ip4]\"
             nownow=`date -d @$now '+%Y-%m-%dT%H-%M'`
             cat <<EOF | $sql -batch $H/run/things.db
 INSERT OR IGNORE
-into unknown (macaddr,ip4,iface,state,last,age)
+into found (macaddr,ip4,iface,state,last,age)
 values("$obj[macaddr]","$obj[ip4]","$obj[iface]","$obj[state]",
 "$nownow","$nownow");
 EOF
@@ -117,7 +99,7 @@ EOF
         }
 
         for i in "${(f)$(print $saved | sql_idx_parse $R/db/thing.idx)}"; do
-           
+
             _k=${i[(w)1]}
             _v=${i[(w)2]}
             func "$_k = $_v"
@@ -128,184 +110,49 @@ EOF
                 }
             }
         done
-        continue
-        # update the last seen timestamp
-        mac_ip_update_last $obj[mac] $obj[ip]
 
-        # query our database from known and unknown hits using mac+ip as uniq
-        known=`print - "SELECT * from known where macaddr=\"$obj[mac]\" and ip4=\"$obj[ip]\";" |
-            $sql -batch $H/run/things.db`
+    done
+}
 
-        unknown=`print - "SELECT * from unknown where macaddr=\"$obj[mac]\" and ip4=\"$obj[ip]\";" |
-            $sql -batch $H/run/things.db`
+update_arp_scan() {
+    fn update_arp_scan $*
 
+    ###### Active ARP scan
+    ## using netdiscover, retrieves OS from MAC fingerprints
+    for _dev in ${(k)net_ip4_addr}; do
+        _addr=${net_ip4_addr[$_dev]}
+        _net=`net_addr_to_network $_addr`
+        for t in "${(f)$(launch netdiscover -i $_dev -r $_net -P -N)}"; do
+            [[ "$t" = "" ]] && continue
+            [[ "$t" =~ "^--" ]] && continue
+            obj=()
+            obj[macaddr]=${t[(w)2]}
+            obj[ip4]=${t[(w)1]}
+            obj[iface]=$_dev
+            obj[last]=$nownow
+            obj[os]="$(print - $t | awk '
+{ for(c=5;c<=NF;c++) printf $c " " }
+')"
 
-        if [[ ${#known} != 0 ]]; then # first quick check
-            # TODO: do what needs to be done when mac address belongs to a known thing
-            mac_ip_update_last $obj[mac] $obj[ip]
+            resolve_obj_hostname
 
-        elif [[ ${#unknown} != 0 ]]; then # unknown
-            func "unknown"
-
-            # update the last seen timestamp
-            mac_ip_update_last $obj[mac] $obj[ip]
-
-            # get and update the hostname
-            mac_to_hostname_via_arp $obj[mac]
-
-            # 
-            # TODO: check changes
-            # obj[state]="${o[(w)6]}"
-            # obj[iface]="${o[(w)3]}"
-
-        else # new entry to unknown
-            # TODO: skip ipv6 for now
-            [[ "$obj[ip]" =~ "::" ]] && continue
-
-            obj[iface]="${o[(w)3]}"
-            obj[mac]="${o[(w)5]}"
-            obj[state]="${o[(w)6]}"
-
-            # insert new entry, ignore if macaddr duplicate (REVIEW)
             cat <<EOF | $sql -batch $H/run/things.db
 INSERT OR IGNORE
-into unknown (macaddr,ip4,iface,state)
-values("$obj[mac]","$obj[ip]","$obj[iface]","$obj[state]");
+into found (macaddr,ip4,iface,last,os,hostname)
+values("$obj[macaddr]","$obj[ip4]","$obj[iface]",
+"$obj[last]","$obj[os]","$obj[hostname]");
+
+UPDATE found SET os = "$obj[os]", hostname = "$obj[hostname]"
+WHERE macaddr = "$obj[macaddr]";
 EOF
-
-        fi
-        # func "$obj"
-        # stash-findings
-    done
-
-}
-
-mac_ip_update_last() {
-    fn mac_ip_update_last $*
-    local _mac="$1"
-    local _ip="$2"
-    req=(_mac _ip)
-    ckreq || return $?
-
-    if nmap -sn -n -oG - $_ip >/dev/null; then
-
-        cat <<EOF | $sql -batch $H/run/things.db
-UPDATE known
-SET last = "`date -d @$now +%D`"
-WHERE macaddr = "$_mac";
-EOF
-        act "online $_mac $_ip"
-    else
-        act "offline $_mac $_ip"
-    fi
-
-}
-
-# stashes all findings about current object lookup
-stash-findings() {
-    fn stash-findings
-    news=0
-    redis_cmd=''
-    [[ "obj[mac]" = "" ]] && {
-        warning "MAC identifier unknown, nothing to stash"
-        return 1 }
-    for i in $objidx; do
-        [[ "$obj[$i]" = "" ]] || {
-            redis_cmd+="SET obj_${obj[mac]}_$i \"$obj[$i]\"\n"
-            news=1
-        }
-    done
-    # deal with age and last seen
-    [[ $news = 1 ]] && {
-        redis_cmd+="SET obj_${obj[mac]}_last \"$now\"\n"
-        print - "$redis_cmd" | redis dynamic 1>/dev/null
-    }
-}
-
-
-# compates all old and new values, signals about changes and saves all
-# in storage
-store-findings() {
-    fn store_findings
-
-    for o_new in "${(f)$(print - 'keys obj_*_last' | redis dynamic)}"; do
-
-        o_name=${o_new%_*}
-        notice "$o_name"
-        o_status=unchanged
-        redis_cmd=''
-
-        for i in $objidx; do
-            fnew=$(print - "GET ${o_name}_$i" | redis dynamic)
-            [[ "$fnew" = "" ]] && continue
-
-            fold=$(print - "GET ${o_name}_$i" | redis storage)
-
-            if [[ "$fold" = "" ]]; then
-                act "$i new: $fnew"
-                redis_cmd+="SET ${o_name}_$i \"$fnew\"\n"
-                o_status=new
-
-            elif [[ "$fnew" = "$fold" ]]; then
-                func "$i unchanged"
-            else
-                act "$i changed: $fold -> $fnew"
-                redis_cmd+="SET ${o_name}_$i  \"$fnew\"\n"
-                o_status=changed
-            fi
-
-            print - "DEL ${o_name}_$i" | redis dynamic 1>/dev/null
-        done
-
-        case $o_status in
-            new)
-                redis_cmd+="SET ${o_name}_age \"$now\" \n"
-                redis_cmd+="SET ${o_name}_last \"$now\" \n"
-                ;;
-            changed)
-                redis_cmd+="SET ${o_name}_last \"$now\" \n"
-                ;;
-        esac
-        print - "DEL ${o_name}_last" | redis dynamic 1>/dev/null
-
-        print - $redis_cmd | redis storage 1>/dev/null
-
-    done
-
-}
-
-list-objects() {
-    fn list-objects $*
-    _db=${1:-storage}
-
-    for o in "${(f)$(print - "keys obj_*_last" | redis ${_db})}"; do
-        [[ "$o" = "" ]] && continue
-        o_name=${o%_*}
-        redis_cmd=''
-        notice "$o_name"
-        for i in ${objidx}; do
-            redis_cmd+="GET ${o_name}_$i\n"
-        done
-
-        c=1
-        for l in "${(f)$(print - $redis_cmd | redis ${_db})}"; do
-            act "${objidx[$c]}: $l"
-            c=$(($c+1))
         done
     done
 }
 
-cmd=${1:-list}
-case $cmd in
-     update)
-         update-neigh
-         update-arp
-         # list-objects dynamic
-         store-findings
-         ;;
+# main
+while true; do
+    update_ip_neigh
+    update_arp_scan
+    sleep 10
+done
 
-     list)
-         list-objects ${2:-storage}
-         ;;
-     "source") ;;
-esac

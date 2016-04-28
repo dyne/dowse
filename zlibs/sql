@@ -1,0 +1,64 @@
+#!/usr/bin/env zsh
+
+# sql functions
+
+# takes a table description from stdin
+# prints "create table" command on stdout
+sql_create_table() {
+    fn sql_create_table
+    name="$1"
+    req=(name)
+    ckreq || return $?
+
+    local cmd="CREATE TABLE $name ("
+    for t in "${(f)$(cat)}"; do
+        [[ "$t" = "" ]] && continue
+        cmd+="${t},"
+    done
+    cmd[${#cmd}]=')'
+    cmd+=';'
+
+    print - "$cmd"
+}
+
+sql_map_insert() {
+    # TODO:
+}
+
+# reads the pipe '|' separated list of results from an SQL query from stdin
+# takes as first argument an .idx file (plain text two columns, key and type)
+# prints out a string (2 columns formatted for maps) with key and value
+sql_idx_parse() {
+    fn sql_query
+    local idx="$1"
+    req=(sql db idx)
+    freq=($idx)
+    ckreq || return $?
+
+    func "parse sql idx: $idx"
+
+    local values="`awk -F '|' '
+/^#/ { next }
+/^$/ { next }
+{ if(NF<1) next;
+  for(c=1;c<=NF;c++)
+    if($c==\"\") printf \" %\"
+    else printf " " $c
+  exit }
+'`"
+    local c=1
+
+    for o in "${(f)$(cat $idx)}"; do
+        # skip newlines
+        [[ "$o" = "" ]] && continue
+        # skip commends
+        [[ "${o[1]}" = "#" ]] && continue
+        # TODO: use ${o[(w)2]} for typechecking
+
+        local val="${values[(w)$c]}"
+        [[ "$val" = "%" ]] ||
+            print - "${o[(w)1]} $val"
+        c=$(( $c + 1 ))
+    done
+}
+
