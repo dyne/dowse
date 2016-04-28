@@ -35,9 +35,11 @@ install:
 	@modules/install.sh ${CONFDIR}
 	install -d ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/*.zkv         ${DESTDIR}${PREFIX}/db
+	install    -p -m 644 build/*.idx         ${DESTDIR}${PREFIX}/db
 	install -s -p -m 755 build/dowse-to-osc    ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dowse-to-gource ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/modprobe        ${DESTDIR}${PREFIX}/bin
+	install -s -p -m 755 build/netdiscover     ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dnscap        ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dowse.so      ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dnscrypt-proxy ${DESTDIR}${PREFIX}/bin

@@ -14,7 +14,8 @@ S=${$(pwd)%/*}
 
 zkv=1
 source $S/zlibs/zuper
-maps=(db dbindex execmap execrules)
+vars=(dbindex thingindex)
+maps=(db execmap execrules)
 source $S/zlibs/zuper.init
 
 fn config $*
@@ -30,10 +31,24 @@ dbindex='
 1 runtime
 2 storage
 '
-#########
 # for the db keys namespace see doc/HACKING.md
+#########
 
 mkdir -p $S/build
+
+thingindex='
+macaddr  text primary key
+ip4      text
+ip6      text
+hostname text
+iface    text
+state    text
+os       text
+dhcp     text
+last     date
+age      date
+'
+print - "$thingindex" > $S/build/thing.idx
 
 # map of permissions
 execrules=(

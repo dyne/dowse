@@ -25,7 +25,7 @@
 # information on network objects, updating it in redis
 
 R=${0%/*}
-[[ "$R" = "pendulum" ]] && R=`pwd`
+[[ "$R" = "pendulum" ]] && R=/usr/local/dowse
 [[ -r $R/zlibs ]] || {
     print "error: no zlibs found in $R"
     return 1 }
@@ -34,19 +34,20 @@ zkv=1
 source $R/zlibs/zuper
 source $R/zlibs/redis
 source $R/zlibs/confstore
+source $R/zlibs/sql
+
 vars+=(R V now)
 arrs+=(objidx)
-maps+=(obj db execmap)
+maps+=(obj db execmap thing)
 source $R/zlibs/zuper.init
-
 
 func "load dataset indexes"
 db=()
-zkv.load $R/build/database.zkv
+zkv.load $R/db/database.zkv
 
 func "load paths and execmaps"
 execmap=()
-source $R/build/execmap.zkv
+source $R/db/execmap.zkv
 
 objidx=(ip hostname iface state os dhcp)
 # age and last are apart
@@ -57,51 +58,147 @@ conf-load
 
 now=`date +'%s'`
 
+resolve_obj_hostname() {
+    fn resolve_obj_hostname $*
+
+    hh="`host $obj[ip4] | awk '{print $NF}'`"
+    hh[${#hh}]='\0'
+    obj[hostname]=${hh%%.*}
+    func "resolved: $obj[hostname]"
+}
+
 # finds out LAN neighbours, their mac and their state
 # this establishes mac addresses as indexes
 update-neigh() {
-    fn update-neigh
+    fn update-neigh $*
+    local hostname
+
+
+    # for n in "${(f)$($R/bin/sup ${execmap[netdiscover]} -r $dowse_net -PN)}"; do
+    #     act "netdiscover: $n"
+    # done
+    # execute `ip neigh` and parse the output line per line
+
+    notice "Update neighbourhood on `date -d @$now`"
     for o in "${(f)$(${execmap[ip]} neigh)}"; do
+        func "$o"
+
+        # parse everything in a map
         obj=()
-        obj[mac]="${o[(w)5]}"
+
+        # not interesting if no mac found (REVIEW)
+        obj[macaddr]="${o[(w)5]}"
         [[ "$obj[mac]" = "FAILED" ]] && continue
 
-        obj[ip]="${o[(w)1]}"
-
-        # TODO: skip ipv6 for now
-        [[ "$obj[ip]" =~ "::" ]] && continue
+        # get the ip4 address
+        obj[ip4]="${o[(w)1]}"
 
         obj[iface]="${o[(w)3]}"
-        obj[mac]="${o[(w)5]}"
+
         obj[state]="${o[(w)6]}"
-        func "$obj"
-        stash-findings
+
+        resolve_obj_hostname
+
+        saved=`print - "SELECT * from unknown where
+macaddr=\"$obj[macaddr]\"
+and ip4=\"$obj[ip4]\"
+;" | $sql -batch $H/run/things.db`
+
+        [[ ${#saved} = 0 ]] && {
+            # no records found
+            nownow=`date -d @$now '+%Y-%m-%dT%H-%M'`
+            cat <<EOF | $sql -batch $H/run/things.db
+INSERT OR IGNORE
+into unknown (macaddr,ip4,iface,state,last,age)
+values("$obj[macaddr]","$obj[ip4]","$obj[iface]","$obj[state]",
+"$nownow","$nownow");
+EOF
+            continue
+        }
+
+        for i in "${(f)$(print $saved | sql_idx_parse $R/db/thing.idx)}"; do
+           
+            _k=${i[(w)1]}
+            _v=${i[(w)2]}
+            func "$_k = $_v"
+            [[ "$obj[$_k]" = "" ]] || { # key is defined in object
+                [[ "$obj[$_k]" = "$_v" ]] || { # values differ
+                    # TODO: send events to redis
+                    warning "changed $_k: $_v -> $obj[$_k]"
+                }
+            }
+        done
+        continue
+        # update the last seen timestamp
+        mac_ip_update_last $obj[mac] $obj[ip]
+
+        # query our database from known and unknown hits using mac+ip as uniq
+        known=`print - "SELECT * from known where macaddr=\"$obj[mac]\" and ip4=\"$obj[ip]\";" |
+            $sql -batch $H/run/things.db`
+
+        unknown=`print - "SELECT * from unknown where macaddr=\"$obj[mac]\" and ip4=\"$obj[ip]\";" |
+            $sql -batch $H/run/things.db`
+
+
+        if [[ ${#known} != 0 ]]; then # first quick check
+            # TODO: do what needs to be done when mac address belongs to a known thing
+            mac_ip_update_last $obj[mac] $obj[ip]
+
+        elif [[ ${#unknown} != 0 ]]; then # unknown
+            func "unknown"
+
+            # update the last seen timestamp
+            mac_ip_update_last $obj[mac] $obj[ip]
+
+            # get and update the hostname
+            mac_to_hostname_via_arp $obj[mac]
+
+            # 
+            # TODO: check changes
+            # obj[state]="${o[(w)6]}"
+            # obj[iface]="${o[(w)3]}"
+
+        else # new entry to unknown
+            # TODO: skip ipv6 for now
+            [[ "$obj[ip]" =~ "::" ]] && continue
+
+            obj[iface]="${o[(w)3]}"
+            obj[mac]="${o[(w)5]}"
+            obj[state]="${o[(w)6]}"
+
+            # insert new entry, ignore if macaddr duplicate (REVIEW)
+            cat <<EOF | $sql -batch $H/run/things.db
+INSERT OR IGNORE
+into unknown (macaddr,ip4,iface,state)
+values("$obj[mac]","$obj[ip]","$obj[iface]","$obj[state]");
+EOF
+
+        fi
+        # func "$obj"
+        # stash-findings
     done
+
 }
 
-# finds out hostnames from the arp table
-update-arp() {
-    fn update-arp
-    for a in "${(f)$(${execmap[arp]} -H ether -a)}"; do
-        [[ "$a" =~ "no match found" ]] && break
-        local useful=0
-        obj=()
-        obj[mac]="${a[(w)4]}"
-        [[ "$obj[mac]" = "<incomplete>" ]] && {
-            warning "$a: missing MAC"
-            continue }
+mac_ip_update_last() {
+    fn mac_ip_update_last $*
+    local _mac="$1"
+    local _ip="$2"
+    req=(_mac _ip)
+    ckreq || return $?
 
-        obj[hostname]="${a[(w)1]}"
-        if [[ "$obj[hostname]" = "?" ]]; then
-            warning "$obj[mac] - could not resolve hostname"
-            obj[hostname]=""
-        else useful=1; fi
+    if nmap -sn -n -oG - $_ip >/dev/null; then
 
-        [[ $useful = 1 ]] && {
-            # field 2 is ip between parenthesis, if needed
-            stash-findings
-        }
-    done
+        cat <<EOF | $sql -batch $H/run/things.db
+UPDATE known
+SET last = "`date -d @$now +%D`"
+WHERE macaddr = "$_mac";
+EOF
+        act "online $_mac $_ip"
+    else
+        act "offline $_mac $_ip"
+    fi
+
 }
 
 # stashes all findings about current object lookup

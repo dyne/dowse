@@ -46,6 +46,7 @@ E=${DOWSE_CONF:-/etc/dowse}
 path+=($R/bin)
 rehash
 
+
 mkdir -p $H
 
 # load development libraries if there
@@ -60,8 +61,11 @@ TEXTDOMAIN=dowse
 # path and debugging
 vars+=(R H E debug quiet script fun settings network)
 vars+=(last_notice last_act last_func)
-vars+=(root)
+vars+=(root sql)
 arrs+=(mods)
+
+# use sqlite
+sql="sqlite3"
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
@@ -386,7 +390,7 @@ BEGIN { c=0 }
   mac[c]=$2
   ip[c]=$3
   if($4=="*") host[c]="anonymous"; else host[c]=$4
-  c++
+zx  c++
 }
 END {
   printf "mac=("; for(i=0;i<c;i++) { printf "%s ", mac[i] }; printf ")\n"
@@ -413,37 +417,69 @@ dowse-dump() {
 dowse-status() {
     fn dowse-status
 
-    req=(address)
-    freq=($H/run/leases)
+    req=(sql)
     ckreq || return $?
 
-    typeset -a mac ip host ping known
-    notice "Reporting network status"
-    eval `dowse-parse-leases`
-    known=()
-    ping=()
+    freq=($H/run/things.db)
+    [[ -r $H/run/things.db ]] || {
+        notice "Creating new things database"
+        cat $R/db/thing.idx |
+            sql_create_table known |
+            $sql -batch $H/run/things.db
+        cat $R/db/thing.idx |
+            sql_create_table unknown |
+            $sql -batch $H/run/things.db
+    }
 
-    for i in {0..${#mac}}; do
-        [[ $mac[$i] = "" ]] && { continue }
-
-        known[$i]="unknown"
-        grep "${mac[$i]}" $E/network > /dev/null
-        [[ $? = 0 ]] && known[$i]="known"
-
-        ping[$i]="offline"
-        nmap -sn -n -oG - $ip[$i] | grep -i 'status: up' > /dev/null
-        [[ $? = 0 ]] && ping[$i]="online"
-
-        if [[ "$known[$i]" == "known" ]]; then
-
-            yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-
-        else
-
-            no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-
-        fi
+    notice "Known things online:"
+    local -A thing
+    for res in `print - "SELECT * from known;" | $sql -batch $H/run/things.db`; do
+        thing=(`print $res | sql_idx_parse $R/db/thing.idx`)
+        [[ "${thing[ip4]}" = "" ]] || {
+            if nmap -sn -n -oG - ${thing[ip4]} >/dev/null; then
+                act "online ${(v)thing}"
+            else
+                act "offline ${(v)thing}"
+            fi
+        }
     done
+
+    notice "Unknown things:"
+    for res in `print - "SELECT * from unknown;" | $sql -batch $H/run/things.db`; do
+        func "$res"
+        thing=(`print $res | sql_idx_parse $R/db/thing.idx`)
+        act "${thing}"
+    done
+
+    return 0
+
+    # typeset -a mac ip host ping known
+    # notice "Reporting network status"
+    # eval `dowse-parse-leases`
+    # known=()
+    # ping=()
+
+    # for i in {0..${#mac}}; do
+    #     [[ $mac[$i] = "" ]] && { continue }
+
+    #     known[$i]="unknown"
+    #     grep "${mac[$i]}" $E/network > /dev/null
+    #     [[ $? = 0 ]] && known[$i]="known"
+
+    #     ping[$i]="offline"
+    #     nmap -sn -n -oG - $ip[$i] | grep -i 'status: up' > /dev/null
+    #     [[ $? = 0 ]] && ping[$i]="online"
+
+    #     if [[ "$known[$i]" == "known" ]]; then
+
+    #         yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
+
+    #     else
+
+    #         no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
+
+    #     fi
+    # done
 }
 
 dowse-scan() {
