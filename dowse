@@ -258,10 +258,10 @@ EOF
             loopback-isolate
 
             act "set up $interface interface with ip $address"
-            $R/bin/sup ifconfig $interface $address netmask $netmask up
+            launch ifconfig $interface $address netmask $netmask up
 
             act "set $wan as default gateway"
-            $R/bin/sup route add default gw $wan
+            launch route add default gw $wan
 
             act "setup snat trasversal"
             iptables-snat-on
