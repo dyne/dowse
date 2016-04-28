@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>netdata dashboard</title>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="author" content="costa@tsaousis.gr">
+
+	<link rel="shortcut icon" href="images/seo-performance-multi-size.ico">
+
+	<link rel="apple-touch-icon" href="images/seo-performance-72.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="images/seo-performance-72.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="images/seo-performance-114.png">
+
+	<link rel="icon" type="image/png" sizes="512x512" href="images/seo-performance-512.png">
+	<link rel="icon" type="image/png" sizes="256x256" href="images/seo-performance-256.png">
+	<link rel="icon" type="image/png" sizes="128x128" href="images/seo-performance-128.png">
+	<link rel="icon" type="image/png" sizes="64x64" href="images/seo-performance-64.png">
+	<link rel="icon" type="image/png" sizes="48x48" href="images/seo-performance-48.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="images/seo-performance-32.png">
+	<link rel="icon" type="image/png" sizes="24x24" href="images/seo-performance-24.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="images/seo-performance-16.png">
+
+	<style>
+
+	/* prevent body from hiding under the navbar */
+	body {
+		padding-top: 50px;
+	}
+
+	.modal-wide .modal-dialog {
+		width: 80%;
+	}
+
+	/* fix # anchors scrolling under the navbar
+	   https://github.com/twbs/bootstrap/issues/1768#issuecomment-46519033
+	 */
+	h1 {
+		position: relative;
+		z-index: -1;
+	}
+	h2 {
+		position: relative;
+		z-index: -2;
+	}
+	h1:before, h2:before {
+		display: block;
+		content: " ";
+		margin-top: -70px;
+		height: 70px;
+		visibility: hidden;
+	}
+
+	.p {
+		display: block;
+		margin-top: 15px;
+	}
+
+	.option-row,
+	.option-control {
+		vertical-align: top;
+		padding: 10px;
+		padding-top: 30px;
+		padding-left: 30px;
+	}
+
+	.option-info {
+		padding: 10px;
+	}
+
+	.chart-message {
+		display: block;
+		margin-top: 10px;
+	}
+
+	.container {
+		width: 90% !important;
+	}
+
+	#masthead h1 {
+		/*font-size: 30px;*/
+		line-height: 1;
+		padding-top: 30px;
+	}
+
+	#masthead .well {
+		margin-top:4%;
+	}
+
+	/* fix the navbar shifting when a modal is open */
+	/* https://github.com/twbs/bootstrap/issues/14040#issuecomment-159891033 */
+	body.modal-open{
+		width: 100% !important;
+		padding-right: 0 !important;
+/*		overflow-y: scroll !important; */
+/*		position: fixed !important;*/
+		overflow: visible;
+	}
+
+	/*
+	 * Side navigation
+	 *
+	 * Scrollspy and affixed enhanced navigation to highlight sections and secondary
+	 * sections of docs content.
+	 */
+
+	.affix {
+		position: static;
+		top: 70px !important;
+		/*width: 220px;*/
+	}
+
+	.affix-top {
+		/*width: 220px;*/
+	}
+
+	.dashboard-sidebar {
+		max-height: calc(100% - 70px) !important;
+		overflow-y: auto;
+		/*width: 220px !important;*/
+	}
+
+	/* By default it's not affixed in mobile views, so undo that */
+	.dashboard-sidebar.affix {
+		position: static;
+	}
+
+	@media (min-width: 768px) {
+		.dashboard-sidebar {
+			padding-left: 20px;
+		}
+	}
+
+	/* First level of nav */
+	.dashboard-sidenav {
+		margin-top: 20px;
+		margin-bottom: 20px;
+	}
+
+	/* All levels of nav */
+	.dashboard-sidebar .nav > li > a {
+		display: block;
+		padding: 4px 20px;
+		font-size: 13px;
+		font-weight: 500;
+		color: #767676;
+	}
+	.dashboard-sidebar .nav > li > a:hover,
+	.dashboard-sidebar .nav > li > a:focus {
+		padding-left: 19px;
+		color: #563d7c;
+		text-decoration: none;
+		background-color: transparent;
+		border-left: 1px solid #563d7c;
+	}
+	.dashboard-sidebar .nav > .active > a,
+	.dashboard-sidebar .nav > .active:hover > a,
+	.dashboard-sidebar .nav > .active:focus > a {
+		padding-left: 18px;
+		font-weight: bold;
+		color: #563d7c;
+		background-color: transparent;
+		border-left: 2px solid #563d7c;
+	}
+
+	/* Nav: second level (shown on .active) */
+	.dashboard-sidebar .nav .nav {
+		display: none; /* Hide by default, but at >768px, show it */
+		padding-bottom: 10px;
+	}
+	.dashboard-sidebar .nav .nav > li > a {
+		padding-top: 1px;
+		padding-bottom: 1px;
+		padding-left: 30px;
+		font-size: 12px;
+		font-weight: normal;
+	}
+	.dashboard-sidebar .nav .nav > li > a:hover,
+	.dashboard-sidebar .nav .nav > li > a:focus {
+		padding-left: 29px;
+	}
+	.dashboard-sidebar .nav .nav > .active > a,
+	.dashboard-sidebar .nav .nav > .active:hover > a,
+	.dashboard-sidebar .nav .nav > .active:focus > a {
+		padding-left: 28px;
+		font-weight: 500;
+	}
+
+	/* Back to top (hidden on mobile) */
+	.back-to-top,
+	.dashboard-theme-toggle {
+		display: none;
+		padding: 4px 10px;
+		margin-top: 10px;
+		margin-left: 10px;
+		font-size: 12px;
+		font-weight: 500;
+		color: #999;
+	}
+	.back-to-top:hover,
+	.dashboard-theme-toggle:hover {
+		color: #563d7c;
+		text-decoration: none;
+	}
+	.dashboard-theme-toggle {
+		margin-top: 0;
+	}
+
+	@media (min-width: 768px) {
+		.back-to-top,
+		.dashboard-theme-toggle {
+			display: block;
+		}
+
+		/* Widen the fixed sidebar */
+		.dashboard-sidebar.affix,
+		.dashboard-sidebar.affix-top,
+		.dashboard-sidebar.affix-bottom {
+			width: 200px !important;
+		}
+
+		.dashboard-sidebar.affix {
+			position: fixed; /* Undo the static from mobile first approach */
+			top: 20px;
+		}
+
+		.dashboard-sidebar.affix-bottom {
+			position: absolute; /* Undo the static from mobile first approach */
+		}
+
+		.dashboard-sidebar.affix-bottom .dashboard-sidenav,
+		.dashboard-sidebar.affix .dashboard-sidenav {
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+	}
+
+	/* Show and affix the side nav when space allows it */
+	@media (min-width: 992px) {
+		.dashboard-sidebar .nav > .active > ul {
+			display: block;
+		}
+
+		/* Widen the fixed sidebar */
+		.dashboard-sidebar.affix,
+		.dashboard-sidebar.affix-top,
+		.dashboard-sidebar.affix-bottom {
+			width: 200px !important;
+		}
+		.dashboard-sidebar.affix {
+			position: fixed; /* Undo the static from mobile first approach */
+			top: 20px;
+		}
+		.dashboard-sidebar.affix-bottom {
+			position: absolute; /* Undo the static from mobile first approach */
+		}
+		.dashboard-sidebar.affix-bottom .dashboard-sidenav,
+		.dashboard-sidebar.affix .dashboard-sidenav {
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+	}
+
+	@media (min-width: 1200px) {
+		/* Widen the fixed sidebar again */
+		.dashboard-sidebar.affix-bottom,
+		.dashboard-sidebar.affix-top,
+		.dashboard-sidebar.affix {
+			width: 263px;
+		}
+	}
+	</style>
+
+	<!-- you can set your netdata server globally, by ucommenting this -->
+	<!-- you can also give a different server per chart, with the attribute: data-host="http://netdata.server:19999" -->
+	<!-- <script> netdataServer = "http://box:19999"; </script> -->
+
+	<!-- check which theme to use -->
+	<script>
+		function loadLocalStorage(name) {
+			var ret = null;
+
+			try {
+				if(typeof Storage !== "undefined" && typeof localStorage === 'object')
+					ret = localStorage.getItem(name);
+			}
+			catch(error) {
+				;
+			}
+
+			if(typeof ret === 'undefined' || ret === null)
+				return null;
+
+			return ret;
+		}
+
+		function saveLocalStorage(name, value) {
+			try {
+				if(typeof Storage !== "undefined" && typeof localStorage === 'object') {
+					localStorage.setItem(name, value.toString());
+					return true;
+				}
+			}
+			catch(error) {
+				;
+			}
+
+			return false;
+		}
+
+		function getTheme(def) {
+			var ret = loadLocalStorage('netdataTheme');
+			if(typeof ret === 'undefined' || ret === null || ret === 'undefined')
+				return def;
+			else
+				return ret;
+		}
+		var netdataTheme = getTheme('slate');
+
+		function setTheme(theme) {
+			if(theme === netdataTheme) return false;
+
+			return saveLocalStorage('netdataTheme', theme);
+		}
+	</script>
+
+	<!-- load the dashboard manager - it will do the rest -->
+	<script type="text/javascript" src="dashboard.js?v34"></script>
+</head>
+
+<body data-spy="scroll" data-target="#sidebar">
+	<nav class="navbar navbar-default navbar-fixed-top" role="banner">
+		<div class="container">
+			<div class="navbar-header">
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a href="/" class="navbar-brand" id="hostname">netdata</a>
+			</div>
+			<nav id="demosites_nav" class="collapse navbar-collapse navbar-left" role="navigation">
+				<ul class="nav navbar-nav">
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="current_view">demo sites <strong class="caret"></strong></a>
+						<ul class="dropdown-menu scrollable-menu inpagemenu" role="menu">
+							<li id="demo_eu"><a href="//netdata.firehol.org?nowelcome">EU - London (DigitalOcean.com)</a></li>
+							<li id="demo_us"><a href="//netdata2.firehol.org?nowelcome">US - Atlanta (CDN77.com)</a></li>
+							<li role="separator" class="divider"></li>
+							<li id="demo_tv"><a href="tv.html">TV Dashboard for 2 servers</a></li>
+							<li id="demosites"><a href="demosites.html">Dashboard for monitoring netdata demo sites</a></li>
+						</ul>
+					</li>
+				</ul>
+			</nav>
+			<nav class="collapse navbar-collapse navbar-right" role="navigation">
+				<ul class="nav navbar-nav">
+					<li><a href="#" class="btn" data-toggle="modal" data-target="#optionsModal"><i class="fa fa-cog"></i> settings</a></li>
+					<li><a href="https://github.com/firehol/netdata/wiki" class="btn" target="_blank"><i class="fa fa-github"></i> community</a></li>
+					<li id="updateButton"><a href="#" class="btn" data-toggle="modal" data-target="#updateModal"><i class="fa fa-cloud-download"></i> update</a></li>
+<!--					<li><a href="old/" class="btn" target="_blank"><i class="fa fa-step-backward"></i> old dashboard</a></li> -->
+					<li><a href="#" class="btn" data-toggle="modal" data-target="#helpModal"><i class="fa fa-question-circle"></i> help</a></li>
+<!--					<li><a href="#sec">Visualize</a></li>
+					<li><a href="#sec">Prototype</a></li>
+-->				</ul>
+			</nav>
+		</div>
+	</nav>
+
+	<div id="masthead" style="display: none;">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-7">
+					<h1>Netdata
+						<p class="lead">Real-time performance monitoring, in the greatest possible detail</p>
+					</h1>
+				</div>
+				<div class="col-md-5">
+					<div class="well well-lg">
+						<div class="row">
+						<div class="col-md-6">
+							<b>Drag</b> charts to pan.
+							<b>Shift + wheel</b> on them, to zoom in and out.
+							<b>Double-click</b> on them, to reset.
+							<b>Hover</b> on them too!
+							</div>
+						<div class="col-md-6">
+							<div data-netdata="system.intr" data-chart-library="dygraph" data-dygraph-theme="sparkline" data-dygraph-type="line" data-dygraph-strokewidth="3" data-dygraph-smooth="true" data-dygraph-highlightcirclesize="6" data-after="-90" data-height="60px" data-colors="#C66"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-md-10" role="main">
+				<div id="charts_div"></div>
+			</div>
+			<div class="col-md-2" role="complementary">
+				<nav class="dashboard-sidebar hidden-print hidden-xs hidden-sm" id="sidebar" role="menu"></nav>
+			</div>
+		</div>
+	</div>
+
+	<div id="footer" class="container" style="display: none;">
+		<div class="row">
+			<div class="col-md-10" role="main">
+				<div class="p">
+					<big><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a></big><br/>
+					<i class="fa fa-copyright"></i> Copyright 2016, Costa Tsaousis.<br/>
+					Released under <a href="http://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank">GPL v3 or later</a>.<br/>
+				</div>
+				<div class="p">
+					<small>
+						<a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a> re-distributes these software tools:
+
+						<i class="fa fa-circle"></i> The excellent <a href="http://dygraphs.com/" target="_blank">Dygraphs.com</a> web chart library,
+						<i class="fa fa-copyright"></i> Copyright 2009, Dan Vanderkam, <a href="http://dygraphs.com/legal.html" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://omnipotent.net/jquery.sparkline/" target="_blank">jQuery Sparklines</a> web chart library,
+						<i class="fa fa-copyright"></i> Copyright 2009-2012, Splunk Inc., <a href="http://opensource.org/licenses/BSD-3-Clause" target="_blank">New BSD License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://benpickles.github.io/peity/" target="_blank">Peity</a> web chart library,
+						<i class="fa fa-copyright"></i> Copyright 2009-2015, Ben Pickles, <a href="https://github.com/benpickles/peity/blob/master/MIT-LICENCE" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="https://rendro.github.io/easy-pie-chart/" target="_blank">Easy Pie Chart</a> web chart library,
+						<i class="fa fa-copyright"></i> Copyright 2013, Robert Fleischmann, <a href="https://github.com/rendro/easy-pie-chart/blob/master/LICENSE" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://bernii.github.io/gauge.js/" target="_blank">Gauge.js</a> web chart library,
+						<i class="fa fa-copyright"></i> Copyright, Bernard Kobos, <a href="http://bernii.github.io/gauge.js/" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="https://jquery.org/" target="_blank">jQuery</a>,
+						<i class="fa fa-copyright"></i> Copyright 2015, jQuery Foundation, <a href="https://jquery.org/license/" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://getbootstrap.com/getting-started/" target="_blank">Bootstrap</a>,
+						<i class="fa fa-copyright"></i> Copyright 2015, Twitter, <a href="http://getbootstrap.com/getting-started/#license-faqs" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://www.bootstraptoggle.com/" target="_blank">Bootstrap Toggle</a>,
+						<i class="fa fa-copyright"></i> Copyright (c) 2011-2014 Min Hur, The New York Times Company, <a href="https://github.com/minhur/bootstrap-toggle/blob/master/LICENSE" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="https://jamesflorentino.github.io/nanoScrollerJS/" target="_blank">NanoScroller</a>,
+						<i class="fa fa-copyright"></i> Copyright 2012, James Florentino, <a href="https://github.com/jamesflorentino/nanoScrollerJS/blob/master/LICENSE" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="https://github.com/marcj/css-element-queries" target="_blank">CSS Element Queries</a>,
+						<i class="fa fa-copyright"></i> Copyright Marc J. Schmidt, <a href="https://github.com/marcj/css-element-queries/blob/master/LICENSE" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="https://fortawesome.github.io/Font-Awesome/" target="_blank">FontAwesome</a>,
+						<i class="fa fa-copyright"></i> Created by Dave Gandy, Font: <a href="http://scripts.sil.org/OFL" target="_blank">SIL OFL 1.1 License</a>, CSS: <a href="http://opensource.org/licenses/mit-license.html" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://www.iconsdb.com/soylent-red-icons/seo-performance-icon.html" target="_blank">IconsDB.com Icons</a>, Icons provided as CC0 1.0 Universal (CC0 1.0) Public Domain Dedication.
+
+						<i class="fa fa-circle"></i> <a href="http://morrisjs.github.io/morris.js/" target="_blank">morris.js</a>,
+						<i class="fa fa-copyright"></i> Copyright 2013, Olly Smith, <a href="http://morrisjs.github.io/morris.js/" target="_blank">Simplified BSD License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://raphaeljs.com/" target="_blank">Raphaël</a>,
+						<i class="fa fa-copyright"></i> Copyright 2008, Dmitry Baranovskiy, <a href="http://raphaeljs.com/license.html" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://C3js.org/" target="_blank">C3</a>,
+						<i class="fa fa-copyright"></i> Copyright 2013, Masayuki Tanaka, <a href="https://github.com/masayuki0812/c3/blob/master/LICENSE" target="_blank">MIT License</a>
+
+						<i class="fa fa-circle"></i> <a href="http://D3js.org/" target="_blank">D3</a>,
+						<i class="fa fa-copyright"></i> Copyright 2015, Mike Bostock, <a href="http://opensource.org/licenses/BSD-3-Clause" target="_blank">BSD License</a>
+
+						<i class="fa fa-circle"></i> <a href="https://github.com/broofa/node-int64" target="_blank">node-int64</a>,
+						<i class="fa fa-copyright"></i> Copyright 2014, Robert Kieffer, <a href="https://github.com/broofa/node-int64/blob/master/LICENSE" target="_blank">MIT License</a>
+
+					</small>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="welcomeModal" tabindex="-1" role="dialog" aria-labelledby="welcomeModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="welcomeModalLabel">Welcome!</h4>
+				</div>
+				<div class="modal-body">
+						<div class="p">
+						<b><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a></b> is the fastest way to visualize metrics. It is a resource efficient, highly optimized system for collecting and visualizing any type of real-time time series data, from CPU usage, disk activity, SQL queries, API calls, web site visitors, etc.
+						</div>
+						<div class="p">
+						<b><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a></b> tries to visualize the truth of <b>now</b>, in its <b>greatest detail</b>, so that you can get insights of what is happening now and what just happened, on your systems and applications.
+						</div>
+						<div class="p">
+						To make a chart in <b><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a></b>, you just need a <b>number</b>. Just a number you can read somehow. <b><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a></b> will turn this number to a real time, interactive, web chart. For collecting these numbers, it supports <a href="https://github.com/firehol/netdata/wiki/External-Plugins" target="_blank">external plugins</a>, even <a href="https://github.com/firehol/netdata/wiki/General-Info---charts.d" target="_blank">shell</a> or <a href="https://github.com/firehol/netdata/wiki/General-Info---charts.d" target="_blank">node.js</a> plugins. Any computer program, in any language, that can print a few lines of text on its standard output, can be a netdata data collector.
+						</div>
+						<div class="p">
+						<b><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a></b> can embed charts everywhere, like this one <div data-netdata="system.cpu" data-dimensions="system" data-after="-120" data-width="25%" data-height="15px" data-chart-library="dygraph" data-dygraph-theme="sparkline" data-show-value-of-system-at="system.cpu.system.modal.1"></div> (my CPU system usage which is <span id="system.cpu.system.modal.1" style="display: inline-block; width: 40px; text-align: right;"></span>%),
+						or this one <div data-netdata="ipv4.tcppackets" data-dimensions="received" data-after="-120" data-width="25%" data-height="15px" data-chart-library="dygraph" data-dygraph-theme="sparkline" data-show-value-of-received-at="ipv4.tcppackets.received.modal.1"></div> (my IPv4 received TCP packets, which are <span id="ipv4.tcppackets.received.modal.1" style="display: inline-block; width: 60px; text-align: right;"></span>/second).
+						</div>
+						<div class="p">
+						You can have <b><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a></b> charts on your site too. Just give it a <code>div</code> and a real time chart, zoomable and draggable will appear (try it even on these tiny ones - <b>drag</b> them to pan horizontally, <b>shift + drag</b> to zoom in, on <b>chrome shift + mouse wheel</b> to zoom in/out, <b>double click</b> on them to reset them - don't be afraid of <b><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata</a></b> performance - <a href="https://github.com/firehol/netdata/wiki/Performance" target="_blank">a raspberry pi 2 can sustain 300 charts updates per second</a>!).
+						</div>
+						<div class="p">
+						For more information please refer to the <b><a href="https://github.com/firehol/netdata/wiki" target="_blank">netdata wiki</a></b>.
+						</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="helpModalLabel">Dashboard Help</h4>
+				</div>
+				<div class="modal-body">
+
+					<h4>Dygraphs (line, area and stacked area charts)</h4>
+
+					<!-- Nav tabs -->
+					<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a href="#help_mouse" aria-controls="help_mouse" role="tab" data-toggle="tab">Mouse Interface</a></li>
+						<li role="presentation"><a href="#help_touch" aria-controls="help_touch" role="tab" data-toggle="tab">Touch Interface</a></li>
+					</ul>
+
+					<!-- Tab panes -->
+					<div class="tab-content">
+						<div role="tabpanel" class="tab-pane active" id="help_mouse">
+							<div class="p">
+								<h4>Mouse Over / Hover</h4>
+								Mouse over on a chart to show, at its legend, the values for the timestamp under the mouse (the chart will also highlight the point at the chart).
+								<br/>
+								All the other visible charts will also show and highlight their values for the same timestamp.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>Drag Chart Contents</h4>
+								Drag the contents of a chart to pan it horizontally.
+								<br/>
+								All the charts will follow soon after you let the chart alone (this little delay is by design: it speeds up your browser and lets you focus on what you are exploring).
+								<br/>
+								Once a chart is panned, auto refreshing stops for all charts. To enable it again, <b>double click</b> a panned chart.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>Double Click</h4>
+								Double Click a chart to reset all the charts to their default auto-refreshing state.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>SHIFT + Drag</h4>
+								While pressing the shift key, click on the contents of a chart and move the mouse to select an area, to zoom in. The other charts will follow too. Zooming is performed in two phases:
+								<ul>
+									<li>The already loaded chart contents are zoomed (low resolution)</li>
+									<li>New data are transferred from the netdata server, to refresh the chart with possibly more detail.</li>
+								</ul>
+								Once a chart is zoomed, auto refreshing stops for all charts. To enable it again, <b>double click</b> a zoomed chart.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>SHIFT + Mouse Wheel <small>(does not work on firefox and IE/Edge)</small></h4>
+								While pressing the shift key and the mouse pointer is over the contents of a chart, scroll the mouse wheel to zoom in or out. This kind of zooming is aligned to center below the mouse pointer. The other charts will follow too.
+								<br/>
+								Once a chart is zoomed, auto refreshing stops for all charts. To enable it again, <b>double click</b> a zoomed chart.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>Legend Operations</h4>
+								Click on the label or value of a dimension, will select / un-select this dimension.
+								<br/>
+								You can press any of the SHIFT or CONTROL keys and then click on legend labels or values, to select / un-select multiple dimensions.
+							</div>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="help_touch">
+							<div class="p">
+								<h4>Single Tap</h4>
+								Single Tap on the contents of a chart to show, at its legend, the values for the timestamp tapped (the chart will also highlight the point at the chart).
+								<br/>
+								All the other visible charts will also show and highlight their values for the same timestamp.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>Drag Chart Contents</h4>
+								Touch and Drag the contents of a chart to pan it horizontally.
+								<br/>
+								All the charts will follow soon after you let the chart alone (this little delay is by design: it speeds up your browser and lets you focus on what you are exploring).
+								<br/>
+								Once a chart is panned, auto refreshing stops for all charts. To enable it again, <b>double tap</b> a panned chart.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>Double Tap</h4>
+								Double tap a chart to reset all the charts to their default auto-refreshing state.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>Zoom <small>(does not work on firefox and IE/Edge)</small></h4>
+								With two fingers, zoom in or out.
+								<br/>
+								Once a chart is zoomed, auto refreshing stops for all charts. To enable it again, <b>double click</b> a zoomed chart.
+							</div>
+							<hr/>
+							<div class="p">
+								<h4>Legend Operations</h4>
+								Tap on the label or value of a dimension, will select / un-select this dimension.
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="optionsModal" tabindex="-1" role="dialog" aria-labelledby="optionsModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="optionsModalLabel">netdata dashboard options</h4>
+				</div>
+				<div class="modal-body">
+					<center>
+						<small style="color: #BBBBBB;">These are browser settings. Each viewer has its own. They do not affect the operation of your netdata server.
+						<br/>
+						Settings take effect immediately and are saved permanently to browser local storage (except the refresh on focus / always option).
+						<br/>
+						To reset all options (including charts sizes) to their defaults, click <a href="#" onclick="resetDashboardOptions(); return false;">here</a>.</small>
+					</center>
+					<div style="padding: 10px;"></div>
+
+					<!-- Nav tabs -->
+					<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a href="#settings_performance" aria-controls="settings_performance" role="tab" data-toggle="tab">Performance</a></li>
+						<li role="presentation"><a href="#settings_sync" aria-controls="settings_sync" role="tab" data-toggle="tab">Synchronization</a></li>
+						<li role="presentation"><a href="#settings_visual" aria-controls="settings_visual" role="tab" data-toggle="tab">Visual</a></li>
+					</ul>
+
+					<!-- Tab panes -->
+					<div class="tab-content">
+						<div role="tabpanel" class="tab-pane active" id="settings_performance">
+							<form id="optionsForm1" method="get" class="form-horizontal">
+								<div class="form-group">
+									<table>
+									<tr class="option-row">
+										<td class="option-control"><input id="stop_updates_when_focus_is_lost" type="checkbox" checked data-toggle="toggle" data-offstyle="danger" data-onstyle="success" data-on="On Focus" data-off="Always" data-width="110px"></td>
+										<td class="option-info"><strong>When to refresh the charts?</strong><br/>
+											<small>When set to <b>On Focus</b>, the charts will stop being updated if the page / tab does not have the focus of the user. When set to <b>Always</b>, the charts will always be refreshed. Set it to <b>On Focus</b> it to lower the CPU requirements of the browser (and extend the battery of laptops and tablets) when this page does not have your focus. Set to <b>Always</b> to work on another window (i.e. change the settings of something) and have the charts auto-refresh in this window.</small>
+										</td>
+										</tr>
+									<tr class="option-row">
+										<td class="option-control">
+										<input id="eliminate_zero_dimensions" type="checkbox" checked data-toggle="toggle" data-on="Non Zero" data-off="All" data-width="110px">
+										</td>
+										<td class="option-info"><strong>Which dimensions to show?</strong><br/>
+											<small>When set to <b>Non Zero</b>, dimensions that have all their values (within the current view) set to zero will not be transferred from the netdata server (except if all dimensions of the chart are zero, in which case this setting does nothing - all dimensions are transferred and shown). When set to <b>All</b>, all dimensions will always be shown. Set it to <b>Non Zero</b> to lower the data transferred between netdata and your browser, lower the CPU requirements of your browser (fewer lines to draw) and increase the focus on the legends (fewer entries at the legends).</small>
+										</td>
+										</tr>
+									<tr class="option-row">
+										<td class="option-control"><input id="destroy_on_hide" type="checkbox" data-toggle="toggle" data-on="Destroy" data-off="Hide" data-width="110px"></td>
+										<td class="option-info"><strong>How to handle hidden charts?</strong><br/>
+											<small>When set to <b>Destroy</b>, charts that are not in the current viewport of the browser (are above, or below the visible area of the page), will be destroyed and re-created if and when they become visible again. When set to <b>Hide</b>, the not-visible charts will be just hidden, to simplify the DOM and speed up your browser. Set it to <b>Destroy</b>, to lower the memory requirements of your browser. Set it to <b>Hide</b> for smoother page scrolling.</small>
+										</td>
+										</tr>
+									</table>
+								</div>
+							</form>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="settings_sync">
+							<form id="optionsForm2" method="get" class="form-horizontal">
+								<div class="form-group">
+									<table>
+									<tr class="option-row">
+										<td class="option-control"><input id="parallel_refresher" type="checkbox" checked data-toggle="toggle" data-on="Parallel" data-off="Sequential" data-width="110px"></td>
+										<td class="option-info"><strong>Which chart refresh policy to use?</strong><br/>
+											<small>When set to <b>parallel</b>, visible charts are refreshed in parallel (all queries are sent to netdata server in parallel) and are rendered asynchronously. When set to <b>sequential</b> charts are refreshed one after another. Set it to parallel if your browser can cope with it (most modern browsers do), set it to sequential if you work on an older/slower computer.</small>
+										</td>
+										</tr>
+									<tr class="option-row" id="concurrent_refreshes_row">
+										<td class="option-control"></td>
+										<td class="option-info">
+											<table>
+											<tr class="option-row">
+											<td class="option-control">
+											<input id="concurrent_refreshes" type="checkbox" checked data-toggle="toggle" data-on="Resync" data-off="Best Effort" data-width="110px">
+											</td>
+											<td class="option-info">
+											<strong>Shall we re-sync chart refreshes?</strong><br/>
+											<small>When set to <b>Resync</b>, the dashboard will attempt to re-synchronize all the charts so that they are refreshed concurrently. When set to <b>Best Effort</b>, each chart may be refreshed with a little time difference to the others. Normally, the dashboard starts refreshing them in parallel, but depending on the speed of your computer and the network latencies, charts start having a slight time difference. Setting this to <b>Resync</b> will attempt to re-synchronize the charts on every update. Setting it to <b>Best Effort</b> may lower the pressure on your browser and the network.</small>
+											</td>
+											</tr>
+											</table>
+										</td>
+										</tr>
+									<tr class="option-row">
+										<td class="option-control"><input id="sync_selection" type="checkbox" checked data-toggle="toggle" data-on="Sync" data-off="Don't Sync" data-onstyle="success" data-offstyle="danger" data-width="110px"></td>
+										<td class="option-info"><strong>Sync hover selection on all charts?</strong><br/>
+											<small>When enabled, a selection on one chart will automatically select the same time on all other visible charts and the legends of all visible charts will be updated to show the selected values. When disabled, only the chart getting the user's attention will be selected. Enable it to get better insights of the data. Disable it if you are on a very slow computer that cannot actually do it.</small>
+										</td>
+										</tr>
+									<tr class="option-row">
+										<td class="option-control"><input id="sync_pan_and_zoom" type="checkbox" checked data-toggle="toggle"  data-on="Sync" data-off="Don't Sync" data-onstyle="success" data-offstyle="danger" data-width="110px"></td>
+										<td class="option-info"><strong>Sync pan and zoom on all charts?</strong><br/>
+											<small>When enabled, pan and zoom operations on a chart will be replicated to all charts (even the ones that are not currently visible - of course only when they will become visible). When disabled, pan and zoom operations will not be propagated to other charts.</small>
+										</td>
+										</tr>
+									</table>
+								</div>
+							</form>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="settings_visual">
+							<form id="optionsForm3" method="get" class="form-horizontal">
+								<div class="form-group">
+									<table>
+									<tr class="option-row">
+										<td class="option-control"><input id="netdata_theme_control" type="checkbox" checked data-toggle="toggle" data-offstyle="danger" data-onstyle="success" data-on="Dark" data-off="White" data-width="110px"></td>
+										<td class="option-info"><strong>Which theme to use?</strong><br/>
+											<small>Netdata comes with two themes: <b>Dark</b> (the default) and <b>White</b>.
+											<br/>
+											<b>Switching this will reload the dashboard</b>.
+											</small>
+										</td>
+										</tr>
+									<tr class="option-row">
+										<td class="option-control"><input id="show_help" type="checkbox" checked data-toggle="toggle" data-on="Help Me" data-off="No Help" data-width="110px"></td>
+										<td class="option-info"><strong>Do you need help?</strong><br/>
+											<small>Netdata can show some help in some areas to help you use the dashboard. If all these balloons bother you, disable them using this switch.
+											<br/>
+											<b>Switching this will reload the dashboard</b>.
+											</small>
+										</td>
+										</tr>
+									<tr class="option-row">
+										<td class="option-control"><input id="pan_and_zoom_data_padding" type="checkbox" checked data-toggle="toggle"  data-on="Pad" data-off="Don't Pad" data-width="110px"></td>
+										<td class="option-info"><strong>Enable data padding when panning and zooming?</strong><br/>
+											<small>When set to <b>Pad</b> the charts will be padded with more data, both before and after the visible area, thus giving the impression the whole database is loaded. This padding will happen only after the first pan or zoom operation on the chart (initially all charts have only the visible data). When set to <b>Don't Pad</b> only the visible data will be transfered from the netdata server, even after the first pan and zoom operation.</small>
+										</td>
+										</tr>
+									<tr class="option-row">
+										<td class="option-control"><input id="smooth_plot" type="checkbox" checked data-toggle="toggle"  data-on="Smooth" data-off="Rough" data-width="110px"></td>
+										<td class="option-info"><strong>Enable Bézier lines on charts?</strong><br/>
+											<small>When set to <b>Smooth</b> the charts libraries that support it, will plot smooth curves instead of simple straight lines to connect the points.
+											<br/>
+											Keep in mind <a href="http://dygraphs.com" target="_blank">dygraphs</a>, the main charting library in netdata dashboards, can only smooth line charts. It cannot smooth area or stacked charts. When set to <b>Rough</b>, this setting can lower the CPU resources consumed by your browser.</small>
+										</td>
+										</tr>
+									</table>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="updateModalLabel">Update Check</h4>
+				</div>
+				<div class="modal-body">
+					Your netdata version: <b><code><span id="netdataVersion">Unknown</span></code></b>
+					<br/>
+					<div style="padding: 10px;"></div>
+					<div id="versionCheckLog">Not checked yet. Please press the Check Now button.</div>
+				</div>
+				<div class="modal-footer">
+					<a href="#" onclick="notifyForUpdate(true);" type="button" class="btn btn-default">Check Now</a>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+<script>
+
+var this_is_demo = null;
+function isdemo() {
+	if(this_is_demo !== null) return this_is_demo;
+	this_is_demo = false;
+
+	try {
+		if(typeof document.location.hostname === 'string') {
+			if(document.location.hostname === 'netdata.firehol.org') {
+				document.getElementById("demo_eu").className = "active";
+				this_is_demo = true;
+			}
+			else if(document.location.hostname === 'netdata2.firehol.org') {
+				document.getElementById("demo_us").className = "active";
+				this_is_demo = true;
+			}
+		}
+
+		if(!this_is_demo)
+			document.getElementById("demosites_nav").style.visibility = "hidden";
+	}
+	catch(error) {
+		;
+	}
+
+	return this_is_demo;
+}
+
+if(isdemo()) {
+	document.getElementById('masthead').style.display = 'block';
+}
+
+var options = {
+	sparklines_registry: {},
+	submenu_names: {},
+	data: null,
+	hostname: 'netdata_server', // will be overwritten by the netdata server
+	categories: new Array(),
+	categories_idx: {},
+	families: new Array(),
+	families_idx: {},
+
+	chartsPerRow: 0,
+	chartsMinWidth: 1450,
+	chartsHeight: 180,
+	sparklinesHeight: 60
+};
+
+// generate a sparkline
+// used in the documentation
+function sparkline(chart, dimension, units) {
+	var key = chart + '.' + dimension;
+
+	if(typeof units === 'undefined')
+		units = '';
+
+	if(typeof options.sparklines_registry[key] === 'undefined')
+		options.sparklines_registry[key] = { count: 1 };
+	else
+		options.sparklines_registry[key].count++;
+
+	key = key + '.' + options.sparklines_registry[key].count;
+
+	var h = '<div data-netdata="' + chart + '" data-after="-120" data-width="25%" data-height="15px" data-chart-library="dygraph" data-dygraph-theme="sparkline" data-dimensions="' + dimension + '" data-show-value-of-' + dimension + '-at="' + key + '"></div> (<span id="' + key + '" style="display: inline-block; min-width: 50px; text-align: right;">X</span>' + units + ')';
+
+	return h;
+}
+
+function chartsPerRow(total) {
+	if(options.chartsPerRow === 0) {
+		width = Math.floor(total / options.chartsMinWidth);
+		if(width === 0) width = 1;
+		return width;
+	}
+	else return options.chartsPerRow;
+}
+
+function prioritySort(a, b) {
+	if(a.priority < b.priority) return -1;
+	if(a.priority > b.priority) return 1;
+	if(a.name < b.name) return -1;
+	return 1;
+}
+
+function sortObjectByPriority(object) {
+	var idx = {};
+	var sorted = new Array();
+
+	for(var i in object) {
+		if(typeof idx[i] === 'undefined') {
+			idx[i] = object[i];
+			sorted.push(i);
+		}
+	}
+
+	sorted.sort(function(a, b) {
+		if(idx[a].priority < idx[b].priority) return -1;
+		if(idx[a].priority > idx[b].priority) return 1;
+		if(a < b) return -1;
+		return 1;
+	});
+
+	return sorted;
+}
+
+// ----------------------------------------------------------------------------
+
+function gaugeChart(title, width, dimensions, colors) {
+	if(typeof colors === 'undefined')
+		colors = '';
+
+	if(typeof dimensions === 'undefined')
+		dimensions = '';
+
+	return '<div data-netdata="CHART_UNIQUE_ID"'
+							+ ' data-dimensions="' + dimensions + '"'
+							+ ' data-chart-library="gauge"'
+							+ ' data-gauge-adjust="width"'
+							+ ' data-title="' + title + '"'
+							+ ' data-width="' + width + '"'
+							+ ' data-before="0"'
+							+ ' data-after="-CHART_DURATION"'
+							+ ' data-points="CHART_DURATION"'
+							+ ' data-colors="' + colors + '"'
+							+ ' role="application"></div>';
+}
+
+// ----------------------------------------------------------------------------
+
+var menuData = {
+	'system': {
+		title: 'System Overview',
+		info: 'Overview of the key system metrics.'
+	},
+
+	'ap': {
+		title: 'Access Points',
+		info: undefined
+	},
+
+	'tc': {
+		title: 'Quality of Service',
+		info: 'Netdata collects and visualizes tc class utilization using its <a href="https://github.com/firehol/netdata/blob/master/plugins.d/tc-qos-helper.sh" target="_blank">tc-helper plugin</a>. If you also use <a href="http://firehol.org/#fireqos" target="_blank">FireQOS</a> for setting up QoS, netdata automatically collects interface and class names. If your QoS configuration includes overheads calculation, the values shown here will include these overheads (the total bandwidth for the same interface as reported in the Network Interfaces section, will be lower than the total bandwidth reported here). Also, data collection may have a slight time difference compared to the interface (QoS data collection is implemented with a BASH script, so a shift in data collection of a few milliseconds should be justified).'
+	},
+
+	'net': {
+		title: 'Network Interfaces',
+		info: 'Per network interface statistics collected from <code>/proc/net/dev</code>.'
+	},
+
+	'ipv4': {
+		title: 'IPv4 Networking',
+		info: undefined
+	},
+
+	'ipv6': {
+		title: 'IPv6 Networking',
+		info: undefined
+	},
+
+	'ipvs': {
+		title: 'IP Virtual Server',
+		info: undefined
+	},
+
+	'netfilter': {
+		title: 'Firewall (netfilter)',
+		info: undefined
+	},
+
+	'cpu': {
+		title: 'CPUs',
+		info: undefined
+	},
+
+	'mem': {
+		title: 'Memory',
+		info: undefined
+	},
+
+	'disk': {
+		title: 'Disks',
+		info: undefined
+	},
+
+	'sensors': {
+		title: 'Sensors',
+		info: undefined
+	},
+
+	'nfsd': {
+		title: 'File Server (nfsd)',
+		info: undefined
+	},
+
+	'apps': {
+		title: 'Applications',
+		info: 'Per application statistics are collected using netdata\'s <code>apps.plugin</code>. This plugin walks through the entire <code>/proc</code> filesystem and aggregates statistics for applications of interest, defined in <code>/etc/netdata/apps_groups.conf</code> (the default is <a href="https://github.com/firehol/netdata/blob/master/conf.d/apps_groups.conf" target="_blank">here</a>). The plugin internally builds a process tree (much like <code>ps fax</code> does), and groups processes together (evaluating both child and parent processes) so that the result is always a chart with a predefined set of dimensions (of course, only application groups found running are reported).<br/><b>IMPORTANT</b>: The values shown here are not 100% accurate. They only include values for the processes running. If an application is spawning children continuously, which are terminated in just a few milliseconds (like shell scripts do), the values reported will be inaccurate. Linux does report the values for the exited children of a process. However, these values are reported to the parent process <b>only when the child exits</b>. If these values, of the exited child processes, were also aggregated in the charts below, the charts would have been full of spikes, presenting unrealistic utilization for each process group. So, we decided to ignore these values and present only the utilization of <b>the currently running processes</b>.',
+		height: 1.5
+	},
+
+	'users': {
+		title: 'Users',
+		info: 'Per user statistics are collected using netdata\'s <code>apps.plugin</code>. This plugin walks through the entire <code>/proc</code> filesystem and aggregates statistics per user.<br/><b>IMPORTANT</b>: The values shown here are not 100% accurate. They only include values for the processes running. If an application is spawning children continuously, which are terminated in just a few milliseconds (like shell scripts do), the values reported will be inaccurate. Linux does report the values for the exited children of a process. However, these values are reported to the parent process <b>only when the child exits</b>. If these values, of the exited child processes, were also aggregated in the charts below, the charts would have been full of spikes, presenting unrealistic utilization for each process group. So, we decided to ignore these values and present only the utilization of <b>the currently running processes</b>.',
+		height: 1.5
+	},
+
+	'groups': {
+		title: 'User Groups',
+		info: 'Per user group statistics are collected using netdata\'s <code>apps.plugin</code>. This plugin walks through the entire <code>/proc</code> filesystem and aggregates statistics per user group.<br/><b>IMPORTANT</b>: The values shown here are not 100% accurate. They only include values for the processes running. If an application is spawning children continuously, which are terminated in just a few milliseconds (like shell scripts do), the values reported will be inaccurate. Linux does report the values for the exited children of a process. However, these values are reported to the parent process <b>only when the child exits</b>. If these values, of the exited child processes, were also aggregated in the charts below, the charts would have been full of spikes, presenting unrealistic utilization for each process group. So, we decided to ignore these values and present only the utilization of <b>the currently running processes</b>.',
+		height: 1.5
+	},
+
+	'netdata': {
+		title: 'Netdata Monitoring',
+		info: undefined
+	},
+
+	'example': {
+		title: 'Example Charts',
+		info: undefined
+	},
+
+	'cgroup': {
+		title: 'Container',
+		info: undefined
+	},
+
+	'mysql': {
+		title: 'MySQL',
+		info: undefined
+	},
+
+	'named': {
+		title: 'named',
+		info: undefined
+	},
+};
+
+var submenuData = {
+	'mem.ksm': {
+		title: 'Memory Deduper',
+		info: 'Kernel Same-page Merging (KSM) performance monitoring, read from several files in <code>/sys/kernel/mm/ksm/</code>. KSM is a memory-saving de-duplication feature in the Linux kernel (since version 2.6.32). The KSM daemon ksmd periodically scans those areas of user memory which have been registered with it, looking for pages of identical content which can be replaced by a single write-protected page (which is automatically copied if a process later wants to update its content). KSM was originally developed for use with KVM (where it was known as Kernel Shared Memory), to fit more virtual machines into physical memory, by sharing the data common between them.  But it can be useful to any application which generates many instances of the same data.'
+	},
+
+	'netfilter.conntrack': {
+		title: 'Connection Tracker',
+		info: 'Netfilter Connection Tracker performance monitoring, read from <code>/proc/net/stat/nf_conntrack</code>. The connection tracker keeps track of all connections of the machine, inbound and outbound. It works by keeping a database with all open connections, tracking network and address translation and connection expectations.'
+	},
+
+	'netfilter.nfacct': {
+		title: 'Bandwidth Accounting',
+		info: 'The following information is read using the <code>nfacct.plugin</code>.'
+	},
+
+	'netfilter.synproxy': {
+		title: 'DDoS Protection',
+		info: 'DDoS Protection performance monitoring read from <code>/proc/net/stat/synproxy</code>. <a href="https://github.com/firehol/firehol/wiki/Working-with-SYNPROXY" target="_blank">SYNPROXY</a> is a TCP SYN packets proxy. It is used to protect any TCP server (like a web server) from SYN floods and similar DDoS attacks. It is a netfilter module, in the Linux kernel (since version 3.12). It is optimized to handle millions of packets per second utilizing all CPUs available without any concurrency locking between the connections. It can be used for any kind of TCP traffic (even encrypted), since it does not interfere with the content itself.'
+	}
+};
+
+var chartData = {
+	'system.cpu': {
+		info: 'Total CPU utilization (all cores). 100% here means there is no CPU idle time at all. You can get per core usage at the <a href="#cpu">CPUs</a> section and per application usage at the <a href="#apps">Applications Monitoring</a> section.<br/>Keep an eye on <b>iowait</b> ' + sparkline('system.cpu', 'iowait', '%') + '. If it is constantly high, your disks are a bottleneck and they slow your system down.<br/>Another important metric worth monitoring, is <b>softirq</b> ' + sparkline('system.cpu', 'softirq', '%') + '. A constantly high percentage of softirq may indicate network drivers issues.'
+	},
+
+	'system.load': {
+		info: 'Current system load read from <code>/proc/loadavg</code>.',
+		height: 0.7
+	},
+
+	'system.io': {
+		info: 'Total Disk I/O, for all disks, read from <code>/proc/vmstat</code>. You can get detailed information about each disk at the <a href="#disk">Disks</a> section and per application Disk usage at the <a href="#apps">Applications Monitoring</a> section.'
+	},
+
+	'system.swapio': {
+		info: 'Total Swap I/O, read from <code>/proc/vmstat</code>. (netdata measures both <code>in</code> and <code>out</code>. If either of them is not shown in the chart, it is because it is zero - you can change the page settings to always render all the available dimensions on all charts).'
+	},
+
+	'system.pgfaults': {
+		info: 'Total page faults, read from <code>/proc/vmstat</code>. <b>Major page faults</b> indicates that the system is using its swap. You can find which applications use the swap at the <a href="#apps">Applications Monitoring</a> section.'
+	},
+
+	'system.entropy': {
+		colors: '#CC22AA',
+		info: '<a href="https://en.wikipedia.org/wiki/Entropy_(computing)" target="_blank">Entropy</a>, read from <code>/proc/sys/kernel/random/entropy_avail</code>, is like a pool of random numbers that are mainly used in cryptography. It is advised that the pool remains always <a href="https://blog.cloudflare.com/ensuring-randomness-with-linuxs-random-number-generator/" target="_blank">above 200</a>. If the pool of entropy gets empty, you risk your security to be predictable and you should install a user-space random numbers generating daemon, like <a href="http://www.issihosts.com/haveged/" target="_blank">haveged</a>, to keep the pool in healthy levels.'
+	},
+
+	'system.forks': {
+		colors: '#5555DD',
+		info: 'The number of new processes created per second, read from <code>/proc/stat</code>.'
+	},
+
+	'system.intr': {
+		colors: '#DD5555',
+		info: 'Total number of CPU interrupts, read from <code>/proc/stat</code>. Check <code>system.interrupts</code> that gives more detail about each interrupt and also the <a href="#cpu">CPUs</a> section where interrupts are analyzed per CPU core.'
+	},
+
+	'system.interrupts': {
+		info: 'CPU interrupts in detail, read from <code>/proc/interrupts</code>. At the <a href="#cpu">CPUs</a> section, interrupts are analyzed per CPU core.'
+	},
+
+	'system.softirqs': {
+		info: 'CPU softirqs in detail, read from <code>/proc/softirqs</code>. At the <a href="#cpu">CPUs</a> section, softirqs are analyzed per CPU core.'
+	},
+
+	'system.processes': {
+		info: 'System processes, read from <code>/proc/stat</code>. <b>Blocked</b> are processes that are willing to execute but they cannot, e.g. because they wait for disk activity.'
+	},
+
+	'system.active_processes': {
+		info: 'All system active processes, read from <code>/proc/loadavg</code>.'
+	},
+
+	'system.ctxt': {
+		info: '<a href="https://en.wikipedia.org/wiki/Context_switch" target="_blank">Context Switches</a>, read from <code>/proc/stat</code>, is the switching of the CPU from one process, task or thread to another. If there are many processes or threads willing to execute and very few CPU cores available to handle them, the system is making more context switching to balance the CPU resources among them. The whole process is computationally intensive. The more the context switches, the slower the system gets.'
+	},
+
+	'system.idlejitter': {
+		colors: '#5555AA',
+		info: 'Idle jitter is calculated by netdata. A thread is spawned that requests to sleep for a few microseconds. When the system wakes it up, it measures how many microseconds have passed. The difference between the requested and the actual duration of the sleep, is the <b>idle jitter</b>. This number is useful in real-time environments, where CPU jitter can affect the quality of the service (like VoIP media gateways).'
+	},
+
+	'system.ipv4': {
+		info: 'Total IPv4 Traffic, read from <code>/proc/net/netstat</code>.'
+	},
+
+	'system.ipv6': {
+		info: 'Total IPv6 Traffic, read from <code>/proc/net/snmp6</code>.'
+	},
+
+	'system.ram': {
+		info: 'System memory, read from <code>/proc/meminfo</code>.'
+	},
+
+	'system.swap': {
+		info: 'System swap memory, read from <code>/proc/meminfo</code>.'
+	},
+
+	'mem.ksm_savings': {
+		heads: [
+			gaugeChart('Saved', '12%', 'savings', '#0099CC')
+		]
+	},
+
+	'mem.ksm_ratios': {
+		heads: [
+			function(id) {
+				return 	'<div data-netdata="' + id + '"'
+					+ ' data-gauge-max-value="100"'
+					+ ' data-chart-library="gauge"'
+					+ ' data-title="Savings"'
+					+ ' data-units="percentage %"'
+					+ ' data-gauge-adjust="width"'
+					+ ' data-width="12%"'
+					+ ' data-before="0"'
+					+ ' data-after="-CHART_DURATION"'
+					+ ' data-points="CHART_DURATION"'
+					+ ' role="application"></div>';
+			}
+		]
+	},
+
+	'mem.committed': {
+		colors: NETDATA.colors[3]
+	},
+
+	'apps.cpu': {
+		height: 2.0
+	},
+
+	'apps.preads': {
+		height: 2.0
+	},
+
+	'apps.pwrites': {
+		height: 2.0
+	},
+
+	'users.cpu': {
+		height: 2.0
+	},
+
+	'users.preads': {
+		height: 2.0
+	},
+
+	'users.pwrites': {
+		height: 2.0
+	},
+
+	'groups.cpu': {
+		height: 2.0
+	},
+
+	'groups.preads': {
+		height: 2.0
+	},
+
+	'groups.pwrites': {
+		height: 2.0
+	},
+
+	'tc.qos': {
+		heads: [
+			function(id) {
+				if(id.match(/.*-ifb$/))
+					return gaugeChart('Inbound', '12%', '', '#5555AA');
+				else
+					return gaugeChart('Outbound', '12%', '', '#AA9900');
+			}
+		]
+	},
+
+	'net.net': {
+		heads: [
+			gaugeChart('Received', '12%', 'received'),
+			gaugeChart('Sent', '12%', 'sent')
+		]
+	},
+
+	'disk.util': {
+		colors: '#FF5588',
+		heads: [
+			gaugeChart('Utilization', '12%', '', '#FF5588')
+		]
+	},
+
+	'disk.backlog': {
+		colors: '#0099CC'
+	},
+
+	'disk.io': {
+		heads: [
+			gaugeChart('Read', '12%', 'reads'),
+			gaugeChart('Write', '12%', 'writes')
+		]
+	},
+
+	'netfilter.sockets': {
+		colors: '#88AA00',
+		heads: [
+			gaugeChart('Active Connections', '12%', '', '#88AA00')
+		]
+	},
+
+	'netfilter.new': {
+		heads: [
+			gaugeChart('New Connections', '12%', 'new', '#5555AA')
+		]
+	},
+
+	'disk.iotime': {
+		height: 0.5
+	},
+	'disk.mops': {
+		height: 0.5
+	},
+	'disk.svctm': {
+		height: 0.5
+	},
+	'disk.avgsz': {
+		height: 0.5
+	},
+	'disk.await': {
+		height: 0.5
+	},
+
+	'apache.connections': {
+		colors: NETDATA.colors[4],
+		mainheads: [
+			gaugeChart('Connections', '12%', '', NETDATA.colors[4])
+		]
+	},
+
+	'apache.requests': {
+		colors: NETDATA.colors[0],
+		mainheads: [
+			gaugeChart('Connections', '12%', '', NETDATA.colors[0])
+		]
+	},
+
+	'apache.net': {
+		colors: NETDATA.colors[3],
+		mainheads: [
+			gaugeChart('Bandwidth', '12%', '', NETDATA.colors[3])
+		]
+	},
+
+	'apache.workers': {
+		mainheads: [
+			function(id) {
+				return 	'<div data-netdata="' + id + '"'
+					+ ' data-dimensions="busy"'
+					+ ' data-append-options="percentage"'
+					+ ' data-gauge-max-value="100"'
+					+ ' data-chart-library="gauge"'
+					+ ' data-title="Workers Utilization"'
+					+ ' data-units="percentage %"'
+					+ ' data-gauge-adjust="width"'
+					+ ' data-width="12%"'
+					+ ' data-before="0"'
+					+ ' data-after="-CHART_DURATION"'
+					+ ' data-points="CHART_DURATION"'
+					+ ' role="application"></div>';
+			}
+		]
+	},
+
+	'apache.bytesperreq': {
+		colors: NETDATA.colors[3],
+		height: 0.5
+	},
+
+	'apache.reqpersec': {
+		colors: NETDATA.colors[4],
+		height: 0.5
+	},
+
+	'apache.bytespersec': {
+		colors: NETDATA.colors[6],
+		height: 0.5
+	},
+
+	'nginx.connections': {
+		colors: NETDATA.colors[4],
+		mainheads: [
+			gaugeChart('Connections', '12%', '', NETDATA.colors[4])
+		]
+	},
+
+	'nginx.requests': {
+		colors: NETDATA.colors[0],
+		mainheads: [
+			gaugeChart('Requests', '12%', '', NETDATA.colors[0])
+		]
+	}
+};
+
+function anyAttribute(obj, attr, key, def) {
+	if(typeof obj[key] !== 'undefined') {
+		if(typeof obj[key][attr] !== 'undefined')
+			return obj[key][attr];
+	}
+	return def;
+}
+
+function menuTitle(chart) {
+	if(typeof chart.menu_pattern !== 'undefined') {
+		return anyAttribute(menuData, 'title', chart.menu_pattern, chart.menu_pattern).toString()
+				+ ': ' + chart.type.slice(-(chart.type.length - chart.menu_pattern.length - 1)).toString();
+	}
+
+	return anyAttribute(menuData, 'title', chart.menu, chart.menu);
+}
+
+function menuInfo(menu) {
+	return anyAttribute(menuData, 'info', menu, null);
+}
+
+function menuHeight(menu, relative) {
+	return anyAttribute(menuData, 'height', menu, 1.0) * relative;
+}
+
+function submenuTitle(menu, submenu) {
+	var key = menu + '.' + submenu;
+	return anyAttribute(submenuData, 'title', key, submenu);
+}
+
+function submenuInfo(menu, submenu) {
+	var key = menu + '.' + submenu;
+	return anyAttribute(submenuData, 'info', key, null);
+}
+
+function submenuHeight(menu, submenu, relative) {
+	var key = menu + '.' + submenu;
+	return anyAttribute(submenuData, 'height', key, 1.0) * relative;
+}
+
+
+function chartInfo(id) {
+	if(typeof chartData[id] !== 'undefined' && typeof chartData[id].info !== 'undefined')
+		return '<div class="chart-message netdata-chart-alignment" role="document">' + chartData[id].info + '</div>';
+	else
+		return '';
+}
+
+function chartHeight(id, def) {
+	if(typeof chartData[id] !== 'undefined' && typeof chartData[id].height !== 'undefined')
+		return def * chartData[id].height;
+	else
+		return def;
+}
+
+
+// ----------------------------------------------------------------------------
+
+// enrich the data structure returned by netdata
+// to reflect our menu system and content
+function enrichChartData(chart) {
+	var tmp = chart.type.split('_')[0];
+
+	switch(tmp) {
+		case 'ap':
+		case 'net':
+		case 'disk':
+			chart.menu = tmp;
+			break;
+
+		case 'mysql':
+		case 'named':
+		case 'cgroup':
+			chart.menu = chart.type;
+			chart.menu_pattern = tmp;
+			break;
+
+		case 'tc':
+			chart.menu = tmp;
+
+			// find a name for this device from fireqos info
+			// we strip '_(in|out)' or '(in|out)_'
+			if(typeof options.submenu_names[chart.family] === 'undefined' || options.submenu_names[chart.family] === chart.family) {
+				var n = chart.name.split('.')[1];
+				if(n.endsWith('_in'))
+					options.submenu_names[chart.family] = n.slice(0, n.lastIndexOf('_in'));
+				else if(n.endsWith('_out'))
+					options.submenu_names[chart.family] = n.slice(0, n.lastIndexOf('_out'));
+				else if(n.startsWith('in_'))
+					options.submenu_names[chart.family] = n.slice(3, n.length);
+				else if(n.startsWith('out_'))
+					options.submenu_names[chart.family] = n.slice(4, n.length);
+			}
+
+			// increase the priority of IFB devices
+			// to have inbound appear before outbound
+			if(chart.id.match(/.*-ifb$/))
+				chart.priority--;
+
+			break;
+
+		default:
+			chart.menu = chart.type;
+			break;
+	}
+
+	chart.submenu = chart.family;
+}
+
+// ----------------------------------------------------------------------------
+
+function name2id(s) {
+	return s
+		.replace(' ', '_')
+		.replace('(', '_')
+		.replace(')', '_')
+		.replace('.', '_')
+		.replace('/', '_');
+}
+
+function headMain(charts, duration) {
+	var head = '';
+
+	if(typeof charts['system.swap'] !== 'undefined')
+		head += '<div style="margin-right: 10px;" data-netdata="system.swap"'
+		+ ' data-dimensions="free"'
+		+ ' data-append-options="percentage"'
+		+ ' data-chart-library="easypiechart"'
+		+ ' data-title="Free Swap"'
+		+ ' data-units="%"'
+		+ ' data-easypiechart-max-value="100"'
+		+ ' data-width="8%"'
+		+ ' data-before="0"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' data-colors="#DD4400"'
+		+ ' role="application"></div>';
+
+	if(typeof charts['system.io'] !== 'undefined') {
+		head += '<div style="margin-right: 10px;" data-netdata="system.io"'
+		+ ' data-dimensions="in"'
+		+ ' data-chart-library="easypiechart"'
+		+ ' data-title="Disk Read"'
+		+ ' data-units="KB / s"'
+		+ ' data-width="10%"'
+		+ ' data-before="0"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' role="application"></div>';
+
+		head += '<div style="margin-right: 10px;" data-netdata="system.io"'
+		+ ' data-dimensions="out"'
+		+ ' data-chart-library="easypiechart"'
+		+ ' data-title="Disk Write"'
+		+ ' data-units="KB / s"'
+		+ ' data-width="10%"'
+		+ ' data-before="0"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' role="application"></div>';
+	}
+
+	if(typeof charts['system.cpu'] !== 'undefined')
+		head += '<div data-netdata="system.cpu"'
+		+ ' data-chart-library="gauge"'
+		+ ' data-title="CPU"'
+		+ ' data-units="%"'
+		+ ' data-gauge-max-value="100"'
+		+ ' data-width="18%"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' data-colors="' + NETDATA.colors[12] + '"'
+		+ ' role="application"></div>';
+
+	if(typeof charts['system.ipv4'] !== 'undefined') {
+		head += '<div style="margin-right: 10px;" data-netdata="system.ipv4"'
+		+ ' data-dimensions="received"'
+		+ ' data-chart-library="easypiechart"'
+		+ ' data-title="IPv4 Inbound"'
+		+ ' data-units="kbps"'
+		+ ' data-width="10%"'
+		+ ' data-before="0"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' role="application"></div>';
+
+		head += '<div style="margin-right: 10px;" data-netdata="system.ipv4"'
+		+ ' data-dimensions="sent"'
+		+ ' data-chart-library="easypiechart"'
+		+ ' data-title="IPv4 Outbound"'
+		+ ' data-units="kbps"'
+		+ ' data-width="10%"'
+		+ ' data-before="0"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' role="application"></div>';
+	}
+	else if(typeof charts['system.ipv6'] !== 'undefined') {
+		head += '<div style="margin-right: 10px;" data-netdata="system.ipv6"'
+		+ ' data-dimensions="received"'
+		+ ' data-chart-library="easypiechart"'
+		+ ' data-title="IPv6 Inbound"'
+		+ ' data-units="kbps"'
+		+ ' data-width="10%"'
+		+ ' data-before="0"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' role="application"></div>';
+
+		head += '<div style="margin-right: 10px;" data-netdata="system.ipv6"'
+		+ ' data-dimensions="sent"'
+		+ ' data-chart-library="easypiechart"'
+		+ ' data-title="IPv6 Outbound"'
+		+ ' data-units="kbps"'
+		+ ' data-width="10%"'
+		+ ' data-before="0"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' role="application"></div>';
+	}
+
+	if(typeof charts['system.ram'] !== 'undefined')
+		head += '<div style="margin-right: 10px;" data-netdata="system.ram"'
+		+ ' data-dimensions="cached|free"'
+		+ ' data-append-options="percentage"'
+		+ ' data-chart-library="easypiechart"'
+		+ ' data-title="Available RAM"'
+		+ ' data-units="%"'
+		+ ' data-easypiechart-max-value="100"'
+		+ ' data-width="8%"'
+		+ ' data-after="-' + duration.toString() + '"'
+		+ ' data-points="' + duration.toString() + '"'
+		+ ' data-colors="' + NETDATA.colors[7] + '"'
+		+ ' role="application"></div>';
+
+	return head;
+}
+
+function generateHeadCharts(type, chart, duration) {
+	var head = '';
+	var hcharts = anyAttribute(chartData, type, chart.context, []);
+	if(hcharts.length > 0) {
+		var hi = 0, hlen = hcharts.length;
+		while(hi < hlen) {
+			if(typeof hcharts[hi] === 'function')
+				head += hcharts[hi](chart.id).replace('CHART_DURATION', duration.toString()).replace('CHART_UNIQUE_ID', chart.id);
+			else
+				head += hcharts[hi].replace('CHART_DURATION', duration.toString()).replace('CHART_UNIQUE_ID', chart.id);
+			hi++;
+		}
+	}
+	return head;
+}
+
+function renderPage(menus, data) {
+	var div = document.getElementById('charts_div');
+	var pcent_width = Math.floor(100 / chartsPerRow($(div).width()));
+
+	// find the proper duration for per-second updates
+	var duration = Math.round(($(div).width() * pcent_width / 100 * data.update_every / 3) / 60) * 60;
+	var html = '';
+	var sidebar = '<ul class="nav dashboard-sidenav" data-spy="affix" id="sidebar_ul">';
+	var mainhead = headMain(data.charts, duration);
+
+	// sort the menus
+	var main = sortObjectByPriority(menus);
+	var i = 0, len = main.length;
+	while(i < len) {
+		var menu = main[i++];
+
+		// generate an entry at the main menu
+
+		sidebar += '<li class=""><a href="#' + menu + '">' + menus[menu].title + '</a><ul class="nav">';
+		html += '<div role="section"><div role="sectionhead"><h1 id="' + menu + '" role="heading">' + menus[menu].title + '</h1></div><div id="' + menu + '" role="document">';
+
+		if(menus[menu].info !== null)
+			html += menus[menu].info;
+
+		// console.log(' >> ' + menu + ' (' + menus[menu].priority + '): ' + menus[menu].title);
+
+		var shtml = '';
+		var mhead = '<div style="width: 100%; text-align: center;">' + mainhead;
+		mainhead = '';
+
+		// sort the submenus of this menu
+		var sub = sortObjectByPriority(menus[menu].submenus);
+		var si = 0, slen = sub.length;
+		while(si < slen) {
+			var submenu = sub[si++];
+
+			// generate an entry at the submenu
+			sidebar += '<li class><a href="#' + name2id(menu + '_' + submenu) + '">' + menus[menu].submenus[submenu].title + '</a></li>';
+			shtml += '<div class="netdata-group-container" id="submenu_' + name2id(menu + '_' + submenu) + '" style="display: inline-block; width: ' + pcent_width.toString() + '%"><h2 id="' + name2id(menu + '_' + submenu) + '" class="netdata-chart-alignment" role="heading">' + menus[menu].submenus[submenu].title + '</h2>';
+
+			if(menus[menu].submenus[submenu].info !== null)
+				shtml += '<div class="chart-message netdata-chart-alignment" role="document">' + menus[menu].submenus[submenu].info + '</div>';
+
+			var head = '<div style="width: 100%; text-align: center;">';
+			var chtml = '';
+
+			// console.log('    \------- ' + submenu + ' (' + menus[menu].submenus[submenu].priority + '): ' + menus[menu].submenus[submenu].title);
+
+			// sort the charts in this submenu of this menu
+			menus[menu].submenus[submenu].charts.sort(prioritySort);
+			var ci = 0, clen = menus[menu].submenus[submenu].charts.length;
+			while(ci < clen) {
+				var chart = menus[menu].submenus[submenu].charts[ci++];
+
+				// generate the submenu heading charts
+				mhead += generateHeadCharts('mainheads', chart, duration);
+				head += generateHeadCharts('heads', chart, duration);
+
+				// generate the chart
+				chtml += chartInfo(chart.context) + '<div data-netdata="' + chart.id + '"'
+					+ ' data-width="' + pcent_width.toString() + '%"'
+					+ ' data-height="' + chartHeight(chart.context, options.chartsHeight).toString() + 'px"'
+					+ ' data-before="0"'
+					+ ' data-after="-' + duration.toString() + '"'
+					+ ' data-id="' + name2id(options.hostname + '/' + chart.id) + '"'
+					+ ' data-colors="' + anyAttribute(chartData, 'colors', chart.context, '') + '"'
+					+ ' role="application"></div>';
+
+				// console.log('         \------- ' + chart.id + ' (' + chart.priority + '): ' + chart.context  + ' height: ' + menus[menu].submenus[submenu].height);
+			}
+
+			head += '</div>';
+			shtml += head + chtml + '</div>';
+		}
+
+		mhead += '</div>';
+		sidebar += '</ul></li>';
+		html += mhead + shtml + '</div></div><hr role="separator"/>';
+	}
+
+	sidebar += '</ul>';
+	div.innerHTML = html;
+	document.getElementById('sidebar').innerHTML = sidebar;
+	finalizePage();
+}
+
+function renderChartsAndMenu(data) {
+	var menus = {};
+	var charts = data.charts;
+
+	for(var c in charts) {
+		enrichChartData(charts[c]);
+
+		// create the menu
+		if(typeof menus[charts[c].menu] === 'undefined') {
+			menus[charts[c].menu] = {
+				priority: charts[c].priority,
+				submenus: {},
+				title: menuTitle(charts[c]),
+				info: menuInfo(charts[c].menu),
+				height: menuHeight(charts[c].menu, options.chartsHeight)
+			};
+		}
+
+		if(charts[c].priority < menus[charts[c].menu].priority)
+			menus[charts[c].menu].priority = charts[c].priority;
+
+		// create the submenu
+		if(typeof menus[charts[c].menu].submenus[charts[c].submenu] === 'undefined') {
+			menus[charts[c].menu].submenus[charts[c].submenu] = {
+				priority: charts[c].priority,
+				charts: new Array(),
+				title: null,
+				info: submenuInfo(charts[c].menu, charts[c].submenu),
+				height: submenuHeight(charts[c].menu, charts[c].submenu, menus[charts[c].menu].height)
+			};
+		}
+
+		if(charts[c].priority < menus[charts[c].menu].submenus[charts[c].submenu].priority)
+			menus[charts[c].menu].submenus[charts[c].submenu].priority = charts[c].priority;
+
+		// index the chart in the menu/submenu
+		menus[charts[c].menu].submenus[charts[c].submenu].charts.push(charts[c]);
+	}
+
+	// propagate the descriptive subname given to QoS
+	// to all the other submenus with the same name
+	for(var m in menus) {
+		for(var s in menus[m].submenus) {
+			// set the family using a name
+			if(typeof options.submenu_names[s] !== 'undefined') {
+				menus[m].submenus[s].title = s + ' (' + options.submenu_names[s] + ')';
+			}
+			else {
+				menus[m].submenus[s].title = submenuTitle(m, s);
+			}
+		}
+	}
+
+	renderPage(menus, data);
+}
+
+function downloadAllCharts(netdata_url) {
+	if(typeof netdata_url === 'undefined' || netdata_url === null)
+		netdata_url = NETDATA.serverDefault;
+
+	NETDATA.pause(function() {
+
+		// download all the charts the server knows
+		NETDATA.chartRegistry.downloadAll(netdata_url, function(data) {
+
+			options.data = data;
+			options.hostname = data.hostname;
+			document.getElementById('hostname').innerHTML = options.hostname;
+			document.getElementById('hostname').href = NETDATA.serverDefault;
+			document.title = options.hostname + ' dashboard';
+
+			renderChartsAndMenu(data);
+
+			// prepare our DOM
+//			prepareScreen(data);
+
+			// due to affix issues, prepareScreen() will unpause
+			// netdata as needed
+		});
+	});
+}
+
+// ----------------------------------------------------------------------------
+
+function versionLog(msg) {
+	document.getElementById('versionCheckLog').innerHTML = msg;
+}
+
+function getNetdataVersion(callback) {
+	versionLog('Downloading installed version info from netdata...');
+
+	$.ajax({
+		url: 'version.txt',
+		async: true,
+		cache: false
+	})
+	.done(function(data) {
+		data = data.replace(/(\r\n|\n|\r| |\t)/gm,"");
+		if(data.length !== 40) {
+			versionLog('Received version string is invalid.');
+			callback(null);
+		}
+		else {
+			versionLog('Installed version of netdata is ' + data);
+			document.getElementById('netdataVersion').innerHTML = data;
+			callback(data);
+		}
+	})
+	.fail(function() {
+		versionLog('Failed to download installed version info from netdata!');
+		callback(null);
+	});
+}
+
+function getGithubLatestCommit(callback) {
+	versionLog('Downloading latest version info from github...');
+
+	$.ajax({
+		url: 'https://api.github.com/repos/firehol/netdata/commits',
+		async: true,
+		cache: false
+	})
+	.done(function(data) {
+		versionLog('Latest version info from github is ' + data[0].sha);
+		callback(data[0].sha);
+	})
+	.fail(function() {
+		versionLog('Failed to download installed version info from github!');
+		callback(null);
+	});
+}
+
+function checkForUpdate(callback) {
+	getNetdataVersion(function(sha1) {
+		if(sha1 === null) callback(null, null);
+
+		getGithubLatestCommit(function(sha2) {
+			callback(sha1, sha2);
+		});
+	});
+
+	return null;
+}
+
+var updateBlinkCounter = 0;
+function notifyForUpdate(force) {
+	versionLog('<p>checking for updates...</p>');
+
+	var now = new Date().getTime();
+
+	if(typeof force === 'undefined' || force !== true) {
+		var last = loadLocalStorage('last_update_check');
+
+		if(typeof last === 'string')
+			last = parseInt(last);
+		else
+			last = 0;
+
+		if(now - last < 3600000 * 8) {
+			// no need to check it - too soon
+			return;
+		}
+	}
+
+	checkForUpdate(function(sha1, sha2) {
+		var save = false;
+
+		if(sha1 === null) {
+			save = false;
+			versionLog('<p><big>Failed to get your netdata version!</big></p><p>You can always get the latest version of netdata from <a href="https://github.com/firehol/netdata" target="_blank">its github page</a>.</p>');
+		}
+		else if(sha2 === null) {
+			save = false;
+			versionLog('<p><big>Failed to get the latest version from github.</big></p><p>You can always get the latest version of netdata from <a href="https://github.com/firehol/netdata" target="_blank">its github page</a>.</p>');
+		}
+		else if(sha1 === sha2) {
+			save = true;
+			versionLog('<p><big>You already have the latest version of netdata!</big></p><p>No update yet?<br/>Probably, we need some motivation to keep going on!</p><p>If you haven\'t already, <a href="https://github.com/firehol/netdata" target="_blank">give netdata a <b>Star</b> at its github page</a>.</p>');
+		}
+		else {
+			save = true;
+			var compare = 'https://github.com/firehol/netdata/compare/' + sha1.toString() + '...' + sha2.toString();
+
+			versionLog('<p><big><strong>New version of netdata available!</strong></big></p><p>Latest version: ' + sha2.toString() + '</p><p><a href="' + compare + '" target="_blank">Click here for the changes log</a> since your installed version, and<br/><a href="https://github.com/firehol/netdata/wiki/Updating-Netdata" target="_blank">click here for directions on updating</a> your netdata installation.</p><p>We suggest to review the changes log for new features you may be interested, or important bug fixes you may need.<br/>Keeping your netdata updated, is generally a good idea.</p>');
+
+			function updateButtonBlink() {
+				updateBlinkCounter--;
+				if(updateBlinkCounter > 0)
+					$('#updateButton').fadeOut(500).fadeIn(500, updateButtonBlink);
+			}
+
+			if(updateBlinkCounter === 0) {
+				updateBlinkCounter = 300;
+				updateButtonBlink();
+			}
+		}
+
+		if(save)
+			saveLocalStorage('last_update_check', now.toString());
+	});
+}
+
+// ----------------------------------------------------------------------------
+
+function getUrlParameter(sParam) {
+    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+            return sParameterName[1] === undefined ? true : sParameterName[1];
+        }
+    }
+}
+
+function finalizePage() {
+	// resize all charts - without starting the background thread
+	// this has to be done while NETDATA is paused
+	// if we ommit this, the affix menu will be wrong, since all
+	// the Dom elements are initially zero-sized
+	NETDATA.parseDom();
+
+	var before = 0, after = 0, nowelcome = 0;
+	after = getUrlParameter('force_after_ms');
+	before = getUrlParameter('force_before_ms');
+	nowelcome = (getUrlParameter('nowelcome') === true)?true:false;
+
+	if(before > 0 && after > 0) {
+		nowelcome = true;
+		NETDATA.globalPanAndZoom.setMaster(NETDATA.options.targets[0], after, before);
+	}
+
+	// let it run (update the charts)
+	NETDATA.unpause();
+
+	// check if we have to jump to a specific section
+	var hash = location.hash.replace('#','');
+	if(hash != '') {
+		// Clear the hash in the URL
+		// location.hash = '';   // delete front "//" if you want to change the address bar
+		var offset = $(location.hash).offset();
+		if(typeof offset !== 'undefined')
+			$('html, body').animate({ scrollTop: offset.top }, 0);
+	}
+
+	/* activate bootstrap sidebar (affix) */
+	$('#sidebar').affix({
+		offset: {
+			top: (isdemo())?150:0,
+			bottom: 0
+		}
+	});
+
+	/* fix scrolling of very long affix lists
+	   http://stackoverflow.com/questions/21691585/bootstrap-3-1-0-affix-too-long
+	 */
+	$('#sidebar').on('affixed.bs.affix', function() {
+		$(this).removeAttr('style');
+	});
+
+	/* activate bootstrap scrollspy (needed for sidebar) */
+	$(document.body).scrollspy({
+		target: '#sidebar',
+		offset: $(window).height() / 3 // controls the diff of the <hX> element to the top, to select it
+	});
+
+	document.getElementById('footer').style.display = 'block';
+
+
+	var update_options_modal = function() {
+		// console.log('update_options_modal');
+
+		var sync_option = function(option) {
+			var self = $('#' + option);
+
+			if(self.prop('checked') !== NETDATA.getOption(option)) {
+				// console.log('switching ' + option.toString());
+				self.bootstrapToggle(NETDATA.getOption(option)?'on':'off');
+			}
+		}
+
+		var theme_sync_option = function(option) {
+			var self = $('#' + option);
+
+			self.bootstrapToggle(netdataTheme === 'slate'?'on':'off');
+		}
+
+		sync_option('eliminate_zero_dimensions');
+		sync_option('destroy_on_hide');
+		sync_option('parallel_refresher');
+		sync_option('concurrent_refreshes');
+		sync_option('sync_selection');
+		sync_option('sync_pan_and_zoom');
+		sync_option('stop_updates_when_focus_is_lost');
+		sync_option('smooth_plot');
+		sync_option('pan_and_zoom_data_padding');
+		sync_option('show_help');
+		theme_sync_option('netdata_theme_control');
+
+		if(NETDATA.getOption('parallel_refresher') === false) {
+			$('#concurrent_refreshes_row').hide();
+		}
+		else {
+			$('#concurrent_refreshes_row').show();
+		}
+	};
+	NETDATA.setOption('setOptionCallback', update_options_modal);
+
+	// handle options changes
+	$('#eliminate_zero_dimensions').change(function()       { NETDATA.setOption('eliminate_zero_dimensions', $(this).prop('checked')); });
+	$('#destroy_on_hide').change(function()                 { NETDATA.setOption('destroy_on_hide', $(this).prop('checked')); });
+	$('#parallel_refresher').change(function()              { NETDATA.setOption('parallel_refresher', $(this).prop('checked')); });
+	$('#concurrent_refreshes').change(function()            { NETDATA.setOption('concurrent_refreshes', $(this).prop('checked')); });
+	$('#sync_selection').change(function()                  { NETDATA.setOption('sync_selection', $(this).prop('checked')); });
+	$('#sync_pan_and_zoom').change(function()               { NETDATA.setOption('sync_pan_and_zoom', $(this).prop('checked')); });
+	$('#stop_updates_when_focus_is_lost').change(function() { NETDATA.setOption('stop_updates_when_focus_is_lost', $(this).prop('checked')); });
+	$('#smooth_plot').change(function()                     { NETDATA.setOption('smooth_plot', $(this).prop('checked')); });
+	$('#pan_and_zoom_data_padding').change(function()       { NETDATA.setOption('pan_and_zoom_data_padding', $(this).prop('checked')); });
+	$('#show_help').change(function()                       { NETDATA.setOption('show_help', $(this).prop('checked')); location.reload(); });
+
+	// this has to be the last
+	// it reloads the page
+	$('#netdata_theme_control').change(function() {
+		if(setTheme($(this).prop('checked')?'slate':'white'))
+			location.reload();
+	});
+
+	if(!nowelcome && isdemo()) {
+		setTimeout(function() {
+			$('#welcomeModal').modal();
+		}, 1000);
+	}
+	else
+		notifyForUpdate();
+
+	$('#updateModal').on('shown.bs.modal', function() {
+		notifyForUpdate(true);
+	});
+}
+
+function resetDashboardOptions() {
+	var help = NETDATA.options.current.show_help;
+
+	NETDATA.resetOptions();
+	if(setTheme('slate'))
+		location.reload();
+
+	if(help !== NETDATA.options.current.show_help)
+		location.reload();
+}
+
+downloadAllCharts();
+
+</script>
+
+</body>
+</html>

@@ -40,6 +40,7 @@ install:
 	install -s -p -m 755 build/dowse-to-gource ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/modprobe        ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/netdiscover     ${DESTDIR}${PREFIX}/bin
+	install -s -p -m 755 build/netdata       ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dnscap        ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dowse.so      ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dnscrypt-proxy ${DESTDIR}${PREFIX}/bin

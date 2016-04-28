@@ -114,10 +114,11 @@ stop() {
 savepid() {
     fn savepid $*
 
-    _daemon="$1"
-    _pid="$2"
-    req=(_daemon _pid)
+    local _daemon="$1"
+    local _pid="$2"
+    req=(_daemon)
     ckreq || return $?
+
 
     print "SET daemon-${_daemon}-pid \"`cat $_pid`\"" \
           | redis runtime > /dev/null

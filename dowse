@@ -25,7 +25,7 @@
 # {{{ GLOBALS
 
 dowse_version=0.9
-dowse_release_date="Mar/2016"
+dowse_release_date="Apr/2016"
 
 zkv=1
 restful=1
@@ -45,7 +45,6 @@ E=${DOWSE_CONF:-/etc/dowse}
 # add all other dowse binaries to the path
 path+=($R/bin)
 rehash
-
 
 mkdir -p $H
 
@@ -124,6 +123,7 @@ source $R/daemons/pgld
 source $R/daemons/tor
 source $R/daemons/redis
 source $R/daemons/dnscrypt-proxy
+source $R/daemons/netdata
 
 # conclude initialization
 if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
@@ -296,6 +296,9 @@ EOF
     # these are root programs that need redis to be running
     start dnscap
 
+    # netdata dashboard for the technical status
+    netdata-conf > $H/run/netdata.conf
+    start netdata
 
     mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
@@ -329,6 +332,9 @@ dowse-stop() {
         dowse-module-stop
 
     done
+
+    # stop the dashboard
+    stop netdata
 
     # stop the dns crypto tunnel
     stop dnscrypt-proxy

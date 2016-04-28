@@ -58,6 +58,7 @@ execrules=(
     nmap         user
     arp          user
     ip           user
+    netdata      user
 
     dnsmasq       root
     dnscap        root
@@ -66,6 +67,7 @@ execrules=(
     iptables      root
     xtables-multi root
     ebtables      root
+    # TODO: sup list of authorized /proc and /sys paths to write
     sysctl        root
     # TODO: sup list of authorized modules to load (using libkmod)
     modprobe      root
@@ -88,6 +90,7 @@ execmap=(
     redis-cli     $PREFIX/bin/redis-cli
     redis-server  $PREFIX/bin/redis-server
     tor           $PREFIX/bin/tor
+    netdata       $PREFIX/bin/netdata
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables

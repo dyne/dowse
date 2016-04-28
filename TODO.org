@@ -59,6 +59,8 @@ implementations wishes for new daemons and modules
   http://contentfilter.futuragts.com/wiki/doku.php?id=downloadable_blacklists
   http://www.urlblacklist.com/?sec=download
 
+  domain filtering hosts file: http://someonewhocares.org/hosts/zero/hosts
+
 * authentication
 
   as every node will store its own public configurations in the k/v
