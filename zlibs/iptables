@@ -200,12 +200,14 @@ loopback-on() {
 
 _sysctl() {
     fn sysctl $*
-    launch sysctl | sysread sysctl_log
+    $R/bin/sup ${execmap[sysctl]} $* | sysread sysctl_log
     func $sysctl_log
 }
 
 sysctl-setup() {
     fn sysctl-setup
+    freq=(${execmap[sysctl]})
+    ckreq || return 1
 
     cat <<EOF | _sysctl -p -
 net.ipv4.tcp_syncookies = 1
