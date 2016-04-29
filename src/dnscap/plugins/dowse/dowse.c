@@ -44,13 +44,14 @@
 
 #include "../../dnscap_common.h"
 
+#include <redis.h>
 #include <database.h>
 #include <epoch.h>
 
-#define REDIS_HOST "localhost"
-#define REDIS_PORT 6379
-redisContext *redis  = NULL;
-redisReply   *rreply = NULL;
+// #define REDIS_HOST "localhost"
+// #define REDIS_PORT 6379
+// redisContext *redis  = NULL;
+// redisReply   *rreply = NULL;
 
 
 static logerr_t *logerr;
@@ -196,27 +197,6 @@ void load_domainlist(const char *path) {
     logerr("Size of parsed domain-list: %u\n", hashmap_length(domainlist));
 }
 
-void connect_redis() {
-
-    logerr("Connecting to redis on %s port %u\n", REDIS_HOST, REDIS_PORT);
-    struct timeval timeout = { 1, 500000 };
-    redis = redisConnectWithTimeout(REDIS_HOST, REDIS_PORT, timeout);
-    /* redis = redisConnect(REDIS_HOST, REDIS_PORT); */
-
-    if (redis == NULL || redis->err) {
-            if (redis) {
-                logerr("Connection error: %s\n", redis->errstr);
-                redisFree(redis);
-            } else {
-                logerr("Connection error: can't allocate redis context\n");
-            }
-    }
-    // select the dnsqueries log database
-    rreply = redisCommand(redis, "SELECT %u", db_dynamic);
-    // logerr("SELECT: %s\n", rreply->str);
-    freeReplyObject(rreply);
-
-}
 
 int
 dowse_start(logerr_t *a_logerr) {
@@ -246,7 +226,7 @@ dowse_start(logerr_t *a_logerr) {
     // load the domain-list path if there
     if(listpath) load_domainlist(listpath);
 
-    connect_redis();
+    connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
     return 0;
 }
@@ -380,7 +360,6 @@ static char *extract_domain(char *address) {
 }
 
 
-#define MAX_OUTPUT 512
 void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int isfrag,
               unsigned sport, unsigned dport, my_bpftimeval ts,
               const u_char *pkt_copy, unsigned olen,
@@ -388,6 +367,7 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
     /* dnspkt may be NULL if IP packet does not contain a valid DNS message */
 
     char output[MAX_OUTPUT];
+    char outnew[MAX_OUTPUT];
 
     if (dnspkt) {
 
@@ -489,32 +469,20 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
             }
 
 
-            // compose the path of the detected query
+            // compose the path of the detected quer
+
+            // new format adhering to specification
+            snprintf(outnew,MAX_OUTPUT,
+                     "DNS,%s,%s,%lu,%s,%s",
+                     from,(action=='A')?"NEW":"KNOWN",
+                     ts2epoch(&ts,NULL),extracted,tld);
+
             // add category if listed
             if(listpath) { // add known domain list information
                 res = hashmap_get(domainlist, extracted, (void**)(&sval));
-                switch(res) {
-
-                case MAP_OK:
-                    /* render with the category in front of domain */
-                    snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s/%s",
-                             ts2epoch(&ts,NULL), // from our epoch.c
-                             from, action, tld, sval, extracted);
-                    break;
-                default:
-                    /* render only the domain in root category */
-                    snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s",
-                             ts2epoch(&ts,NULL), // from our epoch.c
-                             from, action, tld, extracted);
-                    break;
-                }
-            } else
-                /* render only the domain in root category */
-                snprintf(output,MAX_OUTPUT,"%lu|%s|%c|%s/%s",
-                         ts2epoch(&ts,NULL), // from our epoch.c
-                         from, action, tld, extracted);
-
-
+                if(res==MAP_OK) // add domain group
+                    snprintf(outnew,MAX_OUTPUT,"%s,%s",outnew,sval);
+            }
 
             /* write to file */
             if(fileout) {
@@ -530,9 +498,9 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
             }
 
             if(redis) {
-                rreply = redisCommand(redis, "PUBLISH dns-query-channel %s", output);
-                logerr("PUBLISH dns-query-channel: %s\n", rreply->str);
-                freeReplyObject(rreply);
+                reply = redisCommand(redis, "PUBLISH dns-query-channel %s", outnew);
+                logerr("PUBLISH dns-query-channel: %s\n", reply->str);
+                freeReplyObject(reply);
             }
 
         }

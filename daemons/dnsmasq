@@ -111,13 +111,11 @@ EOF
 
 dnsmasq-exec() {
     fn dnsmasq-exec $*
-    exe=${1:-${execmap[dnsmasq]}}
-    freq=($conf $exe)
+    freq=($conf)
     ckreq || return $?
 
     ztmp
-    func "${execpath} -x $ztmpfile -C $conf"
-    $R/bin/sup ${exe} -x $ztmpfile -C $conf
+    launch  dnsmasq -x $ztmpfile -C $conf
     savepid dnsmasq $ztmpfile
 
     return $?

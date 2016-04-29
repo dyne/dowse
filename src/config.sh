@@ -14,7 +14,8 @@ S=${$(pwd)%/*}
 
 zkv=1
 source $S/zlibs/zuper
-maps=(db dbindex execmap execrules)
+vars=(dbindex thingindex)
+maps=(db execmap execrules)
 source $S/zlibs/zuper.init
 
 fn config $*
@@ -30,19 +31,34 @@ dbindex='
 1 runtime
 2 storage
 '
-#########
 # for the db keys namespace see doc/HACKING.md
+#########
 
 mkdir -p $S/build
 
+thingindex='
+macaddr  text primary key
+ip4      text
+ip6      text
+hostname text
+iface    text
+state    text
+os       text
+dhcp     text
+last     date
+age      date
+'
+print - "$thingindex" > $S/build/thing.idx
+
 # map of permissions
 execrules=(
-    dnscrypt     user
+    dnscrypt-proxy user
     redis-cli    user
     redis-server user
     nmap         user
     arp          user
     ip           user
+    netdata      user
 
     dnsmasq       root
     dnscap        root
@@ -51,6 +67,7 @@ execrules=(
     iptables      root
     xtables-multi root
     ebtables      root
+    # TODO: sup list of authorized /proc and /sys paths to write
     sysctl        root
     # TODO: sup list of authorized modules to load (using libkmod)
     modprobe      root
@@ -67,12 +84,13 @@ zkv.save execrules $S/build/execrules.zkv
 execmap=(
     ifconfig      /sbin/ifconfig
     route         /sbin/route
-    dnscrypt      $PREFIX/bin/dnscrypt-proxy
+    dnscrypt-proxy $PREFIX/bin/dnscrypt-proxy
     dnsmasq       $PREFIX/bin/dnsmasq
     dnscap        $PREFIX/bin/dnscap
     redis-cli     $PREFIX/bin/redis-cli
     redis-server  $PREFIX/bin/redis-server
     tor           $PREFIX/bin/tor
+    netdata       $PREFIX/bin/netdata
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables

@@ -1,26 +1,24 @@
-/*  sup 1.1
- *
- *  (c) 2016 Dyne.org Foundation, Amsterdam
- *
- *  Written by:
- *  2009-2011 pancake <nopcode.org>
- *  2016      Denis Roio <jaromil@dyne.org>
- *
- * This source code is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 3 of
- * the License, or (at your option) any later version.
- *
- * This source code is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  Please refer
- * to the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this source code; if not, write to: Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- */
+// sup 1.1
+
+//  (c) 2016 Dyne.org Foundation, Amsterdam
+
+//  Written by:
+//  - 2009-2011 pancake <nopcode.org>
+//  - 2016      Denis Roio <jaromil@dyne.org>
+
+// This source code is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public License
+// as published by the Free Software Foundation; either version 3 of
+// the License, or (at your option) any later version.
+
+// This source code is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  Please refer
+// to the GNU Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this source code; if not, write to: Free
+// Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include <errno.h>
 #include <unistd.h>
@@ -74,13 +72,14 @@ static const char *HELP =
     "\n"
     "Please report bugs to <https://git.devuan.org/jaromil/sup/issues>\n";
 
+// maximum length of a command string
 #define MAXCMD 512
+// maximum length of a command full path string
 #define MAXFILEPATH 4096
-#define MAXBINSIZE 10485760 // 10 MiBs
 
-/* Always return 1 on error, conforming to standard shell checks.
-   Reason of error is described by stderr text before colon,
-   extended reason can be provided or falls back to errno. */
+// Always return 1 on error, conforming to standard shell checks.
+// Reason of error is described by stderr text before colon,
+// extended reason can be provided or falls back to errno.
 static int error(const char *code, const char *reason) {
     fprintf (stderr, "%s: %s\n",
              code? code : "",
@@ -127,9 +126,11 @@ static uint32 getsha(const char *path, unsigned char *dest) {
     do {
         // read chunk of data in binary file
         len = fread(buf, 1, CHUNK, fd);
-        if(!len) break; // NULL read
+        // stop if NULL read
+        if(!len) break;
         tot+=len;
-        if(len<CHUNK) break; // EOF reached
+        // stop if EOF reached
+        if(len<CHUNK) break;
 
         // compute sha256 of chunk
         sha256_update(&sha, buf, len);
@@ -190,24 +191,24 @@ int main(int argc, char **argv) {
 #endif
 
         case 'u':
-            {
-                struct passwd *puid;
-                errno=0;
-                puid=getpwnam(optarg);
-                if(!puid && errno) error("uid_getpwnam",NULL);
-                if(puid) target_uid=puid->pw_uid;
-            }
-            break;
+        {
+            struct passwd *puid;
+            errno=0;
+            puid=getpwnam(optarg);
+            if(!puid && errno) error("uid_getpwnam",NULL);
+            if(puid) target_uid=puid->pw_uid;
+        }
+        break;
 
         case 'g':
-            {
-                struct passwd *pgid;
-                errno=0;
-                pgid=getpwnam(optarg);
-                if(!pgid && errno) error("gid_getpwnam",NULL);
-                if(pgid) target_gid=pgid->pw_gid;
-            }
-            break;
+        {
+            struct passwd *pgid;
+            errno=0;
+            pgid=getpwnam(optarg);
+            if(!pgid && errno) error("gid_getpwnam",NULL);
+            if(pgid) target_gid=pgid->pw_gid;
+        }
+        break;
 
         case 'h':
             fprintf(stdout, "%s\n%s\n%s", HEADER, COPYLEFT, HELP);
@@ -229,9 +230,9 @@ int main(int argc, char **argv) {
             fprintf(stdout,"User\tUID\tGID\t%s\t\t%s\n",
                     "Command","Forced PATH");
             for (i = 0; rules[i].cmd != NULL; i++) {
-                /* Using 'getpwuid' in statically linked applications
-                   requires at runtime the shared libraries from the glibc
-                   version used for linking. But not in case of musl-libc. */
+                // Using 'getpwuid' in statically linked applications
+                // requires at runtime the shared libraries from the glibc
+                // version used for linking. But not in case of musl-libc.
                 pw = getpwuid( rules[i].uid );
                 fprintf (stdout, "%s\t%d\t%d\t%s\t%s\n",
                          pw?pw->pw_name:"", rules[i].uid, rules[i].gid,
@@ -271,15 +272,16 @@ int main(int argc, char **argv) {
     // get the username string from /etc/passwd
     pw = getpwuid( uid );
 #ifdef DEBUG
-    /* one could maintain a log of calls here */
+    // one could maintain a log of calls here
     fprintf(stderr,"sup %s called by %s(%d) gid(%d)\n",
             cmd, pw?pw->pw_name:"", uid, gid);
 #endif
 
     // loop over each rule
     for (i = 0; rules[i].cmd != NULL; i++) {
-
-        /// COMMAND AND PATH CHECK
+;
+        // Command and path check
+        // ----------------------
         // if command is * or matching the rule
         if (*rules[i].cmd == '*' || !strcmp (cmd, rules[i].cmd)) {
             // if path is locked
@@ -289,15 +291,17 @@ int main(int argc, char **argv) {
                     // then check that path matches
                     if( strcmp(rules[i].path,fullcmd) )
                         return error("path","path not matching");
-                // or if path is not specified
-                } else { // get the default path with our getpath()
+                    // or if path is not specified
+                } else {
+                    // get the default path with our getpath()
                     snprintf(fullcmd,MAXCMD,"%s",getpath(cmd));
                     // check if the default environment path matches
                     if( strcmp(rules[i].path,fullcmd) )
                         return error("path","path not matching");
                 }
-            // or if path is not locked
-            } else // and if path is not specified, getpath()
+                // or if path is not locked
+            } else
+                // and if path is not specified, getpath()
                 if((fullcmd[0]!='.')&&(fullcmd[0]!='/'))
                     snprintf(fullcmd,MAXCMD,"%s",getpath(cmd));
 
@@ -307,13 +311,16 @@ int main(int argc, char **argv) {
             fprintf(stderr,"cmd: %s\n",cmd);
 #endif
 
-            /// COMMAND BINARY CHECK
+            // Command binary check
+            // --------------------
             // command does not exist as binary on the filesystem
             if (lstat (fullcmd, &st) == -1)
                 return error("lstat", "cannot stat program");
-            // command has wrong permissions (writable to others)
+
             if (st.st_mode & 0022)
+                // command has wrong permissions (writable to others)
                 return error("perm", "cannot run binaries others can write.");
+
             // user UID is not root
             if (uid != SETUID
                 // and is not unlocked
@@ -332,13 +339,11 @@ int main(int argc, char **argv) {
 
 
 #ifdef HASH
-            /// BINARY HASH CHECKSUM
+            // Binary hash checksum
+            // --------------------
             if( strlen(rules[i].hash) ) {
                 int c;
                 uint32 sizeread;
-
-                if(st.st_size>MAXBINSIZE)
-                    error("binsize", "cannot check hash of file, size too large");
 
                 sizeread = getsha(fullcmd, digest);
                 if(sizeread != st.st_size)
@@ -381,25 +386,31 @@ int main(int argc, char **argv) {
                 pid = fork();
                 if(pid<0) return error("fork", NULL);
 
-                else if(pid==0) { // child
+                // child
+                else if(pid==0) {
 
                     int fd = open("/dev/tty", O_RDWR);
                     ioctl(fd, TIOCNOTTY, 0);
                     close(fd);
                     chdir("/");
-                    umask(022); // secure default
-                    setpgid(0,0);  // process group
-                    fd=open("/dev/null", O_RDWR); // stdin
-                    dup(fd); // stdout
-                    dup(fd); // stderr
+                    // secure default
+                    umask(022);
+                    // process group
+                    setpgid(0,0);
+                    // stdin
+                    fd=open("/dev/null", O_RDWR);
+                    // stdout
+                    dup(fd);
+                    // stderr
+                    dup(fd);
 
                 } else {
 
                     // if pidfile is not an empty string (-p is used)
                     if( strncmp(pidfile,"",MAXFILEPATH) ) {
-                        /* save the pid of the forked child. beware this
-                           does not work with some daemons that follow up
-                           with more forks. */
+                        // save the pid of the forked child. beware this
+                        // does not work with some daemons that follow up
+                        // with more forks.
                         FILE *fpid = fopen(pidfile,"w");
                         if(!fpid) error("pidfile", NULL);
                         fprintf(fpid,"%u\n",pid);

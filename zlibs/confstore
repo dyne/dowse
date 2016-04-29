@@ -11,21 +11,21 @@ conf-load() {
     [[ -r $settings ]] && {
         act "loading configuration from $settings"
         source $settings
-
-        # cover defaults
-        interface=${interface:-lo}
-        hostname=${hostname:-`hostname`}
-        address=${address:-127.0.0.1}
-        wan=${wan:-127.0.0.1}
-        dns=${dns:-$wan}
-        dowse_uid=${dowse_uid:-`id -un`}
-        dowse_gid=${dowse_gid:-`id -gn`}
-        dowse_net=${dowse_net:-127.0.0.0/24}
-        netmask=${netmask:-255.255.255.0}
-        dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
-
-        firewall=${firewall:-yes}
     }
+
+    # cover defaults
+    interface=${interface:-lo}
+    hostname=${hostname:-`hostname`}
+    address=${address:-127.0.0.1}
+    wan=${wan:-127.0.0.1}
+    dns=${dns:-$wan}
+    dowse_uid=${dowse_uid:-`id -un`}
+    dowse_gid=${dowse_gid:-`id -gn`}
+    dowse_net=${dowse_net:-127.0.0.0/24}
+    netmask=${netmask:-255.255.255.0}
+    dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
+
+    firewall=${firewall:-yes}
 
     func "interface: $interface"
     func "hostname: $hostname"

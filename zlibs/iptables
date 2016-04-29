@@ -26,10 +26,10 @@ iptables() {
 
     if [[ "$execmap[xtables-multi]" = "/sbin/xtables-multi" ]]; then
         # func "iptables using xtables-multi"
-        $R/bin/sup ${execmap[xtables-multi]} iptables $*
+        launch xtables-multi iptables $*
         return $?
     else
-        $R/bin/sup $execmap[iptables] $*
+        launch iptables $*
         return $?
     fi
 }
@@ -200,15 +200,14 @@ loopback-on() {
 
 _sysctl() {
     fn sysctl $*
-    freq=(${execmap[sysctl]})
-    ckreq || return 1
-
     $R/bin/sup ${execmap[sysctl]} $* | sysread sysctl_log
     func $sysctl_log
 }
 
 sysctl-setup() {
     fn sysctl-setup
+    freq=(${execmap[sysctl]})
+    ckreq || return 1
 
     cat <<EOF | _sysctl -p -
 net.ipv4.tcp_syncookies = 1
@@ -237,7 +236,7 @@ iptables-snat-on() {
     sysctl-setup
 
     notice "Setting up masquerading (NAT)"
-    $R/bin/sup ${execmap[modprobe]} nf_conntrack_ipv4
+    launch modprobe nf_conntrack_ipv4
     _sysctl net.netfilter.nf_conntrack_acct=1
     # strenghten and optimize a bit the system for networking
 

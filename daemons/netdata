@@ -1,0 +1,38 @@
+#!/usr/bin/zsh
+
+netdata-conf() {
+    cat <<EOF
+[global]
+    # special port for dowse
+    port = 29999
+    ip version = ipv4
+    bind socket to ip = $address
+
+	run as user = $dowse_uid
+	web files owner = root
+    web files group = staff
+
+    error log  = $H/run/netdata-error.log
+    access log = $H/run/netdata-access.log
+    debug log  = $H/run/netdata-debug.log
+
+    memory deduplication = yes
+    # save - dump on exit
+    # map  - write to disk realtime
+    memory mode = ram
+
+EOF
+}
+
+netdata-exec() {
+    fn netdata-start $*
+    req=(conf)
+    freq=($conf)
+    ckreq || return $?
+
+    ztmp
+    launch netdata -pidfile $ztmpfile -c $conf -p 29999
+    savepid netdata $ztmpfile
+
+    return $?
+}

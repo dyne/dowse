@@ -25,7 +25,7 @@
 # {{{ GLOBALS
 
 dowse_version=0.9
-dowse_release_date="Mar/2016"
+dowse_release_date="Apr/2016"
 
 zkv=1
 restful=1
@@ -42,6 +42,10 @@ E=${DOWSE_CONF:-/etc/dowse}
     return 1
 }
 
+# add all other dowse binaries to the path
+path+=($R/bin)
+rehash
+
 mkdir -p $H
 
 # load development libraries if there
@@ -56,8 +60,11 @@ TEXTDOMAIN=dowse
 # path and debugging
 vars+=(R H E debug quiet script fun settings network)
 vars+=(last_notice last_act last_func)
-vars+=(root)
+vars+=(root sql)
 arrs+=(mods)
+
+# use sqlite
+sql="sqlite3"
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
@@ -104,6 +111,7 @@ source $R/zlibs/iptables
 source $R/zlibs/ebtables
 source $R/zlibs/confstore
 source $R/zlibs/redis
+source $R/zlibs/sql
 
 source $R/daemons/consul
 source $R/daemons/dnsmasq
@@ -115,6 +123,7 @@ source $R/daemons/pgld
 source $R/daemons/tor
 source $R/daemons/redis
 source $R/daemons/dnscrypt-proxy
+source $R/daemons/netdata
 
 # conclude initialization
 if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
@@ -249,10 +258,10 @@ EOF
             loopback-isolate
 
             act "set up $interface interface with ip $address"
-            $R/bin/sup ifconfig $interface $address netmask $netmask up
+            launch ifconfig $interface $address netmask $netmask up
 
             act "set $wan as default gateway"
-            $R/bin/sup route add default gw $wan
+            launch route add default gw $wan
 
             act "setup snat trasversal"
             iptables-snat-on
@@ -282,11 +291,14 @@ EOF
     start dnsmasq
 
     # start the dns encrypted tunneling
-    start dnscrypt
+    start dnscrypt-proxy
 
     # these are root programs that need redis to be running
     start dnscap
 
+    # netdata dashboard for the technical status
+    netdata-conf > $H/run/netdata.conf
+    start netdata
 
     mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
     for m in "${(f)mods}"; do
@@ -321,8 +333,11 @@ dowse-stop() {
 
     done
 
+    # stop the dashboard
+    stop netdata
+
     # stop the dns crypto tunnel
-    stop dnscrypt
+    stop dnscrypt-proxy
 
     # stop the dns capture daemon
     stop dnscap
@@ -382,7 +397,7 @@ BEGIN { c=0 }
   mac[c]=$2
   ip[c]=$3
   if($4=="*") host[c]="anonymous"; else host[c]=$4
-  c++
+zx  c++
 }
 END {
   printf "mac=("; for(i=0;i<c;i++) { printf "%s ", mac[i] }; printf ")\n"
@@ -409,37 +424,27 @@ dowse-dump() {
 dowse-status() {
     fn dowse-status
 
-    req=(address)
-    freq=($H/run/leases)
+    req=(sql)
     ckreq || return $?
 
-    typeset -a mac ip host ping known
-    notice "Reporting network status"
-    eval `dowse-parse-leases`
-    known=()
-    ping=()
+    freq=($H/run/things.db)
+    [[ -r $H/run/things.db ]] || {
+        notice "Creating new things database"
+        cat $R/db/thing.idx |
+            sql_create_table found |
+            $sql -batch $H/run/things.db
+        return 0
+    }
 
-    for i in {0..${#mac}}; do
-        [[ $mac[$i] = "" ]] && { continue }
-
-        known[$i]="unknown"
-        grep "${mac[$i]}" $E/network > /dev/null
-        [[ $? = 0 ]] && known[$i]="known"
-
-        ping[$i]="offline"
-        nmap -sn -n -oG - $ip[$i] | grep -i 'status: up' > /dev/null
-        [[ $? = 0 ]] && ping[$i]="online"
-
-        if [[ "$known[$i]" == "known" ]]; then
-
-            yes "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-
-        else
-
-            no "$ping[$i]\t $mac[$i]\t $ip[$i]\t $host[$i]"
-
-        fi
+    notice "Things found online"
+    for res in "${(f)$(print - "SELECT * from found;" | $sql -batch $H/run/things.db)}"; do
+        # func "$res"
+        # thing=(`print $res | sql_idx_parse $R/db/thing.idx`)
+        act "${res}"
+        # TODO: parse things into cli formatting perhaps
     done
+
+    return 0
 }
 
 dowse-scan() {

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+## -*- origami-fold-style: triple-braces -*-
 #
 # Zuper - Zsh Ultimate Programmer's Extensions Refurbished
 #
@@ -31,6 +32,11 @@ arrs=(req freq)
 
 vars+=(zuper_version)
 zuper_version=0.2
+
+zmodload zsh/system
+zmodload zsh/net/tcp
+
+# {{{ Messaging
 
 # Messaging function with pretty coloring
 autoload colors
@@ -128,6 +134,9 @@ function _print() {
     return 0
 }
 
+# }}} Messaging
+
+# {{{ Debugging
 
 fn() {
     fun="$@"
@@ -236,6 +245,10 @@ endgame() {
 # unlike TRAPEXIT, the zshexit() hook is not called when functions exit.
 zshexit() { endgame EXIT; return $? }
 
+# }}} Debugging
+
+# {{{ Tempfiles
+
 ##########################
 # Temp file handling
 
@@ -261,6 +274,10 @@ _ztmp_destructor() {
 
 arrs+=(tmpfiles)
 destruens+=(_ztmp_destructor)
+
+# }}} Tempfiles
+
+# {{{ Strings
 
 # tokenizer, works only with one char length delimiters
 # saves everything in global array tok=()
@@ -289,6 +306,116 @@ strtok() {
     [[ "$t" == "" ]] || tok+=($t)
 }
 
+# TODO: move in here some helpers
+
+# }}} Strings
+
+# {{{ Networking
+
+# This is only tested on GNU/Linux and makes use of sysfs
+
+# index of all network devices
+arrs+=(net_devices)
+
+# map of ipv4 assigned addresses: [dev addr]
+maps+=(net_ip4_addr)
+# map of ipv6 assigned addresses: [dev addr]
+maps+=(net_ip6_addr)
+
+# map of dhcp served ipv4
+maps+=(ip4dhcps)
+# map of dhcp served ipv6
+maps+=(ip6dhcps)
+
+# map of external ipv4 addresses
+maps+=(net_ip4_exit)
+# map of internal ipv6 addresses
+# maps+=(ip6exits)
+
+net.scan_devices() {
+    for i in "${(f)$(find /sys/devices/ -name net)}"; do
+        dev=`ls $i`
+
+        # skip the loopback device
+        [[ "$dev" =~ "^lo" ]] && continue
+        func "$dev"
+        net_devices+=($dev)
+    done
+
+    # return error if no device found
+    if [[ ${#net_devices} = 0 ]]; then return 1
+    else return 0; fi
+}
+
+net.scan_addresses() {
+    [[ ${#net_devices} = 0 ]] && {
+        error "No network device found."
+        func "Have you ran net.scan_devices() first?"
+        return 1
+    }
+
+    for dev in ${net_devices}; do
+        # check ipv4 connections
+        conn=`ip addr show $dev | awk '/inet / {print $2}'`
+        [[ "$conn" = "" ]] || {
+            net_ip4_addr+=($dev $conn) }
+        # check ipv6 connections
+        conn=`ip addr show $dev | awk '/inet6/ {print $2}'`
+        [[ "$conn" = "" ]] || {
+            net_ip6_addr+=($dev $conn) }
+    done
+
+    # list ipv4
+    notice "${#net_ip4_addr} ipv4 connected devices found"
+    for c in ${(k)net_ip4_addr}; do
+        act " $c ${net_ip4_addr[$c]}"
+    done
+
+    # list ipv6
+    notice "${#net_ip6_addr} ipv6 connected devices found"
+    for c in ${(k)net_ip6_addr}; do
+        act " $c ${net_ip6_addr[$c]}"
+    done
+    # find out network addresses
+
+    return 0
+}
+
+net.scan_exits() {
+    # just ipv4 for now, also we use curl to drive the call over the
+    # specific interface, but if that wouldn't matter then rest.get is
+    # better to avoid this dependency
+
+    for dev in ${(k)net_ip4_addr}; do
+        addr=`curl --silent --interface $dev https://api.ipify.org`
+        if [[ "$?" != "0" ]]; then
+            error "curl returns $?: $addr"
+        else
+            [[ "$addr" = "" ]] || {
+                notice "$dev external ip: $addr"
+                net_ip4_exit+=($dev $addr)
+            }
+        fi
+    done
+
+    for dev in ${(k)net_ip6_addr}; do
+        addr=`curl --silent --ipv6 --interface $dev https://api.ipify.org`
+        if [[ $? != 0 ]]; then
+            error "curl returns $?: $addr"
+        else
+            [[ "$addr" = "" ]] || {
+                notice "$dev external ip: $addr"
+                net_ip4_exit+=($dev $addr)
+            }
+        fi
+    done
+
+}
+
+# }}} Networking
+
+# {{{ Key/Value filesave
+
 # optional: define zkv=1 on source
 
 [[ "$zkv" = "" ]] || {
@@ -296,7 +423,6 @@ strtok() {
     ##########################
     # Key/Value file storage using ZSh associative maps
 
-    zmodload zsh/system
 
     # load a map from a file
     # map must be already instantiated with typeset -A by called
@@ -358,44 +484,44 @@ EOF
 
 }
 
-# optional: define restful=1 on source
+# }}} Key/Value filesave
 
-[[ "$restful" = "" ]] || {
+# {{{ Get/Set REST API
 
-    ########
-    # Restful API client
-    # there is a clear zsh optimization here in get/set kv
-    # using zsh/tcp instead of spawning curl
-    # and perhaps querying with one call using ?recursive
+########
+# Restful API client
+# there is a clear zsh optimization here in get/set kv
+# using zsh/tcp instead of spawning curl
+# and perhaps querying with one call using ?recursive
 
-    zmodload zsh/net/tcp
+vars+=(rest_reply_body rest_reply_header)
+maps+=(rest_header)
 
+function rest.put() {
+    fn "rest.put $*"
 
-    function restful.put() {
-        fn "restful.put $*"
+    # $1 = hostname
+    # $2 = port
+    # $3 = path
+    # value from stdin |
 
-        # $1 = hostname
-        # $2 = port
-        # $3 = path
-        # value from stdin |
+    # to check if the http service is running is up to the caller
 
-        # to check if the http service is running is up to the caller
+    _host=${1} # ip address
+    _port=${2}
+    _path=${3}
+    sysread _v
 
-        _host=${1} # ip address
-        _port=${2}
-        _path=${3}
-        sysread _v
+    req=(_host)
+    ckreq || return $?
 
-        req=(_host)
-        ckreq || return $?
+    if ztcp $_host $_port; then
 
-        if ztcp $_host $_port; then
+        # TODO: work out various parsers, this one works with consul.io
 
-            # TODO: work out various parsers, this one works with consul.io
-
-            _fd=$REPLY
-            #    func "tcp open on fd $fd"
-            cat <<EOF >& $_fd
+        _fd=$REPLY
+        #    func "tcp open on fd $fd"
+        cat <<EOF >& $_fd
 PUT ${_path} HTTP/1.1
 User-Agent: Zuper/$zuper_version
 Host: ${_host}:${_port}
@@ -405,71 +531,99 @@ Content-Type: application/x-www-form-urlencoded
 
 EOF
 
-            print -n "$_v" >& $_fd
+        print -n "$_v" >& $_fd
 
-            sysread -i $_fd _res
+        sysread -i $_fd _res
 
-            # close connection
-            ztcp -c $_fd
+        # close connection
+        ztcp -c $_fd
 
-            [[ "$_res" =~ "true" ]] || {
-                warn "failed PUT on restful key/value"
-                warn "host: ${_host}"
-                warn "port: ${_port}"
-                warn "path: ${_path}"
-                warn "value: $_v"
-                print - "$_res"
-                zerr
-                return 1
-            }
-
-        else
-            error "cannot connect to restful service: $_host:$_port"
-            zerr
-            return 1
-        fi
-
-        return 0
-
-    }
-
-    function restful.get() {
-        fn "restful.get $*"
-
-        _host=${1}
-        _port=${2}
-        _path=${3}
-
-        req=(_host _port)
-        ckreq || return $?
-
-        ztcp $_host $_port || {
+        [[ "$_res" =~ "true" ]] || {
+            warn "failed PUT on restful key/value"
+            warn "host: ${_host}"
+            warn "port: ${_port}"
+            warn "path: ${_path}"
+            warn "value: $_v"
+            print - "$_res"
             zerr
             return 1
         }
 
-        _fd=$REPLY
+    else
+        error "cannot connect to restful service: $_host:$_port"
+        zerr
+        return 1
+    fi
 
-        # TODO: work out various parsers, this one works with consul.io
+    return 0
 
-        cat <<EOF >& $_fd
+}
+
+function rest.get() {
+    fn "rest.get $*"
+
+    _host=${1}
+    _port=${2}
+    _path=${3}
+
+    req=(_host _port)
+    ckreq || return $?
+
+    ztcp $_host $_port || {
+        zerr
+        return 1
+    }
+
+    _fd=$REPLY
+
+    # TODO: work out various parsers, this one works with consul.io
+
+    cat <<EOF >& $_fd
 GET ${_path} HTTP/1.1
 User-Agent: Zuper/$zuper_version
 Host: $_host:$_port
 Accept: */*
 
 EOF
-        sysread -i $_fd -o 1 | awk -F: '
-/"Value":/ { gsub(/"|}]/,"",$7) ; print $7 }' | base64 -d
 
-        # close connection
-        ztcp -c $_fd
+    # read header response
+    rest_reply=`sysread -i $_fd -o 1`
 
-        return 0
+    for i in "${(f)rest_reply}"; do
+        print $i | hexdump -C
+        # first line is the response code
 
-    }
+        [[ "$i" -regex-match "\x0d\x0a$" ]] && {
+            func BLANK
+            break }
+
+        # # save other lines in map for fast retrieval
+        # _field=${i[(ws@:@)1]}
+        # func "$_field - header field parsed"
+        # rest_header[$_field]="${i[(ws@:@)2]}"
+
+        # c=$(( $c + 1 ))
+    done
+    # rest_reply_header="${(f)$(cat <&$_fd)}"
+
+    func "${#rest_reply_header} bytes response header stored in rest_reply_header"
+    # | awk -F: '
+    #/"Value":/ { gsub(/"|}]/,"",$7) ; print $7 }' | base64 -d
+
+    # TODO: read content-length and use it here
+
+    rest_reply_body="${(f)$(sysread -i $_fd -o 1)}"
+    func "${#rest_reply_body} bytes response body stored in rest_reply_body"
+
+    # close connection
+    ztcp -c $_fd
+
+    return 0
 
 }
+
+
+# }}} Get/Set REST API
 
 # {{{ Helpers
 [[ "$helpers" = "" ]] || {
@@ -700,4 +854,4 @@ BEGIN { found=0 }
 
 }
 
-# }}}
+# }}} Config

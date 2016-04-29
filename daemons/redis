@@ -100,7 +100,7 @@ redis-server-exec() {
     pidfile=`awk '/pidfile/ { print $2 }' $conf`
     func "redis $conf $* (pidfile: $pidfile)"
 
-    $exe $conf $*
+    launch redis-server $conf $*
 
     act "blank volatile databases"
     print "flushdb" | redis runtime > /dev/null

@@ -15,6 +15,21 @@ CFLAGS="-Wall -fPIC -fPIE -Os"
 LDFLAGS="-fPIC -fPIE -pie"
 
 case $1 in
+    netdata)
+        [[ -x $R/build/netdata ]] || {
+            pushd $R/src/netdata
+            CFLAGS="$CFLAGS" \
+                  ./configure --prefix=${PREFIX}/netdata \
+                  --datarootdir=${PREFIX}/netdata \
+                  --with-webdir=${PREFIX}/netdata \
+                  --localstatedir=$HOME/.dowse \
+                  --sysconfdir=/etc/dowse &&
+                make &&
+                install -s -p src/netdata $R/build             
+            popd
+
+        }
+        ;;
     netdiscover)
         [[ -x $R/build/netdiscover ]] || {
             pushd $R/src/netdiscover

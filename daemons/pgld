@@ -4,8 +4,8 @@ pgld-conf() {
     # required
     # [[ -f /proc/net/ip_tables_targets ]] && \
     #     grep -q NFQUEUE /proc/net/ip_tables_targets || {
-    $R/bin/sup ${execmap[modprobe]} -q xt_NFQUEUE
-    $R/bin/sup ${execmap[modprobe]} -q ipt_NFQUEUE
+    launch modprobe -q xt_NFQUEUE
+    launch modprobe -q ipt_NFQUEUE
 
     # below is all optional
     # [[ -f /proc/net/ip_tables_matches ]] && \
@@ -44,14 +44,12 @@ pgld-conf() {
 
 pgld-exec() {
     fn pgld-start $*
-    exe=${1:-${execmap[pgld]}}
-    req=(conf exe)
-    freq=($conf $exe)
+    req=(conf)
+    freq=($conf)
     ckreq || return 1
 
     ztmp
-    $R/bin/sup $R/bin/pgld -p $ztmpfile -r pgld_reject -a pgld_accept $conf
-
+    launch pgld -p $ztmpfile -r pgld_reject -a pgld_accept $conf
     savepid pgld $ztmpfile
 
     return $?

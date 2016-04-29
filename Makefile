@@ -23,7 +23,7 @@ clean:
 install:
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/bin
-	install -p -m 644 dowse ${DESTDIR}${PREFIX}/.zshrc
+	install -p -m 644 dowse ${DESTDIR}${PREFIX}/zshrc
 	make -C src     install
 	make -C zlibs   install
 	make -C daemons install
@@ -35,9 +35,12 @@ install:
 	@modules/install.sh ${CONFDIR}
 	install -d ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/*.zkv         ${DESTDIR}${PREFIX}/db
+	install    -p -m 644 build/*.idx         ${DESTDIR}${PREFIX}/db
 	install -s -p -m 755 build/dowse-to-osc    ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dowse-to-gource ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/modprobe        ${DESTDIR}${PREFIX}/bin
+	install -s -p -m 755 build/netdiscover     ${DESTDIR}${PREFIX}/bin
+	install -s -p -m 755 build/netdata       ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dnscap        ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dowse.so      ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/dnscrypt-proxy ${DESTDIR}${PREFIX}/bin
