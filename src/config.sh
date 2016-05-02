@@ -147,3 +147,13 @@ for i in ${(k)db}; do
 done
 
 notice "Database indexes generated"
+
+#####
+_id=`id -un`
+_gid=`id -gn`
+cat <<EOF > privileges
+dowse_uid=$_id
+dowse_gid=$_gid
+EOF
+notice "Configured privileges for caller: $_id $_gid"
+######

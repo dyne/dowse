@@ -26,6 +26,7 @@
 
 vars+=(now interval)
 maps+=(obj)
+
 source /usr/local/dowse/zshrc
 
 # gather_network_info fills in global maps
@@ -39,6 +40,7 @@ interval=10 # seconds
 
 notice "Starting pendulum on `date -d @$now`"
 
+
 net_addr_to_network() {
     fn net_addr_to_cclass $*
     local _addr="$1"
@@ -51,9 +53,12 @@ net_addr_to_network() {
 resolve_obj_hostname() {
     fn resolve_obj_hostname $*
 
-    hh="`host $obj[ip4] | awk '{print $NF}'`"
-    hh[${#hh}]='\0'
-    obj[hostname]=${hh%%.*}
+    hh="`host $obj[ip4] | awk '
+/NXDOMAIN/ { exit }
+{ print $NF }'`"
+    # hh[${#hh}]='\0'
+    [[ "$hh" = "" ]] || 
+        obj[hostname]=${hh%%.*}
     func "resolved: $obj[hostname]"
 }
 
@@ -131,8 +136,9 @@ update_arp_scan() {
             obj[iface]=$_dev
             obj[last]=$nownow
             obj[os]="$(print - $t | awk '
-{ for(c=5;c<=NF;c++) printf $c " " }
-')"
+{
+ for(c=5;c<=NF;c++) printf("%s ", $c)
+}')"
 
             resolve_obj_hostname
 

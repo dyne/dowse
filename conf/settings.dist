@@ -37,8 +37,8 @@ firewall=yes # yes, no or flush (blank open)
 
 # under which system UID and GID dowse will run
 # default is current user
-dowse_uid=proxy
-dowse_gid=proxy
+# dowse_uid=proxy
+# dowse_gid=proxy
 
 # what network range we choose for our LAN (class C)
 dowse_net=10.0.0.0/24

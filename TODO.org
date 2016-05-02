@@ -32,6 +32,16 @@ implementations wishes for new daemons and modules
 *** nsd (advanced dns server + dnssec))
 *** credns (external zone verifier)
 
+
+* conf export and routing description
+
+  - http://netjson.org/ use to export current configuration
+    standard shaping up
+  - graph app: https://github.com/interop-dev/netjsongraph.js
+
+    notice also netsukuku
+
+
 * network object discovery
 
   oui sanitized list: http://linuxnet.ca/ieee/oui/
@@ -39,6 +49,7 @@ implementations wishes for new daemons and modules
   arp-scan (most used, packaged): http://www.nta-monitor.com/wiki/index.php/Arp-scan_User_Guide
 
   netdiscovery (passive listening): http://nixgeneration.com/~jaime/netdiscover/releases/
+
 
 
 * domain filtering and categorization

@@ -9,7 +9,7 @@ netdata-conf() {
     bind socket to ip = $address
 
 	run as user = $dowse_uid
-	web files owner = root
+	web files owner = $dowse_uid
     web files group = staff
 
     error log  = $H/run/netdata-error.log

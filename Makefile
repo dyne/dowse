@@ -20,6 +20,9 @@ clean:
 	@rm -rf build
 	make -C src clean
 
+config:
+	make -C src
+
 install:
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/bin
@@ -50,6 +53,8 @@ install:
 	install -s -p -m 755 build/tor          ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/pgld         ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
+	./set_privileges.sh                     ${DESTDIR}${PREFIX}
+
 # here sup is installed with suid bit. sup is a secure application we
 # use for privilege escalation when needed. sup executes only certain
 # binaries on a fixed path and they must match a sha256 hash which is
