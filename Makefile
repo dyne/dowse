@@ -52,8 +52,9 @@ install:
 	install -s -p -m 755 build/redis-cli    ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/tor          ${DESTDIR}${PREFIX}/bin
 	install -s -p -m 755 build/pgld         ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
 	./set_privileges.sh                     ${DESTDIR}${PREFIX}
+	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
+
 
 # here sup is installed with suid bit. sup is a secure application we
 # use for privilege escalation when needed. sup executes only certain
