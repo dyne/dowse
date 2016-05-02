@@ -10,7 +10,7 @@ netdata-conf() {
 
 	run as user = $dowse_uid
 	web files owner = $dowse_uid
-    web files group = staff
+    web files group = $dowse_gid
 
     error log  = $H/run/netdata-error.log
     access log = $H/run/netdata-access.log
