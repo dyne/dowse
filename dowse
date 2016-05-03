@@ -438,9 +438,13 @@ dowse-status() {
 
     notice "Things found online"
     for res in "${(f)$(print - "SELECT * from found;" | $sql -batch $H/run/things.db)}"; do
+        strtok "$res" "|"
+        notice "${tok[4]} :: ${tok[6]}"
+        act "${tok[1]} | ${tok[2]} | ${tok[3]/null/}"
+        act "${tok[6]} | ${tok[9]}"
         # func "$res"
         # thing=(`print $res | sql_idx_parse $R/db/thing.idx`)
-        act "${res}"
+#        act "${res}"
         # TODO: parse things into cli formatting perhaps
     done
 
