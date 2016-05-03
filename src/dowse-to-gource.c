@@ -33,6 +33,10 @@
 static char output[MAX_OUTPUT];
 static int quit = 0;
 
+
+redisContext *redis;
+redisReply   *reply;
+
 void ctrlc(int sig) {
     fprintf(stderr,"\nQuit.\n");
     redisFree(redis);
@@ -42,8 +46,9 @@ void ctrlc(int sig) {
 int main(int argc, char **argv) {
     
     char *dns, *ip, *action, *epoch, *domain, *tld, *group;
+    long long int hits;
 
-    connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
     signal(SIGINT, ctrlc);
 
@@ -66,13 +71,16 @@ int main(int argc, char **argv) {
         if(!tld) continue;
         group = strtok(NULL,","); // optional
         
+
+        hits = atoll(action);
+
         // render
         if(!group)
             snprintf(output,MAX_OUTPUT,"%s|%s|%c|%s/%s",
-                     epoch,ip,(action[0]=='K')?'M':'A',tld,domain);
+                     epoch,ip,(hits==1)?'A':'M',tld,domain);
         else
             snprintf(output,MAX_OUTPUT,"%s|%s|%c|%s/%s/%s",
-                     epoch,ip,(action[0]=='K')?'M':'A',tld,group,domain);
+                     epoch,ip,(hits==1)?'A':'M',tld,group,domain);
             
         fprintf(stdout,"%s\n",output);
         fflush(stdout);

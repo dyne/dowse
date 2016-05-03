@@ -47,6 +47,8 @@ static void (*pgl_dbus_send)(const char *, va_list) = NULL;
 struct nfq_handle *nfqueue_h = 0;
 struct nfq_q_handle *nfqueue_qh = 0;
 
+redisContext *redis = NULL;
+redisReply *reply = NULL;
 
 // General logging function
 void do_log(int priority, const char *format, ...) {
@@ -696,7 +698,7 @@ int main(int argc, char *argv[]) {
     }
 
     // open redis connection
-    connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
     // open logfile
     if (logfile_name != NULL) {

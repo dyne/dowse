@@ -34,6 +34,8 @@
 #include "redis.h"
 #include "database.h"
 
+redisContext *redis;
+redisReply   *reply;
 
 static int quit = 0;
 void ctrlc(int sig) {

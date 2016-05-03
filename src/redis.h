@@ -5,9 +5,6 @@
 
 #define MAX_OUTPUT 512
 
-redisContext *redis = NULL;
-redisReply   *reply = NULL;
-
 /* typedef struct redisReply { */
 /*     int type;            // REDIS_REPLY */
 /*     long long integer;  // The integer when type is REDIS_REPLY_INTEGER */
@@ -17,4 +14,4 @@ redisReply   *reply = NULL;
 /*     struct redisReply **element; // elements vector for REDIS_REPLY_ARRAY */
 /* } redisReply; */
 
-void connect_redis(char *host, int port, int db);
+redisContext *connect_redis(char *host, int port, int db);

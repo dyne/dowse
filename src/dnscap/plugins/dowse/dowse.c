@@ -71,6 +71,9 @@ static int console = 1;
 #define MAX_QUERY 512
 #define MAX_DOMAIN 256
 #define MAX_TLD 32
+
+#define DNS_HIT_EXPIRE (60*60*6)
+
 static char query[MAX_QUERY]; // incoming query
 static char domain[MAX_DOMAIN]; // domain part parsed (2nd last dot)
 static char tld[MAX_TLD]; // tld (domain extension, 1st dot)
@@ -84,6 +87,10 @@ output_t dowse_output;
 map_t visited;
 // hash map of known domains
 map_t domainlist;
+
+
+redisContext *redis;
+redisReply   *reply;
 
 void dowse_usage() {
     fprintf(stderr,
@@ -226,7 +233,8 @@ dowse_start(logerr_t *a_logerr) {
     // load the domain-list path if there
     if(listpath) load_domainlist(listpath);
 
-    connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    // TODO: check succesful result
 
     return 0;
 }
@@ -366,7 +374,6 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
               const u_char *dnspkt, unsigned dnslen) {
     /* dnspkt may be NULL if IP packet does not contain a valid DNS message */
 
-    char output[MAX_OUTPUT];
     char outnew[MAX_OUTPUT];
 
     if (dnspkt) {
@@ -375,14 +382,14 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
         int qdcount;
         ns_rr rr;
 
-        int *val;
         char *sval;
+
+        long long int val;
 
         char *extracted;
         char *resolved;
         char *from;
         int res;
-        char action = 'A';
 
         char from_color[16];
 
@@ -424,82 +431,31 @@ void dowse_output(const char *descr, iaddr from, iaddr to, uint8_t proto, int is
             resolved = ns_rr_name(rr);
             // what domain is being looked up
             extracted = extract_domain(resolved);
-
-            res = hashmap_get(visited, extracted, (void**)(&val));
-            switch(res) {
-
-                // TODO: fix malloc and strdup here as they grow as a leak on long term
-            case MAP_MISSING : // never visited
-
-                /* ==13150== 992 bytes in 248 blocks are definitely lost in loss record 45 of 49 */
-                /*     ==13150==    at 0x4C28C20: malloc (vg_replace_malloc.c:296) */
-                /*     ==13150==    by 0x5C3D326: dowse_output (dowse.c:417) */
-                /*     ==13150==    by 0x404CAB: output (dnscap.c:2201) */
-                /*     ==13150==    by 0x406779: network_pkt (dnscap.c:2164) */
-                /*     ==13150==    by 0x407065: dl_pkt (dnscap.c:1608) */
-                /*     ==13150==    by 0x503F5E9: ??? (in /usr/lib/x86_64-linux-gnu/libpcap.so.1.6.2) */
-                /*     ==13150==    by 0x5043783: ??? (in /usr/lib/x86_64-linux-gnu/libpcap.so.1.6.2) */
-                /*     ==13150==    by 0x4037E0: poll_pcaps (dnscap.c:1344) */
-                /*     ==13150==    by 0x4037E0: main (dnscap.c:406) */
-                val = malloc(sizeof(int));
-                *val = 1; // just a placeholder for now
-
-                /* ==13150== 3,069 bytes in 248 blocks are definitely lost in loss record 47 of 49 */
-                /*       ==13150==    at 0x4C28C20: malloc (vg_replace_malloc.c:296) */
-                /*       ==13150==    by 0x5511A69: strdup (strdup.c:42) */
-                /*       ==13150==    by 0x5C3D34D: dowse_output (dowse.c:419) */
-                /*       ==13150==    by 0x404CAB: output (dnscap.c:2201) */
-                /*       ==13150==    by 0x406779: network_pkt (dnscap.c:2164) */
-                /*       ==13150==    by 0x407065: dl_pkt (dnscap.c:1608) */
-                /*       ==13150==    by 0x503F5E9: ??? (in /usr/lib/x86_64-linux-gnu/libpcap.so.1.6.2) */
-                /*       ==13150==    by 0x5043783: ??? (in /usr/lib/x86_64-linux-gnu/libpcap.so.1.6.2) */
-                /*       ==13150==    by 0x4037E0: poll_pcaps (dnscap.c:1344) */
-                /*       ==13150==    by 0x4037E0: main (dnscap.c:406) */
-                res = hashmap_put(visited, strdup(extracted), val);
-                break;
-
-            case MAP_OK: // already visited
-                action = 'M';
-                break;
-
-                // TODO error checks
-            case MAP_FULL:
-            case MAP_OMEM:
-                break;
-            }
-
+            reply = redisCommand(redis, "INCR dns_query_%s", extracted);
+            val = reply->integer;
+            freeReplyObject(reply);
+            reply = redisCommand(redis, "EXPIRE dns_query_%s %u", extracted, DNS_HIT_EXPIRE);
+            // logerr("dns_query_%s VAL: %lld\n", extracted, val);
 
             // compose the path of the detected quer
-
-            // new format adhering to specification
             snprintf(outnew,MAX_OUTPUT,
-                     "DNS,%s,%s,%lu,%s,%s",
-                     from,(action=='A')?"NEW":"KNOWN",
+                     "DNS,%s,%lld,%lu,%s,%s",
+                     from,val,
                      ts2epoch(&ts,NULL),extracted,tld);
 
             // add category if listed
             if(listpath) { // add known domain list information
                 res = hashmap_get(domainlist, extracted, (void**)(&sval));
-                if(res==MAP_OK) // add domain group
-                    snprintf(outnew,MAX_OUTPUT,"%s,%s",outnew,sval);
-            }
-
-            /* write to file */
-            if(fileout) {
-                fputs(output, fileout);
-                fputc('\n',fileout);
-                if(fileout) fflush(fileout);
-            }
-
-            /* print fast on console for realtime */
-            if(console) {
-                puts(output);
-                fflush(stdout);
+                if(res==MAP_OK) {// add domain group
+                    strncat(outnew,",",2);
+                    strncat(outnew,sval,MAX_OUTPUT-128);
+                    //snprintf(outnew,MAX_OUTPUT,"%s,%s",outnew,sval);
+                }
             }
 
             if(redis) {
                 reply = redisCommand(redis, "PUBLISH dns-query-channel %s", outnew);
-                logerr("PUBLISH dns-query-channel: %s\n", reply->str);
+                logerr("dnscap: %s", outnew);
                 freeReplyObject(reply);
             }
 

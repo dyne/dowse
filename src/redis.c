@@ -23,30 +23,31 @@
 
 #include <hiredis/hiredis.h>
 
-extern redisContext *redis;
-extern redisReply   *reply;
+redisContext *redis;
+redisReply   *reply;
 
 
 
-void connect_redis(char *host, int port, int db) {
-
+redisContext *connect_redis(char *host, int port, int db) {
+    redisContext   *rx;
+    redisReply     *reply;
     fprintf(stderr,"Connecting to redis on %s port %u\n", host, port);
     struct timeval timeout = { 1, 500000 };
-    redis = redisConnectWithTimeout(host, port, timeout);
-    /* redis = redisConnect(REDIS_HOST, REDIS_PORT); */
+    rx = redisConnectWithTimeout(host, port, timeout);
+    /* rx = redisConnect(REDIS_HOST, REDIS_PORT); */
 
-    if (redis == NULL || redis->err) {
-        if (redis) {
-            fprintf(stderr,"Connection error: %s\n", redis->errstr);
-            redisFree(redis);
+    if (rx == NULL || rx->err) {
+        if (rx) {
+            fprintf(stderr,"Connection error: %s\n", rx->errstr);
+            redisFree(rx);
         } else {
             fprintf(stderr,"Connection error: can't allocate redis context\n");
         }
     }
     // select the dynamic database where is dns_query_channel
-    reply = redisCommand(redis, "SELECT %u", db);
+    reply = redisCommand(rx, "SELECT %u", db);
     // TODO: check if result is OK
     // fprintf(stderr,"SELECT: %s\n", reply->str);
     freeReplyObject(reply);
-
+    return rx;
 }
