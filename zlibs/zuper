@@ -296,14 +296,22 @@ strtok() {
         if [[ "${_string[(e)$c]}" == "$_delim" ]]; then
             # check if not empty
             t=${_string[(e)$(($f + 1)),$(($c - 1))]}
-            [[ "$t" == "" ]] || tok+=($t)
+            if [[ "$t" == "" ]]; then
+                tok+=("null")
+            else
+                tok+=($t)
+            fi
             # save last found
             f=$c
         fi
     done
     # add last token
     t=${_string[(e)$(($f + 1)),$c]}
-    [[ "$t" == "" ]] || tok+=($t)
+    if [[ "$t" == "" ]]; then
+        tok+=("null")
+    else
+        tok+=($t)
+    fi
 }
 
 # TODO: move in here some helpers
