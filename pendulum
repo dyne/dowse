@@ -111,7 +111,7 @@ EOF
             [[ "$obj[$_k]" = "" ]] || { # key is defined in object
                 [[ "$obj[$_k]" = "$_v" ]] || { # values differ
                     # TODO: send events to redis
-                    warning "changed $_k: $_v -> $obj[$_k]"
+                    warning "${i[hostname]} change $_k: $_v -> $obj[$_k]"
                 }
             }
         done
