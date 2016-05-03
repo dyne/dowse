@@ -1,33 +1,27 @@
 # Objects
 
-Known and unknown objects on the network are listed in the STORAGE
-database using keys with 3 strings separated by underscore (_):
+Known and unknown objects on the network are listed in the things.db sqlite3 database located in `$H/run/things.db`. Each object is contained in an sql table like this:
 
 ```
-{KNO|UNO}_HEX:MAC:ADDR:STRING_FIELD
+1 macaddr  text primary key
+2 ip4      text
+3 ip6      text
+4 hostname text :: hostname resolved and declared
+5 iface    text :: interface to which this object connected last
+6 state    text :: connectivity state as reported by ip neigh
+7 os       text :: operating system deducted from macaddress magic
+8 dhcp     text :: ip assigned to this object by our dhcp
+9 identity text :: known or unknown network object
+10 last     date :: last time this object was seen (in EPOCH)
+11 age      date :: first time this object was seen (in EPOCH)
 ```
 
- - `KNO`: Known Network Object
- - `UNO`: Unknown Network Object
- - `HEX:MAC:ADDR:STRING`: MAC address used as unique identifier
- - `FIELD`: can be any string holding information (`objidx` array)
-   - `ip`: ip address
-   - `hostname`: hostname resolved and declared
-   - `iface`: interface to which this object connected last
-   - `state`: state of this object's connectivity reported by `ip neigh`
-   - `os`: operating system of this object reported by `p0f`
-   - `dhcp`: ip assigned to this object by our dhcp
-   - `last`: last time this object was seen (in EPOCH)
-   - `age`: first time this object was seen (in EPOCH)
-
-To list stored known and unknown objects from commandline, do:
+To list stored known and unknown objects from commandline, `source dowse` and then do:
 
 ```
-db=`awk '/db_storage/ { print $3 }' src/database.h`
-cat <<EOF | redis-cli -n $db --raw
-keys kno_*
-keys uno_*
+print - "SELECT * from found;" | $sql -batch $H/run/things.db
 ```
+
 
 # Events
 
