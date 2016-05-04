@@ -40,11 +40,9 @@ net.scan_addresses
 now=`date +'%s'`
 interval=10 # seconds
 
-notice "Starting pendulum on `date -d @$now`"
 
-
-net_addr_to_network() {
-    fn net_addr_to_cclass $*
+pendulum_ip_to_network() {
+    fn pendulum_ip_to_network $*
     local _addr="$1"
     req=(_addr)
     ckreq || return $?
@@ -52,22 +50,78 @@ net_addr_to_network() {
 }
 
 
-resolve_obj_hostname() {
-    fn resolve_obj_hostname $*
+_pendulum_resolve_hostname() {
+    fn pendulum_resolve_hostname $*
+    [[ "$obj[ip4]" = "" ]] && {
+        obj[hostname]=""
+        return 1
+    }
 
     hh="`host $obj[ip4] | awk '
 /NXDOMAIN/ { exit }
 { print $NF }'`"
     # hh[${#hh}]='\0'
-    [[ "$hh" = "" ]] || 
+    [[ "$hh" = "" ]] ||
         obj[hostname]=${hh%%.*}
     func "resolved: $obj[hostname]"
 }
 
+_pendulum_update_changes() {
+    fn pendulum_update_changes $*
+    macaddr="$obj[macaddr]"
+    req=(macaddr)
+    ckreq || return $?
+
+    info=`print - "SELECT * from found where
+macaddr=\"$obj[macaddr]\"
+;" | $sql -batch $H/run/things.db`
+
+    if [[ ${#info} = 0 ]]; then
+        act "new: ${obj[macaddr]} ${obj[hostname]:-${obj[ip4]}} :: ${obj[os]}"
+        # no records found
+        nownow=`date -d @$now '+%Y-%m-%dT%H:%M'`
+        cat <<EOF | $sql -batch $H/run/things.db
+INSERT OR IGNORE
+into found (macaddr,ip4,iface,state,last,age)
+values("$obj[macaddr]","$obj[ip4]","$obj[iface]","$obj[state]",
+"$nownow","$nownow");
+EOF
+
+        # TODO: send event to redis
+        continue
+    fi
+
+    for i in "${(f)$(print $info | sql_idx_parse $R/db/thing.idx)}"; do
+        strtok "$i" ' '
+        _k="${tok[1]}"
+        _v="${tok[2]}"
+        [[ ${#tok} -gt 2 ]] && {
+            for c in {3..${#tok}}; do
+                _v+=" ${tok[$c]}"
+            done
+        }
+        func "$_k = $_v"
+        [[ "$obj[$_k]" = "" ]] || { # key is defined in object
+            [[ "$obj[$_k]" = "$_v" ]] || { # values differ
+
+                # TODO: send events to redis
+                warning "${obj[hostname]} change $_k: $_v -> $obj[$_k]"
+
+                # update in database
+                cat <<EOF | $sql --echo -batch $H/run/things.db
+UPDATE found SET $_k = "$obj[$_k]"
+WHERE macaddr = "$obj[macaddr]";
+EOF
+            }
+        }
+    done
+
+
+}
 # finds out LAN neighbours, their mac and their state
 # this establishes mac addresses as indexes
-update_ip_neigh() {
-    fn update_ip_neigh $*
+pendulum_ip_neigh() {
+    fn pendulum_ip_neigh $*
 
     for o in "${(f)$(launch ip neigh)}"; do
         func "$o"
@@ -79,56 +133,36 @@ update_ip_neigh() {
         obj[macaddr]="${o[(w)5]}"
         [[ "$obj[mac]" = "FAILED" ]] && continue
 
-        # get the ip4 address
-        obj[ip4]="${o[(w)1]}"
+        # get the ip address
+        if [[ "$o{[(w)1]}" =~ "::" ]]; then
+            obj[ip6]="${o[(w)1]}"
+        else
+            obj[ip4]="${o[(w)1]}"
+        fi
+
+        # we keep track only of ipv4 on the LAN for now
+        [[ "${obj[ip4]}" = "" ]] && continue
 
         obj[iface]="${o[(w)3]}"
 
         obj[state]="${o[(w)6]}"
 
-        resolve_obj_hostname
+        _pendulum_resolve_hostname
 
-        saved=`print - "SELECT * from found where
-macaddr=\"$obj[macaddr]\"
-and ip4=\"$obj[ip4]\"
-;" | $sql -batch $H/run/things.db`
-
-        [[ ${#saved} = 0 ]] && {
-            # no records found
-            nownow=`date -d @$now '+%Y-%m-%dT%H-%M'`
-            cat <<EOF | $sql -batch $H/run/things.db
-INSERT OR IGNORE
-into found (macaddr,ip4,iface,state,last,age)
-values("$obj[macaddr]","$obj[ip4]","$obj[iface]","$obj[state]",
-"$nownow","$nownow");
-EOF
-            continue
-        }
-
-        for i in "${(f)$(print $saved | sql_idx_parse $R/db/thing.idx)}"; do
-
-            _k=${i[(w)1]}
-            _v=${i[(w)2]}
-            func "$_k = $_v"
-            [[ "$obj[$_k]" = "" ]] || { # key is defined in object
-                [[ "$obj[$_k]" = "$_v" ]] || { # values differ
-                    # TODO: send events to redis
-                    warning "${i[hostname]} change $_k: $_v -> $obj[$_k]"
-                }
-            }
-        done
+        _pendulum_update_changes
 
     done
 }
 
-update_arp_scan() {
-    fn update_arp_scan $*
+pendulum_arp_scan() {
+    fn pendulum_arp_scan $*
 
     ###### Active ARP scan
     ## using netdiscover, retrieves OS from MAC fingerprints
     for _dev in ${(k)net_ip4_addr}; do
         _addr=${net_ip4_addr[$_dev]}
-        _net=`net_addr_to_network $_addr`
+        _net=`pendulum_ip_to_network $_addr`
+        func "arp scan $_net ($_dev)"
         for t in "${(f)$(launch netdiscover -i $_dev -r $_net -P -N)}"; do
             [[ "$t" = "" ]] && continue
             [[ "$t" =~ "^--" ]] && continue
@@ -139,35 +173,30 @@ update_arp_scan() {
             obj[last]=$nownow
             obj[os]="$(print - $t | awk '
 {
- for(c=5;c<=NF;c++) printf("%s ", $c)
+  for(c=5;c<=NF;c++) {
+    printf("%s_", $c)
+  }
 }')"
+            _pendulum_resolve_hostname
 
-            resolve_obj_hostname
-
-            cat <<EOF | $sql -batch $H/run/things.db
-INSERT OR IGNORE
-into found (macaddr,ip4,iface,last,os,hostname)
-values("$obj[macaddr]","$obj[ip4]","$obj[iface]",
-"$obj[last]","$obj[os]","$obj[hostname]");
-
-UPDATE found SET os = "$obj[os]", hostname = "$obj[hostname]"
-WHERE macaddr = "$obj[macaddr]";
-EOF
+            _pendulum_update_changes
         done
     done
 }
 
-# main
-while true; do
-    update_ip_neigh
-    update_arp_scan
-    for i in {1..10}; do 
-        func "quit: $quit"
-        [[ $quit = 1 ]] && {
-            notice "Pendulum exiting."
-            return 0
-        }
-        sleep 1
+[[ "$1" = "start" ]] && {
+    notice "Starting pendulum on `date -d @$now`"
+    # main
+    while true; do
+        pendulum_ip_neigh
+        pendulum_arp_scan
+        for i in {1..10}; do
+            func "quit: $quit"
+            [[ $quit = 1 ]] && {
+                notice "Pendulum exiting."
+                return 0
+            }
+            sleep 1
+        done
     done
-done
-
+}

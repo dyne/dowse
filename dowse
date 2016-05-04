@@ -162,13 +162,15 @@ else
     RPROMPT=Dowse
 fi
 
-cat <<EOF
+[[ $QUIET = 1 ]] || {
+    cat <<EOF
 
  Copyright (C) 2012-2016 Dyne.org Foundation, License GNU GPL v3+
  This is free software: you are free to change and redistribute it
  For more informations see http://www.dyne.org/software/dowse
 
 EOF
+}
 
 # global file path to settings
 settings=${1:-/etc/dowse/settings}
@@ -319,7 +321,7 @@ EOF
     }
 
     QUIET=1 pendulum &! savepid pendulum $!
-    
+
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
 
@@ -426,7 +428,7 @@ dowse-dump() {
 }
 
 dowse-status() {
-    fn dowse-status
+    fn dowse-status $*
 
     req=(sql)
     ckreq || return $?
@@ -440,18 +442,32 @@ dowse-status() {
         return 0
     }
 
-    notice "Things found online"
-    for res in "${(f)$(print - "SELECT * from found;" | $sql -batch $H/run/things.db)}"; do
-        strtok "$res" "|"
-        notice "${tok[4]} :: ${tok[6]}"
-        act "${tok[1]} | ${tok[2]} | ${tok[3]/null/}"
-        act "${tok[6]} | ${tok[9]}"
-        # func "$res"
-        # thing=(`print $res | sql_idx_parse $R/db/thing.idx`)
-#        act "${res}"
-        # TODO: parse things into cli formatting perhaps
-    done
+    arg="$1"
+    if [[ "$arg" = "" ]]; then
 
+        notice "List things found online"
+        for res in "${(f)$(print - "SELECT * from found;" | $sql -batch $H/run/things.db)}"; do
+            [[ "$res" = "" ]] && continue
+                local -A obj
+                obj=( $(print $res | sql_idx_parse $R/db/thing.idx) )
+                notice "$obj[hostname] (${obj[os]//_/ })"
+                act "$obj[macaddr] $obj[ip4]"
+                act "$obj[iface] $obj[state]"
+        done
+
+    else
+
+        act "Search '$arg' among things found"
+        for res in "${(f)$(sql_search $R/db/thing.idx found "$arg")}"; do
+            [[ "$res" = "" ]] && continue
+            local -A obj
+            obj=( $(print $res | sql_idx_parse $R/db/thing.idx) )
+            notice "$obj[hostname] (${obj[os]//_/ })"
+            act "$obj[macaddr] $obj[ip4]"
+            act "$obj[iface] $obj[state]"
+        done
+
+    fi
     return 0
 }
 
