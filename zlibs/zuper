@@ -212,7 +212,6 @@ catch() { function TRAPZERR() { } }
 # Endgame handling
 
 arrs+=(destruens)
-destruens=()
 
 # Trap functions for the endgame event
 TRAPINT()  { endgame INT;   return $? }
@@ -295,11 +294,11 @@ strtok() {
     for c in {1..${#_string}}; do
         if [[ "${_string[(e)$c]}" == "$_delim" ]]; then
             # check if not empty
-            t=${_string[(e)$(($f + 1)),$(($c - 1))]}
+            t="${_string[(e)$(($f + 1)),$(($c - 1))]}"
             if [[ "$t" == "" ]]; then
                 tok+=("null")
             else
-                tok+=($t)
+                tok+=("$t")
             fi
             # save last found
             f=$c
@@ -310,7 +309,7 @@ strtok() {
     if [[ "$t" == "" ]]; then
         tok+=("null")
     else
-        tok+=($t)
+        tok+=("$t")
     fi
 }
 
