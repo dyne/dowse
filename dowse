@@ -318,6 +318,8 @@ EOF
             start pgld
     }
 
+    QUIET=1 pendulum &! savepid pendulum $!
+    
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
 
@@ -325,6 +327,8 @@ EOF
 
 dowse-stop() {
     fn dowse-stop
+
+    stop pendulum
 
     for m in `dowse-module-list`; do
 

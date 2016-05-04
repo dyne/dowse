@@ -24,9 +24,11 @@
 # This standalone program runs every N seconds and gathers current
 # information on network objects, updating it in redis
 
-vars+=(now interval)
+vars+=(now interval quit)
 maps+=(obj)
-
+destruens+=(exitloop)
+quit=0
+exitloop() { quit=1 }
 source /usr/local/dowse/zshrc
 
 # gather_network_info fills in global maps
@@ -159,6 +161,13 @@ EOF
 while true; do
     update_ip_neigh
     update_arp_scan
-    sleep 10
+    for i in {1..10}; do 
+        func "quit: $quit"
+        [[ $quit = 1 ]] && {
+            notice "Pendulum exiting."
+            return 0
+        }
+        sleep 1
+    done
 done
 
