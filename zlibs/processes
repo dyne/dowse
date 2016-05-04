@@ -119,10 +119,13 @@ savepid() {
     req=(_daemon)
     ckreq || return $?
 
-
-    print "SET daemon-${_daemon}-pid \"`cat $_pid`\"" \
-          | redis runtime > /dev/null
-
+    if [[ -r "$_pid" ]]; then
+        print "SET daemon-${_daemon}-pid \"`cat $_pid`\"" \
+            | redis runtime > /dev/null
+    else
+        print "SET daemon-${_daemon}-pid \"$_pid\"" \
+            | redis runtime > /dev/null
+    fi
 }
 
 getpid() {
