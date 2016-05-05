@@ -5,7 +5,7 @@
 # takes a table description from stdin
 # prints "create table" command on stdout
 sql_create_table() {
-    fn sql_create_table
+    fn sql_create_table $*
     name="$1"
     req=(name)
     ckreq || return $?
@@ -21,6 +21,33 @@ sql_create_table() {
     print - "$cmd"
 }
 
+# search for a case insensitive string across all columns
+# needs args: .idx, table, string
+sql_search() {
+    fn sql_search $*
+    local idx="$1"
+    local table="$2"
+    local needle="$3"
+    req=(sql db idx table needle)
+    freq=($idx)
+    ckreq || return $?
+
+    local query="SELECT * from $table where "
+    local c=0
+    for o in "${(f)$(cat $idx)}"; do
+        # skip newlines
+        [[ "$o" = "" ]] && continue
+        # skip commends
+        [[ "${o[1]}" = "#" ]] && continue
+
+        [[ $c = 0 ]] || query+=" or "
+        query+="${o[(w)1]} like '%$needle%'"
+        c=$(( $c + 1 ))
+    done
+    print - "$query;" | $sql -batch $H/run/things.db
+}
+
+
 sql_map_insert() {
     # TODO:
 }
@@ -29,7 +56,7 @@ sql_map_insert() {
 # takes as first argument an .idx file (plain text two columns, key and type)
 # prints out a string (2 columns formatted for maps) with key and value
 sql_idx_parse() {
-    fn sql_query
+    fn sql_query $*
     local idx="$1"
     req=(sql db idx)
     freq=($idx)
@@ -43,7 +70,10 @@ sql_idx_parse() {
 { if(NF<1) next;
   for(c=1;c<=NF;c++)
     if($c==\"\") printf \" %\"
-    else printf " " $c
+    else {
+      gsub(/ /,"_",$c)
+      printf " " $c
+    }
   exit }
 '`"
     local c=1

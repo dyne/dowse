@@ -24,7 +24,7 @@
 # This standalone program runs every N seconds and gathers current
 # information on network objects, updating it in redis
 
-vars+=(now interval quit)
+vars+=(now interval quit sqlquery)
 maps+=(obj)
 destruens+=(exitloop)
 quit=0
@@ -52,18 +52,34 @@ pendulum_ip_to_network() {
 
 _pendulum_resolve_hostname() {
     fn pendulum_resolve_hostname $*
-    [[ "$obj[ip4]" = "" ]] && {
-        obj[hostname]=""
-        return 1
-    }
+    [[ "$obj[ip4]" = "" ]] && return 1
 
     hh="`host $obj[ip4] | awk '
 /NXDOMAIN/ { exit }
 { print $NF }'`"
     # hh[${#hh}]='\0'
-    [[ "$hh" = "" ]] ||
+    [[ "$hh" = "" ]] || {
         obj[hostname]=${hh%%.*}
-    func "resolved: $obj[hostname]"
+    }
+}
+
+_pendulum_commit_changes() {
+    fn pendulum_commit_changes $*
+    [[ "$sqlquery" = "" ]] && return 0
+
+    if [[ $DEBUG = 1 ]]; then
+        print - "$sqlquery" | $sql --echo -batch $H/run/things.db
+    else
+        print - "$sqlquery" | $sql -batch $H/run/things.db
+    fi
+    [[ $? = 0 ]] || {
+        error "sql query failed on db: $H/run/things.db"
+        func "$sqlquery"
+        sqlquery=""
+        return 1
+    }
+    sqlquery=""
+    return 0
 }
 
 _pendulum_update_changes() {
@@ -72,48 +88,89 @@ _pendulum_update_changes() {
     req=(macaddr)
     ckreq || return $?
 
-    info=`print - "SELECT * from found where
-macaddr=\"$obj[macaddr]\"
-;" | $sql -batch $H/run/things.db`
+    [[ "$macaddr" = "FAILED"     ]] && return 1
+    [[ "$macaddr" = "INCOMPLETE" ]] && return 1
+
+    local info=`print - "SELECT * from found where macaddr is '$obj[macaddr]';" | $sql -batch $H/run/things.db`
+
+    local nownow=`date '+%Y-%m-%dT%H:%M:%S'`
+
+    local name=${obj[hostname]}
 
     if [[ ${#info} = 0 ]]; then
         act "new: ${obj[macaddr]} ${obj[hostname]:-${obj[ip4]}} :: ${obj[os]}"
-        # no records found
-        nownow=`date -d @$now '+%Y-%m-%dT%H:%M'`
-        cat <<EOF | $sql -batch $H/run/things.db
-INSERT OR IGNORE
-into found (macaddr,ip4,iface,state,last,age)
-values("$obj[macaddr]","$obj[ip4]","$obj[iface]","$obj[state]",
-"$nownow","$nownow");
-EOF
+        # no records found, this is a new one
+        
+        sqlquery+="
+INSERT OR IGNORE into found (macaddr,ip4,iface,hostname,state,last,age)
+values('$obj[macaddr]','$obj[ip4]','$obj[iface]','$obj[hostname]','$obj[state]','$nownow','$nownow');"
+
 
         # TODO: send event to redis
         continue
-    fi
+    else
+        sqlquery+="
+UPDATE found SET last = '$nownow' WHERE macaddr = '$obj[macaddr]';"
+    fi        
 
+    # check all changes on each property one by one
     for i in "${(f)$(print $info | sql_idx_parse $R/db/thing.idx)}"; do
+        [[ "$i" = "" ]] && continue
+        # tokenize for easier handling
         strtok "$i" ' '
         _k="${tok[1]}"
-        _v="${tok[2]}"
-        [[ ${#tok} -gt 2 ]] && {
-            for c in {3..${#tok}}; do
-                _v+=" ${tok[$c]}"
-            done
-        }
-        func "$_k = $_v"
+
+        # skip last here because we always update it
+        [[ "$_k" = "last" ]] && continue
+
+        # skip macaddr since its the identifier
+        [[ "$_k" = "macaddr" ]] && continue
+
+        tok[1]=()
+        # in case values contain more than one string with spaces
+        _v="${tok}"
+
+        # [[ ${#tok} -gt 2 ]] && {
+        #     for c in {3..${#tok}}; do
+        #         _v+=" ${tok[$c]}"
+        #     done
+        # }
+        # now _k and _v are stored key/value in database
+
         [[ "$obj[$_k]" = "" ]] || { # key is defined in object
-            [[ "$obj[$_k]" = "$_v" ]] || { # values differ
+            func "$_k = $_v -> $obj[$_k] "
+
+            [[ "$obj[$_k]" = "$_v" ]] || {
+                # values differ
 
                 # TODO: send events to redis
-                warning "${obj[hostname]} change $_k: $_v -> $obj[$_k]"
+                warning "$name change $_k: $_v -> $obj[$_k]"
 
                 # update in database
-                cat <<EOF | $sql --echo -batch $H/run/things.db
-UPDATE found SET $_k = "$obj[$_k]"
-WHERE macaddr = "$obj[macaddr]";
-EOF
+                sqlquery+="
+UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
+            
             }
+
+            # delete from object as done
+            obj[$_k]=""
         }
+    done
+
+
+    # for _k in ${(k)obj}; do
+    #     act "analysis $_k = $obj[$_k]" 
+    # done
+
+    # update all informations that are left in object
+    for _k in ${(k)obj}; do
+
+        [[ "$_k" = "macaddr" ]] && continue
+        [[ "${obj[$_k]}" = "" ]] && continue
+
+        warning "leftover: $_k = $obj[$_k]"
+        sqlquery+="
+UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
     done
 
 
@@ -126,8 +183,6 @@ pendulum_ip_neigh() {
     for o in "${(f)$(launch ip neigh)}"; do
         func "$o"
 
-        # parse everything in a map
-        obj=()
 
         # not interesting if no mac found (REVIEW)
         obj[macaddr]="${o[(w)5]}"
@@ -166,7 +221,6 @@ pendulum_arp_scan() {
         for t in "${(f)$(launch netdiscover -i $_dev -r $_net -P -N)}"; do
             [[ "$t" = "" ]] && continue
             [[ "$t" =~ "^--" ]] && continue
-            obj=()
             obj[macaddr]=${t[(w)2]}
             obj[ip4]=${t[(w)1]}
             obj[iface]=$_dev
@@ -186,10 +240,25 @@ pendulum_arp_scan() {
 
 [[ "$1" = "start" ]] && {
     notice "Starting pendulum on `date -d @$now`"
+
+    [[ -r $H/run/things.db ]] || {
+        act "Creating new things database"
+        cat $R/db/thing.idx |
+            sql_create_table found |
+            $sql -batch $H/run/things.db
+        [[ $? = 0 ]] || {
+            error "error creating database: $H/run/things.db"
+            return 1 }
+    }
+
     # main
     while true; do
+        # parse everything in this map
+        obj=()
+
         pendulum_ip_neigh
         pendulum_arp_scan
+        _pendulum_commit_changes
         for i in {1..10}; do
             func "quit: $quit"
             [[ $quit = 1 ]] && {

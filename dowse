@@ -320,7 +320,7 @@ EOF
             start pgld
     }
 
-    QUIET=1 pendulum &! savepid pendulum $!
+    QUIET=1 pendulum start &! savepid pendulum $!
 
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
@@ -429,30 +429,24 @@ dowse-dump() {
 
 dowse-status() {
     fn dowse-status $*
-
     req=(sql)
-    ckreq || return $?
-
     freq=($H/run/things.db)
-    [[ -r $H/run/things.db ]] || {
-        notice "Creating new things database"
-        cat $R/db/thing.idx |
-            sql_create_table found |
-            $sql -batch $H/run/things.db
-        return 0
-    }
+    ckreq || return $?
 
     arg="$1"
     if [[ "$arg" = "" ]]; then
-
+        minago=`date  "+%H:%M:%S" -d '1 min ago'`
+        now=`date  "+%H:%M:%S"`
         notice "List things found online"
-        for res in "${(f)$(print - "SELECT * from found;" | $sql -batch $H/run/things.db)}"; do
+        for res in "${(f)$(print - "SELECT * from found WHERE strftime('%H:%M:%S', last) between '$minago' and '$now';" | $sql -batch $H/run/things.db)}"; do
             [[ "$res" = "" ]] && continue
-                local -A obj
-                obj=( $(print $res | sql_idx_parse $R/db/thing.idx) )
-                notice "$obj[hostname] (${obj[os]//_/ })"
-                act "$obj[macaddr] $obj[ip4]"
-                act "$obj[iface] $obj[state]"
+            local -A _obj
+            _obj=( $(print - $res | sql_idx_parse $R/db/thing.idx) )
+            warning "$_obj"
+            notice "$_obj[hostname] (${_obj[os]//_/ })"
+            act "$_obj[last]"
+            act "$_obj[macaddr] $_obj[ip4]"
+            act "$_obj[iface] $_obj[state]"
         done
 
     else
@@ -460,11 +454,12 @@ dowse-status() {
         act "Search '$arg' among things found"
         for res in "${(f)$(sql_search $R/db/thing.idx found "$arg")}"; do
             [[ "$res" = "" ]] && continue
-            local -A obj
-            obj=( $(print $res | sql_idx_parse $R/db/thing.idx) )
-            notice "$obj[hostname] (${obj[os]//_/ })"
-            act "$obj[macaddr] $obj[ip4]"
-            act "$obj[iface] $obj[state]"
+            local -A _obj
+            _obj=( $(print - $res | sql_idx_parse $R/db/thing.idx) )
+            notice "$_obj[hostname] (${_obj[os]//_/ })"
+            act "$_obj[last]"
+            act "$_obj[macaddr] $_obj[ip4]"
+            act "$_obj[iface] $_obj[state]"
         done
 
     fi
