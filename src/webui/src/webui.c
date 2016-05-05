@@ -1,7 +1,7 @@
 #include <kore/kore.h>
 #include <kore/http.h>
 
-int		page(struct http_request *);
+int	page(struct http_request *);
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,12 +9,6 @@ int		page(struct http_request *);
 #include <signal.h>
 #include <string.h>
 #include <time.h>
-
-// liblo
-// #include <lo/lo.h>
-
-// jemalloc
-// #include <jemalloc/jemalloc.h>
 
 #include <sqlite3.h>
 #include "thingsdb.h"
@@ -34,6 +28,8 @@ char *thing_get(char *key);
 
 int things_list_cb(void *data, int argc, char **argv, char **azColName){
     int i;
+    struct tm tt;
+    char *laststr;
     // fprintf(stderr, "callback: %s\n", (const char*)data);
 
     for(i=0; i<argc; i++){ // save all fields into the hashmap
@@ -42,14 +38,22 @@ int things_list_cb(void *data, int argc, char **argv, char **azColName){
 
     // fprintf(stderr, "elements: %u\n", hashmap_length(thing));
 
-    snprintf(line,ml,"<h3>%s [ %s ]</h3>\n",
+    snprintf(line,ml,"<h3>%s [ %s ] ",
              thing_get("hostname"), thing_get("os"));
+    strncat(buf,line,mb);
+
+    // get last datestamp
+    laststr = thing_get("last");
+    // parse last into a tm struct
+    memset(&tt,0,sizeof(struct tm));
+    strptime(laststr, "%Y-%m-%dT%H:%M:%S", &tt);
+
+    strftime(line, ml, "last seen: %d %m %Y - %H:%M:%S</h3>", &tt);
     strncat(buf,line,mb);
 
     snprintf(line,ml,"<li style=\"font-family: courier\">%s - %s</li>\n",
              thing_get("macaddr"), thing_get("ip4"));
     strncat(buf,line,mb);
-
     return 0;
 }
 
@@ -58,7 +62,7 @@ things_list(struct http_request *req)
 {
     int rc;
     char *zErrMsg = 0;
-    char *query = "SELECT * FROM found WHERE state IS NOT NULL";
+    char *query = "SELECT * FROM found ORDER BY last DESC";
     struct timespec when;
 
     if(!db) {
@@ -83,7 +87,8 @@ things_list(struct http_request *req)
     else {
         struct tm *tt;
         tt = localtime (&when.tv_sec);
-        strftime(line, ml, "<h1>%d %m %Y - %H:%M:%S</h1>", tt);
+        mktime(tt);
+        strftime(line, ml, "<h1>Dowse :: %d %m %Y - %H:%M:%S</h1>", tt);
         strncat(buf,line,mb);
     }
 
