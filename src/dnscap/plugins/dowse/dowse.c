@@ -83,8 +83,6 @@ char *own_ipv4 = NULL;
 
 output_t dowse_output;
 
-// hash map of visited domains
-map_t visited;
 // hash map of known domains
 map_t domainlist;
 
@@ -228,8 +226,6 @@ dowse_start(logerr_t *a_logerr) {
     // get own hostname
     gethostname(hostname,(size_t)MAX_DOMAIN);
 
-    visited = hashmap_new();
-
     // load the domain-list path if there
     if(listpath) load_domainlist(listpath);
 
@@ -258,9 +254,6 @@ void dowse_stop() {
         hashmap_iterate(domainlist, free_domainlist_f, NULL);
         hashmap_free(domainlist);
     }
-
-    // free the map
-    hashmap_free(visited);
 
     redisFree(redis);
 }
