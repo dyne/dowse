@@ -49,16 +49,13 @@
         archive=yes
 
     - name: Compiling Dowse source code
-      shell: ./src/compile.sh > compile.log
-        chdir=/opt/dowse
-
-    - name: Installing Dowse and its daemons on system
-      shell: ./utils/debian_deps.sh > install.log
+      shell: make > compile.log
         chdir=/opt/dowse
 
     # change this script for configs
     - name: Configuring Dowse
-      script: dowse_setup.sh
+      script: make install
+        chdir=/opt/dowse
 
     - name: Starting Dowse
       shell: ./start.sh

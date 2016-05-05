@@ -8,6 +8,7 @@ int		page(struct http_request *);
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <time.h>
 
 // liblo
 // #include <lo/lo.h>
@@ -18,6 +19,7 @@ int		page(struct http_request *);
 #include <sqlite3.h>
 #include "thingsdb.h"
 #include "hashmap.h"
+#include <parse-datetime.h>
 
 #define mb 1024*1000
 #define ml 1024*3
@@ -57,6 +59,7 @@ things_list(struct http_request *req)
     int rc;
     char *zErrMsg = 0;
     char *query = "SELECT * FROM found WHERE state IS NOT NULL";
+    struct timespec when;
 
     if(!db) {
         rc = sqlite3_open(THINGS_DB, &db);
@@ -74,6 +77,15 @@ things_list(struct http_request *req)
            "<title>Dowse</title>"
            "</head>"
            "<body>");
+
+    if( ! parse_datetime(&when, "now", NULL) )
+        fprintf(stderr,"parse-datetime error\n");
+    else {
+        struct tm *tt;
+        tt = localtime (&when.tv_sec);
+        strftime(line, ml, "<h1>%d %m %Y - %H:%M:%S</h1>", tt);
+        strncat(buf,line,mb);
+    }
 
     sqlite3_exec(db, query, things_list_cb, "things/list/all", &zErrMsg);
     if( rc != SQLITE_OK ){

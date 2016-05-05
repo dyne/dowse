@@ -21,8 +21,6 @@ wan=$w
 dns=$d
 lan=$l
 firewall=yes
-dowse_uid=proxy
-dowse_gid=proxy
 #
 dowse_net=$n
 netmask=$m
