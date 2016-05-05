@@ -93,6 +93,8 @@ things_list(struct http_request *req)
         sqlite3_free(zErrMsg);
     }
 
+    strcat(buf,"</body></html>");
+
 
 	http_response(req, 200, buf, strlen(buf));
     memset(buf,0,strlen(buf));
