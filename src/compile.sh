@@ -18,6 +18,7 @@ case $1 in
     netdata)
         [[ -x $R/build/netdata ]] || {
             pushd $R/src/netdata
+            ./autogen.sh
             CFLAGS="$CFLAGS" \
                   ./configure --prefix=${PREFIX}/netdata \
                   --datarootdir=${PREFIX}/netdata \
@@ -88,6 +89,8 @@ case $1 in
                 install -s -p $R/src/dnscap/plugins/dowse/dowse.so $R/build
             popd
         }
+        # copy plugin over every pass, easier for debugging changes
+        install -s -p $R/src/dnscap/plugins/dowse/dowse.so $R/build
         ;;
 
     *)
