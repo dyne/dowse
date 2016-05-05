@@ -45,6 +45,7 @@ iface    text
 state    text
 os       text
 dhcp     text
+gateway  text
 last     date
 age      date
 '
@@ -59,6 +60,7 @@ execrules=(
     arp          user
     ip           user
     netdata      user
+    webui        user
 
     dnsmasq       root
     dnscap        root
@@ -91,6 +93,7 @@ execmap=(
     redis-server  $PREFIX/bin/redis-server
     tor           $PREFIX/bin/tor
     netdata       $PREFIX/bin/netdata
+    webui         $PREFIX/bin/kore
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
@@ -145,6 +148,31 @@ touch  $S/src/database.h
 for i in ${(k)db}; do
     print "#define db_$i ${db[$i]}" >> $S/src/database.h
 done
+
+# db=()
+# for i in ${(f)thingindex}; do
+#     db+=( ${i[(w)1]} ${i[(w)1]} )
+# done
+
+rm -rf $S/src/thingsdb.h
+c=1
+print "#define THINGS_DB \"$HOME/.dowse/run/things.db\"" > $S/src/thingsdb.h
+
+for i in "${(f)thingindex}"; do
+    [[ "$i" = "" ]] && continue
+    print "#define ${i[(w)1]} $c" >> $S/src/thingsdb.h
+    c=$(( $c + 1 ))
+done
+
+print "#define all_things_fields $(( $c - 1 ))" >> $S/src/thingsdb.h
+
+# print "static char *get[] = {" >> $S/src/thingsdb.h
+# for i in "${(f)thingindex}"; do
+#     [[ "$i" = "" ]] && continue
+#     print "\"${i[(w)1]}\"," >> $S/src/thingsdb.h
+# done
+# print " NULL };" >> $S/src/thingsdb.h
+EOF
 
 notice "Database indexes generated"
 

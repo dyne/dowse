@@ -1,0 +1,6 @@
+kore
+*.o
+*.swp
+*.module
+*.DSYM
+cert

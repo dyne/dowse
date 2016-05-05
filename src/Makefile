@@ -11,6 +11,8 @@ all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
 	@./compile.sh dnscap
 	@./compile.sh netdiscover
 	@./compile.sh netdata
+	@./compile.sh kore
+	@./compile.sh webui
 	@./import.sh
 	@install -s -p modprobe        ../build
 	@install -s -p dowse-to-gource ../build
@@ -40,6 +42,8 @@ install:
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/domain-list/data
 	install -p -m 644 domain-list/data/* ${DESTDIR}${PREFIX}/domain-list/data
+	install -d ${DESTDIR}${PREFIX}/webui
+	cp -rav webui/* ${DESTDIR}${PREFIX}/webui/
 	make -C netdata install
 #	@./compile.sh install
 

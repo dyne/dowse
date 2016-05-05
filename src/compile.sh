@@ -15,6 +15,20 @@ CFLAGS="-Wall -fPIC -fPIE -Os"
 LDFLAGS="-fPIC -fPIE -pie"
 
 case $1 in
+    webui)
+        pushd $R/src/webui
+        $R/build/kore build
+        popd
+        ;;
+
+    kore)
+        [[ -x $R/build/kore ]] || {
+            pushd $R/src/kore
+            make NOTLS=1
+            install -s -p kore $R/build
+            popd
+        }
+        ;;
     netdata)
         [[ -x $R/build/netdata ]] || {
             pushd $R/src/netdata

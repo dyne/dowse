@@ -1,0 +1,11 @@
+language: c
+sudo: false
+compiler:
+  - clang
+  - gcc
+addons:
+  apt:
+    packages:
+    - libssl-dev
+script:
+  - make

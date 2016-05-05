@@ -1,0 +1,6 @@
+*.o
+.flavor
+.objs
+webui.so
+assets.h
+cert

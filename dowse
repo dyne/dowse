@@ -124,6 +124,7 @@ source $R/daemons/tor
 source $R/daemons/redis
 source $R/daemons/dnscrypt-proxy
 source $R/daemons/netdata
+source $R/daemons/webui
 
 # conclude initialization
 if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
