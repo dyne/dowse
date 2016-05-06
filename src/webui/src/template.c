@@ -33,7 +33,7 @@
 #include <unistd.h>
 #endif
 
-#include <kore/kore.h>
+#include <kore.h>
 
 struct entry {
 	unsigned type; /* 0=raw 1=attribute */

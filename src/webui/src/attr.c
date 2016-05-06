@@ -31,7 +31,7 @@
 #include "attr.h"
 #include "escape.h"
 
-#include <kore/kore.h>
+#include <kore.h>
 
 struct attribute_list
 {

@@ -52,7 +52,7 @@ int epoch2utc(char *epoch, char *utc) {
     }
 
     if(utc) { // if not NULL render string
-        ts = *gmtime(&epoch_t);
+        gmtime_r(&epoch_t,&ts);
         strftime(utc, MAX, "%Y-%m-%dT%H:%M:%SZ", &ts);
     }
 

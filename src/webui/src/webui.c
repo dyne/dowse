@@ -19,8 +19,8 @@
  *
  */
 
-#include <kore/kore.h>
-#include <kore/http.h>
+#include <kore.h>
+#include <http.h>
 #include <assets.h>
 
 #include <stdio.h>
