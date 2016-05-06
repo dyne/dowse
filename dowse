@@ -21,6 +21,11 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
+# load development libraries if there
+if [[ -r `pwd`/zlibs/zuper-dev/zuper ]]; then
+    func "Zuper loaded from development symlink"
+    source `pwd`/zlibs/zuper-dev/zuper
+else source `pwd`/zlibs/zuper; fi
 
 # {{{ GLOBALS
 
@@ -47,12 +52,6 @@ path+=($R/bin)
 rehash
 
 mkdir -p $H
-
-# load development libraries if there
-if [[ -r `pwd`/zlibs/zuper-dev/zuper ]]; then
-    func "Zuper loaded from development symlink"
-    source `pwd`/zlibs/zuper-dev/zuper
-else source `pwd`/zlibs/zuper; fi
 
 # For gettext
 TEXTDOMAIN=dowse
