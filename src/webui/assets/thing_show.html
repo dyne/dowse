@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>${title}</title>
+
+    <link rel="stylesheet" href="/bootstrap.min.css">
+
+  </head>
+  <body>
+
+    <div class="container">
+
+      <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">${title}</div>
+        <div class="panel-body">
+          <p>Show all info gathered on ${hostname}</p>
+        </div>
+
+        <table class="table">
+<tr>
+<td>last seen</td><td>${last}</td>
+</tr><tr>
+
+<td>first seen</td><td>${age}</td>
+</tr><tr>
+
+<td>notes</td><td>${notes}</td>
+</tr><tr>
+
+<td>os</td><td>${os}</td>
+</tr><tr>
+
+<td>ip4</td><td>${ip4}</td>
+</tr><tr>
+
+<td>macaddr</td><td>${macaddr}</td>
+</tr><tr>
+
+<td>ip6</td><td>${ip6}</td>
+</tr><tr>
+
+<td>iface</td><td>${iface}</td>
+</tr><tr>
+
+<td>state</td><td>${state}<td>
+</tr>
+
+        </table>
+      </div>
+
+    </div>
+  </body>
+</html>
