@@ -92,11 +92,14 @@ _pendulum_update_changes() {
     [[ "$macaddr" = "FAILED"     ]] && return 1
     [[ "$macaddr" = "INCOMPLETE" ]] && return 1
 
-    local info=`print - "SELECT * from found where macaddr is '$obj[macaddr]';" | $sql -batch $H/run/things.db`
+    local info
+    info=`print - "SELECT * from found where macaddr is '$obj[macaddr]';" | $sql -batch $H/run/things.db`
 
-    local nownow=`date --utc '+%Y-%m-%dT%H:%M:%SZ'`
+    local nownow
+    nownow=`date --utc '+%Y-%m-%dT%H:%M:%SZ'`
 
-    local name=${obj[hostname]}
+    local name
+    name=${obj[hostname]}
 
     if [[ ${#info} = 0 ]]; then
         act "new: ${obj[macaddr]} ${obj[hostname]:-${obj[ip4]}} :: ${obj[os]}"

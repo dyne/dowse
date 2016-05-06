@@ -2,13 +2,13 @@
 
 webui-conf() {
     cat << EOF
-bind		127.0.0.1 8080
+bind		$address 8080
 load		$R/webui/webui.so
 pidfile     $H/run/webui.pid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
-domain 127.0.0.1 {
+domain $address {
 	static	/	               things_list
     static  /thing             thing_show
 	params get /thing {
