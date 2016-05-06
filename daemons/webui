@@ -1,0 +1,25 @@
+#!/usr/bin/zsh
+
+webui-conf() {
+    cat << EOF
+bind		127.0.0.1 8080
+load		$R/webui/webui.so
+# chroot    $R/webui
+# runas     $dowse_uid
+domain 127.0.0.1 {
+	static	/	things_list
+}
+EOF
+}
+
+webui-exec() {
+    fn webui $*
+    req=(conf)
+    freq=($conf)
+    ckreq || return $?
+
+    # TODO: chroot and drop privs
+    # https://github.com/jorisvink/kore/issues/123
+    launch webui -c $conf -n -r
+    savepid webui $!
+}
