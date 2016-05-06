@@ -36,6 +36,15 @@ typedef char _char;
 #define MAX_ATTR_LEN	1024	/* an arbitrary limit */
 typedef struct attribute_list *attrlist_t;
 
+struct attribute
+{
+    int type;
+    _char *value;
+    unsigned len; /* string length */
+    /* int value; */
+};
+typedef struct attribute attr_t;
+
 /* attr.c */
 void attrcatn(attrlist_t al, const char *name, const _char *value, size_t len);
 void attrcat(attrlist_t al, const char *name, const _char *value);
@@ -44,7 +53,7 @@ void attrset(attrlist_t al, const char *name, const _char *value);
 void attrset_safe(attrlist_t al, const char *name, const _char *value);
 int attrprintf(attrlist_t al, const char *name, const char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
 int attrvprintf(attrlist_t al, const char *name, const char *fmt, va_list ap);
-const _char *attrget(attrlist_t al, const char *name);
+attr_t *attrget(attrlist_t al, const char *name);
 int attrlist(attrlist_t al, const _char **type, const _char **value, int *counter);
 attrlist_t attrinit(void);
 void attrfree(attrlist_t al);

@@ -33,15 +33,6 @@
 
 #include <kore/kore.h>
 
-struct attribute
-{
-    int type;
-    _char *value;
-    unsigned len; /* string length */
-    /* int value; */
-};
-typedef struct attribute attr_t;
-
 struct attribute_list
 {
     unsigned len;
@@ -245,14 +236,14 @@ int attrprintf(attrlist_t al, const char *name, const char *fmt, ...)
 }
 
 /* get an attribute, return NULL if not found */
-const _char *attrget(attrlist_t al, const char *name)
+attr_t *attrget(attrlist_t al, const char *name)
 {
     attr_t *at;
     int type;
 
-    type=attrtype(name);
-    at=attrlookup(al, type);
-    return at?at->value:NULL;
+    type = attrtype(name);
+    at = attrlookup(al, type);
+    return(at);
 }
 
 int attrlist(attrlist_t al, const _char **name, const _char **value, int *counter)
@@ -300,19 +291,19 @@ void namefree(void)
 /* gets an attribute as a numeric value */
 int attrget_int(attrlist_t al, const char *name, long *i) {
     long ret;
-    const char *tmp;
+    attr_t *tmp;
     char *endptr;
 
     assert(i!=NULL);
     assert(al!=NULL);
     assert(name!=NULL);
-    tmp=(const char*)attrget(al, name);
+    tmp = attrget(al, name);
     if(!tmp) {
         return 0; /* failure */
     }
-    ret=strtoul(tmp, &endptr, 10);
+    ret=strtoul(tmp->value, &endptr, 10);
     assert(endptr!=NULL);
-    if(endptr==tmp || *endptr) {
+    if(endptr == (char*)tmp->value || *endptr) {
         return 0; /* failure */
     }
     *i=ret;

@@ -37,7 +37,7 @@ net.scan_devices
 net_ip4_addr=()
 net.scan_addresses
 
-now=`date +'%s'`
+now=`date --utc +'%s'`
 interval=10 # seconds
 
 
@@ -88,12 +88,13 @@ _pendulum_update_changes() {
     req=(macaddr)
     ckreq || return $?
 
+    [[ "$macaddr" = "NULL"     ]] && return 1
     [[ "$macaddr" = "FAILED"     ]] && return 1
     [[ "$macaddr" = "INCOMPLETE" ]] && return 1
 
     local info=`print - "SELECT * from found where macaddr is '$obj[macaddr]';" | $sql -batch $H/run/things.db`
 
-    local nownow=`date '+%Y-%m-%dT%H:%M:%S'`
+    local nownow=`date --utc '+%Y-%m-%dT%H:%M:%SZ'`
 
     local name=${obj[hostname]}
 
@@ -120,6 +121,9 @@ UPDATE found SET last = '$nownow' WHERE macaddr = '$obj[macaddr]';"
         strtok "$i" ' '
         _k="${tok[1]}"
 
+        # skip if new object scan contains NULL info
+        [[ "${obj[$_k]}"  = "NULL" ]] && continue
+
         # skip last here because we always update it
         [[ "$_k" = "last" ]] && continue
 
@@ -127,15 +131,9 @@ UPDATE found SET last = '$nownow' WHERE macaddr = '$obj[macaddr]';"
         [[ "$_k" = "macaddr" ]] && continue
 
         tok[1]=()
-        # in case values contain more than one string with spaces
+        # shift in case values contain more than one string with spaces
         _v="${tok}"
 
-        # [[ ${#tok} -gt 2 ]] && {
-        #     for c in {3..${#tok}}; do
-        #         _v+=" ${tok[$c]}"
-        #     done
-        # }
-        # now _k and _v are stored key/value in database
 
         [[ "$obj[$_k]" = "" ]] || { # key is defined in object
             func "$_k = $_v -> $obj[$_k] "

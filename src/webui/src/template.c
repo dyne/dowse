@@ -157,7 +157,7 @@ int template_load(const char *str, int len, template_t *ret) {
 void template_apply(template_t *t, attrlist_t al, kore_buf_t *out) {
 	struct entry *e;
 	char buf[64]; /* TODO: max macro length */
-	const _char *tmp;
+	attr_t *tmp;
 
 	/* TODO: we could cache the attrget lookup */
 	// fflush(stdout); /* we'll be using posix i/o instead of iso c */
@@ -169,8 +169,8 @@ void template_apply(template_t *t, attrlist_t al, kore_buf_t *out) {
 		if(al && e->type && (e->len<(sizeof buf-1))) {
 			memcpy(buf, e->data, e->len);
 			buf[e->len]=0;
-			tmp=attrget(al, buf);
-            if(tmp) kore_buf_append(out,tmp,strlen(tmp));
+			tmp = attrget(al, buf);
+            if(tmp) kore_buf_append(out, tmp->value, tmp->len);
 
 		} else if(!al && e->type) { /* debug mode because al==NULL */
 			kore_log(LOG_DEBUG,"%s (%u)", e->data, e->len);

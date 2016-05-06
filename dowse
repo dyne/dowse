@@ -323,6 +323,10 @@ EOF
 
     QUIET=1 pendulum start &! savepid pendulum $!
 
+    # start web interface on port 8080
+    webui-conf > $H/run/webui.conf
+    start webui
+
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
 
@@ -330,6 +334,8 @@ EOF
 
 dowse-stop() {
     fn dowse-stop
+
+    stop webui
 
     stop pendulum
 

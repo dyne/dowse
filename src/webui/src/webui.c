@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 #include <sqlite3.h>
 
@@ -51,11 +52,81 @@ sqlite3 *db = NULL;
 map_t thing = NULL;
 
 char *thing_get(char *key);
+int sqlquery(char *query,
+             int (*callback)(void*,int,char**,char**),
+             attrlist_t attrl);
 
+int relative_time(char *utc, char *out) {
+    time_t nowutc;
+    time_t now;
+    time_t then;
+    long int deltaSeconds;
+    long int deltaMinutes;
+
+    struct tm tt;
+
+    // parse utc into a tm struct
+    memset(&tt,0,sizeof(struct tm));
+    if( ! strptime(utc, "%Y-%m-%dT%H:%M:%SZ", &tt) ) {
+        kore_log(LOG_ERR,"relative_time failed parsing UTC string: %s",utc);
+        if( ! strptime(utc, "%Y-%m-%dT%H:%M:%S", &tt) )
+            return 1; }
+    then = mktime(&tt);
+    
+    // gets what UTC time is now
+    time( &nowutc );
+    now = mktime( gmtime ( &nowutc ) );
+
+    // localtime_r( &rnow, &now );
+    deltaSeconds = now - then;
+    deltaMinutes = (now / 60) - (then / 60);
+
+    if(deltaSeconds < 60)
+        snprintf(out,256,"%u seconds ago", deltaSeconds);
+    else if (deltaMinutes < 60)
+        snprintf(out,256,"%u minutes ago", deltaMinutes);
+    else if (deltaMinutes < (24 * 60))
+        snprintf(out,256,"%u hours ago",(int)floor(deltaMinutes/60));
+    else if (deltaMinutes < (24 * 60 * 7))
+        snprintf(out,256,"%u days ago",(int)floor(deltaMinutes/(60 * 24)));
+    else if (deltaMinutes < (24 * 60 * 31))
+        snprintf(out,256,"%u weeks ago",(int)floor(deltaMinutes/(60 * 24 * 7)));
+    else if (deltaMinutes < (24 * 60 * 365.25))
+        snprintf(out,256,"%u months ago",(int)floor(deltaMinutes/(60 * 24 * 30)));
+    else
+        snprintf(out,256,"%u years ago",(int)floor(deltaMinutes/(60 * 24 * 365)));
+
+    return 0;
+}
+
+int thing_show_cb(void *data, int argc, char **argv, char **azColName){
+    int i;
+    char humandate[256];
+    memset(humandate,0,256);
+    for(i=0; i<argc; i++){ // save all fields into the template
+        if(!argv[i]) continue;
+
+        if(strcmp(azColName[i],"last")==0) {
+            kore_log(LOG_DEBUG,"last: %s",argv[i]);
+            relative_time(argv[i],humandate);
+            attrset(data, "last", humandate);
+            
+        } else if(strcmp(azColName[i],"age")==0) {
+            kore_log(LOG_DEBUG,"age: %s",argv[i]);
+            relative_time(argv[i],humandate);
+            attrset(data, "age",  humandate);
+
+        } else {
+            attrprintf(data, azColName[i], "%s", argv[i]); }
+    }
+    return 0;
+
+}
 int things_list_cb(void *data, int argc, char **argv, char **azColName){
     int i;
     struct tm tt;
     char *laststr;
+    char humandate[256];
     // fprintf(stderr, "callback: %s\n", (const char*)data);
 
     for(i=0; i<argc; i++){ // save all fields into the hashmap
@@ -64,33 +135,74 @@ int things_list_cb(void *data, int argc, char **argv, char **azColName){
     }
     attrcat(data,"list_of_things","<tr>");
 
-    snprintf(line,ml,"<td>%s</td><td>%s</td>",
+    snprintf(line,ml,
+"<td><a href=\"/thing?macaddr=%s\">"
+"%s</td><td>%s</td></a>",
+             thing_get("macaddr"),
              thing_get("hostname"), thing_get("os"));
     attrcat(data,"list_of_things",line);
 
     // get last datestamp
     laststr = thing_get("last");
-
-    // parse last into a tm struct
-    memset(&tt,0,sizeof(struct tm));
-    strptime(laststr, "%Y-%m-%dT%H:%M:%S", &tt);
-
-    strftime(line, ml, "<td>%d %m %Y - %H:%M:%S</td>", &tt);
+    if(laststr) relative_time(laststr,humandate);
+    snprintf(line, ml, "<td>%s</td>", humandate);
     attrcat(data,"list_of_things",line);
 
-    snprintf(line,ml,"<td>%s</td><td>%s</td>\n",
-             thing_get("macaddr"), thing_get("ip4"));
+    // snprintf(line,ml,"<td>%s</td><td>%s</td>\n",
+    //          thing_get("macaddr"), thing_get("ip4"));
 
-    attrcat(data,"list_of_things",line);
+    // attrcat(data,"list_of_things",line);
 
     attrcat(data,"list_of_things","</tr>");
 
     return 0;
 }
 
-int
-things_list(struct http_request *req)
-{
+int thing_show(struct http_request *req) {
+    int rc;
+    template_t tmpl;
+	attrlist_t attributes;
+    char *zErrMsg = 0;
+    char *macaddr;
+
+	http_populate_get(req);
+
+    // we shouldn't free the result in macaddr
+	if (http_argument_get_string(req, "macaddr", &macaddr))
+		kore_log(LOG_DEBUG, "thing_show macaddr %s",macaddr);
+    else
+        kore_log(LOG_ERR,"thing_show get argument error");
+
+    // prepare query
+    snprintf(line,ml,"SELECT * FROM found WHERE macaddr = '%s'",macaddr);
+    
+    // allocate output buffer
+    buf = kore_buf_create(mb);
+
+    // load template
+    template_load
+        (asset_thing_show_html, asset_len_thing_show_html, &tmpl);
+    attributes = attrinit();
+
+    attrcat(attributes, "title", "Dowse information panel");
+
+    // SQL query
+    sqlquery(line, thing_show_cb, attributes);
+
+    template_apply(&tmpl,attributes,buf);
+
+	http_response(req, 200, buf->data, buf->offset);
+
+    template_free(&tmpl);
+    attrfree(attributes);
+
+    kore_buf_free(buf);
+
+	return (KORE_RESULT_OK);
+
+}
+
+int things_list(struct http_request *req) {
     int rc;
     char *zErrMsg = 0;
     char *query = "SELECT * FROM found ORDER BY last DESC";
@@ -98,15 +210,6 @@ things_list(struct http_request *req)
 	attrlist_t attributes;
 
     struct timespec when;
-
-    if(!db) {
-        rc = sqlite3_open(THINGS_DB, &db);
-        if( rc ) {
-            kore_log(LOG_ERR, "Can't open database: %s\n",
-                     sqlite3_errmsg(db));
-            return(KORE_RESULT_ERROR);
-        }
-    }
 
     buf = kore_buf_create(mb);
 
@@ -129,16 +232,9 @@ things_list(struct http_request *req)
         attrcat(attributes, "title", line);
     }
     
-    sqlite3_exec(db, query, things_list_cb, attributes, &zErrMsg);
-
-    if( rc != SQLITE_OK ){
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
-
+    sqlquery(query, things_list_cb, attributes);
 
     template_apply(&tmpl, attributes, buf);
-
 
 	http_response(req, 200, buf->data, buf->offset);
 
@@ -159,4 +255,25 @@ char *thing_get(char *key) {
         return(sval);
     else
         return("NULL");
+}
+
+// same as sqlite3_exec
+int sqlquery(char *query,
+             int (*callback)(void*,int,char**,char**),
+             attrlist_t attrl) {
+    int rc;
+    char *zErrMsg = 0;
+    // open db connection
+    if(!db) {
+        rc = sqlite3_open(THINGS_DB, &db);
+        if( rc ) {
+            kore_log(LOG_ERR, "Can't open database: %s\n",
+                     sqlite3_errmsg(db));
+            return(KORE_RESULT_ERROR);
+        } }
+
+    sqlite3_exec(db, query, callback, attrl, &zErrMsg);
+    if( rc != SQLITE_OK ){
+        kore_log(LOG_ERR, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg); }
 }

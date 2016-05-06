@@ -46,6 +46,8 @@ state    text
 os       text
 dhcp     text
 gateway  text
+network  text
+notes    text
 last     date
 age      date
 '
@@ -158,11 +160,11 @@ rm -rf $S/src/thingsdb.h
 c=1
 print "#define THINGS_DB \"$HOME/.dowse/run/things.db\"" > $S/src/thingsdb.h
 
-for i in "${(f)thingindex}"; do
-    [[ "$i" = "" ]] && continue
-    print "#define ${i[(w)1]} $c" >> $S/src/thingsdb.h
-    c=$(( $c + 1 ))
-done
+# for i in "${(f)thingindex}"; do
+#     [[ "$i" = "" ]] && continue
+#     print "#define ${i[(w)1]} $c" >> $S/src/thingsdb.h
+#     c=$(( $c + 1 ))
+# done
 
 print "#define all_things_fields $(( $c - 1 ))" >> $S/src/thingsdb.h
 
