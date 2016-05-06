@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>${title}</title>
+
+    <link rel="stylesheet" href="/bootstrap.min.css">
+
+  </head>
+  <body>
+
+    <div class="container">
+
+      <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">${title}</div>
+        <div class="panel-body">
+          <p>List of devices recently found on LAN</p>
+        </div>
+
+        <table class="table">
+          <tr>
+            <th>hostname</th><th>manufacturer</th><th>last seen</th><th>MAC</th><th>IP</th>
+          </tr>
+          ${list_of_things}
+        </table>
+      </div>
+
+    </div>
+
+  </body>
+</html>

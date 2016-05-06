@@ -24,7 +24,7 @@ case $1 in
     kore)
         [[ -x $R/build/kore ]] || {
             pushd $R/src/kore
-            make NOTLS=1
+            make NOTLS=1 DEBUG=1
             install -s -p kore $R/build
             popd
         }

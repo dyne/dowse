@@ -443,7 +443,7 @@ dowse-status() {
             [[ "$res" = "" ]] && continue
             local -A _obj
             _obj=( $(print - $res | sql_idx_parse $R/db/thing.idx) )
-            warning "$_obj"
+
             notice "$_obj[hostname] (${_obj[os]//_/ })"
             act "$_obj[last]"
             act "$_obj[macaddr] $_obj[ip4]"
