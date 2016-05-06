@@ -3,17 +3,20 @@
 Known and unknown objects on the network are listed in the things.db sqlite3 database located in `$H/run/things.db`. Each object is contained in an sql table like this:
 
 ```
-1 macaddr  text primary key
-2 ip4      text
-3 ip6      text
-4 hostname text :: hostname resolved and declared
-5 iface    text :: interface to which this object connected last
-6 state    text :: connectivity state as reported by ip neigh
-7 os       text :: operating system deducted from macaddress magic
-8 dhcp     text :: ip assigned to this object by our dhcp
-9 identity text :: known or unknown network object
-10 last     date :: last time this object was seen (in EPOCH)
-11 age      date :: first time this object was seen (in EPOCH)
+1  macaddr  text primary key
+2  ip4      text
+3  ip6      text
+4  hostname text :: hostname resolved and declared
+5  iface    text :: interface to which this object connected last
+6  state    text :: connectivity state as reported by ip neigh
+7  os       text :: operating system deducted from macaddress magic
+8  dhcp     text :: ip assigned to this object by our dhcp
+9  gateway  text :: gateway configured when this thing was last seen
+10 network  text :: network configured when this thing was last seen
+11 notes    text :: user made custom notes about the thing
+12 identity text :: user assigned name, marks it as known thing
+13 last     date :: last time this object was seen (in UTC)
+14 age      date :: first time this object was seen (in UTC)
 ```
 
 To list stored known and unknown objects from commandline, `source dowse` and then do:
@@ -32,7 +35,7 @@ relevant depending from the data type.
 
 Fixed positions:
 ```
-{TYPE},IP,ACTION,EPOC,...
+{TYPE},IP,ACTION,EPOCH,...
 
 TYPE: { DNS | OBJ | PGL | CMD }
 ```
@@ -60,16 +63,15 @@ Channel:
 Format:
 
 ```
-DNS,IP,{ACTION},EPOCH,DOMAIN,TLD[,GROUP]
+DNS,IP,HITS,EPOCH,DOMAIN,TLD[,GROUP]
 
-ACTION: { NEW | KNOWN }
 ```
 
-Actions:
-- `NEW`: the domain is visited for the first time
-- `KNOWN`: the domain is known and has been visited before
 
 Arguments:
+- `IP`: IPv4 address where the dns query comes from
+- `HITS`: number of hits so far on this domain
+- `EPOCH`: time when query occurred, number of seconds since Epoch
 - `DOMAIN`: is the domain string to be resolved
 - `TLD`: is the last string of the domain, i.e: .org, .com, .net etc.
 - `GROUP`: optionally, a group the domain belongs (see domain-list)
