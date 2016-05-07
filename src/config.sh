@@ -176,7 +176,6 @@ print "#define all_things_fields $(( $c - 1 ))" >> $S/src/thingsdb.h
 #     print "\"${i[(w)1]}\"," >> $S/src/thingsdb.h
 # done
 # print " NULL };" >> $S/src/thingsdb.h
-EOF
 
 notice "Database indexes generated"
 
