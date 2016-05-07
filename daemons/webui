@@ -11,12 +11,17 @@ runas		$dowse_uid
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
 domain $address {
-	static	/	               things_list
-    static  /thing             thing_show
-	params get /thing {
+    static  /                   welcome
+    static  /index              welcome
+    static  /logo.png           logo
+    static  /bootstrap.min.css  bootstrap_css
+
+	static	   /things/all      things_list
+    static     /things          thing_show
+	params get /things {
 		validate	macaddr		v_macaddr
 	}
-    static  /bootstrap.min.css bootstrap_css
+
 }
 EOF
 }
@@ -39,7 +44,6 @@ webui-kill() {
     req=(_pid)
     ckreq || return $?
 
-    act "stopping webui ($_pid)"
     $R/bin/sup kill $_pid
     waitpid $_pid || {
         error "webui: could not stop pid $_pid"
