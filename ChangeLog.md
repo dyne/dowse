@@ -1,3 +1,15 @@
+# 0.9
+## May 2016
+### Refactoring and new features
+
+The internal messaging system is now relying on Redis as a core
+component for Dowse. Kore is adopted as web interface, Pendulum is
+added as a process to monitor the presence of things on LAN, Netdata
+is adopted as status graph dashboard. Events can be exported to
+OSC. Developers documentation is complete. This stage of development
+has been kindly supported by NLNET and SIDNfonds and will be used as a
+base for experimentation at the Live Performers Meeting 2016.
+
 # 0.8
 ## November 2015
 ### Fixes and cleanups, DNS graphic visualization

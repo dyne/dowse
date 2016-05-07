@@ -72,40 +72,43 @@ Installation and activation takes a few steps and needs root:
 zsh iptables ebtables sqlite3 procps gettext-base procps net-tools
 autoconf libssl-dev libbind-dev libpcap-dev unzip wget gcc make
 liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev
-libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev
+sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev
+libkmod-dev bind9-host
 ```
 
 3. Choose which user should be running dowse: your own is fine, or
    eventually create one just for that to separate filesystem
    permissions.
 
-4. As the user of choice, run `make`
+4. As the user of choice, run `make` inside the dowse source
 
 5. As root, run `make install`
 
+6. If necessary edit the files in the `/etc/dowse` folder, especially
+   `settings` where it should be indicated the address for the local
+   network you like to create.
 
 7. As the dowse user of choice and inside the source, fire up the
    startup script `./start.sh`
 
-Dowse is now running, but there is no graphical interface at the
-moment. To interact and check the status there is only a console with
-commands prefixed with `dowse-` (tab completion available).
+Dowse is now running with a web interface on port 80.
 
-To enter it run zsh without extensions and source the main script:
-first type `zsh -f` and press enter, then type `source
-/usr/local/dowse/zshrc` and press enter.
+To interact with dowse there is also a console with commands prefixed
+with `dowse-` (tab completion available). To enter it run zsh without
+extensions and source the main script: first type `zsh -f` and press
+enter, then type `source /usr/local/dowse/zshrc` and press enter.
 
 If you like the dowse user to have an interactive console every time
-it logs in, then do `ln -s /usr/local/dowse/zshrc $HOME`.
-
-If necessary edit the files in the `/etc/dowse` folder, maybe with the address for the local network you like to create or the wifi you like to connect to.
+it logs in, then do `ln -s /usr/local/dowse/zshrc $HOME/.zshrc`.
 
 If all went well now one should be able to connect any device to the
 internet as you did before, via Dowse.
 
 ## Embedded ARM devices
 
-Using https://beta.devuan.org just compile and install Dowse following the procedure above. Images are available for a several popular ARM devices including RaspberryPI2 and 3, BananaPI, Cubieboard etc.
+Using https://www.devuan.org just compile and install Dowse following
+the procedure above. Images are available for a several popular ARM
+devices including RaspberryPI2 and 3, BananaPI, Cubieboard etc.
 
 # Visualization
 
@@ -167,6 +170,9 @@ welcomes contributions: https://github.com/dyne/domain-list
 
 # Disclaimer
 
+Dowse development is supported by: NLNET foundation (2015)
+                                   SIDNfonds   (2015-2016)
+
 Dowse is Copyright (C) 2012-2016 by the Dyne.org Foundation
 
 	This source code is free software; you can redistribute it and/or
@@ -182,3 +188,4 @@ Dowse is Copyright (C) 2012-2016 by the Dyne.org Foundation
 	You should have received a copy of the GNU Public License along
 	with this source code; if not, write to: Free Software Foundation,
 	Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

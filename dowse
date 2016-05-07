@@ -48,11 +48,8 @@ rehash
 
 mkdir -p $H
 
-# load development libraries if there
-if [[ -r `pwd`/zlibs/zuper-dev/zuper ]]; then
-    func "Zuper loaded from development symlink"
-    source `pwd`/zlibs/zuper-dev/zuper
-else source `pwd`/zlibs/zuper; fi
+#####################
+source $R/zlibs/zuper
 
 # For gettext
 TEXTDOMAIN=dowse
@@ -379,45 +376,45 @@ dowse-stop() {
 
 }
 
-dowse-reload() {
-    fn dowse-reload
-    freq=($E/modules/enabled)
-    ckreq || return 1
+# dowse-reload() {
+#     fn dowse-reload
+#     freq=($E/modules/enabled)
+#     ckreq || return 1
 
-    mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
-    func "modules enabled: $mods"
-    for m in "${(f)mods}"; do
-        dowse-module-load $m || continue
-        dowse-module-stop
-    done
+#     mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
+#     func "modules enabled: $mods"
+#     for m in "${(f)mods}"; do
+#         dowse-module-load $m || continue
+#         dowse-module-stop
+#     done
 
-    for m in "${(f)mods}"; do
-        dowse-module-load $m || continue
-        dowse-module-setup
-    done
+#     for m in "${(f)mods}"; do
+#         dowse-module-load $m || continue
+#         dowse-module-setup
+#     done
 
-    for m in "${(f)mods}"; do
-        dowse-module-load $m || continue
-        dowse-module-start
-    done
+#     for m in "${(f)mods}"; do
+#         dowse-module-load $m || continue
+#         dowse-module-start
+#     done
 
-}
+# }
 
-dowse-parse-leases() {
-    awk '
-BEGIN { c=0 }
-{
-  mac[c]=$2
-  ip[c]=$3
-  if($4=="*") host[c]="anonymous"; else host[c]=$4
-zx  c++
-}
-END {
-  printf "mac=("; for(i=0;i<c;i++) { printf "%s ", mac[i] }; printf ")\n"
-  printf "ip=("; for(i=0;i<c;i++) { printf "%s ", ip[i] }; printf ")\n"
-  printf "host=("; for(i=0;i<c;i++) { printf "%s ", host[i] }; printf ")\n"
-}' $H/run/leases
-}
+# dowse-parse-leases() {
+#     awk '
+# BEGIN { c=0 }
+# {
+#   mac[c]=$2
+#   ip[c]=$3
+#   if($4=="*") host[c]="anonymous"; else host[c]=$4
+# zx  c++
+# }
+# END {
+#   printf "mac=("; for(i=0;i<c;i++) { printf "%s ", mac[i] }; printf ")\n"
+#   printf "ip=("; for(i=0;i<c;i++) { printf "%s ", ip[i] }; printf ")\n"
+#   printf "host=("; for(i=0;i<c;i++) { printf "%s ", host[i] }; printf ")\n"
+# }' $H/run/leases
+# }
 
 dowse-dump() {
     fn dowse-dump
@@ -442,10 +439,11 @@ dowse-status() {
 
     arg="$1"
     if [[ "$arg" = "" ]]; then
-        minago=`date  "+%H:%M:%S" -d '1 min ago'`
+        minago=`date  "+%H:%M:%S" -d '1 day ago'`
         now=`date  "+%H:%M:%S"`
         notice "List things found online"
-        for res in "${(f)$(print - "SELECT * from found WHERE strftime('%H:%M:%S', last) between '$minago' and '$now';" | $sql -batch $H/run/things.db)}"; do
+#        for res in "${(f)$(print - "SELECT * from found WHERE strftime('%H:%M:%S', last) between '$minago' and '$now';" | $sql -batch $H/run/things.db)}"; do
+        for res in "${(f)$(print - "SELECT * from found;" | $sql -batch $H/run/things.db)}"; do
             [[ "$res" = "" ]] && continue
             local -A _obj
             _obj=( $(print - $res | sql_idx_parse $R/db/thing.idx) )
@@ -473,25 +471,25 @@ dowse-status() {
     return 0
 }
 
-dowse-scan() {
-    fn dowse-scan
-    freq=($H/run/leases)
-    ckreq || return $?
+# dowse-scan() {
+#     fn dowse-scan
+#     freq=($H/run/leases)
+#     ckreq || return $?
 
-    notice "Scanning unknown network objects"
-    eval `dowse-parse-leases`
+#     notice "Scanning unknown network objects"
+#     eval `dowse-parse-leases`
 
-    for s in {0..${#mac}}; do
-        [[ $mac[$s] == "" ]] && { continue }
-        grep "${mac[$s]}" $E/network > /dev/null
-        [[ $? == 1 ]] && { # unknown
-            act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
-            func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""
-            nmap -A -F -sT -Pn -T5 -n "${ip[$s]}"
-            print
-        }
-    done
+#     for s in {0..${#mac}}; do
+#         [[ $mac[$s] == "" ]] && { continue }
+#         grep "${mac[$s]}" $E/network > /dev/null
+#         [[ $? == 1 ]] && { # unknown
+#             act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
+#             func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""
+#             nmap -A -F -sT -Pn -T5 -n "${ip[$s]}"
+#             print
+#         }
+#     done
 
-}
+# }
 
 # }}}
