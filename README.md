@@ -73,7 +73,7 @@ zsh iptables ebtables sqlite3 procps gettext-base procps net-tools
 autoconf libssl-dev libbind-dev libpcap-dev unzip wget gcc make
 liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev
 sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev
-libkmod-dev bind9-host
+libkmod-dev bind9-host bison
 ```
 
 3. Choose which user should be running dowse: your own is fine, or
