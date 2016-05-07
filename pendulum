@@ -226,12 +226,12 @@ pendulum_arp_scan() {
             obj[ip4]=${t[(w)1]}
             obj[iface]=$_dev
             obj[last]=$nownow
-            obj[os]="$(print - $t | awk '
+            obj[os]=$(print - $t | awk '
 {
   for(c=5;c<=NF;c++) {
     printf("%s_", $c)
   }
-}')"
+}')
             _pendulum_resolve_hostname
 
             _pendulum_update_changes
