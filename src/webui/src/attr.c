@@ -131,6 +131,8 @@ static attr_t *setup_access(attrlist_t al, const char *name) {
 
 /*** EXPORTED STUFF ***/
 
+// TODO: split this in two functions: one to retrieve attr and one to
+// strcat contents into it.
 void attrcatn(attrlist_t al, const char *name, const _char *value, size_t len) {
     attr_t *at;
     size_t oldlen;

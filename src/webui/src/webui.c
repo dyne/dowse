@@ -68,7 +68,7 @@ int relative_time(char *utc, char *out) {
     // parse utc into a tm struct
     memset(&tt,0,sizeof(struct tm));
     if( ! strptime(utc, "%Y-%m-%dT%H:%M:%SZ", &tt) ) {
-        kore_log(LOG_ERR,"relative_time failed parsing UTC string: %s",utc);
+        // kore_log(LOG_ERR,"relative_time failed parsing UTC string: %s",utc);
         if( ! strptime(utc, "%Y-%m-%dT%H:%M:%S", &tt) )
             return 1; }
     then = mktime(&tt);
@@ -127,6 +127,10 @@ int things_list_cb(void *data, int argc, char **argv, char **azColName){
     struct tm tt;
     char *laststr;
     char humandate[256];
+    const char *button_group_start="<div class=\"btn-group\" role=\"group\" aria-label=\"actions\">";
+    const char *button_start="<button type=\"button\" class=\"btn btn-default\">";
+
+
     // fprintf(stderr, "callback: %s\n", (const char*)data);
 
     for(i=0; i<argc; i++){ // save all fields into the hashmap
@@ -136,7 +140,7 @@ int things_list_cb(void *data, int argc, char **argv, char **azColName){
     attrcat(data,"list_of_things","<tr>");
 
     snprintf(line,ml,
-"<td><a href=\"/thing?macaddr=%s\">"
+"<td><a href=\"/things?macaddr=%s\">"
 "%s</td><td>%s</td></a>",
              thing_get("macaddr"),
              thing_get("hostname"), thing_get("os"));
@@ -145,15 +149,26 @@ int things_list_cb(void *data, int argc, char **argv, char **azColName){
     // get last datestamp
     laststr = thing_get("last");
     if(laststr) relative_time(laststr,humandate);
-    snprintf(line, ml, "<td>%s</td>", humandate);
+    snprintf(line, ml, "<td>%s</td><td>", humandate);
     attrcat(data,"list_of_things",line);
+
+    // action buttons
+    attrcat(data,"list_of_things",button_group_start);
+
+    // info button
+    attrcat(data,"list_of_things",button_start);
+    snprintf(line,ml,
+             "<a href=\"/things?macaddr=%s\">info</a></button>",
+             thing_get("macaddr"));
+    attrcat(data,"list_of_things",line);
+
+    attrcat(data,"list_of_things","</div></td></tr>");
 
     // snprintf(line,ml,"<td>%s</td><td>%s</td>\n",
     //          thing_get("macaddr"), thing_get("ip4"));
 
     // attrcat(data,"list_of_things",line);
 
-    attrcat(data,"list_of_things","</tr>");
 
     return 0;
 }

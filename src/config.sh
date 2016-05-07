@@ -64,6 +64,7 @@ execrules=(
     netdata      user
     webui        user
 
+    kore          root
     dnsmasq       root
     dnscap        root
     ifconfig      root
@@ -96,6 +97,7 @@ execmap=(
     tor           $PREFIX/bin/tor
     netdata       $PREFIX/bin/netdata
     webui         $PREFIX/bin/kore
+    kore          $PREFIX/bin/kore
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
