@@ -5,7 +5,7 @@ webui-conf() {
 bind		$address 80
 load		$R/webui/webui.so
 pidfile     $H/run/webui.pid
-chroot		$R/webui
+chroot		$H
 runas		$dowse_uid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
@@ -21,7 +21,7 @@ domain $address {
 	params get /things {
 		validate	macaddr		v_macaddr
 	}
-
+	accesslog		$H/log/webui_access.log
 }
 EOF
 }

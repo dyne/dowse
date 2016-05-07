@@ -280,12 +280,17 @@ int sqlquery(char *query,
     char *zErrMsg = 0;
     // open db connection
     if(!db) {
-        rc = sqlite3_open(THINGS_DB, &db);
+
+        rc = sqlite3_open("/run/things.db", &db);
         if( rc ) {
-            kore_log(LOG_ERR, "Can't open database: %s\n",
-                     sqlite3_errmsg(db));
-            return(KORE_RESULT_ERROR);
+            kore_log(LOG_ERR, "%s: %s\n", sqlite3_errmsg(db), "/run/things.db");
+            // retry
+            rc = sqlite3_open(THINGS_DB, &db);
+            if( rc ) {
+                kore_log(LOG_ERR, "%s: %s\n", sqlite3_errmsg(db), THINGS_DB);
+                return(KORE_RESULT_ERROR);
         } }
+    }
 
     sqlite3_exec(db, query, callback, attrl, &zErrMsg);
     if( rc != SQLITE_OK ){
