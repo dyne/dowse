@@ -2,9 +2,11 @@
 
 webui-conf() {
     cat << EOF
-bind		$address 8080
+bind		$address 80
 load		$R/webui/webui.so
 pidfile     $H/run/webui.pid
+chroot		$R/webui
+runas		$dowse_uid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
@@ -20,15 +22,29 @@ EOF
 }
 
 webui-exec() {
-    fn webui $*
+    fn webui-exec $*
     req=(conf)
     freq=($conf)
     ckreq || return $?
 
     # TODO: chroot and drop privs
     # https://github.com/jorisvink/kore/issues/123
-    launch webui -c $conf -n -r
+    launch kore -c $conf
     savepid webui $H/run/webui.pid
+}
+
+webui-kill() {
+    fn webui-kill $*    
+    _pid=`getpid $_daemon`
+    req=(_pid)
+    ckreq || return $?
+
+    act "stopping webui ($_pid)"
+    $R/bin/sup kill $_pid
+    waitpid $_pid || {
+        error "webui: could not stop pid $_pid"
+        return 1 }
+    print "DEL daemon-webui-pid" | redis runtime
 }
 
 
