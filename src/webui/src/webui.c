@@ -128,7 +128,7 @@ int things_list_cb(void *data, int argc, char **argv, char **azColName){
     char *laststr;
     char humandate[256];
     const char *button_group_start="<div class=\"btn-group\" role=\"group\" aria-label=\"actions\">";
-    const char *button_start="<button type=\"button\" class=\"btn btn-default\">";
+    const char *button_start="<div type=\"button\" class=\"btn btn-default\">";
 
 
     // fprintf(stderr, "callback: %s\n", (const char*)data);
@@ -158,7 +158,7 @@ int things_list_cb(void *data, int argc, char **argv, char **azColName){
     // info button
     attrcat(data,"list_of_things",button_start);
     snprintf(line,ml,
-             "<a href=\"/things?macaddr=%s\">info</a></button>",
+             "<a href=\"/things?macaddr=%s\">info</a></div>",
              thing_get("macaddr"));
     attrcat(data,"list_of_things",line);
 
