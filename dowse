@@ -250,7 +250,7 @@ EOF
         iptables-start
 
         iptables-base-protection
-
+        
         loopback-on
         if loopback-only; then
             act "dry run on localhost only"
@@ -260,8 +260,10 @@ EOF
             act "set up $interface interface with ip $address"
             launch ifconfig $interface $address netmask $netmask up
 
-            act "set $wan as default gateway"
-            launch route add default gw $wan
+            [[ "$wan" = "" ]] || {
+                act "set $wan as default gateway"
+                launch route add default gw $wan
+            }
 
             act "setup snat trasversal"
             iptables-snat-on

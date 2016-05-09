@@ -17,15 +17,32 @@ conf-load() {
     interface=${interface:-lo}
     hostname=${hostname:-`hostname`}
     address=${address:-127.0.0.1}
-    wan=${wan:-127.0.0.1}
-    dns=${dns:-$wan}
+    wan=${wan:-""}
+    dns=${dns:-127.0.0.1}
     dowse_uid=${dowse_uid:-`id -un`}
     dowse_gid=${dowse_gid:-`id -gn`}
     dowse_net=${dowse_net:-127.0.0.0/24}
     netmask=${netmask:-255.255.255.0}
     dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
+    lan=${lan:-dowse.it}
 
     firewall=${firewall:-yes}
+
+    net_devices=()
+    net.scan_devices
+    net_ip4_addr=()
+    net_ip6_addr=()
+    net.scan_addresses
+
+    for d in $net_devices; do
+        local _addr=${net_ip4_addr[$d]}
+        _addr=${_addr[(ws:/:)1]}
+        [[ "$_addr" = "" ]] && continue
+        act "$d $_addr # detected network config"
+        interface=$d
+        address=$_addr
+        dowse_net="${_addr[(ws:.:)1]}.${_addr[(ws:.:)2]}.${_addr[(ws:.:)3]}.0/24"
+    done
 
     func "interface: $interface"
     func "hostname: $hostname"

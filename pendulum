@@ -96,7 +96,7 @@ _pendulum_update_changes() {
     info=`print - "SELECT * from found where macaddr is '$obj[macaddr]';" | $sql -batch $H/run/things.db`
 
     local nownow
-    nownow=`date --utc '+%Y-%m-%dT%H:%M:%SZ'`
+    nownow=`date --utc '+%Y-%m-%dT%H:%M:%S'`
 
     local name
     name=${obj[hostname]}

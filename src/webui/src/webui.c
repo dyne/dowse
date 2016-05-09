@@ -107,12 +107,12 @@ int thing_show_cb(void *data, int argc, char **argv, char **azColName){
         if(!argv[i]) continue;
 
         if(strcmp(azColName[i],"last")==0) {
-            kore_log(LOG_DEBUG,"last: %s",argv[i]);
+            // kore_log(LOG_DEBUG,"last: %s",argv[i]);
             relative_time(argv[i],humandate);
             attrset(data, "last", humandate);
             
         } else if(strcmp(azColName[i],"age")==0) {
-            kore_log(LOG_DEBUG,"age: %s",argv[i]);
+            // kore_log(LOG_DEBUG,"age: %s",argv[i]);
             relative_time(argv[i],humandate);
             attrset(data, "age",  humandate);
 

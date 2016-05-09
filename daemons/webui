@@ -10,7 +10,7 @@ runas		$dowse_uid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
-domain $address {
+domain $hostname {
     static  /                   welcome
     static  /index              welcome
     static  /logo.png           logo
@@ -34,8 +34,12 @@ webui-exec() {
 
     # TODO: chroot and drop privs
     # https://github.com/jorisvink/kore/issues/123
-    launch kore -c $conf
-    savepid webui $H/run/webui.pid
+    if [[ $DEBUG = 1 ]]; then
+        launch kore -c $conf -f
+    else
+        launch kore -c $conf
+        savepid webui $H/run/webui.pid
+    fi
 }
 
 webui-kill() {
