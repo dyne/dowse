@@ -2,7 +2,7 @@
 
 webui-conf() {
     cat << EOF
-bind		$address 80
+bind        $hostname 80
 load		$R/webui/webui.so
 pidfile     $H/run/webui.pid
 chroot		$H
