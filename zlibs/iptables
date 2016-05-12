@@ -293,6 +293,7 @@ iptables-start() {
     # Allow services such as www and ssh (can be disabled)
     iptables -A INPUT -p tcp --dport http -j ACCEPT
     iptables -A INPUT -p tcp --dport ssh  -j ACCEPT
+	iptables -A INPUT -p tcp --dport 29999 -j ACCEPT
 
     # Keep state of connections from local machine and private subnets
     iptables -A OUTPUT  -m state --state NEW -o ${interface} -j ACCEPT
