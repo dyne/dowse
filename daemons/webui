@@ -2,7 +2,7 @@
 
 webui-conf() {
     cat << EOF
-bind		$address 80
+bind		$hostname.$lan 80
 load		$R/webui/webui.so
 pidfile     $H/run/webui.pid
 chroot		$H
@@ -10,7 +10,7 @@ runas		$dowse_uid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
-domain $hostname {
+domain $hostname.$lan {
     static  /                   welcome
     static  /index              welcome
     static  /logo.png           logo
