@@ -58,8 +58,7 @@ int main(int argc, char **argv) {
     osc = lo_address_new_from_url( argv[1] );
     lo_address_set_ttl(osc, 1); // subnet scope
 
-    connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
-
+    redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
     reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
