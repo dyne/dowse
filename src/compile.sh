@@ -15,6 +15,13 @@ CFLAGS="-Wall -fPIC -fPIE -Os"
 LDFLAGS="-fPIC -fPIE -pie"
 
 case $1 in
+    webdis)
+        pushd $R/src/webdis
+        make
+        install -s -p webdis $R/build
+        popd
+        ;;
+
     webui)
         pushd $R/src/webui
         $R/build/kore build

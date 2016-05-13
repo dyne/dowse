@@ -14,6 +14,7 @@ all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
 	@./compile.sh netdata
 	@./compile.sh kore
 	@./compile.sh webui
+	@./compile.sh webdis
 	@./import.sh
 	@install -s -p modprobe        ../build
 	@install -s -p dowse-to-gource ../build
