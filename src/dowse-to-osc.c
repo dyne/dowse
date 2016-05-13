@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
     int err;
     lo_address osc;
     char *dns, *ip, *action, *epoch, *domain, *tld;
+    unsigned int hits;
 
     if(argv[1] == NULL) {
         fprintf(stderr, "usage: dns-to-osc osc.URL (i.e: osc.udp://localhost:666/pd)\n");
@@ -67,6 +68,7 @@ int main(int argc, char **argv) {
 
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
 
+        // reusable block to parse redis into variables
         dns = strtok(reply->element[2]->str,",");
         if(!dns) continue;
         ip = strtok(NULL,",");
@@ -79,16 +81,19 @@ int main(int argc, char **argv) {
         if(!domain) continue;
         tld = strtok(NULL,",");
         if(!tld) continue;
+        // --
+
+        hits = atoll(action);
 
         // TODO: use a more refined lo_send with low-latency flags
-        err = lo_send(osc, "/dowse/dns", "ssss", 
-                      ip, (action[0]=='N')?"new":"known", domain, tld);
+        err = lo_send(osc, "/dowse/dns", "siss", 
+                      ip, hits, domain, tld);
         if(err == -1)
             fprintf(stderr,"OSC send error: %s\n",lo_address_errstr(osc));
         // just for console debugging
         else
-            fprintf(stderr,"/dowse/dns %s %s %s %s\n",
-                    ip, (action[0]=='N')?"new":"known", domain, tld);
+            fprintf(stderr,"/dowse/dns %s %u %s %s\n",
+                    ip, hits, domain, tld);
 
         fflush(stderr);
 
