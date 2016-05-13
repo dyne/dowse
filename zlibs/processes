@@ -65,6 +65,11 @@ start() {
         *) lib=/usr/lib ;;
     esac
 
+    # if configuration is not defined, generate the default
+    [[ -r $conf ]] || {
+        act "regenerating default configuration for $_daemon"
+        $_daemon-conf > $conf }
+
     act "starting daemon: $_daemon $*"
     execpath=${execmap[$_daemon]}
     func "execpath: $execpath"
