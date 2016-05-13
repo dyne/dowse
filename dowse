@@ -122,6 +122,7 @@ source $R/daemons/redis
 source $R/daemons/dnscrypt-proxy
 source $R/daemons/netdata
 source $R/daemons/webui
+source $R/daemons/webdis
 
 # conclude initialization
 if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
