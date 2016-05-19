@@ -64,3 +64,7 @@ install:
 # binaries on a fixed path and they must match a sha256 hash which is
 # compiled in. for more information see: https://github.com/dyne/sup
 # to see what binaries are compiled in, do `sup -l`
+
+uninstall:
+	rm -rf ${DESTDIR}${CONFDIR}
+	rm -rf ${DESTDIR}${PREFIX}
