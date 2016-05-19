@@ -1,58 +1,72 @@
 #!/usr/bin/env zsh
 
-
 vars+=(settings address interface hostname wan lan firewall)
 vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
 conf-load() {
-    fn conf-load
+	fn conf-load
 
-    # conf/settings override all
-    [[ -r $settings ]] && {
-        act "loading configuration from $settings"
-        source $settings
-    }
+	# conf/settings override all
+	[[ -r $settings ]] && {
+		act "loading configuration from $settings"
+		source $settings
+	}
 
-    # cover defaults
-    interface=${interface:-lo}
-    hostname=${hostname:-`hostname`}
-    address=${address:-127.0.0.1}
-    wan=${wan:-""}
-    dns=${dns:-127.0.0.1}
-    dowse_uid=${dowse_uid:-`id -un`}
-    dowse_gid=${dowse_gid:-`id -gn`}
-    dowse_net=${dowse_net:-127.0.0.0/24}
-    netmask=${netmask:-255.255.255.0}
-    dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
-    lan=${lan:-dowse.it}
+	# cover defaults
+	interface=${interface:-lo}
+	hostname=${hostname:-`hostname`}
+	address=${address:-127.0.0.1}
+	wan=${wan:-""}
+	dns=${dns:-127.0.0.1}
+	dowse_uid=${dowse_uid:-`id -un`}
+	dowse_gid=${dowse_gid:-`id -gn`}
+	dowse_net=${dowse_net:-127.0.0.0/24}
+	netmask=${netmask:-255.255.255.0}
+	dowse_guests=${dowse_guests:-10.0.0.101,10.0.0.199,48h}
+	lan=${lan:-dowse.it}
 
-    firewall=${firewall:-yes}
+	firewall=${firewall:-yes}
 
-    net_devices=()
-    net.scan_devices
-    net_ip4_addr=()
-    net_ip6_addr=()
-    net.scan_addresses
+	net_devices=()
+	net.scan_devices
+	net_ip4_addr=()
+	net_ip6_addr=()
+	net.scan_addresses
 
-    for d in $net_devices; do
-        local _addr=${net_ip4_addr[$d]}
-        _addr=${_addr[(ws:/:)1]}
-        [[ "$_addr" = "" ]] && continue
-        act "$d $_addr # detected network config"
-        interface=$d
-        address=$_addr
-        dowse_net="${_addr[(ws:.:)1]}.${_addr[(ws:.:)2]}.${_addr[(ws:.:)3]}.0/24"
-    done
+	for d in $net_devices; do
+		local _addr=${net_ip4_addr[$d]}
+		_addr=${_addr[(ws:/:)1]}
+		range=${_addr[(ws:/:)2]}
+		[[ "$_addr" = "" ]] && continue
+		act "$d $_addr # detected network config"
+		address=$_addr
+		interface=$d
 
-    func "interface: $interface"
-    func "hostname: $hostname"
-    func "address: $address"
-    func "wan: $wan"
-    func "dns: $dns"
-    func "uid: $dowse_uid"
-    func "gid: $dowse_uid"
-    func "network: $dowse_net"
-    func "netmask: $netmark"
-    func "dhcp: $dowse_guests"
-    func "firewall: $firewall"
+		wan=`ip route show dev $d`
+		wan=${wan[(w)3]}
+
+		if [[ range == 24 ]]; then
+			subn=${wan[(ws:.:)1]}.${wan[(ws:.:)2]}.${wan[(ws:.:)3]}
+			dowse_net=$subn.0/24
+			netmask=255.255.255.0
+			dowse_guests=$subn.101,$subn.199,48h
+		elif [[ range == 16 ]]; then
+			subn=${wan[(ws:.:)1]}.${wan[(ws:.:)2]}
+			dowse_net=$subn.0.0/16
+			netmask=255.255.0.0
+			dowse_guests=$subn.0.101,$subn.255.199,48h
+		fi
+	done
+
+	func "interface: $interface"
+	func "hostname: $hostname"
+	func "address: $address"
+	func "wan: $wan"
+	func "dns: $dns"
+	func "uid: $dowse_uid"
+	func "gid: $dowse_uid"
+	func "network: $dowse_net"
+	func "netmask: $netmark"
+	func "dhcp: $dowse_guests"
+	func "firewall: $firewall"
 }
