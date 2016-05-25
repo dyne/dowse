@@ -341,7 +341,7 @@ maps+=(net_ip4_exit)
 
 net.scan_devices() {
     for i in "${(f)$(find /sys/devices/ -name net)}"; do
-        dev=`ls $i`
+        dev=`ls --indicator-style=none $i`
 
         # skip the loopback device
         [[ "$dev" =~ "^lo" ]] && continue
