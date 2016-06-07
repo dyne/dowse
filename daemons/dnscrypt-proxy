@@ -1,6 +1,18 @@
 #!/usr/bin/env zsh
 
 
+dnscrypt-proxy-conf() {
+	cat <<EOF
+
+    # launch dnscrypt-proxy -a 127.0.0.1:53443 \
+    #         -p $pid -l $H/log/dnscrypt.log \
+    #         -r "176.56.237.171:443" \
+    #         -k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
+    #         -N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
+    #         -d -m 4 # log only warning conditions
+
+EOF
+}
 
 dnscrypt-proxy-exec() {
     fn dnscrypt-exec

@@ -174,6 +174,7 @@ EOF
 # global file path to settings
 settings=${1:-/etc/dowse/settings}
 conf-load
+# TODO: using first argument here breaks ~/.zshrc auto-load
 
 act "checking requirements to run dowse..."
 
@@ -234,12 +235,6 @@ dowse-start() {
     notice "Starting Dowse"
 
     # start the redis daemon (core k/v service)
-    redis-conf > $H/run/redis-server.conf
-    cat <<EOF >> $H/run/redis-server.conf
-pidfile $H/run/redis-server.pid
-logfile $H/log/redis-server.log
-port 6379
-EOF
     start redis-server
 
     [[ "$firewall" = "yes" ]] && {
@@ -282,25 +277,16 @@ EOF
         fi
     }
 
-    # generate the dnsmasq configuration
-    dnsmasq-conf > $H/run/dnsmasq.conf
-
-    # tunnel dnsmasq across dnscrypt-proxy
-    cat <<EOF >> $H/run/dnsmasq.conf
-server=127.0.0.1#53443
-EOF
-
     # launch the dnsmasq daemon
     start dnsmasq
 
     # start the dns encrypted tunneling
     start dnscrypt-proxy
 
-    # these are root programs that need redis to be running
+    # start capturing dns traffic
     start dnscap
 
     # netdata dashboard for the technical status
-    netdata-conf > $H/run/netdata.conf
     start netdata
 
     mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
@@ -324,7 +310,6 @@ EOF
     QUIET=1 pendulum start &! savepid pendulum $!
 
     # start web interface on port 8080
-    webui-conf > $H/run/webui.conf
     start webui
 
     notice "Dowse succesfully started" # , web interface up on:"

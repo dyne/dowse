@@ -29,6 +29,8 @@ address=/$hostname/$address
 address=/$hostname.$lan/$address
 # address=/.i2p/$address
 # address=/.onion/$address
+# dnscrypt-proxy
+server=127.0.0.1#53443
 bogus-priv
 cache-size=2048
 dhcp-range=$dowse_guests
