@@ -58,6 +58,13 @@ start() {
     req=(_daemon)
     ckreq || return $?
 
+	# check if already running
+    _pid=`getpid $_daemon`
+
+    [[ "$_pid" = "" ]] || {
+		warning "$_daemon already running (pid $_pid)"
+        return 0
+	}
 
     case `uname -m` in
         arm*)   lib=/usr/lib/arm-linux-gnueabihf ;;
@@ -66,7 +73,7 @@ start() {
     esac
 
     # if configuration is not defined, generate the default
-    [[ -r $conf ]] || {
+    [[ -s $conf ]] || {
         act "regenerating default configuration for $_daemon"
         $_daemon-conf > $conf }
 
