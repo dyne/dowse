@@ -309,13 +309,13 @@ dowse-start() {
             start pgld
     }
 
-    QUIET=1 pendulum start &! savepid pendulum $!
-
     # start web interface
     start webui
 
 	# start the reverse proxy
 	start tinyproxy-reverse
+
+	start seccrond
 
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
@@ -325,11 +325,11 @@ dowse-start() {
 dowse-stop() {
     fn dowse-stop
 
+	stop seccrond
+
 	stop tinyproxy-reverse
 
     stop webui
-
-    stop pendulum
 
     for m in `dowse-module-list`; do
 
@@ -413,9 +413,6 @@ dowse-stop() {
 
 dowse-dump() {
     fn dowse-dump
-
-    freq=($H/run/redis.pid)
-    ckreq || return $?
 
     notice "Dumping variables in Redis"
     act "Runtime:"
