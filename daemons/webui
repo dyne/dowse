@@ -2,15 +2,15 @@
 
 webui-conf() {
     cat << EOF
-bind		$address 80
+bind		127.0.0.1 29100
 load		$R/webui/webui.so
 pidfile     $H/run/webui.pid
-chroot		$H
-runas		$dowse_uid
+# chroot		$H
+# runas		$dowse_uid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
-domain *.$lan {
+domain 127.0.0.1 {
     static  /                   welcome
     static  /index              welcome
     static  /logo.png           logo
@@ -35,9 +35,9 @@ webui-exec() {
     # TODO: chroot and drop privs
     # https://github.com/jorisvink/kore/issues/123
     if [[ $DEBUG = 1 ]]; then
-        launch kore -c $conf -f
+        launch kore -n -r -c $conf -f
     else
-        launch kore -c $conf
+        launch kore -n -r -c $conf
         savepid webui $H/run/webui.pid
     fi
 }

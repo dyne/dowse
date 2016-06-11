@@ -64,8 +64,9 @@ execrules=(
     netdata      user
     webui        user
     webdis       user
+    kore         user
 
-    kore          root
+	tinyproxy     root
     dnsmasq       root
     dnscap        root
     ifconfig      root
@@ -96,6 +97,7 @@ execmap=(
     redis-cli     $PREFIX/bin/redis-cli
     redis-server  $PREFIX/bin/redis-server
     tor           $PREFIX/bin/tor
+	tinyproxy     $PREFIX/bin/tinyproxy
     netdata       $PREFIX/bin/netdata
     webui         $PREFIX/bin/kore
     webdis        $PREFIX/bin/webdis
