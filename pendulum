@@ -176,6 +176,7 @@ UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
 
 
 }
+
 # finds out LAN neighbours, their mac and their state
 # this establishes mac addresses as indexes
 pendulum_ip_neigh() {
@@ -239,34 +240,38 @@ pendulum_arp_scan() {
     done
 }
 
-[[ "$1" = "start" ]] && {
-    notice "Starting pendulum on `date -d @$now`"
 
-    [[ -r $H/run/things.db ]] || {
-        act "Creating new things database"
-        cat $R/db/thing.idx |
-            sql_create_table found |
-            $sql -batch $H/run/things.db
-        [[ $? = 0 ]] || {
-            error "error creating database: $H/run/things.db"
-            return 1 }
-    }
+################
+# MAIN functions
 
-    # main
-    while true; do
+cmd="$1"
+
+case "$1" in
+    newdb)
+        # create a new things database if not existing
+        [[ -r $H/run/things.db ]] || {
+            act "Creating new things database"
+            cat $R/db/thing.idx |
+                sql_create_table found |
+                $sql -batch $H/run/things.db
+            [[ $? = 0 ]] || {
+                error "error creating database: $H/run/things.db"
+                return 1 }
+            return 0
+        }
+        error "$H/run/things.db already exists, newdb aborted"
+        return 1
+        ;;
+
+    netscan)
         # parse everything in this map
         obj=()
-
         pendulum_ip_neigh
         pendulum_arp_scan
         _pendulum_commit_changes
-        for i in {1..10}; do
-            func "quit: $quit"
-            [[ $quit = 1 ]] && {
-                notice "Pendulum exiting."
-                return 0
-            }
-            sleep 1
-        done
-    done
-}
+        ;;
+
+    procscan)
+        # TODO: pgrep
+        ;;
+esac
