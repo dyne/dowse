@@ -1,0 +1,67 @@
+#!/usr/bin/env zsh
+#
+# Copyright (C) 2012-2015 Dyne.org Foundation
+#
+# Dowse is written and maintained by Denis Roio <jaromil@dyne.org>
+#
+# This source code is free software; you can redistribute it
+# and/or modify it under the terms of the GNU Public License
+# as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# This source code is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.  Please refer to the GNU Public License for more
+# details.
+#
+# You should have received a copy of the GNU Public License
+# along with this source code; if not, write to: Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+# 02139, USA.
+
+tinyproxy-reverse-conf() {
+	fn tinyproxy-reverse-conf
+	cat <<EOF
+User $dowse_uid
+Group $dowse_gid
+Port 80
+Listen 0.0.0.0
+# Bind 127.0.0.1
+BindSame yes
+Timeout 3
+# StatHost $address
+LogFile "$H/log/tinyproxy-reverse.log"
+# LogLevel Connect
+PidFile "$H/run/tinyproxy-reverse.pid"
+MaxClients 10
+MinSpareServers 2
+MaxSpareServers 5
+StartServers 2
+MaxRequestsPerChild 0
+Allow .$lan
+Allow $dowse_net
+Allow 127.0.0.1
+# ViaProxyName Dowse.eu
+ReverseOnly Yes
+ReverseMagic Yes
+# webui
+ReversePath "/control" "http://127.0.0.1:29100/"
+# netstat
+ReversePath "/status"  "http://127.0.0.1:29999/"
+# TODO: add header for no-cache
+EOF
+}
+
+tinyproxy-reverse-exec() {
+	fn tinyproxy-reverse-exec
+	freq=($conf)
+	ckreq || return $?
+
+	launch  tinyproxy -c $conf
+	savepid tinyproxy-reverse $H/run/tinyproxy-reverse.pid
+
+	return $?
+}
+	

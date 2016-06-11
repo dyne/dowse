@@ -15,6 +15,21 @@ CFLAGS="-Wall -fPIC -fPIE -Os"
 LDFLAGS="-fPIC -fPIE -pie"
 
 case $1 in
+	tinyproxy)
+		pushd $R/src/tinyproxy
+		CFLAGS="$CFLAGS" \
+			  ./configure --enable-reverse --enable-transparent
+		make -C src
+        install -s -p src/tinyproxy $R/build
+		popd
+		;;
+
+    dcron)
+        pushd $R/src/dcron
+        CFLAGS="$CFLAGS" make
+        popd
+        ;;
+
     webdis)
         pushd $R/src/webdis
         make
@@ -47,7 +62,7 @@ case $1 in
                   --localstatedir=$HOME/.dowse \
                   --sysconfdir=/etc/dowse &&
                 make &&
-                install -s -p src/netdata $R/build             
+                install -s -p src/netdata $R/build
             popd
 
         }

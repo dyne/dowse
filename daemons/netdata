@@ -6,7 +6,7 @@ netdata-conf() {
     # special port for dowse
     port = 29999
     ip version = ipv4
-    bind socket to ip = $address
+    bind socket to ip = 127.0.0.1
 
 	run as user = $dowse_uid
 	web files owner = $dowse_uid

@@ -110,17 +110,18 @@ source $R/zlibs/confstore
 source $R/zlibs/redis
 source $R/zlibs/sql
 
-source $R/daemons/consul
+# source $R/daemons/consul
 source $R/daemons/dnsmasq
-source $R/daemons/squid3
-source $R/daemons/privoxy
-source $R/daemons/polipo
+# source $R/daemons/squid3
+# source $R/daemons/privoxy
+# source $R/daemons/polipo
 source $R/daemons/dnscap
-source $R/daemons/pgld
-source $R/daemons/tor
-source $R/daemons/redis
 source $R/daemons/dnscrypt-proxy
 source $R/daemons/netdata
+source $R/daemons/pgld
+source $R/daemons/redis
+source $R/daemons/tinyproxy
+source $R/daemons/tor
 source $R/daemons/webui
 source $R/daemons/webdis
 
