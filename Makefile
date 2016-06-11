@@ -13,7 +13,8 @@ all: sources
 	@echo
 
 sources:
-	@mkdir -p build
+	@mkdir -p build/bin
+	@mkdir -p build/db
 	make -C src
 
 clean:
@@ -38,24 +39,9 @@ install:
 	install -p -m 644 conf/blocklists/*      ${CONFDIR}/blocklists
 	@modules/install.sh ${CONFDIR}
 	install -d ${DESTDIR}${PREFIX}/db
-	install    -p -m 644 build/*.zkv         ${DESTDIR}${PREFIX}/db
-	install    -p -m 644 build/*.idx         ${DESTDIR}${PREFIX}/db
-	install -s -p -m 755 build/dowse-to-osc    ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/dowse-to-gource ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/modprobe        ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/netdiscover     ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/netdata       ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/kore          ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/tinyproxy     ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/webdis        ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/dnscap        ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/dowse.so      ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/dnscrypt-proxy ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/dnsmasq      ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/redis-server ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/redis-cli    ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/tor          ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 755 build/pgld         ${DESTDIR}${PREFIX}/bin
+	install    -p -m 644 build/db/*.zkv   ${DESTDIR}${PREFIX}/db
+	install    -p -m 644 build/db/*.idx   ${DESTDIR}${PREFIX}/db
+	install -s -p -m 755 build/bin/*      ${DESTDIR}${PREFIX}/bin
 	./set_privileges.sh                     ${DESTDIR}${PREFIX}
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
 

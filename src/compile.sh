@@ -14,32 +14,54 @@ PREFIX=${PREFIX:-/usr/local/dowse}
 CFLAGS="-Wall -fPIC -fPIE -Os"
 LDFLAGS="-fPIC -fPIE -pie"
 
+# exceptions
+[[ "$1" = "dnscap" ]] && {
+	[[ -r $R/build/dowse.so ]] || {
+
+		pushd $R/src/dnscap
+		./configure --prefix=${PREFIX} \
+			&& \
+			make && \
+			install -s -p $R/src/dnscap/dnscap $R/build/bin && \
+		popd
+	}
+	# copy plugin over every pass, easier for debugging changes
+	install -s -p $R/src/dnscap/plugins/dowse/dowse.so $R/build/bin
+}
+
+
+[[ -x $R/build/bin/$1 ]] && {
+	print "$1 already built into $R/build/bin/$1"
+	print "delete it from there to force recompilation"
+	return 0 }
+
 case $1 in
 	tinyproxy)
 		pushd $R/src/tinyproxy
 		CFLAGS="$CFLAGS" \
 			  ./configure --enable-reverse --enable-transparent
 		make -C src
-        install -s -p src/tinyproxy $R/build
+        install -s -p src/tinyproxy $R/build/bin
 		popd
 		;;
 
-    dcron)
-        pushd $R/src/dcron
+    seccrond)
+        pushd $R/src/seccrond
         CFLAGS="$CFLAGS" make
+		install -s -p seccrond $R/build/bin
         popd
         ;;
 
     webdis)
         pushd $R/src/webdis
         make
-        install -s -p webdis $R/build
+        install -s -p webdis $R/build/bin
         popd
         ;;
 
     webui)
         pushd $R/src/webui
-        $R/build/kore build
+        $R/build/bin/kore build
         popd
         ;;
 
@@ -47,7 +69,7 @@ case $1 in
         [[ -x $R/build/kore ]] || {
             pushd $R/src/kore
             make NOTLS=1 DEBUG=1
-            install -s -p kore $R/build
+            install -s -p kore $R/build/bin
             popd
         }
         ;;
@@ -62,7 +84,7 @@ case $1 in
                   --localstatedir=$HOME/.dowse \
                   --sysconfdir=/etc/dowse &&
                 make &&
-                install -s -p src/netdata $R/build
+                install -s -p src/netdata $R/build/bin
             popd
 
         }
@@ -73,7 +95,7 @@ case $1 in
 			autoreconf && \
             CFLAGS="$CFLAGS" ./configure --prefix=${PREFIX} && \
                 make && \
-                install -s -p src/netdiscover $R/build
+                install -s -p src/netdiscover $R/build/bin
             popd
         }
         ;;
@@ -90,43 +112,25 @@ case $1 in
         ;;
 
     dnscrypt-proxy)
-        [[ -x $R/build/dnscrypt-proxy ]] || {
-            pushd $R/src/dnscrypt-proxy
-            ./configure --without-systemd --prefix=${PREFIX} \
-                && \
-                make && \
-                install -s -p src/proxy/dnscrypt-proxy $R/build
-            popd
-        }
+        pushd $R/src/dnscrypt-proxy
+        ./configure --without-systemd --prefix=${PREFIX} \
+            && \
+            make && \
+            install -s -p src/proxy/dnscrypt-proxy $R/build/bin
+        popd
         ;;
 
-    pgl)
-        [[ -x $R/build/pgld ]] || {
-            pushd $R/src/pgl
-            ./configure --without-qt4 --disable-dbus --enable-lowmem \
-						--disable-networkmanager \
-                        --prefix ${PREFIX}/pgl \
-                        --sysconfdir ${HOME}/.dowse/pgl/etc \
-                        --with-initddir=${PREFIX}/pgl/init.d \
-                && \
-                make -C pgld && \
-                install -s -p $R/src/pgl/pgld/pgld $R/build
-            popd
-        }
-        ;;
-
-    dnscap)
-        [[ -x $R/build/dnscap ]] || {
-            pushd $R/src/dnscap
-            ./configure --prefix=${PREFIX} \
-                && \
-                make && \
-                install -s -p $R/src/dnscap/dnscap $R/build && \
-                install -s -p $R/src/dnscap/plugins/dowse/dowse.so $R/build
-            popd
-        }
-        # copy plugin over every pass, easier for debugging changes
-        install -s -p $R/src/dnscap/plugins/dowse/dowse.so $R/build
+    pgld)
+        pushd $R/src/pgl
+        ./configure --without-qt4 --disable-dbus --enable-lowmem \
+					--disable-networkmanager \
+                    --prefix ${PREFIX}/pgl \
+                    --sysconfdir ${HOME}/.dowse/pgl/etc \
+                    --with-initddir=${PREFIX}/pgl/init.d \
+            && \
+            make -C pgld && \
+            install -s -p $R/src/pgl/pgld/pgld $R/build/bin
+        popd
         ;;
 
     *)

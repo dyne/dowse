@@ -8,7 +8,7 @@ LIBS = -ljemalloc -lhiredis
 all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
 	@make -C libparse-datetime
 	@./compile.sh dnscrypt-proxy
-	@./compile.sh pgl
+	@./compile.sh pgld
 	@./compile.sh dnscap
 	@./compile.sh netdiscover
 	@./compile.sh netdata

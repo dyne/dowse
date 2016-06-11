@@ -310,8 +310,11 @@ dowse-start() {
 
     QUIET=1 pendulum start &! savepid pendulum $!
 
-    # start web interface on port 8080
+    # start web interface
     start webui
+
+	# start the reverse proxy
+	start tinyproxy-reverse
 
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
@@ -320,6 +323,8 @@ dowse-start() {
 
 dowse-stop() {
     fn dowse-stop
+
+	stop tinyproxy-reverse
 
     stop webui
 
