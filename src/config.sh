@@ -65,6 +65,7 @@ execrules=(
     webui        user
     webdis       user
     kore         user
+	seccrond     user
 
 	tinyproxy     root
     dnsmasq       root
@@ -96,12 +97,12 @@ execmap=(
     dnscap        $PREFIX/bin/dnscap
     redis-cli     $PREFIX/bin/redis-cli
     redis-server  $PREFIX/bin/redis-server
-    tor           $PREFIX/bin/tor
 	tinyproxy     $PREFIX/bin/tinyproxy
     netdata       $PREFIX/bin/netdata
     webui         $PREFIX/bin/kore
     webdis        $PREFIX/bin/webdis
     kore          $PREFIX/bin/kore
+	seccrond      $PREFIX/bin/seccrond
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
