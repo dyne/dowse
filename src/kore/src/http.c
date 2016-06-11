@@ -142,10 +142,10 @@ http_request_new(struct connection *c, const char *host,
 		return (KORE_RESULT_ERROR);
 	}
 
-	if (strcasecmp(version, "http/1.1")) {
-		http_error_response(c, 505);
-		return (KORE_RESULT_ERROR);
-	}
+	// if (strcasecmp(version, "http/1.1")) {
+	// 	http_error_response(c, 505);
+	// 	return (KORE_RESULT_ERROR);
+	// }
 
 	if ((p = strchr(path, '?')) != NULL) {
 		*p = '\0';
