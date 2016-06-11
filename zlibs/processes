@@ -51,38 +51,32 @@ launch() {
 start() {
     fn start $*
     _daemon="$1"
-    pid=${2:-$H/run/$_daemon.pid}
-    conf=${3:-$H/run/$_daemon.conf}
+    conf=${2:-$H/run/$_daemon.conf}
 
     shift
     req=(_daemon)
     ckreq || return $?
 
-	# check if already running
+	# TODO: check if already running
     _pid=`getpid $_daemon`
-
     [[ "$_pid" = "" ]] || {
 		warning "$_daemon already running (pid $_pid)"
         return 0
 	}
 
-    case `uname -m` in
-        arm*)   lib=/usr/lib/arm-linux-gnueabihf ;;
-        x86_64) lib=/usr/lib/x86_64-linux-gnu    ;;
-        *) lib=/usr/lib ;;
-    esac
-
     # if configuration is not defined, generate the default
-    [[ -s $conf ]] || {
-        act "regenerating default configuration for $_daemon"
-        $_daemon-conf > $conf }
+    act "regenerating configuration for $_daemon"
+    $_daemon-conf > $conf
 
     act "starting daemon: $_daemon $*"
     execpath=${execmap[$_daemon]}
     func "execpath: $execpath"
     [[ "$execpath" = "" ]] && {
-        error "$_daemon not found in execpath"
-        return 1 }
+		execpath=${execmap[${_daemon%-*}]}
+		[[ "$execpath" = "" ]] && {
+			error "$_daemon not found in execpath"
+			return 1 }
+	}
 
     if command -v $_daemon-exec > /dev/null; then
         # we preload jemalloc for better memory handling
@@ -103,19 +97,19 @@ stop() {
     _pid=`getpid $_daemon`
 
     if [[ "$_pid" = "" ]]; then
+		warning "$_daemon is not running"
         return 1
     else
         act "stopping $_daemon ($_pid)"
         if command -v $_daemon-kill > /dev/null; then
             $_daemon-kill
         else
-            killpid $_pid && {
-                waitpid $_pid || {
-                    error "$_daemon: could not stop pid $_pid"
-                    return 1 }
-                [[ "$_daemon" = "redis-server" ]] || {
-                    print "DEL daemon-$_daemon-pid" | redis runtime
-                }
+            killpid $_pid
+            waitpid $_pid || {
+                error "$_daemon: could not stop pid $_pid"
+                return 1 }
+            [[ "$_daemon" = "redis-server" ]] || {
+                print "DEL daemon-$_daemon-pid" | redis runtime
             }
         fi
     fi
@@ -131,10 +125,17 @@ savepid() {
     req=(_daemon)
     ckreq || return $?
 
+	# make sure the pidfiles are written
+	sleep 2
+	# TODO: check if its a number we don't need to wait
+
     if [[ -r "$_pid" ]]; then
         print "SET daemon-${_daemon}-pid \"`cat $_pid`\"" \
             | redis runtime > /dev/null
-    else
+    elif [[ "$_pid[1]" = "/" ]]; then
+		warning "$_daemon pidfile wasn't created in $_pid"
+		return 1
+	else
         print "SET daemon-${_daemon}-pid \"$_pid\"" \
             | redis runtime > /dev/null
     fi
@@ -150,7 +151,7 @@ getpid() {
 
     print QUIT | redis runtime && {
         _pid=`print "GET daemon-${_daemon}-pid" | redis runtime` }
-
+ 
     # [[ "$_pid" = "" ]] && [[ -r $H/run/${_daemon}.pid ]] && {
     #     _pid=`cat $H/run/${_daemon}.pid` }
 
