@@ -34,7 +34,7 @@ dbindex='
 # for the db keys namespace see doc/HACKING.md
 #########
 
-mkdir -p $S/build
+mkdir -p $S/build/db
 
 thingindex='
 macaddr  text primary key
@@ -51,7 +51,7 @@ notes    text
 last     date
 age      date
 '
-print - "$thingindex" > $S/build/thing.idx
+print - "$thingindex" > $S/build/db/thing.idx
 
 # map of permissions
 execrules=(
@@ -83,7 +83,7 @@ execrules=(
     pgld          root
     netdiscover   root
 )
-zkv.save execrules $S/build/execrules.zkv
+zkv.save execrules $S/build/db/execrules.zkv
 
 
 
@@ -138,7 +138,7 @@ case `uname -m` in
         ;;
 esac
 
-zkv.save execmap $S/build/execmap.zkv
+zkv.save execmap $S/build/db/execmap.zkv
 
 
 ### Database index
@@ -148,7 +148,7 @@ for i in ${(f)dbindex}; do
     # this is reverse order: names are the indexes
     db+=( ${i[(w)2]} ${i[(w)1]} )
 done
-zkv.save db $S/build/database.zkv
+zkv.save db $S/build/db/database.zkv
 
 # save databases for the C code
 rm -rf $S/src/database.h
