@@ -522,8 +522,9 @@ usage(void)
 {
 	fprintf(stderr, VERSION " (c) 2014-2015\n");
 	fprintf(stderr, "usage: %s [-f file] [-n]\n", argv0);
-	fprintf(stderr, "  -f	config file\n");
-	fprintf(stderr, "  -n	do not daemonize\n");
+	fprintf(stderr, "  -f \t config file\n");
+	fprintf(stderr, "  -p \t pid file\n");
+	fprintf(stderr, "  -n \t do not daemonize\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -542,6 +543,9 @@ main(int argc, char *argv[])
 		break;
 	case 'f':
 		config = EARGF(usage());
+		break;
+	case 'p':
+		pidfile = EARGF(usage());
 		break;
 	default:
 		usage();
