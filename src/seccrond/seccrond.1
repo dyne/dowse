@@ -1,0 +1,48 @@
+.Dd June 11, 2016
+.Dt SECCROND 1
+.Os
+.Sh NAME
+.Nm seccrond
+.Nd second crontab daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl f Ar file
+.Op Fl n
+.Sh DESCRIPTION
+.Nm
+schedules commands to be run at specified seconds, dates and times, using the same notation as usual crontabs, but adding a new field in front which indicates seconds.
+.Pp
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl f Ar file
+Use the specified
+.Ar file
+instead of the default
+.Ar /etc/seccrontab .
+.It Fl n
+Do not daemonize.
+.El
+.Sh CONFIGURATION
+Configuration is done by editing the crontab file.
+
+Columns:
+ seconds, minute, hour, day of month, month, day of week, command
+
+Separator:
+ Any number of tabs or spaces.
+
+Value:
+ * (wildcard), 30 (number), */N (repeat), 1-5 (range), or 1,3,6 (list)
+.Sh EXAMPLE
+Example of crontab file:
+ # Run date every 5 seconds
+ */5	*	*	*	*	*			date +'%s %N'
+
+ # Run updatedb at 6:00 every day
+ 0		0	6	*	*	*		updatedb
+
+ # Run at 5:30 every business day. Log output to /var/log/backup.log.
+ 0		30	5	*	*	1-5		syncbackup &>> /var/log/backup.log
+
+ # Run as user postmaster at 5:00 every third day of month.
+ 0		0	5	*/3	*	*		su -c 'mail -s "Hello world" a@b.com' postmaster
