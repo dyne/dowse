@@ -15,6 +15,8 @@ all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
 	@./compile.sh kore
 	@./compile.sh webui
 	@./compile.sh webdis
+	@./compile.sh tinyproxy
+	@./compile.sh seccrond
 	@./import.sh
 	@install -s -p modprobe        ../build
 	@install -s -p dowse-to-gource ../build
@@ -63,4 +65,9 @@ clean:
 	make -C pgl                  clean
 	make -C netdiscover          clean
 	make -C netdata              clean
+	make -C tinyproxy			 clean
+	make -C webdis				 clean
+	make -C kore				 clean
+	make -C seccrond			 clean
+
 
