@@ -16,7 +16,7 @@ LDFLAGS="-fPIC -fPIE -pie"
 
 # exceptions
 [[ "$1" = "dnscap" ]] && {
-	[[ -r $R/build/dowse.so ]] || {
+	[[ -r $R/build/bin/dowse.so ]] || {
 
 		pushd $R/src/dnscap
 		./configure --prefix=${PREFIX} \
@@ -42,7 +42,7 @@ case $1 in
 		pushd $R/src/tinyproxy
 		CFLAGS="$CFLAGS" \
 			  ./configure --enable-reverse --enable-transparent
-		make -C src
+		make -C src -f Makefile.gnu
         install -s -p src/tinyproxy $R/build/bin
 		popd
 		;;
