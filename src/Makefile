@@ -18,9 +18,9 @@ all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
 	@./compile.sh tinyproxy
 	@./compile.sh seccrond
 	@./import.sh
-	@install -s -p modprobe        ../build
-	@install -s -p dowse-to-gource ../build
-	@install -s -p dowse-to-osc    ../build
+	@install -s -p modprobe        ../build/bin
+	@install -s -p dowse-to-gource ../build/bin
+	@install -s -p dowse-to-osc    ../build/bin
 	@./checksum.sh
 	@./compile.sh sup
 
