@@ -15,7 +15,9 @@ source $S/zlibs/zuper.init
 
 fn import $*
 
-mkdir -p $S/build
+mkdir -p $S/build/bin
+mkdir -p $S/build/db
+mkdir -p $S/debs
 
 deb-download() {
     fn deb-download $*
@@ -56,7 +58,6 @@ deb-download() {
 # Check if Apt based
 command -v apt-get >/dev/null && {
     notice "Importing binary packages from apt repositories..."
-    mkdir -p $S/build
     tmp=`mktemp -d`
     act "using temporary directory: $tmp"
     pushd $tmp > /dev/null
@@ -64,25 +65,25 @@ command -v apt-get >/dev/null && {
     [[ -r $S/build/dnsmasq ]] || {
         act "fetching dnsmasq"
         deb-download dnsmasq-base
-        cp $tmp/usr/sbin/dnsmasq $S/build
+        cp $tmp/usr/sbin/dnsmasq $S/build/bin
     }
 
     [[ -r $S/build/redis-server ]] || {
         act "fetching redis server"
         deb-download redis-server
-        cp $tmp/usr/bin/redis-server $S/build }
+        cp $tmp/usr/bin/redis-server $S/build/bin }
 
     [[ -r $S/build/redis-cli ]] || {
         act "fetching redis tools"
         deb-download redis-tools
-        cp $tmp/usr/bin/redis-cli $S/build
+        cp $tmp/usr/bin/redis-cli $S/build/bin
     }
 
-    [[ -r $S/build/tor ]] || {
-        act "fetching tor"
-        deb-download tor
-        cp $tmp/usr/bin/tor $S/build
-    }
+    # [[ -r $S/build/tor ]] || {
+    #     act "fetching tor"
+    #     deb-download tor
+    #     cp $tmp/usr/bin/tor $S/build/bin
+    # }
 
     popd
     rm -rf $tmp
