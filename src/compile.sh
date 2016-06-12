@@ -31,9 +31,11 @@ LDFLAGS="-fPIC -fPIE -pie"
 
 
 [[ -x $R/build/bin/$1 ]] && {
-	print "$1 already built into $R/build/bin/$1"
-	print "delete it from there to force recompilation"
+	act "$1 found in $R/build/bin/$1"
+	act "delete it from build/bin to force recompilation"
 	return 0 }
+
+notice "Compiling $1"
 
 case $1 in
 	tinyproxy)
@@ -134,6 +136,6 @@ case $1 in
         ;;
 
     *)
-        print "usage; ./src/compile.sh [ pgl | dnscap | clean ]"
+        act "usage; ./src/compile.sh [ pgl | dnscap | clean ]"
         ;;
 esac

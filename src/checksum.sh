@@ -12,8 +12,8 @@ vars=(tmp)
 maps=(execmap execrules execsums)
 source $R/zlibs/zuper.init
 
-zkv.load $R/build/execmap.zkv
-zkv.load $R/build/execrules.zkv
+zkv.load $R/build/db/execmap.zkv
+zkv.load $R/build/db/execrules.zkv
 
 act "generating execution rules"
 
@@ -46,8 +46,8 @@ execsums=()
 
 for x in ${(k)execmap}; do
     [[ "$execrules[$x]" = "root" ]] && {
-        if [[ -r $R/build/$x ]]; then
-            cksum=`sha256sum $R/build/$x`
+        if [[ -r $R/build/bin/$x ]]; then
+            cksum=`sha256sum $R/build/bin/$x`
         elif [[ -r ${execmap[$x]} ]]; then
             cksum=`sha256sum ${execmap[$x]}`
         else
@@ -65,7 +65,7 @@ for x in ${(k)execmap}; do
 EOF
     }
 done
-zkv.save execsums $R/build/execsums.zkv
+zkv.save execsums $R/build/db/execsums.zkv
 
 cat <<EOF >> $R/src/sup/config.h
 { 0 },
