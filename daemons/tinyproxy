@@ -46,10 +46,12 @@ Allow 127.0.0.1
 # ViaProxyName Dowse.eu
 ReverseOnly Yes
 ReverseMagic Yes
-# webui
-ReversePath "/control" "http://127.0.0.1:29100/"
+# welcome
+ReversePath "/"       "http://127.0.0.1:29100/"
+# things
+ReversePath "/things" "http://127.0.0.1:29100/things/all"
 # netstat
-ReversePath "/status"  "http://127.0.0.1:29999/"
+ReversePath "/stats"  "http://127.0.0.1:29999/"
 # TODO: add header for no-cache
 EOF
 }
