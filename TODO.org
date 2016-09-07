@@ -70,6 +70,8 @@ implementations wishes for new daemons and modules
   http://contentfilter.futuragts.com/wiki/doku.php?id=downloadable_blacklists
   http://www.urlblacklist.com/?sec=download
 
+  domain, url and ip blacklists https://ransomwaretracker.abuse.ch/blocklist/
+
   domain filtering hosts file: http://someonewhocares.org/hosts/zero/hosts
 
 * authentication
