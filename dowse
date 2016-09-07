@@ -32,6 +32,9 @@ R=${DOWSE_PREFIX:-/usr/local/dowse}
 H=${DOWSE_HOME:-$HOME/.dowse}
 E=${DOWSE_CONF:-/etc/dowse}
 
+#####################
+source /usr/share/zuper/zuper
+
 [[ -r $R ]] || {
     error "Dowse is not installed in: $R"
     error "export DOWSE_PREFIX if installed on a different path"
@@ -43,9 +46,6 @@ path+=($R/bin)
 rehash
 
 mkdir -p $H
-
-#####################
-source /usr/share/zuper/zuper
 
 # For gettext
 TEXTDOMAIN=dowse
