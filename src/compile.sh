@@ -115,7 +115,7 @@ case $1 in
 
     dnscrypt-proxy)
         pushd $R/src/dnscrypt-proxy
-        ./configure --without-systemd --prefix=${PREFIX} \
+        ./configure --without-systemd --enable-plugins --prefix=${PREFIX} \
             && \
             make && \
             install -s -p src/proxy/dnscrypt-proxy $R/build/bin
