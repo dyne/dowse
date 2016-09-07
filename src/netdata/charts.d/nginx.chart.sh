@@ -1,9 +1,10 @@
-#!/bin/bash
+# no need for shebang - this file is loaded from charts.d.plugin
 
 # if this chart is called X.chart.sh, then all functions and global variables
 # must start with X_
 
 nginx_url="http://127.0.0.1:80/stub_status"
+nginx_curl_opts=""
 
 # _update_every is a special variable - it holds the number of seconds
 # between the calls of the _update() function
@@ -19,7 +20,7 @@ nginx_reading=0
 nginx_writing=0
 nginx_waiting=0
 nginx_get() {
-	nginx_response=($(curl -Ss "${nginx_url}"))
+	nginx_response=($(curl -Ss ${nginx_curl_opts} "${nginx_url}"))
 	[ $? -ne 0 -o "${#nginx_response[@]}" -eq 0 ] && return 1
 
 	if [ "${nginx_response[0]}" != "Active" \
@@ -81,18 +82,18 @@ nginx_check() {
 # _create is called once, to create the charts
 nginx_create() {
 	cat <<EOF
-CHART nginx.connections '' "nginx Active Connections" "connections" nginx nginx.connections line $[nginx_priority + 1] $nginx_update_every
+CHART nginx_local.connections '' "nginx Active Connections" "connections" nginx nginx.connections line $((nginx_priority + 1)) $nginx_update_every
 DIMENSION active '' absolute 1 1
 
-CHART nginx.requests '' "nginx Requests" "requests/s" nginx nginx.requests line $[nginx_priority + 2] $nginx_update_every
+CHART nginx_local.requests '' "nginx Requests" "requests/s" nginx nginx.requests line $((nginx_priority + 2)) $nginx_update_every
 DIMENSION requests '' incremental 1 1
 
-CHART nginx.connections_status '' "nginx Active Connections by Status" "connections" nginx nginx.connections.status line $[nginx_priority + 3] $nginx_update_every
+CHART nginx_local.connections_status '' "nginx Active Connections by Status" "connections" nginx nginx.connections.status line $((nginx_priority + 3)) $nginx_update_every
 DIMENSION reading '' absolute 1 1
 DIMENSION writing '' absolute 1 1
 DIMENSION waiting idle absolute 1 1
 
-CHART nginx.connect_rate '' "nginx Connections Rate" "connections/s" nginx nginx.connections.rate line $[nginx_priority + 4] $nginx_update_every
+CHART nginx_local.connect_rate '' "nginx Connections Rate" "connections/s" nginx nginx.connections.rate line $((nginx_priority + 4)) $nginx_update_every
 DIMENSION accepts accepted incremental 1 1
 DIMENSION handled '' incremental 1 1
 EOF
@@ -113,20 +114,20 @@ nginx_update() {
 
 	# write the result of the work.
 	cat <<VALUESEOF
-BEGIN nginx.connections $1
-SET active = $[nginx_active_connections]
+BEGIN nginx_local.connections $1
+SET active = $((nginx_active_connections))
 END
-BEGIN nginx.requests $1
-SET requests = $[nginx_requests]
+BEGIN nginx_local.requests $1
+SET requests = $((nginx_requests))
 END
-BEGIN nginx.connections_status $1
-SET reading = $[nginx_reading]
-SET writing = $[nginx_writing]
-SET waiting = $[nginx_waiting]
+BEGIN nginx_local.connections_status $1
+SET reading = $((nginx_reading))
+SET writing = $((nginx_writing))
+SET waiting = $((nginx_waiting))
 END
-BEGIN nginx.connect_rate $1
-SET accepts = $[nginx_accepts]
-SET handled = $[nginx_handled]
+BEGIN nginx_local.connect_rate $1
+SET accepts = $((nginx_accepts))
+SET handled = $((nginx_handled))
 END
 VALUESEOF
 

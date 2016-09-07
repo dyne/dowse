@@ -1,4 +1,4 @@
-#!/bin/sh
+# no need for shebang - this file is loaded from charts.d.plugin
 
 # sensors docs
 # https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface
@@ -22,6 +22,8 @@ sensors_source_update=1
 sensors_update_every=
 
 sensors_priority=90000
+
+declare -A sensors_excluded=()
 
 sensors_find_all_files() {
 	find $1 -maxdepth $sensors_sys_depth -name \*_input -o -name temp 2>/dev/null
@@ -47,15 +49,20 @@ sensors_check() {
 
 sensors_check_files() {
 	# we only need sensors that report a non-zero value
+	# also remove not needed sensors
 
-	local f= v=
+	local f= v= excluded=
 	for f in $*
 	do
 		[ ! -f "$f" ] && continue
+		for ex in ${sensors_excluded[@]}; do
+			[[ $f =~ .*$ex$ ]] && excluded='1' && break
+		done
 
-		v="$( cat $f )"
+		[ "$excluded" != "1" ] && v="$( cat $f )" || v=0
 		v=$(( v + 1 - 1 ))
 		[ $v -ne 0 ] && echo "$f" && continue
+		excluded=
 
 		echo >&2 "$PROGRAM_NAME: sensors: $f gives zero values"
 	done
@@ -129,7 +136,7 @@ sensors_create() {
 					files="$( sensors_check_files $files )"
 					files="$( sensors_check_temp_type $files )"
 					[ -z "$files" ] && continue
-					echo "CHART sensors.temp_$id '' '$name Temperature' 'Celsius' 'temperature' 'sensors.temp' line $[sensors_priority + 1] $sensors_update_every"
+					echo "CHART sensors.temp_$id '' '$name Temperature' 'Celsius' 'temperature' 'sensors.temp' line $((sensors_priority + 1)) $sensors_update_every"
 					echo >>$TMP_DIR/sensors.sh "echo \"BEGIN sensors.temp_$id \$1\""
 					divisor=1000
 					;;
@@ -138,7 +145,7 @@ sensors_create() {
 					files="$( ls $path/in*_input 2>/dev/null )"
 					files="$( sensors_check_files $files )"
 					[ -z "$files" ] && continue
-					echo "CHART sensors.volt_$id '' '$name Voltage' 'Volts' 'voltage' 'sensors.volt' line $[sensors_priority + 2] $sensors_update_every"
+					echo "CHART sensors.volt_$id '' '$name Voltage' 'Volts' 'voltage' 'sensors.volt' line $((sensors_priority + 2)) $sensors_update_every"
 					echo >>$TMP_DIR/sensors.sh "echo \"BEGIN sensors.volt_$id \$1\""
 					divisor=1000
 					;;
@@ -147,7 +154,7 @@ sensors_create() {
 					files="$( ls $path/curr*_input 2>/dev/null )"
 					files="$( sensors_check_files $files )"
 					[ -z "$files" ] && continue
-					echo "CHART sensors.curr_$id '' '$name Current' 'Ampere' 'current' 'sensors.curr' line $[sensors_priority + 3] $sensors_update_every"
+					echo "CHART sensors.curr_$id '' '$name Current' 'Ampere' 'current' 'sensors.curr' line $((sensors_priority + 3)) $sensors_update_every"
 					echo >>$TMP_DIR/sensors.sh "echo \"BEGIN sensors.curr_$id \$1\""
 					divisor=1000
 					;;
@@ -156,7 +163,7 @@ sensors_create() {
 					files="$( ls $path/power*_input 2>/dev/null )"
 					files="$( sensors_check_files $files )"
 					[ -z "$files" ] && continue
-					echo "CHART sensors.power_$id '' '$name Power' 'Watt' 'power' 'sensors.power' line $[sensors_priority + 4] $sensors_update_every"
+					echo "CHART sensors.power_$id '' '$name Power' 'Watt' 'power' 'sensors.power' line $((sensors_priority + 4)) $sensors_update_every"
 					echo >>$TMP_DIR/sensors.sh "echo \"BEGIN sensors.power_$id \$1\""
 					divisor=1000000
 					;;
@@ -165,7 +172,7 @@ sensors_create() {
 					files="$( ls $path/fan*_input 2>/dev/null )"
 					files="$( sensors_check_files $files )"
 					[ -z "$files" ] && continue
-					echo "CHART sensors.fan_$id '' '$name Fans Speed' 'Rotations / Minute' 'fans' 'sensors.fans' line $[sensors_priority + 5] $sensors_update_every"
+					echo "CHART sensors.fan_$id '' '$name Fans Speed' 'Rotations / Minute' 'fans' 'sensors.fans' line $((sensors_priority + 5)) $sensors_update_every"
 					echo >>$TMP_DIR/sensors.sh "echo \"BEGIN sensors.fan_$id \$1\""
 					;;
 
@@ -173,7 +180,7 @@ sensors_create() {
 					files="$( ls $path/energy*_input 2>/dev/null )"
 					files="$( sensors_check_files $files )"
 					[ -z "$files" ] && continue
-					echo "CHART sensors.energy_$id '' '$name Energy' 'Joule' 'energy' 'sensors.energy' areastack $[sensors_priority + 6] $sensors_update_every"
+					echo "CHART sensors.energy_$id '' '$name Energy' 'Joule' 'energy' 'sensors.energy' areastack $((sensors_priority + 6)) $sensors_update_every"
 					echo >>$TMP_DIR/sensors.sh "echo \"BEGIN sensors.energy_$id \$1\""
 					algorithm="incremental"
 					divisor=1000000
@@ -183,7 +190,7 @@ sensors_create() {
 					files="$( ls $path/humidity*_input 2>/dev/null )"
 					files="$( sensors_check_files $files )"
 					[ -z "$files" ] && continue
-					echo "CHART sensors.humidity_$id '' '$name Humidity' 'Percent' 'humidity' 'sensors.humidity' line $[sensors_priority + 7] $sensors_update_every"
+					echo "CHART sensors.humidity_$id '' '$name Humidity' 'Percent' 'humidity' 'sensors.humidity' line $((sensors_priority + 7)) $sensors_update_every"
 					echo >>$TMP_DIR/sensors.sh "echo \"BEGIN sensors.humidity_$id \$1\""
 					divisor=1000
 					;;
@@ -206,7 +213,7 @@ sensors_create() {
 				fi
 
 				echo "DIMENSION $fid '$labelname' $algorithm $multiplier $divisor"
-				echo >>$TMP_DIR/sensors.sh "printf \"SET $fid = \"; cat $file "
+				echo >>$TMP_DIR/sensors.sh "echo \"SET $fid = \"\$(< $file )"
 			done
 
 			echo >>$TMP_DIR/sensors.sh "echo END"
