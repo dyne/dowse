@@ -8,10 +8,12 @@ dist_plugins_DATA = \
 	$(NULL)
 
 dist_plugins_SCRIPTS = \
+	alarm-email.sh \
 	cgroup-name.sh \
 	charts.d.dryrun-helper.sh \
 	charts.d.plugin \
 	node.d.plugin \
+	python.d.plugin \
 	tc-qos-helper.sh \
 	loopsleepms.sh.inc \
 	$(NULL)

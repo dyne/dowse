@@ -8,8 +8,8 @@ netdata-conf() {
     ip version = ipv4
     bind socket to ip = 127.0.0.1
 
-	run as user = $dowse_uid
-	web files owner = $dowse_uid
+    run as user = $dowse_uid
+    web files owner = $dowse_uid
     web files group = $dowse_gid
 
     error log  = $H/run/netdata-error.log
@@ -21,6 +21,29 @@ netdata-conf() {
     # map  - write to disk realtime
     memory mode = ram
 
+[plugins]
+	tc = no
+	idlejitter = no
+	cgroups = no
+	checks = no
+	apps = no
+	node.d = no
+
+[plugin:proc]
+        /proc/diskstats = no
+        /proc/net/ip_vs/stats = no
+        /proc/vmstat = no
+        /proc/net/rpc/nfsd = no
+        /proc/interrupts = no
+        /proc/softirqs = no
+        /sys/kernel/mm/ksm = no
+
+[plugin:proc:/proc/stat]
+        cpu interrupts = no
+
+[plugin:proc:/proc/meminfo]
+        system swap = no
+
 EOF
 }
 
@@ -31,7 +54,7 @@ netdata-exec() {
     ckreq || return $?
 
     ztmp
-    launch netdata -pidfile $ztmpfile -c $conf -p 29999
+    launch netdata -P $ztmpfile -c $conf -p 29999
     savepid netdata $ztmpfile
 
     return $?

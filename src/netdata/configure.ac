@@ -4,7 +4,7 @@
 AC_PREREQ(2.60)
 
 define([VERSION_MAJOR], [1])
-define([VERSION_MINOR], [1])
+define([VERSION_MINOR], [3])
 define([VERSION_FIX], [1])
 define([VERSION_NUMBER], VERSION_MAJOR[.]VERSION_MINOR[.]VERSION_FIX)
 define([VERSION_SUFFIX], [_master])
@@ -34,6 +34,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
 AC_USE_SYSTEM_EXTENSIONS
+AC_CHECK_FUNCS_ONCE(accept4)
 
 AC_ARG_ENABLE(
 	[plugin-nfacct],
@@ -92,6 +93,15 @@ if test -z "${MATH_LIBS}"; then
 	)
 fi
 
+PKG_CHECK_MODULES(
+	[UUID],
+	[uuid],
+)
+test -z "${UUID_LIBS}" && AC_MSG_ERROR([libuuid required but not found. Try installing 'uuid-dev' or 'libuuid-devel'.])
+AC_DEFINE([NETDATA_WITH_UUID], [1], [uuid settings])
+OPTIONAL_UUID_CLFAGS="${UUID_CFLAGS}"
+OPTIONAL_UUID_LIBS="${UUID_LIBS}"
+
 if test "${enable_plugin_nfacct}" = "yes"; then
 	PKG_CHECK_MODULES(
 		[NFACCT],
@@ -102,7 +112,7 @@ if test "${enable_plugin_nfacct}" = "yes"; then
 		[libmnl],
 	)
 	test -z "${NFACCT_LIBS}" && AC_MSG_ERROR([netfilter_acct required but not found])
-	test -z "${LIBMNL_LIBS}" && AC_MSG_ERROR([libmnl required but not found])
+	test -z "${LIBMNL_LIBS}" && AC_MSG_ERROR([libmnl required but not found. Try installing 'libmnl-dev' or 'libmnl-devel'])
 	AC_DEFINE([INTERNAL_PLUGIN_NFACCT], [1], [nfacct plugin settings])
 	OPTIONAL_NFACCT_CLFAGS="${NFACCT_CFLAGS} ${LIBMNL_CFLAGS}"
 	OPTIONAL_NFACCT_LIBS="${NFACCT_LIBS} ${LIBMNL_LIBS}"
@@ -112,7 +122,7 @@ if test "${with_zlib}" = "yes"; then
 		[ZLIB],
 		[zlib],
 	)
-	test -z "${ZLIB_LIBS}" && AC_MSG_ERROR([zlib required but not found])
+	test -z "${ZLIB_LIBS}" && AC_MSG_ERROR([zlib required but not found. Try installing 'zlib1g-dev' or 'zlib-devel'.])
 	AC_DEFINE([NETDATA_WITH_ZLIB], [1], [zlib settings])
 	OPTIONAL_ZLIB_CLFAGS="${ZLIB_CFLAGS}"
 	OPTIONAL_ZLIB_LIBS="${ZLIB_LIBS}"
@@ -139,9 +149,12 @@ fi
 
 AC_DEFINE_UNQUOTED([NETDATA_USER], ["${with_user}"], [use this user to drop privileged])
 
+AC_SUBST([varlibdir], ["\$(localstatedir)/lib/netdata"])
+AC_SUBST([registrydir], ["\$(localstatedir)/lib/netdata/registry"])
 AC_SUBST([cachedir], ["\$(localstatedir)/cache/netdata"])
 AC_SUBST([chartsdir], ["\$(libexecdir)/netdata/charts.d"])
 AC_SUBST([nodedir], ["\$(libexecdir)/netdata/node.d"])
+AC_SUBST([pythondir], ["\$(libexecdir)/netdata/python.d"])
 AC_SUBST([configdir], ["\$(sysconfdir)/netdata"])
 AC_SUBST([logdir], ["\$(localstatedir)/log/netdata"])
 AC_SUBST([pluginsdir], ["\$(libexecdir)/netdata/plugins.d"])
@@ -153,12 +166,15 @@ AC_SUBST([OPTIONAL_NFACCT_CLFAGS])
 AC_SUBST([OPTIONAL_NFACCT_LIBS])
 AC_SUBST([OPTIONAL_ZLIB_CLFAGS])
 AC_SUBST([OPTIONAL_ZLIB_LIBS])
+AC_SUBST([OPTIONAL_UUID_CLFAGS])
+AC_SUBST([OPTIONAL_UUID_LIBS])
 
 AC_CONFIG_FILES([
 	Makefile
 	charts.d/Makefile
 	conf.d/Makefile
 	netdata.spec
+	python.d/Makefile
 	node.d/Makefile
 	plugins.d/Makefile
 	src/Makefile

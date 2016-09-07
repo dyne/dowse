@@ -1,16 +1,15 @@
 [Unit]
-Description=Linux real time system monitoring, over the web
+Description=Real time performance monitoring
 After=network.target httpd.service squid.service nfs-server.service mysqld.service named.service postfix.service
 
 [Service]
-Type=forking
-WorkingDirectory=/tmp
-User=root
-Group=root
-PIDFile=@localstatedir_POST@/run/netdata.pid
-ExecStart=@sbindir_POST@/netdata -pidfile @localstatedir_POST@/run/netdata.pid
-ExecStop=/bin/kill -SIGTERM $MAINPID
-TimeoutStopSec=30
+Type=simple
+User=netdata
+Group=netdata
+ExecStart=@sbindir_POST@/netdata -D
+
+# saving a big db on slow disks may need some time
+TimeoutStopSec=60
 
 [Install]
 WantedBy=multi-user.target

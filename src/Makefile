@@ -2,7 +2,7 @@ DESTDIR ?=
 PREFIX ?= /usr/local/dowse
 
 CC = gcc
-CFLAGS = -Wall -fPIC -Os -O2
+CFLAGS = -Wall -fPIC -Os
 LIBS = -ljemalloc -lhiredis
 
 all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup

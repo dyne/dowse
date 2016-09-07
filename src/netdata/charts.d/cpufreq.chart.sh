@@ -1,4 +1,4 @@
-#!/bin/sh
+# no need for shebang - this file is loaded from charts.d.plugin
 
 # if this chart is called X.chart.sh, then all functions and global variables
 # must start with X_
@@ -36,7 +36,7 @@ cpufreq_create() {
 	# - the highest speed we can achieve -
 	[ $cpufreq_source_update -eq 1 ] && echo >$TMP_DIR/cpufreq.sh "cpufreq_update() {"
 
-	echo "CHART cpu.cpufreq '' 'CPU Clock' 'MHz' 'cpufreq' '' line $[cpufreq_priority + 1] $cpufreq_update_every"
+	echo "CHART cpu.cpufreq '' 'CPU Clock' 'MHz' 'cpufreq' '' line $((cpufreq_priority + 1)) $cpufreq_update_every"
 	echo >>$TMP_DIR/cpufreq.sh "echo \"BEGIN cpu.cpufreq \$1\""
 
 	i=0
@@ -54,7 +54,7 @@ cpufreq_create() {
 		echo >&2 "charts.d: cpufreq: on file='$file', dir='$dir', cpu='$cpu', id='$id'"
 
 		echo "DIMENSION $id '$id' absolute 1 1000"
-		echo >>$TMP_DIR/cpufreq.sh "printf \"SET $id = \"; cat $file "
+		echo >>$TMP_DIR/cpufreq.sh "echo \"SET $id = \"\$(< $file )"
 	done
 	echo >>$TMP_DIR/cpufreq.sh "echo END"
 
