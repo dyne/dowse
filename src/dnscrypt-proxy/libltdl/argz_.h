@@ -1,6 +1,6 @@
-/* lt__alloc.h -- internal memory management interface
+/* lt__argz.h -- internal argz interface for non-glibc systems
 
-   Copyright (C) 2004 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2007, 2008 Free Software Foundation, Inc.
    Written by Gary V. Vaughan, 2004
 
    NOTE: The canonical source of this file is maintained with the
@@ -28,31 +28,41 @@ or obtained by writing to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#if !defined(LT__ALLOC_H)
-#define LT__ALLOC_H 1
+#if !defined(LT__ARGZ_H)
+#define LT__ARGZ_H 1
 
-#include "lt_system.h"
+#include <stdlib.h>
+#define __need_error_t
+#include <errno.h>
+#include <sys/types.h>
 
-LT_BEGIN_C_DECLS
+#if defined(LTDL)
+#  include "lt__glibc.h"
+#  include "lt_system.h"
+#else
+#  define LT_SCOPE
+#endif
 
-#define MALLOC(tp, n)		(tp*) lt__malloc((n) * sizeof(tp))
-#define REALLOC(tp, mem, n)	(tp*) lt__realloc((mem), (n) * sizeof(tp))
-#define FREE(mem)					LT_STMT_START {	\
-	if (mem) { free ((void *)mem); mem = NULL; }	} LT_STMT_END
-#define MEMREASSIGN(p, q)				LT_STMT_START {	\
-	if ((p) != (q)) { if (p) free (p); (p) = (q); (q) = 0; }	\
-								} LT_STMT_END
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-/* If set, this function is called when memory allocation has failed.  */
-LT_SCOPE void (*lt__alloc_die) (void);
+LT_SCOPE error_t argz_append	(char **pargz, size_t *pargz_len,
+				 const char *buf, size_t buf_len);
+LT_SCOPE error_t argz_create_sep(const char *str, int delim,
+				 char **pargz, size_t *pargz_len);
+LT_SCOPE error_t argz_insert	(char **pargz, size_t *pargz_len,
+				 char *before, const char *entry);
+LT_SCOPE char *	 argz_next	(char *argz, size_t argz_len,
+				 const char *entry);
+LT_SCOPE void	 argz_stringify	(char *argz, size_t argz_len, int sep);
 
-LT_SCOPE void *lt__malloc (size_t n);
-LT_SCOPE void *lt__zalloc (size_t n);
-LT_SCOPE void *lt__realloc (void *mem, size_t n);
-LT_SCOPE void *lt__memdup (void const *mem, size_t n);
+#if defined(__cplusplus)
+}
+#endif
 
-LT_SCOPE char *lt__strdup (const char *string);
+#if !defined(LTDL)
+#  undef LT_SCOPE
+#endif
 
-LT_END_C_DECLS
-
-#endif /*!defined(LT__ALLOC_H)*/
+#endif /*!defined(LT__ARGZ_H)*/
