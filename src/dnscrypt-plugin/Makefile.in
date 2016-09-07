@@ -126,8 +126,9 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
-dnscrypt_dowse_la_DEPENDENCIES =
-am_dnscrypt_dowse_la_OBJECTS = dnscrypt_dowse_la-dnscrypt-dowse.lo
+dnscrypt_dowse_la_DEPENDENCIES = ../redis.o
+am_dnscrypt_dowse_la_OBJECTS = dnscrypt_dowse_la-dnscrypt-dowse.lo \
+	dnscrypt_dowse_la-hashmap.lo
 dnscrypt_dowse_la_OBJECTS = $(am_dnscrypt_dowse_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -338,9 +339,9 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 pkglib_LTLIBRARIES = dnscrypt_dowse.la
 dnscrypt_dowse_la_LIBTOOLFLAGS = --tag=disable-static
-dnscrypt_dowse_la_SOURCES = dnscrypt-dowse.c
-dnscrypt_dowse_la_LIBADD = @LDNS_LIBS@
-dnscrypt_dowse_la_CFLAGS = -I../dnscrypt-proxy/src/include
+dnscrypt_dowse_la_SOURCES = dnscrypt-dowse.c hashmap.c
+dnscrypt_dowse_la_LIBADD = ../redis.o @LDNS_LIBS@ -lhiredis -ljemalloc
+dnscrypt_dowse_la_CFLAGS = -I../dnscrypt-proxy/src/include -I..
 dnscrypt_dowse_la_LDFLAGS = $(AM_LDFLAGS) \
 -avoid-version \
 -export-dynamic \
@@ -448,6 +449,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnscrypt_dowse_la-dnscrypt-dowse.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnscrypt_dowse_la-hashmap.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -479,6 +481,13 @@ dnscrypt_dowse_la-dnscrypt-dowse.lo: dnscrypt-dowse.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dnscrypt-dowse.c' object='dnscrypt_dowse_la-dnscrypt-dowse.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(dnscrypt_dowse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnscrypt_dowse_la_CPPFLAGS) $(CPPFLAGS) $(dnscrypt_dowse_la_CFLAGS) $(CFLAGS) -c -o dnscrypt_dowse_la-dnscrypt-dowse.lo `test -f 'dnscrypt-dowse.c' || echo '$(srcdir)/'`dnscrypt-dowse.c
+
+dnscrypt_dowse_la-hashmap.lo: hashmap.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(dnscrypt_dowse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnscrypt_dowse_la_CPPFLAGS) $(CPPFLAGS) $(dnscrypt_dowse_la_CFLAGS) $(CFLAGS) -MT dnscrypt_dowse_la-hashmap.lo -MD -MP -MF $(DEPDIR)/dnscrypt_dowse_la-hashmap.Tpo -c -o dnscrypt_dowse_la-hashmap.lo `test -f 'hashmap.c' || echo '$(srcdir)/'`hashmap.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dnscrypt_dowse_la-hashmap.Tpo $(DEPDIR)/dnscrypt_dowse_la-hashmap.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='hashmap.c' object='dnscrypt_dowse_la-hashmap.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(dnscrypt_dowse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnscrypt_dowse_la_CPPFLAGS) $(CPPFLAGS) $(dnscrypt_dowse_la_CFLAGS) $(CFLAGS) -c -o dnscrypt_dowse_la-hashmap.lo `test -f 'hashmap.c' || echo '$(srcdir)/'`hashmap.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
