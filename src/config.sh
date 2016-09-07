@@ -13,10 +13,10 @@ S=${$(pwd)%/*}
 
 
 zkv=1
-source $S/zlibs/zuper
+source /usr/share/zuper/zuper
 vars=(dbindex thingindex)
 maps=(db execmap execrules)
-source $S/zlibs/zuper.init
+source /usr/share/zuper/zuper.init
 
 fn config $*
 

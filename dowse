@@ -27,10 +27,6 @@
 dowse_version=0.9
 dowse_release_date="Apr/2016"
 
-zkv=1
-restful=1
-helpers=1
-
 # export DOWSE_PREFIX and DOWSE_HOME to override
 R=${DOWSE_PREFIX:-/usr/local/dowse}
 H=${DOWSE_HOME:-$HOME/.dowse}
@@ -49,7 +45,7 @@ rehash
 mkdir -p $H
 
 #####################
-source $R/zlibs/zuper
+source /usr/share/zuper/zuper
 
 # For gettext
 TEXTDOMAIN=dowse
@@ -127,9 +123,7 @@ source $R/daemons/webui
 source $R/daemons/webdis
 
 # conclude initialization
-if [[ -r $R/zlibs/zuper-dev/zuper.init ]]; then
-    source $R/zlibs/zuper-dev/zuper.init
-else source $R/zlibs/zuper.init; fi
+source /usr/share/zuper/zuper.init
 
 func "load dataset indexes"
 db=()
