@@ -122,6 +122,13 @@ case $1 in
         popd
         ;;
 
+	dnscrypt_dowse.so)
+		pushd $R/src/dnscrypt-plugin
+		./configure && make && \
+			install -s -p .libs/dnscrypt_dowse.so $R/build/bin
+		popd
+		;;
+
     pgld)
         pushd $R/src/pgl
         ./configure --without-qt4 --disable-dbus --enable-lowmem \
