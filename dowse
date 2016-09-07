@@ -111,7 +111,6 @@ source $R/daemons/dnsmasq
 # source $R/daemons/squid3
 # source $R/daemons/privoxy
 # source $R/daemons/polipo
-source $R/daemons/dnscap
 source $R/daemons/dnscrypt-proxy
 source $R/daemons/netdata
 source $R/daemons/pgld
@@ -279,9 +278,6 @@ dowse-start() {
     # start the dns encrypted tunneling
     start dnscrypt-proxy
 
-    # start capturing dns traffic
-    start dnscap
-
     # netdata dashboard for the technical status
     start netdata
 
@@ -337,9 +333,6 @@ dowse-stop() {
 
     # stop the dns crypto tunnel
     stop dnscrypt-proxy
-
-    # stop the dns capture daemon
-    stop dnscap
 
     # stop the dhcp server
     stop dnsmasq
