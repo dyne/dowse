@@ -69,7 +69,6 @@ execrules=(
 
 	tinyproxy     root
     dnsmasq       root
-    dnscap        root
     ifconfig      root
     route         root
     iptables      root
@@ -94,7 +93,6 @@ execmap=(
     route         /sbin/route
     dnscrypt-proxy $PREFIX/bin/dnscrypt-proxy
     dnsmasq       $PREFIX/bin/dnsmasq
-    dnscap        $PREFIX/bin/dnscap
     redis-cli     $PREFIX/bin/redis-cli
     redis-server  $PREFIX/bin/redis-server
 	tinyproxy     $PREFIX/bin/tinyproxy
@@ -121,7 +119,6 @@ execmap=(
 command -v emerge >/dev/null && {
     execmap=(
         dnscrypt      /usr/sbin/dnscrypt-proxy
-        dnscap        $PREFIX/src/dnscap/dnscap
         dnsmasq       /usr/sbin/dnsmasq
         redis-cli     /usr/bin/redis-cli
         redis-server  /usr/sbin/redis-server

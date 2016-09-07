@@ -14,21 +14,6 @@ PREFIX=${PREFIX:-/usr/local/dowse}
 CFLAGS="-Wall -fPIC -fPIE -Os"
 LDFLAGS="-fPIC -fPIE -pie"
 
-# exceptions
-[[ "$1" = "dnscap" ]] && {
-	[[ -r $R/build/bin/dowse.so ]] || {
-
-		pushd $R/src/dnscap
-		./configure --prefix=${PREFIX} \
-			&& \
-			make && \
-			install -s -p $R/src/dnscap/dnscap $R/build/bin && \
-		popd
-	}
-	# copy plugin over every pass, easier for debugging changes
-	install -s -p $R/src/dnscap/plugins/dowse/dowse.so $R/build/bin
-}
-
 
 [[ -x $R/build/bin/$1 ]] && {
 	act "$1 found in $R/build/bin/$1"
@@ -115,12 +100,19 @@ case $1 in
 
     dnscrypt-proxy)
         pushd $R/src/dnscrypt-proxy
-        ./configure --without-systemd --prefix=${PREFIX} \
+        ./configure --without-systemd --enable-plugins --prefix=${PREFIX} \
             && \
             make && \
             install -s -p src/proxy/dnscrypt-proxy $R/build/bin
         popd
         ;;
+
+	dnscrypt_dowse.so)
+		pushd $R/src/dnscrypt-plugin
+		./configure && make && \
+			install -s -p .libs/dnscrypt_dowse.so $R/build/bin
+		popd
+		;;
 
     pgld)
         pushd $R/src/pgl
@@ -136,6 +128,6 @@ case $1 in
         ;;
 
     *)
-        act "usage; ./src/compile.sh [ pgl | dnscap | clean ]"
+        act "usage; ./src/compile.sh [ clean ]"
         ;;
 esac
