@@ -23,7 +23,6 @@ EXTRA_DIST = \
 	LICENSE.md \
 	COPYING \
 	autogen.sh \
-	netdata-9999.ebuild \
 	tests/stress.sh \
 	$(NULL)
 
@@ -32,14 +31,22 @@ SUBDIRS = \
 	conf.d \
 	node.d \
 	plugins.d \
+	python.d \
 	src \
 	system \
 	web \
 	contrib \
 	$(NULL)
 
-dist_noinst_DATA = netdata.spec
+dist_noinst_DATA= \
+	configs.signatures \
+	Dockerfile \
+	netdata.spec \
+	$(NULL)
 
 # until integrated within build
 # should be proper init.d/openrc/systemd usable
-dist_noinst_SCRIPTS = netdata-installer.sh
+dist_noinst_SCRIPTS= \
+	docker-build.sh \
+	netdata-installer.sh \
+	$(NULL)
