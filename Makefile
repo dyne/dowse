@@ -32,6 +32,7 @@ install:
 	make -C src     install
 	make -C zlibs   install
 	make -C daemons install
+	make -C zuper   install
 	install -d ${CONFDIR}
 	install -d ${CONFDIR}/blocklists
 	install -p -m 644 conf/settings.dist     ${CONFDIR}/settings.dist

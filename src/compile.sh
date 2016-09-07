@@ -7,8 +7,8 @@ R=${R%/*}
     return 1
 }
 
-source $R/zlibs/zuper
-source $R/zlibs/zuper.init
+source /usr/share/zuper/zuper
+source /usr/share/zuper/zuper.init
 
 PREFIX=${PREFIX:-/usr/local/dowse}
 CFLAGS="-Wall -fPIC -fPIE -Os"

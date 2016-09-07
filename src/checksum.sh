@@ -7,10 +7,10 @@ R=${$(pwd)%/*}
 }
 
 zkv=1
-source $R/zlibs/zuper
+source /usr/share/zuper/zuper
 vars=(tmp)
 maps=(execmap execrules execsums)
-source $R/zlibs/zuper.init
+source /usr/share/zuper/zuper.init
 
 zkv.load $R/build/db/execmap.zkv
 zkv.load $R/build/db/execrules.zkv
