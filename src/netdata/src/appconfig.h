@@ -1,5 +1,3 @@
-#include "web_buffer.h"
-
 #ifndef NETDATA_CONFIG_H
 #define NETDATA_CONFIG_H 1
 
@@ -25,6 +23,9 @@ extern const char *config_set(const char *section, const char *name, const char 
 extern const char *config_set_default(const char *section, const char *name, const char *value);
 extern long long config_set_number(const char *section, const char *name, long long value);
 extern int config_set_boolean(const char *section, const char *name, int value);
+
+extern int config_exists(const char *section, const char *name);
+extern int config_rename(const char *section, const char *old, const char *new);
 
 extern void generate_config(BUFFER *wb, int only_changed);
 

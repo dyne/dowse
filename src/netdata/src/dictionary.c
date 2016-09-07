@@ -1,160 +1,288 @@
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-#include <pthread.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "avl.h"
 #include "common.h"
-#include "log.h"
-
-#include "dictionary.h"
 
 // ----------------------------------------------------------------------------
-// name_value index
+// dictionary statistics
 
-static int name_value_iterator(avl *a) { if(a) {}; return 0; }
+static inline void NETDATA_DICTIONARY_STATS_INSERTS_PLUS1(DICTIONARY *dict) {
+    if(likely(dict->stats))
+        dict->stats->inserts++;
+}
+static inline void NETDATA_DICTIONARY_STATS_DELETES_PLUS1(DICTIONARY *dict) {
+    if(likely(dict->stats))
+        dict->stats->deletes++;
+}
+static inline void NETDATA_DICTIONARY_STATS_SEARCHES_PLUS1(DICTIONARY *dict) {
+    if(likely(dict->stats))
+        dict->stats->searches++;
+}
+static inline void NETDATA_DICTIONARY_STATS_ENTRIES_PLUS1(DICTIONARY *dict) {
+    if(likely(dict->stats))
+        dict->stats->entries++;
+}
+static inline void NETDATA_DICTIONARY_STATS_ENTRIES_MINUS1(DICTIONARY *dict) {
+    if(likely(dict->stats))
+        dict->stats->entries--;
+}
+
+
+// ----------------------------------------------------------------------------
+// dictionary locks
+
+static inline void dictionary_read_lock(DICTIONARY *dict) {
+    if(likely(dict->rwlock)) {
+        // debug(D_DICTIONARY, "Dictionary READ lock");
+        pthread_rwlock_rdlock(dict->rwlock);
+    }
+}
+
+static inline void dictionary_write_lock(DICTIONARY *dict) {
+    if(likely(dict->rwlock)) {
+        // debug(D_DICTIONARY, "Dictionary WRITE lock");
+        pthread_rwlock_wrlock(dict->rwlock);
+    }
+}
+
+static inline void dictionary_unlock(DICTIONARY *dict) {
+    if(likely(dict->rwlock)) {
+        // debug(D_DICTIONARY, "Dictionary UNLOCK lock");
+        pthread_rwlock_unlock(dict->rwlock);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// avl index
 
 static int name_value_compare(void* a, void* b) {
-	if(((NAME_VALUE *)a)->hash < ((NAME_VALUE *)b)->hash) return -1;
-	else if(((NAME_VALUE *)a)->hash > ((NAME_VALUE *)b)->hash) return 1;
-	else return strcmp(((NAME_VALUE *)a)->name, ((NAME_VALUE *)b)->name);
+    if(((NAME_VALUE *)a)->hash < ((NAME_VALUE *)b)->hash) return -1;
+    else if(((NAME_VALUE *)a)->hash > ((NAME_VALUE *)b)->hash) return 1;
+    else return strcmp(((NAME_VALUE *)a)->name, ((NAME_VALUE *)b)->name);
 }
 
-#define name_value_index_add(dict, cv) avl_insert(&((dict)->values_index), (avl *)(cv))
-#define name_value_index_del(dict, cv) avl_remove(&((dict)->values_index), (avl *)(cv))
+#define dictionary_name_value_index_add_nolock(dict, nv) do { NETDATA_DICTIONARY_STATS_INSERTS_PLUS1(dict); avl_insert(&((dict)->values_index), (avl *)(nv)); } while(0)
+#define dictionary_name_value_index_del_nolock(dict, nv) do { NETDATA_DICTIONARY_STATS_DELETES_PLUS1(dict); avl_remove(&(dict->values_index), (avl *)(nv)); } while(0)
 
-static NAME_VALUE *dictionary_name_value_index_find(DICTIONARY *dict, const char *name, uint32_t hash) {
-	NAME_VALUE *result = NULL, tmp;
-	tmp.hash = (hash)?hash:simple_hash(name);
-	tmp.name = (char *)name;
+static inline NAME_VALUE *dictionary_name_value_index_find_nolock(DICTIONARY *dict, const char *name, uint32_t hash) {
+    NAME_VALUE tmp;
+    tmp.hash = (hash)?hash:simple_hash(name);
+    tmp.name = (char *)name;
 
-	avl_search(&(dict->values_index), (avl *)&tmp, name_value_iterator, (avl **)&result);
-	return result;
-}
-
-// ----------------------------------------------------------------------------
-
-static NAME_VALUE *dictionary_name_value_create(DICTIONARY *dict, const char *name, void *value, size_t value_len) {
-	debug(D_DICTIONARY, "Creating name value entry for name '%s', value '%s'.", name, value);
-
-	NAME_VALUE *nv = calloc(1, sizeof(NAME_VALUE));
-	if(!nv) {
-		fatal("Cannot allocate name_value of size %z", sizeof(NAME_VALUE));
-		exit(1);
-	}
-
-	nv->name = strdup(name);
-	if(!nv->name) fatal("Cannot allocate name_value.name of size %z", strlen(name));
-	nv->hash = simple_hash(nv->name);
-
-	nv->value = malloc(value_len);
-	if(!nv->value) fatal("Cannot allocate name_value.value of size %z", value_len);
-	memcpy(nv->value, value, value_len);
-
-	// link it
-	pthread_rwlock_wrlock(&dict->rwlock);
-	nv->next = dict->values;
-	dict->values = nv;
-	pthread_rwlock_unlock(&dict->rwlock);
-
-	// index it
-	name_value_index_add(dict, nv);
-
-	return nv;
-}
-
-static void dictionary_name_value_destroy(DICTIONARY *dict, NAME_VALUE *nv) {
-	debug(D_DICTIONARY, "Destroying name value entry for name '%s'.", nv->name);
-
-	pthread_rwlock_wrlock(&dict->rwlock);
-	if(dict->values == nv) dict->values = nv->next;
-	else {
-		NAME_VALUE *n = dict->values;
-		while(n && n->next && n->next != nv) nv = nv->next;
-		if(!n || n->next != nv) {
-			fatal("Cannot find name_value with name '%s' in dictionary.", nv->name);
-			exit(1);
-		}
-		n->next = nv->next;
-		nv->next = NULL;
-	}
-	pthread_rwlock_unlock(&dict->rwlock);
-
-	free(nv->value);
-	free(nv);
+    NETDATA_DICTIONARY_STATS_SEARCHES_PLUS1(dict);
+    return (NAME_VALUE *)avl_search(&(dict->values_index), (avl *) &tmp);
 }
 
 // ----------------------------------------------------------------------------
+// internal methods
 
-DICTIONARY *dictionary_create(void) {
-	debug(D_DICTIONARY, "Creating dictionary.");
+static NAME_VALUE *dictionary_name_value_create_nolock(DICTIONARY *dict, const char *name, void *value, size_t value_len, uint32_t hash) {
+    debug(D_DICTIONARY, "Creating name value entry for name '%s'.", name);
 
-	DICTIONARY *dict = calloc(1, sizeof(DICTIONARY));
-	if(!dict) {
-		fatal("Cannot allocate DICTIONARY");
-		exit(1);
-	}
+    NAME_VALUE *nv = callocz(1, sizeof(NAME_VALUE));
 
-	avl_init(&dict->values_index, name_value_compare);
-	pthread_rwlock_init(&dict->rwlock, NULL);
+    if(dict->flags & DICTIONARY_FLAG_NAME_LINK_DONT_CLONE)
+        nv->name = (char *)name;
+    else {
+        nv->name = strdupz(name);
+    }
 
-	return dict;
+    nv->hash = (hash)?hash:simple_hash(nv->name);
+
+    if(dict->flags & DICTIONARY_FLAG_VALUE_LINK_DONT_CLONE)
+        nv->value = value;
+    else {
+        nv->value = mallocz(value_len);
+        memcpy(nv->value, value, value_len);
+    }
+
+    // index it
+    dictionary_name_value_index_add_nolock(dict, nv);
+    NETDATA_DICTIONARY_STATS_ENTRIES_PLUS1(dict);
+
+    return nv;
+}
+
+static void dictionary_name_value_destroy_nolock(DICTIONARY *dict, NAME_VALUE *nv) {
+    debug(D_DICTIONARY, "Destroying name value entry for name '%s'.", nv->name);
+
+    dictionary_name_value_index_del_nolock(dict, nv);
+
+    NETDATA_DICTIONARY_STATS_ENTRIES_MINUS1(dict);
+
+    if(!(dict->flags & DICTIONARY_FLAG_VALUE_LINK_DONT_CLONE)) {
+        debug(D_REGISTRY, "Dictionary freeing value of '%s'", nv->name);
+        freez(nv->value);
+    }
+
+    if(!(dict->flags & DICTIONARY_FLAG_NAME_LINK_DONT_CLONE)) {
+        debug(D_REGISTRY, "Dictionary freeing name '%s'", nv->name);
+        freez(nv->name);
+    }
+
+    freez(nv);
+}
+
+// ----------------------------------------------------------------------------
+// API - basic methods
+
+DICTIONARY *dictionary_create(uint8_t flags) {
+    debug(D_DICTIONARY, "Creating dictionary.");
+
+    DICTIONARY *dict = callocz(1, sizeof(DICTIONARY));
+
+    if(flags & DICTIONARY_FLAG_WITH_STATISTICS)
+        dict->stats = callocz(1, sizeof(struct dictionary_stats));
+
+    if(!(flags & DICTIONARY_FLAG_SINGLE_THREADED)) {
+        dict->rwlock = callocz(1, sizeof(pthread_rwlock_t));
+        pthread_rwlock_init(dict->rwlock, NULL);
+    }
+
+    avl_init(&dict->values_index, name_value_compare);
+    dict->flags = flags;
+
+    return dict;
 }
 
 void dictionary_destroy(DICTIONARY *dict) {
-	debug(D_DICTIONARY, "Destroying dictionary.");
+    debug(D_DICTIONARY, "Destroying dictionary.");
 
-	pthread_rwlock_wrlock(&dict->rwlock);
-	while(dict->values) dictionary_name_value_destroy(dict, dict->values);
-	pthread_rwlock_unlock(&dict->rwlock);
+    dictionary_write_lock(dict);
 
-	free(dict);
+    while(dict->values_index.root)
+        dictionary_name_value_destroy_nolock(dict, (NAME_VALUE *)dict->values_index.root);
+
+    dictionary_unlock(dict);
+
+    if(dict->stats)
+        freez(dict->stats);
+
+    if(dict->rwlock)
+        freez(dict->rwlock);
+
+    freez(dict);
 }
 
 // ----------------------------------------------------------------------------
 
 void *dictionary_set(DICTIONARY *dict, const char *name, void *value, size_t value_len) {
-	debug(D_DICTIONARY, "SET dictionary entry with name '%s'.", name);
+    debug(D_DICTIONARY, "SET dictionary entry with name '%s'.", name);
 
-	pthread_rwlock_rdlock(&dict->rwlock);
-	NAME_VALUE *nv = dictionary_name_value_index_find(dict, name, 0);
-	pthread_rwlock_unlock(&dict->rwlock);
-	if(!nv) {
-		debug(D_DICTIONARY, "Dictionary entry with name '%s' not found. Creating a new one.", name);
-		nv = dictionary_name_value_create(dict, name, value, value_len);
-		if(!nv) {
-			fatal("Cannot create name_value.");
-			exit(1);
-		}
-		return nv->value;
-	}
-	else {
-		debug(D_DICTIONARY, "Dictionary entry with name '%s' found. Changing its value.", name);
-		pthread_rwlock_wrlock(&dict->rwlock);
-		void *old = nv->value;
-		nv->value = malloc(value_len);
-		if(!nv->value) fatal("Cannot allocate value of size %z", value_len);
-		memcpy(nv->value, value, value_len);
-		pthread_rwlock_unlock(&dict->rwlock);
-		free(old);
-	}
+    uint32_t hash = simple_hash(name);
 
-	return nv->value;
+    dictionary_write_lock(dict);
+
+    NAME_VALUE *nv = dictionary_name_value_index_find_nolock(dict, name, hash);
+    if(unlikely(!nv)) {
+        debug(D_DICTIONARY, "Dictionary entry with name '%s' not found. Creating a new one.", name);
+
+        nv = dictionary_name_value_create_nolock(dict, name, value, value_len, hash);
+        if(unlikely(!nv))
+            fatal("Cannot create name_value.");
+    }
+    else {
+        debug(D_DICTIONARY, "Dictionary entry with name '%s' found. Changing its value.", name);
+
+        if(dict->flags & DICTIONARY_FLAG_VALUE_LINK_DONT_CLONE) {
+            debug(D_REGISTRY, "Dictionary: linking value to '%s'", name);
+            nv->value = value;
+        }
+        else {
+            debug(D_REGISTRY, "Dictionary: cloning value to '%s'", name);
+
+            // copy the new value without breaking
+            // any other thread accessing the same entry
+            void *new = mallocz(value_len),
+                    *old = nv->value;
+
+            memcpy(new, value, value_len);
+            nv->value = new;
+
+            debug(D_REGISTRY, "Dictionary: freeing old value of '%s'", name);
+            freez(old);
+        }
+    }
+
+    dictionary_unlock(dict);
+
+    return nv->value;
 }
 
 void *dictionary_get(DICTIONARY *dict, const char *name) {
-	debug(D_DICTIONARY, "GET dictionary entry with name '%s'.", name);
+    debug(D_DICTIONARY, "GET dictionary entry with name '%s'.", name);
 
-	pthread_rwlock_rdlock(&dict->rwlock);
-	NAME_VALUE *nv = dictionary_name_value_index_find(dict, name, 0);
-	pthread_rwlock_unlock(&dict->rwlock);
-	if(!nv) {
-		debug(D_DICTIONARY, "Not found dictionary entry with name '%s'.", name);
-		return NULL;
-	}
+    dictionary_read_lock(dict);
+    NAME_VALUE *nv = dictionary_name_value_index_find_nolock(dict, name, 0);
+    dictionary_unlock(dict);
 
-	debug(D_DICTIONARY, "Found dictionary entry with name '%s'.", name);
-	return nv->value;
+    if(unlikely(!nv)) {
+        debug(D_DICTIONARY, "Not found dictionary entry with name '%s'.", name);
+        return NULL;
+    }
+
+    debug(D_DICTIONARY, "Found dictionary entry with name '%s'.", name);
+    return nv->value;
+}
+
+int dictionary_del(DICTIONARY *dict, const char *name) {
+    int ret;
+
+    debug(D_DICTIONARY, "DEL dictionary entry with name '%s'.", name);
+
+    dictionary_write_lock(dict);
+
+    NAME_VALUE *nv = dictionary_name_value_index_find_nolock(dict, name, 0);
+    if(unlikely(!nv)) {
+        debug(D_DICTIONARY, "Not found dictionary entry with name '%s'.", name);
+        ret = -1;
+    }
+    else {
+        debug(D_DICTIONARY, "Found dictionary entry with name '%s'.", name);
+        dictionary_name_value_destroy_nolock(dict, nv);
+        ret = 0;
+    }
+
+    dictionary_unlock(dict);
+
+    return ret;
+}
+
+
+// ----------------------------------------------------------------------------
+// API - walk through the dictionary
+// the dictionary is locked for reading while this happens
+// do not user other dictionary calls while walking the dictionary - deadlock!
+
+static int dictionary_walker(avl *a, int (*callback)(void *entry, void *data), void *data) {
+    int total = 0, ret = 0;
+
+    if(a->avl_link[0]) {
+        ret = dictionary_walker(a->avl_link[0], callback, data);
+        if(ret < 0) return ret;
+        total += ret;
+    }
+
+    ret = callback(((NAME_VALUE *)a)->value, data);
+    if(ret < 0) return ret;
+    total += ret;
+
+    if(a->avl_link[1]) {
+        ret = dictionary_walker(a->avl_link[1], callback, data);
+        if (ret < 0) return ret;
+        total += ret;
+    }
+
+    return total;
+}
+
+int dictionary_get_all(DICTIONARY *dict, int (*callback)(void *entry, void *data), void *data) {
+    int ret = 0;
+
+    dictionary_read_lock(dict);
+
+    if(likely(dict->values_index.root))
+        ret = dictionary_walker(dict->values_index.root, callback, data);
+
+    dictionary_unlock(dict);
+
+    return ret;
 }
