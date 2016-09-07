@@ -3,6 +3,8 @@
 #include <string.h>
 
 #include <dirent.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <dnscrypt/plugin.h>
 #include <ldns/ldns.h>
@@ -26,6 +28,8 @@ typedef struct {
 	char query[MAX_QUERY]; // incoming query
 	char domain[MAX_DOMAIN]; // domain part parsed (2nd last dot)
 	char tld[MAX_TLD]; // tld (domain extension, 1st dot)
+
+	char from[NI_MAXHOST]; // hostname or ip originating the query
 
 	// hash map of known domains
 	map_t domainlist;
@@ -68,7 +72,7 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	// TODO: check succesful result
 
 	dcplugin_set_user_data(dcplugin, data);
-    
+
 	return 0;
 }
 
@@ -81,17 +85,45 @@ dcplugin_destroy(DCPlugin * const dcplugin)
 
 	hashmap_iterate(data->domainlist, free_domainlist_f, NULL);
 	hashmap_free(data->domainlist);
-		
+
 	redisFree(data->redis);
+
+	return 0;
+}
+
+DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDNSPacket *dcp_packet) {
+
+    struct sockaddr_storage *from_sa;
+	socklen_t from_len;
+	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
+
+	from_sa = dcplugin_get_client_address(dcp_packet);
+	from_len = dcplugin_get_client_address_len(dcp_packet);
+
+	getnameinfo((struct sockaddr *)from_sa, from_len,
+	            data->from, sizeof(data->from), NULL, 0, 0x0);
 
 	return 0;
 }
 
 
 DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginDNSPacket *dcp_packet) {
-	void *data = dcplugin_get_user_data(dcplugin);
 	ldns_pkt *packet = NULL;
 	DCPluginSyncFilterResult result = DCP_SYNC_FILTER_RESULT_OK;
+
+	ldns_rr  *question;
+	char     *resolved;
+	char     *extracted;
+	long long int val;
+	char *sval;
+	int res;
+
+	char outnew[MAX_OUTPUT];
+	struct sockaddr *from_sa;
+
+	time_t epoch_t;
+
+	plugin_data_t *data;
 
 	if (ldns_wire2pkt(&packet, dcplugin_get_wire_data(dcp_packet),
 	                  dcplugin_get_wire_data_len(dcp_packet)) != LDNS_STATUS_OK) {
@@ -100,55 +132,37 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 
 
 
+	question = ldns_rr_list_rr(ldns_pkt_question(packet), 0U);
+	if ((resolved = ldns_rdf2str(ldns_rr_owner(question))) == NULL)
+		return DCP_SYNC_FILTER_RESULT_FATAL;
 
+	data = dcplugin_get_user_data(dcplugin);
+	extracted = extract_domain(resolved, data);
+	data->reply = redisCommand(data->redis, "INCR dns_query_%s", extracted);
+	val = data->reply->integer;
+	freeReplyObject(data->reply);
+	data->reply = redisCommand(data->redis, "EXPIRE dns_query_%s %u", extracted, 21600); // DNS_HIT_EXPIRE
 
-	// test print out domain from packet
-	{
-		ldns_rr  *question;
-		char     *resolved;
-		char     *extracted;
-		long long int val;
-		char *sval;
-		int res;
+	time(&epoch_t);
 
-		char outnew[MAX_OUTPUT];
+	// compose the path of the detected query
+	snprintf(outnew,MAX_OUTPUT,
+	         "DNS,%s,%lld,%lu,%s,%s",
+	         data->from, val,
+	         epoch_t, extracted, data->tld);
 
-		time_t epoch_t;
-
-		question = ldns_rr_list_rr(ldns_pkt_question(packet), 0U);
-		if ((resolved = ldns_rdf2str(ldns_rr_owner(question))) == NULL)
-			return DCP_SYNC_FILTER_RESULT_FATAL;
-
-		plugin_data_t *data = dcplugin_get_user_data(dcplugin);
-		extracted = extract_domain(resolved, data);
-		data->reply = redisCommand(data->redis, "INCR dns_query_%s", extracted);
-		val = data->reply->integer;
-		freeReplyObject(data->reply);
-		data->reply = redisCommand(data->redis, "EXPIRE dns_query_%s %u", extracted, 21600); // DNS_HIT_EXPIRE
-
-		time(&epoch_t);
-
-
-		// compose the path of the detected query
-		snprintf(outnew,MAX_OUTPUT,
-		         "DNS,%s,%lld,%lu,%s,%s",
-		         "from",val,
-		         epoch_t,extracted,data->tld);
-
-		res = hashmap_get(data->domainlist, extracted, (void**)(&sval));
-		if(res==MAP_OK) {// add domain group
-			strncat(outnew,",",2);
-			strncat(outnew,sval,MAX_OUTPUT-128);
-			//snprintf(outnew,MAX_OUTPUT,"%s,%s",outnew,sval);
-		}
-
-		data->reply = redisCommand(data->redis, "PUBLISH dns-query-channel %s", outnew);
-		freeReplyObject(data->reply);
-
-
-		fprintf(stderr,"DNS: %s\n", outnew);
-		
+	res = hashmap_get(data->domainlist, extracted, (void**)(&sval));
+	if(res==MAP_OK) {// add domain group
+		strncat(outnew,",",2);
+		strncat(outnew,sval,MAX_OUTPUT-128);
+		//snprintf(outnew,MAX_OUTPUT,"%s,%s",outnew,sval);
 	}
+
+	data->reply = redisCommand(data->redis, "PUBLISH dns-query-channel %s", outnew);
+	freeReplyObject(data->reply);
+
+
+	fprintf(stderr,"DNS: %s\n", outnew);
 
 
 #if 0
