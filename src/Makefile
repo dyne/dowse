@@ -5,12 +5,11 @@ CC = gcc
 CFLAGS = -Wall -fPIC -Os
 LIBS = -ljemalloc -lhiredis
 
-all: config modprobe dowse-to-gource dowse-to-osc dowse-dnscap-plugin sup
+all: config modprobe dowse-to-gource dowse-to-osc sup
 	@make -C libparse-datetime
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
 	@./compile.sh pgld
-	@./compile.sh dnscap
 	@./compile.sh netdiscover
 	@./compile.sh netdata
 	@./compile.sh kore
@@ -40,9 +39,6 @@ dowse-to-gource: dowse-to-gource.o redis.o epoch.o
 dowse-to-osc: dowse-to-osc.o redis.o epoch.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
-dowse-dnscap-plugin:
-	make -C dnscap/plugins/dowse
-
 install:
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/domain-list/data
@@ -58,10 +54,7 @@ clean:
 	rm -f *.zkv
 	rm -f database.h execrules.h
 	rm -f modprobe dowse-to-osc dowse-to-gource
-	rm -f dnscap/plugins/dowse/*.o
 	make -C sup                  clean
-	make -C dnscap               clean
-	make -C dnscap/plugins/dowse clean
 	make -C dnscrypt-proxy       clean
 	make -C dnscrypt-plugin      clean
 	make -C pgl                  clean
