@@ -45,6 +45,8 @@ install:
 	install -s -p -m 755 build/bin/*      ${DESTDIR}${PREFIX}/bin
 	./set_privileges.sh                     ${DESTDIR}${PREFIX}
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
+	install -d ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
+	install -s -p -m 644 build/bin/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
 
 
 # here sup is installed with suid bit. sup is a secure application we

@@ -20,25 +20,26 @@ dnscrypt-proxy-exec() {
 	ztmp
     if [[ $DEBUG = 1 ]]; then
 
+		func "Launching dnscrypt-proxy to listen on port 53443"
 		DOWSE_DOMAINLIST=$HOME/devel/dowse/src/domain-list/data \
-						launch dnscrypt-proxy -a 127.0.0.1:53443 \
+						dnscrypt-proxy -a 0.0.0.0:53443 \
 						-l $H/log/dnscrypt.log \
 						-r "176.56.237.171:443" \
 						-k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
 						-N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
 						-X $HOME/devel/dowse/src/dnscrypt-plugin/.libs/dnscrypt_dowse.so \
-						-m 6 # log level informational (7 for debug)
+						-m 7 # log level informational (7 for debug)
 		return $?
 
     else
 		DOWSE_DOMAINLIST=$R/domain-list/data \
-						launch dnscrypt-proxy -a 127.0.0.1:53443 \
+						launch dnscrypt-proxy -a 127.0.0.1:53 \
 						-p $ztmpfile -l $H/log/dnscrypt.log \
 						-r "176.56.237.171:443" \
 						-k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
 						-N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
-						-X $R/bin/dnscrypt_dowse.so \
-						-d -m 4 # log only warning conditions
+						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so \
+						-d -m 4 -u $dowse_uid # log only warning conditions
 
     fi
     sleep 1 # avoid race condition
