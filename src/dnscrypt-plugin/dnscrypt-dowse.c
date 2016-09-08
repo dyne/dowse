@@ -81,7 +81,7 @@ typedef struct {
 size_t trim(char *out, size_t len, const char *str);
 void load_domainlist(plugin_data_t *data);
 int free_domainlist_f(any_t arg, any_t element);
-char *extract_domain(char *address, plugin_data_t *data);
+char *extract_domain(plugin_data_t *data);
 int publish_query(plugin_data_t *data);
 
 const char * dcplugin_description(DCPlugin * const dcplugin) {
@@ -138,7 +138,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	socklen_t from_len;
 	uint8_t* wire;
 	size_t wirelen;
-	int val;
 
 	ldns_pkt *packet = NULL;
 	ldns_rr  *question;
@@ -165,11 +164,12 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		// this may be to drastic as FATAL? change if problems occur
 		return DCP_SYNC_FILTER_RESULT_ERROR;
 
-	ldns_pkt_free(packet);
 
 	// save the query
 	strncpy(data->query, resolved, MAX_QUERY);
-	data->query[strlen(resolved)-1] = '\0'; // eliminate terminating dot
+	data->query[strlen(data->query)-1] = '\0'; // eliminate terminating dot
+
+	ldns_pkt_free(packet);
 
 	// get the source ip
 	from_sa = dcplugin_get_client_address(dcp_packet);
@@ -206,23 +206,13 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// 	         p[0], p[1], p[2], p[3], p[4], p[5]);
 	// 	// this is here as a pro-memoria, since we never get AF_P
 
-			
+	dcplugin_set_user_data(dcplugin, data);
+	
 	return DCP_SYNC_FILTER_RESULT_OK;
 }
 
 
 DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginDNSPacket *dcp_packet) {
-	ldns_pkt *packet = NULL;
-	DCPluginSyncFilterResult result = DCP_SYNC_FILTER_RESULT_OK;
-
-	char     *extracted;
-	long long int val;
-	int res;
-
-	char outnew[MAX_OUTPUT];
-	struct sockaddr *from_sa;
-
-	time_t epoch_t;
 
 	plugin_data_t *data;
 	uint8_t *wire;
@@ -239,7 +229,7 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	data->reply = redisCommand(data->cache, "SET dns_cache_%s %b", data->query, wire, wirelen);
 	// TODO: check reply
 	freeReplyObject(data->reply);
-	data->reply = redisCommand(data->redis, "EXPIRE dns_cache_%s %u", extracted, 5); // DNS_HIT_EXPIRE
+	data->reply = redisCommand(data->redis, "EXPIRE dns_cache_%s %u", data->query, 5); // DNS_HIT_EXPIRE
 	freeReplyObject(data->reply);
 
 
@@ -314,7 +304,6 @@ size_t trim(char *out, size_t len, const char *str) {
 
 
 int publish_query(plugin_data_t *data) {
-	char temp[MAX_QUERY];
 	char *extracted;
 	int val, res;
 	char *sval;
@@ -322,19 +311,20 @@ int publish_query(plugin_data_t *data) {
 	time_t epoch_t;
 	char outnew[MAX_OUTPUT];
 
-	strncpy(temp,data->query,MAX_QUERY);
-	extracted = extract_domain(temp, data);
+	// domain hit count
+	extracted = extract_domain(data);
 	data->reply = redisCommand(data->redis, "INCR dns_query_%s", extracted);
 	val = data->reply->integer;
 	freeReplyObject(data->reply);
 	data->reply = redisCommand(data->redis, "EXPIRE dns_query_%s %u", extracted, DNS_HIT_EXPIRE); // DNS_HIT_EXPIRE
 	freeReplyObject(data->reply);
 
+	// timestamp
 	time(&epoch_t);
 
 	// compose the path of the detected query
 	snprintf(outnew,MAX_OUTPUT,
-	         "DNS,%s,%lld,%lu,%s,%s",
+	         "DNS,%s,%d,%lu,%s,%s",
 	         data->from, val,
 	         epoch_t, extracted, data->tld);
 
@@ -405,7 +395,7 @@ int free_domainlist_f(any_t arg, any_t element) {
 }
 
 
-char *extract_domain(char *address, plugin_data_t *data) {
+char *extract_domain(plugin_data_t *data) {
     // extracts the last two or three strings of a dotted domain string
 
     int c;
@@ -413,15 +403,15 @@ char *extract_domain(char *address, plugin_data_t *data) {
     int first = 1;
     char *last;
     int positions = 2; // minimum, can become three if sld too short
-    int len = strlen(address);
+    int len;
+    char address[MAX_QUERY];
+
+    strncpy(address, data->query, MAX_QUERY);
+    len = strlen(address);
 
     /* logerr("extract_domain: %s (%u)",address, len); */
 
     if(len<3) return(NULL); // a.i
-
-    if(len>MAX_QUERY) {
-        fprintf(stderr,"extract_domain: string too long (%s - %u)", address, len);
-        return(NULL); }
 
     data->domain[len+1]='\0';
     for(c=len; c>=0; c--) {
