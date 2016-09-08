@@ -10,8 +10,8 @@ S=${$(pwd)%/*}
 
 
 zkv=1
-source /usr/share/zuper/zuper
-source /usr/share/zuper/zuper.init
+source $S/zuper/zuper
+source $S/zuper/zuper.init
 
 fn import $*
 
