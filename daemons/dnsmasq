@@ -30,9 +30,11 @@ address=/$hostname.$lan/$address
 # address=/.i2p/$address
 # address=/.onion/$address
 # dnscrypt-proxy
-server=127.0.0.1#53443
+# server=127.0.0.1#53443
 bogus-priv
-cache-size=2048
+# cache-size=2048
+# deactivate dns
+port=0
 dhcp-range=$dowse_guests
 addn-hosts=$H/run/hosts
 dhcp-leasefile=$H/run/leases

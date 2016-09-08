@@ -55,7 +55,6 @@ print - "$thingindex" > $S/build/db/thing.idx
 
 # map of permissions
 execrules=(
-    dnscrypt-proxy user
     redis-cli    user
     redis-server user
     nmap         user
@@ -67,6 +66,7 @@ execrules=(
     kore         user
 	seccrond     user
 
+    dnscrypt-proxy root
 	tinyproxy     root
     dnsmasq       root
     ifconfig      root
