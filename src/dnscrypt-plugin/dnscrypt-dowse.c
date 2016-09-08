@@ -1,9 +1,34 @@
+/*  Dowse - DNSCrypt proxy plugin for DNS management
+ *
+ *  (c) Copyright 2016 Dyne.org foundation, Amsterdam
+ *  Written by Denis Roio aka jaromil <jaromil@dyne.org>
+ *
+ * This source code is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Public License as published
+ * by the Free Software Foundation; either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Please refer to the GNU Public License for more details.
+ *
+ * You should have received a copy of the GNU Public License along with
+ * this source code; if not, write to:
+ * Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <dirent.h>
 #include <sys/socket.h>
+#include <linux/if_packet.h>
+#include <net/ethernet.h>
+
 #include <netdb.h>
 
 #include <dnscrypt/plugin.h>
@@ -20,9 +45,18 @@
 
 DCPLUGIN_MAIN(__FILE__);
 
+// expiration in seconds for the domain hit counter
+#define DNS_HIT_EXPIRE 21600
+
+// expiration in seconds for the cache on dns replies
+#define DNS_CACHE_EXPIRE 5
+
 #define MAX_QUERY 512
 #define MAX_DOMAIN 256
 #define MAX_TLD 32
+#define MAX_DNS 512  // RFC 6891
+
+#define MAX_LINE 512
 
 typedef struct {
 	char query[MAX_QUERY]; // incoming query
@@ -30,18 +64,25 @@ typedef struct {
 	char tld[MAX_TLD]; // tld (domain extension, 1st dot)
 
 	char from[NI_MAXHOST]; // hostname or ip originating the query
+	char mac[32]; // mac address (could be just 12 chars)
 
-	// hash map of known domains
+	// map of known domains
+	char *listpath;
 	map_t domainlist;
 
 	redisContext *redis;
 	redisReply   *reply;
+
+	// using db_runtime to store cached hits
+	redisContext *cache;
+
 }  plugin_data_t;
 
 size_t trim(char *out, size_t len, const char *str);
-void load_domainlist(const char *path, plugin_data_t *data);
+void load_domainlist(plugin_data_t *data);
 int free_domainlist_f(any_t arg, any_t element);
 char *extract_domain(char *address, plugin_data_t *data);
+int publish_query(plugin_data_t *data);
 
 const char * dcplugin_description(DCPlugin * const dcplugin) {
 	return "Dowse plugin to filter dnscrypt queries";
@@ -55,27 +96,26 @@ const char * dcplugin_long_description(DCPlugin * const dcplugin) {
 
 int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 
-	char *listpath = getenv("DOWSE_DOMAINLIST");
-	if(!listpath) {
-		fprintf(stderr,"error: environmental variable DOWSE_DOMAINLIST not set\n");
-		return 1;
-	}
-
 	plugin_data_t *data = malloc(sizeof(plugin_data_t));
+	memset(data, 0x0, sizeof(plugin_data_t));
 
-	if(listpath) {
-		fprintf(stderr, "Loading domainlist from: %s\n", listpath);
-		load_domainlist(listpath, data);
+	data->listpath = getenv("DOWSE_DOMAINLIST");
+	if(!data->listpath)
+		fprintf(stderr,"warning: environmental variable DOWSE_DOMAINLIST not set\n");
+	else {
+		fprintf(stderr, "Loading domainlist from: %s\n", data->listpath);
+		load_domainlist(data);
 	}
 
 	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+	data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
+
 	// TODO: check succesful result
 
 	dcplugin_set_user_data(dcplugin, data);
 
 	return 0;
 }
-
 
 int
 dcplugin_destroy(DCPlugin * const dcplugin)
@@ -87,6 +127,7 @@ dcplugin_destroy(DCPlugin * const dcplugin)
 	hashmap_free(data->domainlist);
 
 	redisFree(data->redis);
+	redisFree(data->cache);
 
 	return 0;
 }
@@ -95,15 +136,78 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
     struct sockaddr_storage *from_sa;
 	socklen_t from_len;
+	uint8_t* wire;
+	size_t wirelen;
+	int val;
+
+	ldns_pkt *packet = NULL;
+	ldns_rr  *question;
+	char     *resolved;
+
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
+	// check if there is a cache hit
+	wire = dcplugin_get_wire_data(dcp_packet);
+	wirelen = dcplugin_get_wire_data_len(dcp_packet);
+	// enforce max dns query size
+	if(wirelen > MAX_DNS) return DCP_SYNC_FILTER_RESULT_KILL;
+		
+//	fprintf(stderr,"%u bytes received as dns wire request\n", wirelen);
+
+	// import the wire packet to ldns format
+	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
+		return DCP_SYNC_FILTER_RESULT_ERROR;
+
+	// retrieve the actual question (first in list)
+	// TODO: check if we need to query for more questions here
+	question = ldns_rr_list_rr(ldns_pkt_question(packet), 0U);
+	if ((resolved = ldns_rdf2str(ldns_rr_owner(question))) == NULL)
+		// this may be to drastic as FATAL? change if problems occur
+		return DCP_SYNC_FILTER_RESULT_ERROR;
+
+	ldns_pkt_free(packet);
+
+	// save the query
+	strncpy(data->query, resolved, MAX_QUERY);
+	data->query[strlen(resolved)-1] = '\0'; // eliminate terminating dot
+
+	// get the source ip
 	from_sa = dcplugin_get_client_address(dcp_packet);
 	from_len = dcplugin_get_client_address_len(dcp_packet);
-
 	getnameinfo((struct sockaddr *)from_sa, from_len,
 	            data->from, sizeof(data->from), NULL, 0, 0x0);
 
-	return 0;
+	// publish info to redis channel
+	publish_query(data);
+
+//	fprintf(stderr,"%s - query contained this question\n", data->query);
+
+
+	// check if the answer is cached (the key is the domain string)
+	data->reply = redisCommand(data->cache, "GET dns_cache_%s", data->query);
+	if(data->reply->len) { // it exists in cache, return that
+//		fprintf(stderr,"%u bytes cache hit!\n", data->reply->len);
+		// TODO: a bit dangerous, working directly on the wire packet
+
+		// copy message ID (first 16 bits)
+		data->reply->str[0] = wire[0];
+		data->reply->str[1] = wire[1];
+
+		dcplugin_set_wire_data(dcp_packet, data->reply->str, data->reply->len);
+		freeReplyObject(data->reply);
+		return DCP_SYNC_FILTER_RESULT_DIRECT;
+	} else
+		freeReplyObject(data->reply);
+
+
+	// if(from_sa->ss_family == AF_PACKET) { // if contains mac address
+	// 	char *p = ((struct sockaddr_ll*) from_sa)->sll_addr;
+	// 	snprintf(data->mac, 32, "%02x:%02x:%02x:%02x:%02x:%02x",
+	// 	         p[0], p[1], p[2], p[3], p[4], p[5]);
+	// 	// this is here as a pro-memoria, since we never get AF_P
+
+			
+	return DCP_SYNC_FILTER_RESULT_OK;
 }
 
 
@@ -111,11 +215,8 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	ldns_pkt *packet = NULL;
 	DCPluginSyncFilterResult result = DCP_SYNC_FILTER_RESULT_OK;
 
-	ldns_rr  *question;
-	char     *resolved;
 	char     *extracted;
 	long long int val;
-	char *sval;
 	int res;
 
 	char outnew[MAX_OUTPUT];
@@ -124,45 +225,22 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	time_t epoch_t;
 
 	plugin_data_t *data;
+	uint8_t *wire;
+	size_t wirelen;
 
-	if (ldns_wire2pkt(&packet, dcplugin_get_wire_data(dcp_packet),
-	                  dcplugin_get_wire_data_len(dcp_packet)) != LDNS_STATUS_OK) {
-		return DCP_SYNC_FILTER_RESULT_ERROR;
-	}
+	wire = dcplugin_get_wire_data(dcp_packet);
+	wirelen = dcplugin_get_wire_data_len(dcp_packet);
 
-
-
-	question = ldns_rr_list_rr(ldns_pkt_question(packet), 0U);
-	if ((resolved = ldns_rdf2str(ldns_rr_owner(question))) == NULL)
-		return DCP_SYNC_FILTER_RESULT_FATAL;
+//	fprintf(stderr,"%u bytes reply from dnscrypt received\n", wirelen);
 
 	data = dcplugin_get_user_data(dcplugin);
-	extracted = extract_domain(resolved, data);
-	data->reply = redisCommand(data->redis, "INCR dns_query_%s", extracted);
-	val = data->reply->integer;
+
+	// check if the query is cached
+	data->reply = redisCommand(data->cache, "SET dns_cache_%s %b", data->query, wire, wirelen);
+	// TODO: check reply
 	freeReplyObject(data->reply);
-	data->reply = redisCommand(data->redis, "EXPIRE dns_query_%s %u", extracted, 21600); // DNS_HIT_EXPIRE
-
-	time(&epoch_t);
-
-	// compose the path of the detected query
-	snprintf(outnew,MAX_OUTPUT,
-	         "DNS,%s,%lld,%lu,%s,%s",
-	         data->from, val,
-	         epoch_t, extracted, data->tld);
-
-	res = hashmap_get(data->domainlist, extracted, (void**)(&sval));
-	if(res==MAP_OK) {// add domain group
-		strncat(outnew,",",2);
-		strncat(outnew,sval,MAX_OUTPUT-128);
-		//snprintf(outnew,MAX_OUTPUT,"%s,%s",outnew,sval);
-	}
-
-	data->reply = redisCommand(data->redis, "PUBLISH dns-query-channel %s", outnew);
+	data->reply = redisCommand(data->redis, "EXPIRE dns_cache_%s %u", extracted, 5); // DNS_HIT_EXPIRE
 	freeReplyObject(data->reply);
-
-
-	fprintf(stderr,"DNS: %s\n", outnew);
 
 
 #if 0
@@ -191,8 +269,6 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 		}
 	}
 #endif
-
-	ldns_pkt_free(packet);
 
 	return DCP_SYNC_FILTER_RESULT_OK;
 
@@ -234,10 +310,55 @@ size_t trim(char *out, size_t len, const char *str) {
 
 	return out_size;
 }
-#define MAX_LINE 512
 
 
-void load_domainlist(const char *path, plugin_data_t *data) {
+
+int publish_query(plugin_data_t *data) {
+	char temp[MAX_QUERY];
+	char *extracted;
+	int val, res;
+	char *sval;
+
+	time_t epoch_t;
+	char outnew[MAX_OUTPUT];
+
+	strncpy(temp,data->query,MAX_QUERY);
+	extracted = extract_domain(temp, data);
+	data->reply = redisCommand(data->redis, "INCR dns_query_%s", extracted);
+	val = data->reply->integer;
+	freeReplyObject(data->reply);
+	data->reply = redisCommand(data->redis, "EXPIRE dns_query_%s %u", extracted, DNS_HIT_EXPIRE); // DNS_HIT_EXPIRE
+	freeReplyObject(data->reply);
+
+	time(&epoch_t);
+
+	// compose the path of the detected query
+	snprintf(outnew,MAX_OUTPUT,
+	         "DNS,%s,%lld,%lu,%s,%s",
+	         data->from, val,
+	         epoch_t, extracted, data->tld);
+
+	// add domainlist group if found
+	if(data->listpath) {
+		res = hashmap_get(data->domainlist, extracted, (void**)(&sval));
+		if(res==MAP_OK) {// add domain group
+			strncat(outnew,",",2);
+			strncat(outnew,sval,MAX_OUTPUT-128);
+			//snprintf(outnew,MAX_OUTPUT,"%s,%s",outnew,sval);
+		}
+	}
+
+	data->reply = redisCommand(data->redis, "PUBLISH dns-query-channel %s", outnew);
+	freeReplyObject(data->reply);
+
+
+//	fprintf(stderr,"DNS: %s\n", outnew);
+
+	return 0;
+}
+
+
+void load_domainlist(plugin_data_t *data) {
     char line[MAX_LINE];
     char trimmed[MAX_LINE];
     DIR *listdir = 0;
@@ -247,16 +368,16 @@ void load_domainlist(const char *path, plugin_data_t *data) {
     data->domainlist = hashmap_new();
 
     // parse all files in directory
-    listdir = opendir(path);
+    listdir = opendir(data->listpath);
     if(!listdir) {
-        perror(path);
+        perror(data->listpath);
         exit(1); }
 
     // read file by file
     dp = readdir (listdir);
     while (dp) {
         char fullpath[MAX_LINE];
-        snprintf(fullpath,MAX_LINE,"%s/%s",path,dp->d_name);
+        snprintf(fullpath,MAX_LINE,"%s/%s",data->listpath,dp->d_name);
         // open and read line by line
         fp = fopen(fullpath,"r");
         if(!fp) {
