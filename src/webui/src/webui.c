@@ -192,7 +192,7 @@ int thing_show(struct http_request *req) {
     snprintf(line,ml,"SELECT * FROM found WHERE macaddr = '%s'",macaddr);
     
     // allocate output buffer
-    buf = kore_buf_create(mb);
+    buf = kore_buf_alloc(mb);
 
     // load template
     template_load
@@ -226,7 +226,7 @@ int things_list(struct http_request *req) {
 
     struct timespec when;
 
-    buf = kore_buf_create(mb);
+    buf = kore_buf_alloc(mb);
 
     if(!thing) thing = hashmap_new();
 

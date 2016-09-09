@@ -38,7 +38,7 @@ int welcome(struct http_request *req) {
     struct kore_buf *buf;
 
     // allocate output buffer
-    buf = kore_buf_create(1024*1000);
+    buf = kore_buf_alloc(1024*1000);
 
     // load template
     template_load
