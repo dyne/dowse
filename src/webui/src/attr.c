@@ -178,7 +178,7 @@ static void attrsetn_internal(attrlist_t al, const char *name, int safe_fl, cons
         return;
     }
     /* discard the old attribute values */
-    kore_mem_free(at->value);
+    kore_free(at->value);
     at->value=NULL;
     /* set the attribute */
     if(safe_fl) {
@@ -274,18 +274,18 @@ void attrfree(attrlist_t al)
     unsigned i;
     for(i=0;i<al->len;i++) {
         if(al->data[i].value)
-            kore_mem_free(al->data[i].value);
+            kore_free(al->data[i].value);
     }
-    if(al->data) kore_mem_free(al->data);
+    if(al->data) kore_free(al->data);
 }
 
 void namefree(void)
 {
     unsigned i;
     for(i=0;i<name_list.len;i++) {
-        kore_mem_free(name_list.data[i]);
+        kore_free(name_list.data[i]);
     }
-    kore_mem_free(name_list.data);
+    kore_free(name_list.data);
     name_list.data=NULL;
     name_list.len=0;
 }

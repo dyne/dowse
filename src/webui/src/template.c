@@ -186,7 +186,7 @@ void template_free(template_t *t) {
 		return; /* t=NULL then just leave */
 	for(curr=t->entry_list;curr;curr=next) {
 		next=curr->next;
-		kore_mem_free(curr);
+		kore_free(curr);
 	}
 //	free(t);
 }
