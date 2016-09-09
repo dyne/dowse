@@ -1,0 +1,89 @@
+#!/usr/bin/env python2
+# Copyright (c) 2016 Dyne.org Foundation
+# dowse.plugin is written and maintained by parazyd <parazyd@dyne.org>
+#
+# This file is part of Dowse <https://dowse.eu>
+#                            <https://github.com/dyne/dowse>
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+#
+# Dowse python module for netdata
+# depends on python-redis and python-hiredis
+
+import redis
+import time
+
+## server settings
+r = redis.StrictRedis(host='localhost', port=6379, db=0)
+p = r.pubsub()
+#p.subscribe('dns-query-channel', 'pgl-info-channel')
+p.subscribe('dns-query-channel')
+
+## domain groups
+groups = {}
+
+## TLDs
+tlds = {}
+
+## charts
+charttype = "stacked" # line|area|stacked
+grpschart = "CHART Dowse.groups 'domain groups' 'domain groups' 'times hit' Dowse %s" % (charttype)
+tldschart = "CHART Dowse.tlds 'TLDs hit' 'TLDs hit' 'TLDs hit' Dowse %s" % (charttype)
+
+def createCharts():
+    ## chart for the domain-list groups hit through Dowse
+    print(grpschart)
+    ## chart for the tld-s hit through Dowse
+    print(tldschart)
+
+def getData():
+    while True:
+        request = p.get_message()
+        if request:
+            message = str(request['data'])
+            #message = message[2:]
+            entry = message.split(",")
+
+            if len(entry) == 7:
+                tldEntry(entry[5][1:])
+                grpEntry(entry[6])
+            elif len(entry) == 6:
+                tldEntry(entry[5][1:])
+
+        #time.sleep(0.5)
+        time.sleep(1) # consider switching back to 0.5,  it's not as heavy as it seems
+
+def tldEntry(tld):
+    try:
+        tlds[tld] += 1
+        print("BEGIN Dowse.tlds\nSET tld_hits_%s = %s\nEND" % (tld, str(tlds[tld])))
+    except KeyError:
+        tlds[tld] = 1
+        print("%s\nDIMENSION tld_hits_%s %s absolute 1 1" % (tldschart, tld, tld))
+        print("BEGIN Dowse.tlds\nSET tld_hits_%s = %s\nEND" % (tld, str(tlds[tld])))
+
+def grpEntry(grp):
+    try:
+        groups[grp] += 1
+        print("BEGIN Dowse.groups\nSET group_hits_%s = %s\nEND" % (grp, str(groups[grp])))
+    except KeyError:
+        groups[grp] = 1
+        print("%s\nDIMENSION grp_hits_%s %s absolute 1 1" % (grpschart, grp, grp))
+        print("BEGIN Dowse.groups\nSET group_hits_%s = %s\nEND" % (grp, str(groups[grp])))
+
+def main():
+    createCharts()
+    getData()
+
+main()
