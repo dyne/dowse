@@ -202,11 +202,10 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// publish info to redis channel
 	publish_query(data);
 
-
 	// resolve locally leased hostnames
 	data->reply = redisCommand(data->redis, "GET dns-lease-%s", data->query);
 	if(data->reply->len) { // it exists, return that
-		fprintf(stderr,"lease found: %s\n", data->reply->str);
+		fprintf(stderr,"local lease found: %s\n", data->reply->str);
 		ldns_pkt *answer_pkt = NULL;
 		size_t answer_size = 0;
 		ldns_status status;
@@ -227,7 +226,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 		// TODO: optimise by avoiding the string parsing and creating the rdf manually
         //	i.e.	ldns_rr_set_rdf(answer_an_rr, answer_an_rdf, 0U);
-		snprintf(tmprr, 1024, "%s 1200 IN A %s", data->query, data->reply->str);
+		snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
 		ldns_rr_new_frm_str(&answer_an_rr, tmprr, 0, NULL, NULL); 
 		freeReplyObject(data->reply);		// we can free redis here
 		
@@ -239,6 +238,8 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 		ldns_pkt_set_qr(answer_pkt, 1);
 		ldns_pkt_set_aa(answer_pkt, 1);
+		ldns_pkt_set_ad(answer_pkt, 0);
+
 		ldns_pkt_set_id(answer_pkt, ldns_pkt_id(packet));
 
 		ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_QUESTION,   answer_qr);
