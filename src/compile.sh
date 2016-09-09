@@ -46,20 +46,29 @@ case $1 in
         popd
         ;;
 
-    webui)
-        pushd $R/src/webui
-        $R/build/bin/kore build
-        popd
-        ;;
-
+	# first kore, then webui (which is built with kore)
     kore)
         [[ -x $R/build/kore ]] || {
             pushd $R/src/kore
             make NOTLS=1 DEBUG=1
-            install -s -p kore $R/build/bin
             popd
         }
         ;;
+    webui)
+        pushd $R/src/webui
+		notice "Generating WebUI configuration"
+		act "chroot: $HOME/.dowse"
+		act "uid:    $USER"
+		cat <<EOF > conf/webui.conf
+chroot    $HOME/.dowse
+runas     $USER
+EOF
+		cat conf/webui.conf.dist >> conf/webui.conf
+        $R/src/kore/kore build
+		install -s -p webui $R/build/bin
+        popd
+        ;;
+
     netdata)
         [[ -x $R/build/netdata ]] || {
             pushd $R/src/netdata

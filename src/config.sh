@@ -61,11 +61,10 @@ execrules=(
     arp          user
     ip           user
     netdata      user
-    webui        user
     webdis       user
-    kore         user
 	seccrond     user
 
+    webui         root
     dnscrypt-proxy root
 	tinyproxy     root
     dnsmasq       root
@@ -97,9 +96,8 @@ execmap=(
     redis-server  $PREFIX/bin/redis-server
 	tinyproxy     $PREFIX/bin/tinyproxy
     netdata       $PREFIX/bin/netdata
-    webui         $PREFIX/bin/kore
+    webui         $PREFIX/bin/webui
     webdis        $PREFIX/bin/webdis
-    kore          $PREFIX/bin/kore
 	seccrond      $PREFIX/bin/seccrond
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi

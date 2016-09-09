@@ -1,0 +1,25 @@
+# webui conf
+# requires kore build with NOTLS=1
+
+bind		127.0.0.1 29100
+pidfile     /run/webui.pid
+
+# added by compile.sh:
+# chroot    $H
+# runas		$dowse_uid
+
+validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
+
+domain 127.0.0.1 {
+    static  /                   welcome
+    static  /index              welcome
+    static  /logo.png           logo
+    static  /bootstrap.min.css  bootstrap_css
+
+	static	   /things/all      things_list
+    static     /things          thing_show
+	params get /things {
+		validate	macaddr		v_macaddr
+	}
+# 	accesslog		/dev/null
+}

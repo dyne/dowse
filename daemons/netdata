@@ -53,8 +53,9 @@ netdata-exec() {
     freq=($conf)
     ckreq || return $?
 
-	# check if required reg dir exists
+	# check if required dirs exist
 	mkdir -p $H/lib/netdata/registry
+	mkdir -p $H/cache/netdata
 
     ztmp
     launch netdata -P $ztmpfile -c $conf -p 29999
