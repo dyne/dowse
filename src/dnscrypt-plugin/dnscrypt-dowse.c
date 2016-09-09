@@ -59,6 +59,13 @@ DCPLUGIN_MAIN(__FILE__);
 #define MAX_LINE 512
 
 typedef struct {
+	/////////
+	// flags
+	int caching;
+
+	////////
+	// data
+
 	char query[MAX_QUERY]; // incoming query
 	char domain[MAX_DOMAIN]; // domain part parsed (2nd last dot)
 	char tld[MAX_TLD]; // tld (domain extension, 1st dot)
@@ -95,7 +102,7 @@ const char * dcplugin_long_description(DCPlugin * const dcplugin) {
 }
 
 int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
-
+	int i;
 	plugin_data_t *data = malloc(sizeof(plugin_data_t));
 	memset(data, 0x0, sizeof(plugin_data_t));
 
@@ -108,9 +115,18 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	}
 
 	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
-	data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
 
 	// TODO: check succesful result
+
+	data->cache = NULL;
+	data->caching=0;
+	for(i=0; i<argc; i++) {
+		fprintf(stderr,"%u arg: %s\n", i, argv[i]);
+
+		if( strncmp(argv[i], "cache", 5) == 0) data->caching=5;
+		data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
+
+	}
 
 	dcplugin_set_user_data(dcplugin, data);
 
@@ -127,7 +143,7 @@ dcplugin_destroy(DCPlugin * const dcplugin)
 	hashmap_free(data->domainlist);
 
 	redisFree(data->redis);
-	redisFree(data->cache);
+	if(data->cache) redisFree(data->cache);
 
 	return 0;
 }
@@ -145,12 +161,11 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
-	// check if there is a cache hit
 	wire = dcplugin_get_wire_data(dcp_packet);
 	wirelen = dcplugin_get_wire_data_len(dcp_packet);
 	// enforce max dns query size
 	if(wirelen > MAX_DNS) return DCP_SYNC_FILTER_RESULT_KILL;
-		
+
 //	fprintf(stderr,"%u bytes received as dns wire request\n", wirelen);
 
 	// import the wire packet to ldns format
@@ -182,23 +197,23 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 //	fprintf(stderr,"%s - query contained this question\n", data->query);
 
+	if(data->cache) {
+		// check if the answer is cached (the key is the domain string)
+		data->reply = redisCommand(data->cache, "GET dns_cache_%s", data->query);
+		if(data->reply->len) { // it exists in cache, return that
+//      fprintf(stderr,"%u bytes cache hit!\n", data->reply->len);
+			// TODO: a bit dangerous, working directly on the wire packet
 
-	// check if the answer is cached (the key is the domain string)
-	data->reply = redisCommand(data->cache, "GET dns_cache_%s", data->query);
-	if(data->reply->len) { // it exists in cache, return that
-//		fprintf(stderr,"%u bytes cache hit!\n", data->reply->len);
-		// TODO: a bit dangerous, working directly on the wire packet
+			// copy message ID (first 16 bits)
+			data->reply->str[0] = wire[0];
+			data->reply->str[1] = wire[1];
 
-		// copy message ID (first 16 bits)
-		data->reply->str[0] = wire[0];
-		data->reply->str[1] = wire[1];
-
-		dcplugin_set_wire_data(dcp_packet, data->reply->str, data->reply->len);
-		freeReplyObject(data->reply);
-		return DCP_SYNC_FILTER_RESULT_DIRECT;
-	} else
-		freeReplyObject(data->reply);
-
+			dcplugin_set_wire_data(dcp_packet, data->reply->str, data->reply->len);
+			freeReplyObject(data->reply);
+			return DCP_SYNC_FILTER_RESULT_DIRECT;
+		} else
+			freeReplyObject(data->reply);
+	}
 
 	// if(from_sa->ss_family == AF_PACKET) { // if contains mac address
 	// 	char *p = ((struct sockaddr_ll*) from_sa)->sll_addr;
@@ -206,8 +221,8 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// 	         p[0], p[1], p[2], p[3], p[4], p[5]);
 	// 	// this is here as a pro-memoria, since we never get AF_P
 
-	dcplugin_set_user_data(dcplugin, data);
-	
+	// dcplugin_set_user_data(dcplugin, data);
+
 	return DCP_SYNC_FILTER_RESULT_OK;
 }
 
@@ -218,20 +233,22 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	uint8_t *wire;
 	size_t wirelen;
 
-	wire = dcplugin_get_wire_data(dcp_packet);
-	wirelen = dcplugin_get_wire_data_len(dcp_packet);
-
-//	fprintf(stderr,"%u bytes reply from dnscrypt received\n", wirelen);
-
 	data = dcplugin_get_user_data(dcplugin);
 
-	// check if the query is cached
-	data->reply = redisCommand(data->cache, "SET dns_cache_%s %b", data->query, wire, wirelen);
-	// TODO: check reply
-	freeReplyObject(data->reply);
-	data->reply = redisCommand(data->redis, "EXPIRE dns_cache_%s %u", data->query, 5); // DNS_HIT_EXPIRE
-	freeReplyObject(data->reply);
+	if(data->cache) {
+		wire = dcplugin_get_wire_data(dcp_packet);
+		wirelen = dcplugin_get_wire_data_len(dcp_packet);
 
+//  fprintf(stderr,"%u bytes reply from dnscrypt received\n", wirelen);
+
+
+		// check if the query is cached
+		data->reply = redisCommand(data->cache, "SET dns_cache_%s %b", data->query, wire, wirelen);
+		// TODO: check reply
+		freeReplyObject(data->reply);
+		data->reply = redisCommand(data->cache, "EXPIRE dns_cache_%s %u", data->query, data->caching); // DNS_HIT_EXPIRE
+		freeReplyObject(data->reply);
+	}
 
 #if 0
 	// test print out ip from packet
