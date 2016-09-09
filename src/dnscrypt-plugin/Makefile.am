@@ -8,7 +8,7 @@ dnscrypt_dowse_la_SOURCES = dnscrypt-dowse.c hashmap.c
 
 dnscrypt_dowse_la_LIBADD = ../redis.o @LDNS_LIBS@ -lhiredis -ljemalloc
 
-dnscrypt_dowse_la_CFLAGS = -I../dnscrypt-proxy/src/include -I..
+dnscrypt_dowse_la_CFLAGS = -Os -Wall -I../dnscrypt-proxy/src/include -I..
 
 dnscrypt_dowse_la_LDFLAGS = $(AM_LDFLAGS) \
 -avoid-version \
