@@ -91,6 +91,8 @@ int free_domainlist_f(any_t arg, any_t element);
 char *extract_domain(plugin_data_t *data);
 int publish_query(plugin_data_t *data);
 
+
+
 const char * dcplugin_description(DCPlugin * const dcplugin) {
 	return "Dowse plugin to filter dnscrypt queries";
 }
@@ -156,8 +158,10 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	size_t wirelen;
 
 	ldns_pkt *packet = NULL;
-	ldns_rr  *question;
-	char     *resolved;
+	ldns_rr_list *question_rr_list;
+	ldns_rr  *question_rr;
+	ldns_rdf *question_owner;
+	char     *question_str;
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
@@ -170,21 +174,24 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// import the wire packet to ldns format
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
-		return DCP_SYNC_FILTER_RESULT_ERROR;
+		return DCP_SYNC_FILTER_RESULT_FATAL;
 
-	// retrieve the actual question (first in list)
+	// retrieve the actual question string 
+	question_rr_list  = ldns_pkt_question(packet);
+	question_rr       = ldns_rr_list_rr(question_rr_list, 0U); // first in list)
+	question_owner    = ldns_rr_owner(question_rr);
+	question_str      = ldns_rdf2str(question_owner);
 	// TODO: check if we need to query for more questions here
-	question = ldns_rr_list_rr(ldns_pkt_question(packet), 0U);
-	if ((resolved = ldns_rdf2str(ldns_rr_owner(question))) == NULL)
+
+	if (question_str == NULL)
 		// this may be to drastic as FATAL? change if problems occur
-		return DCP_SYNC_FILTER_RESULT_ERROR;
+		return DCP_SYNC_FILTER_RESULT_FATAL;
 
 
 	// save the query
-	strncpy(data->query, resolved, MAX_QUERY);
+	strncpy(data->query, question_str, MAX_QUERY);
 	data->query[strlen(data->query)-1] = '\0'; // eliminate terminating dot
 
-	ldns_pkt_free(packet);
 
 	// get the source ip
 	from_sa = dcplugin_get_client_address(dcp_packet);
@@ -194,6 +201,69 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// publish info to redis channel
 	publish_query(data);
+
+
+	// resolve locally leased hostnames
+	data->reply = redisCommand(data->redis, "GET dns-lease-%s", data->query);
+	if(data->reply->len) { // it exists, return that
+		fprintf(stderr,"lease found: %s\n", data->reply->str);
+		ldns_pkt *answer_pkt = NULL;
+		size_t answer_size = 0;
+		ldns_status status;
+		uint8_t *outbuf = NULL;
+		ldns_rr_list *answer_qr;
+		ldns_rr_list *answer_an;
+		ldns_rr *answer_an_rr;
+		char tmprr[1024];
+
+		// clone the question_rr in answer_qr
+		answer_qr = ldns_rr_list_new();
+		ldns_rr_list_push_rr(answer_qr, ldns_rr_clone(question_rr));
+
+		// create the answer_an rr_list
+		answer_an = ldns_rr_list_new();
+		// answer_an_rdf = ldns_rdf_new_frm_str // makes a copy of data buffer
+		// 	(LDNS_RDF_TYPE_A, data->reply->str);
+
+		// TODO: optimise by avoiding the string parsing and creating the rdf manually
+        //	i.e.	ldns_rr_set_rdf(answer_an_rr, answer_an_rdf, 0U);
+		snprintf(tmprr, 1024, "%s 1200 IN A %s", data->query, data->reply->str);
+		ldns_rr_new_frm_str(&answer_an_rr, tmprr, 0, NULL, NULL); 
+		freeReplyObject(data->reply);		// we can free redis here
+		
+
+		ldns_rr_list_push_rr(answer_an, answer_an_rr);
+
+		// create the packet and empty fields
+		answer_pkt = ldns_pkt_new();
+
+		ldns_pkt_set_qr(answer_pkt, 1);
+		ldns_pkt_set_aa(answer_pkt, 1);
+		ldns_pkt_set_id(answer_pkt, ldns_pkt_id(packet));
+
+		ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_QUESTION,   answer_qr);
+		ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_ANSWER,     answer_an);
+
+		// render the packet into wire format (outbuf is saved with a memcpy)
+		status = ldns_pkt2wire(&outbuf, answer_pkt, &answer_size);
+
+		// free all the packet structure here, outbuf is the wire format result
+		ldns_pkt_free(answer_pkt);
+
+		if (status != LDNS_STATUS_OK) {
+			fprintf(stderr,"Error resolving lease: %s\n",
+			        ldns_get_errorstr_by_id(status));
+			return DCP_SYNC_FILTER_RESULT_FATAL; }
+
+		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+
+		if(outbuf) LDNS_FREE(outbuf);
+		return DCP_SYNC_FILTER_RESULT_DIRECT;
+	}
+
+	// free the buffers here in any case
+	freeReplyObject(data->reply);
+	ldns_pkt_free(packet);
 
 //	fprintf(stderr,"%s - query contained this question\n", data->query);
 
