@@ -1,8 +1,8 @@
 # webui conf
 # requires kore build with NOTLS=1
 
-bind		127.0.0.1 29100
-pidfile     /run/webui.pid
+bind		0 80
+pidfile     /var/run/dowse.pid
 
 # added by compile.sh:
 # chroot    $H
@@ -10,7 +10,7 @@ pidfile     /run/webui.pid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
-domain 127.0.0.1 {
+domain * {
     static  /                   welcome
     static  /index              welcome
     static  /logo.png           logo

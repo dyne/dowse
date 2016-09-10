@@ -116,7 +116,7 @@ source $R/daemons/netdata
 source $R/daemons/pgld
 source $R/daemons/redis
 source $R/daemons/seccrond
-source $R/daemons/tinyproxy
+# source $R/daemons/tinyproxy
 source $R/daemons/tor
 source $R/daemons/webui
 source $R/daemons/webdis
@@ -303,7 +303,7 @@ dowse-start() {
     start webui
 
 	# start the reverse proxy
-	start tinyproxy-reverse
+	# start tinyproxy-reverse
 
 	start seccrond
 
@@ -317,7 +317,7 @@ dowse-stop() {
 
 	stop seccrond
 
-	stop tinyproxy-reverse
+	# stop tinyproxy-reverse
 
     stop webui
 
