@@ -1,44 +1,28 @@
 #!/usr/bin/zsh
 
 webui-conf() {
-    cat << EOF
-bind		127.0.0.1 29100
-# load		$R/webui/webui.so
-pidfile     $H/run/webui.pid
-chroot      $H
-runas		$dowse_uid
-
-validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
-
-domain 127.0.0.1 {
-    static  /                   welcome
-    static  /index              welcome
-    static  /logo.png           logo
-    static  /bootstrap.min.css  bootstrap_css
-
-	static	   /things/all      things_list
-    static     /things          thing_show
-	params get /things {
-		validate	macaddr		v_macaddr
-	}
-	accesslog		$H/log/webui_access.log
-}
-EOF
+	# see: src/webui/conf/webui.conf.dist
+	# conf is there because built-in at compile time
 }
 
 webui-exec() {
     fn webui-exec $*
-    req=(conf)
-    freq=($conf)
-    ckreq || return $?
+    # req=(conf)
+    # freq=($conf)
+    # ckreq || return $?
 
+	func "launching webui on $hostname.$lan"
     # TODO: chroot and drop privs
     # https://github.com/jorisvink/kore/issues/123
     if [[ $DEBUG = 1 ]]; then
-        launch  webui -n -r -f -d
+		hostname=$hostname \
+				domain=$lan \
+				launch  webui -n -r -f -d
     else
-        launch  webui
-        savepid webui $H/run/webui.pid
+		hostname=$hostname \
+				domain=$lan \
+				launch  webui
+        savepid webui /var/run/dowse.pid
     fi
 }
 

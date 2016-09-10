@@ -45,6 +45,16 @@ int welcome(struct http_request *req) {
         (asset_welcome_html, asset_len_welcome_html, &tmpl);
     attributes = attrinit();
 
+    char *hostname = getenv("hostname");
+    if(!hostname) hostname = "dowse";
+    char *domain = getenv("domain");
+    if(!domain) domain = "dowse.it";
+
+    // TODO: reflect configuration
+    attrset(attributes, "hostname", hostname);
+    attrset(attributes, "domain",   domain);
+
+
     // TODO: space to set stuff in the welcome page here
 
     template_apply(&tmpl,attributes,buf);
