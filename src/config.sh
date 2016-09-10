@@ -66,7 +66,6 @@ execrules=(
 
     webui         root
     dnscrypt-proxy root
-	tinyproxy     root
     dnsmasq       root
     ifconfig      root
     route         root

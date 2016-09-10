@@ -23,15 +23,6 @@ LDFLAGS="-fPIC -fPIE -pie"
 notice "Compiling $1"
 
 case $1 in
-	tinyproxy)
-		pushd $R/src/tinyproxy
-		CFLAGS="$CFLAGS" \
-			  ./configure --enable-reverse --enable-transparent
-		make -C src -f Makefile.gnu
-        install -s -p src/tinyproxy $R/build/bin
-		popd
-		;;
-
     seccrond)
         pushd $R/src/seccrond
         CFLAGS="$CFLAGS" make
