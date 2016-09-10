@@ -7,34 +7,42 @@ dnscrypt-proxy-conf() {
 	for i in ${(f)"$(cat $H/run/leases)"}; do
 		leases+="SET dns-lease-${i[(w)4]} ${i[(w)3]}\n"
 	done
+	leases+="SET dns-lease-${hostname} ${lan}"
+	leases+="SET dns-lease-gateway ${wan}"
 	print $leases | redis dynamic > /dev/null
 }
 
 dnscrypt-proxy-exec() {
-    fn dnscrypt-exec
+
+	args=""
+	[[ $* =~ cache ]] && args+=",cache"
 
 	func "Launching dnscrypt-proxy to listen on port 53"
 
     if [[ $DEBUG = 1 ]]; then
 		DOWSE_DOMAINLIST=$HOME/devel/dowse/src/domain-list/data \
+						hostname=$hostname \
+						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
 						-l $H/log/dnscrypt.log \
 						-r "176.56.237.171:443" \
 						-k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
 						-N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
-						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so \
+						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
 						-m 7 -u $dowse_uid # log level informational (7 for debug)
 		return $?
 
     else
 		ztmp
 		DOWSE_DOMAINLIST=$R/domain-list/data \
+						hostname=$hostname \
+						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
 						-p $ztmpfile -l $H/log/dnscrypt.log \
 						-r "176.56.237.171:443" \
 						-k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
 						-N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
-						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so \
+						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
 						-d -m 4 -u $dowse_uid # log only warning conditions
 
     fi

@@ -270,7 +270,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	if(data->cache) {
 		// check if the answer is cached (the key is the domain string)
-		data->reply = redisCommand(data->cache, "GET dns_cache_%s", data->query);
+		data->reply = redisCommand(data->cache, "GET dns-cache-%s", data->query);
 		if(data->reply->len) { // it exists in cache, return that
 //      fprintf(stderr,"%u bytes cache hit!\n", data->reply->len);
 			// TODO: a bit dangerous, working directly on the wire packet
@@ -314,11 +314,11 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 
 
 		// check if the query is cached
-		data->reply = redisCommand(data->cache, "SET dns_cache_%s %b", data->query, wire, wirelen);
+		data->reply = redisCommand(data->cache, "SETEX dns-cache-%s %u %b", data->query, data->caching, wire, wirelen);
 		// TODO: check reply
 		freeReplyObject(data->reply);
-		data->reply = redisCommand(data->cache, "EXPIRE dns_cache_%s %u", data->query, data->caching); // DNS_HIT_EXPIRE
-		freeReplyObject(data->reply);
+		// data->reply = redisCommand(data->cache, "EXPIRE dns_cache_%s %u", data->query, data->caching); // DNS_HIT_EXPIRE
+		// freeReplyObject(data->reply);
 	}
 
 #if 0
