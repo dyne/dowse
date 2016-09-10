@@ -51,11 +51,15 @@ launch() {
 start() {
     fn start $*
     _daemon="$1"
-    conf=${2:-$H/run/$_daemon.conf}
 
     shift
+
     req=(_daemon)
     ckreq || return $?
+
+	args="$*"
+
+    conf=$H/run/$_daemon.conf
 
 	# TODO: check if already running
     _pid=`getpid $_daemon`
@@ -80,7 +84,8 @@ start() {
 
     if command -v $_daemon-exec > /dev/null; then
         # we preload jemalloc for better memory handling
-        LD_PRELOAD=${execmap[libjemalloc]} $_daemon-exec $execpath
+		func "$_daemon-exec $args"
+        LD_PRELOAD=${execmap[libjemalloc]} $_daemon-exec $args
         return $?
     else
         warning "daemon executable not found: $execpath"
