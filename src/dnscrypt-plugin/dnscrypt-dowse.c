@@ -49,7 +49,7 @@ DCPLUGIN_MAIN(__FILE__);
 #define DNS_HIT_EXPIRE 21600
 
 // expiration in seconds for the cache on dns replies
-#define DNS_CACHE_EXPIRE 5
+#define DNS_CACHE_EXPIRE 60
 
 #define MAX_QUERY 512
 #define MAX_DOMAIN 256
@@ -57,6 +57,11 @@ DCPLUGIN_MAIN(__FILE__);
 #define MAX_DNS 512  // RFC 6891
 
 #define MAX_LINE 512
+
+// ldns/error.h
+void warning(const char *fmt, ...);
+void    error(const char *fmt, ...);
+void    mesg(const char *fmt, ...);
 
 typedef struct {
 	/////////
@@ -152,7 +157,7 @@ dcplugin_destroy(DCPlugin * const dcplugin)
 
 DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDNSPacket *dcp_packet) {
 
-    struct sockaddr_storage *from_sa;
+	struct sockaddr_storage *from_sa;
 	socklen_t from_len;
 	uint8_t* wire;
 	size_t wirelen;
@@ -160,8 +165,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	ldns_pkt *packet = NULL;
 	ldns_rr_list *question_rr_list;
 	ldns_rr  *question_rr;
-	ldns_rdf *question_owner;
-	char     *question_str;
+	ldns_rdf *question_rdf;
+	char     question_str[MAX_QUERY];
+	int      question_len;
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
@@ -170,28 +176,134 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// enforce max dns query size
 	if(wirelen > MAX_DNS) return DCP_SYNC_FILTER_RESULT_KILL;
 
-//	fprintf(stderr,"%u bytes received as dns wire request\n", wirelen);
+//  fprintf(stderr,"%u bytes received as dns wire request\n", wirelen);
 
 	// import the wire packet to ldns format
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
 		return DCP_SYNC_FILTER_RESULT_FATAL;
 
-	// retrieve the actual question string 
+	// debug
+	fprintf(stderr,"-- packet received:\n");
+	ldns_pkt_print(stderr, packet);
+	fprintf(stderr,"-- \n");
+
+	// retrieve the actual question string
 	question_rr_list  = ldns_pkt_question(packet);
 	question_rr       = ldns_rr_list_rr(question_rr_list, 0U); // first in list)
-	question_owner    = ldns_rr_owner(question_rr);
-	question_str      = ldns_rdf2str(question_owner);
+	question_rdf      = ldns_rr_owner(question_rr);
+	snprintf(question_str, MAX_QUERY, "%s", ldns_rdf2str(question_rdf));
+	// TODO: this needs a free(question_str)
+	question_len      = strlen(question_str);
 	// TODO: check if we need to query for more questions here
 
-	if (question_str == NULL)
+	if (question_len == 0)
 		// this may be to drastic as FATAL? change if problems occur
 		return DCP_SYNC_FILTER_RESULT_FATAL;
 
+	// debug
+	fprintf(stderr,"%s (%u, last: '%c')\n", question_str, question_len,
+	        question_str[question_len-1]);
 
-	// save the query
+	/////////////////////////////////////
+	// resolve reverse ip to domain (PTR)
+	///
+	if(question_str[question_len-1] == '.') { // .arpa. query?
+		if(question_str[question_len-5] == 'a' &&
+		   question_str[question_len-4] == 'r' &&
+		   question_str[question_len-3] == 'p' &&
+		   question_str[question_len-2] == 'a') {
+			// TODO: shall we check for .in.addr? (RFC?)
+			// this is now considered a reverse call
+			ldns_rdf    *tmpname, *reverse;
+			char reverse_str[MAX_QUERY];
+			// import in ldns dname format
+			tmpname = ldns_dname_new_frm_str(question_str);
+			if (ldns_rdf_get_type(tmpname) != LDNS_RDF_TYPE_DNAME) {
+				fprintf(stderr, "dropped packet: .arpa address is not dname\n");
+				return DCP_SYNC_FILTER_RESULT_FATAL; }
+
+			// reverse the domain
+			reverse = ldns_dname_reverse(tmpname);
+			// chop left twice (lazy with ldns, TODO: optimise)
+			ldns_rdf_deep_free(tmpname);
+			tmpname = ldns_dname_left_chop((const ldns_rdf*)reverse);
+			ldns_rdf_deep_free(reverse);
+			reverse = ldns_dname_left_chop(tmpname);
+			ldns_rdf_deep_free(tmpname);
+
+			snprintf(reverse_str, MAX_QUERY, "%s", ldns_rdf2str(reverse));
+			// debug
+			fprintf(stderr, "reverse: %s\n", reverse_str);
+			// TODO: lookup dns-reverse in redis dynamic
+
+			// resolve locally leased hostnames with a O(1) operation on redis
+			data->reply = redisCommand(data->redis, "GET dns-reverse-%s", reverse_str);
+			fprintf(stderr,"QUA: %s\n", data->reply->str);
+
+			if(data->reply->len) { // it exists, return that
+				ldns_pkt *answer_pkt = NULL;
+				size_t answer_size = 0;
+				ldns_status status;
+				uint8_t *outbuf = NULL;
+				ldns_rr_list *answer_qr;
+				ldns_rr_list *answer_an;
+				ldns_rr *answer_an_rr;
+				char tmprr[1024];
+
+				fprintf(stderr, "found local reverse: %s\n", data->reply->str);
+				// clone the question_rr in answer_qr
+				answer_qr = ldns_rr_list_new();
+				ldns_rr_list_push_rr(answer_qr, ldns_rr_clone(question_rr));
+
+				// create the answer_an rr_list
+				answer_an = ldns_rr_list_new();
+				// answer_an_rdf = ldns_rdf_new_frm_str // makes a copy of data buffer
+				//  (LDNS_RDF_TYPE_A, data->reply->str);
+
+				// TODO: optimise by avoiding the string parsing and creating the rdf manually
+				//  i.e.    ldns_rr_set_rdf(answer_an_rr, answer_an_rdf, 0U);
+				snprintf(tmprr, 1024, "%s 0 IN PTR %s.", question_str, data->reply->str);
+				ldns_rr_new_frm_str(&answer_an_rr, tmprr, 0, NULL, NULL);
+				freeReplyObject(data->reply);       // we can free redis here
+
+
+				ldns_rr_list_push_rr(answer_an, answer_an_rr);
+
+				// create the packet and empty fields
+				answer_pkt = ldns_pkt_new();
+
+				ldns_pkt_set_qr(answer_pkt, 1);
+				ldns_pkt_set_aa(answer_pkt, 1);
+				ldns_pkt_set_ad(answer_pkt, 0);
+
+				ldns_pkt_set_id(answer_pkt, ldns_pkt_id(packet));
+
+				ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_QUESTION,   answer_qr);
+				ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_ANSWER,     answer_an);
+
+				// render the packet into wire format (outbuf is saved with a memcpy)
+				status = ldns_pkt2wire(&outbuf, answer_pkt, &answer_size);
+
+				// free all the packet structure here, outbuf is the wire format result
+				ldns_pkt_free(answer_pkt);
+
+				if (status != LDNS_STATUS_OK) {
+					fprintf(stderr,"Error resolving lease: %s\n",
+					        ldns_get_errorstr_by_id(status));
+					return DCP_SYNC_FILTER_RESULT_FATAL; }
+
+				dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+
+				if(outbuf) LDNS_FREE(outbuf);
+				return DCP_SYNC_FILTER_RESULT_DIRECT;
+			}
+
+		}
+	}
+
+	// save the query string in the user plugin_data structure
 	strncpy(data->query, question_str, MAX_QUERY);
 	data->query[strlen(data->query)-1] = '\0'; // eliminate terminating dot
-
 
 	// get the source ip
 	from_sa = dcplugin_get_client_address(dcp_packet);
@@ -202,7 +314,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// publish info to redis channel
 	publish_query(data);
 
-	// resolve locally leased hostnames
+	// resolve locally leased hostnames with a O(1) operation on redis
 	data->reply = redisCommand(data->redis, "GET dns-lease-%s", data->query);
 	if(data->reply->len) { // it exists, return that
 		fprintf(stderr,"local lease found: %s\n", data->reply->str);
@@ -222,14 +334,14 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		// create the answer_an rr_list
 		answer_an = ldns_rr_list_new();
 		// answer_an_rdf = ldns_rdf_new_frm_str // makes a copy of data buffer
-		// 	(LDNS_RDF_TYPE_A, data->reply->str);
+		//  (LDNS_RDF_TYPE_A, data->reply->str);
 
 		// TODO: optimise by avoiding the string parsing and creating the rdf manually
-        //	i.e.	ldns_rr_set_rdf(answer_an_rr, answer_an_rdf, 0U);
+		//  i.e.    ldns_rr_set_rdf(answer_an_rr, answer_an_rdf, 0U);
 		snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
-		ldns_rr_new_frm_str(&answer_an_rr, tmprr, 0, NULL, NULL); 
-		freeReplyObject(data->reply);		// we can free redis here
-		
+		ldns_rr_new_frm_str(&answer_an_rr, tmprr, 0, NULL, NULL);
+		freeReplyObject(data->reply);       // we can free redis here
+
 
 		ldns_rr_list_push_rr(answer_an, answer_an_rr);
 
@@ -266,7 +378,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	freeReplyObject(data->reply);
 	ldns_pkt_free(packet);
 
-//	fprintf(stderr,"%s - query contained this question\n", data->query);
+//  fprintf(stderr,"%s - query contained this question\n", data->query);
 
 	if(data->cache) {
 		// check if the answer is cached (the key is the domain string)
@@ -287,10 +399,10 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	}
 
 	// if(from_sa->ss_family == AF_PACKET) { // if contains mac address
-	// 	char *p = ((struct sockaddr_ll*) from_sa)->sll_addr;
-	// 	snprintf(data->mac, 32, "%02x:%02x:%02x:%02x:%02x:%02x",
-	// 	         p[0], p[1], p[2], p[3], p[4], p[5]);
-	// 	// this is here as a pro-memoria, since we never get AF_P
+	//  char *p = ((struct sockaddr_ll*) from_sa)->sll_addr;
+	//  snprintf(data->mac, 32, "%02x:%02x:%02x:%02x:%02x:%02x",
+	//           p[0], p[1], p[2], p[3], p[4], p[5]);
+	//  // this is here as a pro-memoria, since we never get AF_P
 
 	// dcplugin_set_user_data(dcplugin, data);
 
@@ -430,50 +542,50 @@ int publish_query(plugin_data_t *data) {
 	freeReplyObject(data->reply);
 
 
-//	fprintf(stderr,"DNS: %s\n", outnew);
+//  fprintf(stderr,"DNS: %s\n", outnew);
 
 	return 0;
 }
 
 
 void load_domainlist(plugin_data_t *data) {
-    char line[MAX_LINE];
-    char trimmed[MAX_LINE];
-    DIR *listdir = 0;
-    struct dirent *dp;
-    FILE *fp;
+	char line[MAX_LINE];
+	char trimmed[MAX_LINE];
+	DIR *listdir = 0;
+	struct dirent *dp;
+	FILE *fp;
 
-    data->domainlist = hashmap_new();
+	data->domainlist = hashmap_new();
 
-    // parse all files in directory
-    listdir = opendir(data->listpath);
-    if(!listdir) {
-        perror(data->listpath);
-        exit(1); }
+	// parse all files in directory
+	listdir = opendir(data->listpath);
+	if(!listdir) {
+		perror(data->listpath);
+		exit(1); }
 
-    // read file by file
-    dp = readdir (listdir);
-    while (dp) {
-        char fullpath[MAX_LINE];
-        snprintf(fullpath,MAX_LINE,"%s/%s",data->listpath,dp->d_name);
-        // open and read line by line
-        fp = fopen(fullpath,"r");
-        if(!fp) {
-            perror(fullpath);
-            continue; }
-        while(fgets(line,MAX_LINE, fp)) {
-            // save lines in hashmap with filename as value
-            if(line[0]=='#') continue; // skip comments
-            trim(trimmed, strlen(line), line);
-            if(trimmed[0]=='\0') continue; // skip blank lines
-            // logerr("(%u) %s\t%s", trimmed[0], trimmed, dp->d_name);
-            hashmap_put(data->domainlist, strdup(trimmed), strdup(dp->d_name));
-        }
-        fclose(fp);
-        dp = readdir (listdir);
-    }
-    closedir(listdir);
-    fprintf(stderr,"size of parsed domain-list: %u\n", hashmap_length(data->domainlist));
+	// read file by file
+	dp = readdir (listdir);
+	while (dp) {
+		char fullpath[MAX_LINE];
+		snprintf(fullpath,MAX_LINE,"%s/%s",data->listpath,dp->d_name);
+		// open and read line by line
+		fp = fopen(fullpath,"r");
+		if(!fp) {
+			perror(fullpath);
+			continue; }
+		while(fgets(line,MAX_LINE, fp)) {
+			// save lines in hashmap with filename as value
+			if(line[0]=='#') continue; // skip comments
+			trim(trimmed, strlen(line), line);
+			if(trimmed[0]=='\0') continue; // skip blank lines
+			// logerr("(%u) %s\t%s", trimmed[0], trimmed, dp->d_name);
+			hashmap_put(data->domainlist, strdup(trimmed), strdup(dp->d_name));
+		}
+		fclose(fp);
+		dp = readdir (listdir);
+	}
+	closedir(listdir);
+	fprintf(stderr,"size of parsed domain-list: %u\n", hashmap_length(data->domainlist));
 }
 
 
@@ -484,42 +596,42 @@ int free_domainlist_f(any_t arg, any_t element) {
 
 
 char *extract_domain(plugin_data_t *data) {
-    // extracts the last two or three strings of a dotted domain string
+	// extracts the last two or three strings of a dotted domain string
 
-    int c;
-    int dots = 0;
-    int first = 1;
-    char *last;
-    int positions = 2; // minimum, can become three if sld too short
-    int len;
-    char address[MAX_QUERY];
+	int c;
+	int dots = 0;
+	int first = 1;
+	char *last;
+	int positions = 2; // minimum, can become three if sld too short
+	int len;
+	char address[MAX_QUERY];
 
-    strncpy(address, data->query, MAX_QUERY);
-    len = strlen(address);
+	strncpy(address, data->query, MAX_QUERY);
+	len = strlen(address);
 
-    /* logerr("extract_domain: %s (%u)",address, len); */
+	/* logerr("extract_domain: %s (%u)",address, len); */
 
-    if(len<3) return(NULL); // a.i
+	if(len<3) return(NULL); // a.i
 
-    data->domain[len+1]='\0';
-    for(c=len; c>=0; c--) {
-        last=address+c;
-        if(*last=='.') {
-            dots++;
-            // take the tld as first dot hits
-            if(first) {
-                strncpy(data->tld,last,MAX_TLD);
-                first=0; }
-        }
-        if(dots>=positions) {
-            char *test = strtok(last+1,".");
-            if( strlen(test) > 3 ) break; // its not a short SLD
-            else positions++;
-        }
-        data->domain[c]=*last;
-    }
+	data->domain[len+1]='\0';
+	for(c=len; c>=0; c--) {
+		last=address+c;
+		if(*last=='.') {
+			dots++;
+			// take the tld as first dot hits
+			if(first) {
+				strncpy(data->tld,last,MAX_TLD);
+				first=0; }
+		}
+		if(dots>=positions) {
+			char *test = strtok(last+1,".");
+			if( strlen(test) > 3 ) break; // its not a short SLD
+			else positions++;
+		}
+		data->domain[c]=*last;
+	}
 
-    // logerr("extracted: %s (%p) (dots: %u)", domain+c+1, domain+c+1, dots);
+	// logerr("extracted: %s (%p) (dots: %u)", domain+c+1, domain+c+1, dots);
 
-    return(data->domain+c+1);
+	return(data->domain+c+1);
 }

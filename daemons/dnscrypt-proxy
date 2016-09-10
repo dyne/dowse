@@ -2,14 +2,20 @@
 
 
 dnscrypt-proxy-conf() {
-	# load leases in redis
-	leases=""
+	rconf=""
+	# load dhcp leases in redis
 	for i in ${(f)"$(cat $H/run/leases)"}; do
-		leases+="SET dns-lease-${i[(w)4]} ${i[(w)3]}\n"
+		rconf+="SET dns-lease-${i[(w)4]} ${i[(w)3]}\n"
+		# and the hosts reverses
+		rconf+="SET dns-reverse-${i[(w)3]}. ${i[(w)4]}\n"
 	done
-	leases+="SET dns-lease-${hostname} ${lan}"
-	leases+="SET dns-lease-gateway ${wan}"
-	print $leases | redis dynamic > /dev/null
+	# load the local hosts known
+	rconf+="SET dns-lease-${hostname} ${lan}\n"
+	rconf+="SET dns-lease-gateway ${wan}\n"
+	# load the local hosts reverses
+	rconf+="SET dns-reverse-${address}. ${hostname}\n"
+	rconf+="SET dns-reverse-${wan}. gateway\n"
+	print $rconf | redis dynamic
 }
 
 dnscrypt-proxy-exec() {
