@@ -10,7 +10,7 @@ dnscrypt-proxy-conf() {
 		rconf+="SET dns-reverse-${i[(w)3]}. ${i[(w)4]}\n"
 	done
 	# load the local hosts known
-	rconf+="SET dns-lease-${hostname} ${lan}\n"
+	rconf+="SET dns-lease-${hostname} ${address}\n"
 	rconf+="SET dns-lease-gateway ${wan}\n"
 	# load the local hosts reverses
 	rconf+="SET dns-reverse-${address}. ${hostname}\n"
@@ -26,7 +26,7 @@ dnscrypt-proxy-exec() {
 	func "Launching dnscrypt-proxy to listen on port 53"
 
     if [[ $DEBUG = 1 ]]; then
-		DOWSE_DOMAINLIST=$HOME/devel/dowse/src/domain-list/data \
+		DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
@@ -34,7 +34,7 @@ dnscrypt-proxy-exec() {
 						-r "176.56.237.171:443" \
 						-k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
 						-N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
-						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
+						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
 						-m 7 -u $dowse_uid # log level informational (7 for debug)
 		return $?
 

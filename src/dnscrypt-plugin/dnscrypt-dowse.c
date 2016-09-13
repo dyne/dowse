@@ -88,6 +88,7 @@ typedef struct {
 	// using db_runtime to store cached hits
 	redisContext *cache;
 
+	int debug;
 }  plugin_data_t;
 
 size_t trim(char *out, size_t len, const char *str);
@@ -123,7 +124,7 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 
 	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
-	// TODO: check succesful result
+	// TODO: check succesful result or refuse to init
 
 	data->cache = NULL;
 	data->caching=0;
@@ -131,8 +132,10 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 		fprintf(stderr,"%u arg: %s\n", i, argv[i]);
 
 		if( strncmp(argv[i], "cache", 5) == 0) data->caching=5;
+		// TODO: use libshardcache in place of redis for caching
 		data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
 
+		if( strncmp(argv[i], "debug", 5) == 0) data->debug=1;
 	}
 
 	dcplugin_set_user_data(dcplugin, data);
@@ -146,11 +149,15 @@ dcplugin_destroy(DCPlugin * const dcplugin)
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
+	if(data->debug)
+		fprintf(stderr, "dnscrypt dowse plugin quit\n");
+
 	hashmap_iterate(data->domainlist, free_domainlist_f, NULL);
 	hashmap_free(data->domainlist);
 
 	redisFree(data->redis);
 	if(data->cache) redisFree(data->cache);
+	free(data);
 
 	return 0;
 }
@@ -176,16 +183,31 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// enforce max dns query size
 	if(wirelen > MAX_DNS) return DCP_SYNC_FILTER_RESULT_KILL;
 
-//  fprintf(stderr,"%u bytes received as dns wire request\n", wirelen);
+	// TODO: throttling to something like 200 calls per second
+	// FUNCTION LIMIT_API_CALL(ip)
+	// 	ts = CURRENT_UNIX_TIME()
+	// 	keyname = ip+":"+ts
+	// 	current = GET(keyname)
+	// 	IF current != NULL AND current > 10 THEN
+	// 	ERROR "too many requests per second"
+	// 	ELSE
+	// 	MULTI
+	// 	INCR(keyname,1)
+	// 	EXPIRE(keyname,10)
+	// 	EXEC
+	// 	PERFORM_API_CALL()
+	// 	END
 
 	// import the wire packet to ldns format
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
 		return DCP_SYNC_FILTER_RESULT_FATAL;
 
 	// debug
-	fprintf(stderr,"-- packet received:\n");
-	ldns_pkt_print(stderr, packet);
-	fprintf(stderr,"-- \n");
+	if(data->debug) {
+		fprintf(stderr,"-- packet received:\n");
+		ldns_pkt_print(stderr, packet);
+		fprintf(stderr,"-- \n");
+	}
 
 	// retrieve the actual question string
 	question_rr_list  = ldns_pkt_question(packet);
@@ -201,8 +223,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		return DCP_SYNC_FILTER_RESULT_FATAL;
 
 	// debug
-	fprintf(stderr,"%s (%u, last: '%c')\n", question_str, question_len,
-	        question_str[question_len-1]);
+	if(data->debug)
+		fprintf(stderr,"%s (%u, last: '%c')\n", question_str, question_len,
+		        question_str[question_len-1]);
 
 	/////////////////////////////////////
 	// resolve reverse ip to domain (PTR)
@@ -232,8 +255,10 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			ldns_rdf_deep_free(tmpname);
 
 			snprintf(reverse_str, MAX_QUERY, "%s", ldns_rdf2str(reverse));
+
+			if(data->debug)
 			// debug
-			fprintf(stderr, "reverse: %s\n", reverse_str);
+				fprintf(stderr, "reverse: %s\n", reverse_str);
 			// TODO: lookup dns-reverse in redis dynamic
 
 			// resolve locally leased hostnames with a O(1) operation on redis
@@ -427,7 +452,7 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 
 		// check if the query is cached
 		data->reply = redisCommand(data->cache, "SETEX dns-cache-%s %u %b", data->query, data->caching, wire, wirelen);
-		// TODO: check reply
+		// TODO: check redis reply
 		freeReplyObject(data->reply);
 		// data->reply = redisCommand(data->cache, "EXPIRE dns_cache_%s %u", data->query, data->caching); // DNS_HIT_EXPIRE
 		// freeReplyObject(data->reply);
