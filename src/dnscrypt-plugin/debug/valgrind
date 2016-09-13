@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+
+R=`pwd`
+
+[[ -r ../../zuper/zuper ]] || {
+   print "usage: ./debug/valgrind (run from inside src/dnscrypt-plugin)"
+   return 1 }
+
+source ../../zuper/zuper
+
+source ../../zuper/zuper.init
+
+[[ -r .libs/dnscrypt_dowse.so ]] || {
+   error "dnscrypt_dowse.so not found in .libs (run make?)"
+   return 1 }
+
+notice "Valgrind debug session on Debugging"
+act "`date`"
+
+DOWSE_DOMAINLIST=$HOME/devel/dowse/src/domain-list/data \
+				hostname=$hostname \
+				domain=$lan \
+			    valgrind --leak-check-heuristics=all --show-leak-kinds=all --track-origins=yes \
+				../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
+				-a 127.0.0.1:53530 \
+				-l debug/valgrind.log \
+				-r "176.56.237.171:443" \
+				-k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
+				-N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
+				-X $R/.libs/dnscrypt_dowse.so,cache \
+				-m 7 # log level informational (7 for debug)
+
