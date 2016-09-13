@@ -8,6 +8,9 @@ Updates: http://dowse.eu
 
 Whitepaper: https://files.dyne.org/dowse/dowse_whitepaper.pdf
 
+
+[![Build Status](https://api.travis-ci.org/dyne/dowse.svg)](https://travis-ci.org/dyne/dowse)
+
 # Introduction
 
 Dowse is a **transparent proxy** facilitating the awareness of ingoing
