@@ -1,0 +1,52 @@
+#!/usr/bin/env zsh
+
+R=`pwd`
+
+source ../../dowse
+
+[[ -r .libs/dnscrypt_dowse.so ]] || {
+   error "dnscrypt_dowse.so not found in .libs (run make?)"
+   return 1 }
+
+notice "Test session on Dowse DNSCrypt plugin"
+act "`date`"
+
+start redis-server
+
+cat <<EOF | redis dynamic
+SET dns-lease-testlease1 10.0.0.101
+SET dns-lease-testlease2 10.0.0.102
+SET dns-reverse-10.0.0.101. testlease1
+SET dns-reverse-10.0.0.102. testlease2
+SET dns-reverse-${address}. ${hostname}
+SET dns-reverse-${wan}. gateway
+EOF
+
+DOWSE_DOMAINLIST=`pwd`/../domain-list/data \
+				hostname=$hostname \
+				domain=$lan \
+			    valgrind --leak-check-heuristics=all \
+				--show-leak-kinds=all --track-origins=yes \
+				../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
+				-a 127.0.0.1:54540 \
+				-l debug/valgrind.log \
+				-r "176.56.237.171:443" \
+				-k "67C0:0F2C:21C5:5481:45DD:7CB4:6A27:1AF2:EB96:9931:40A3:09B6:2B8D:1653:1185:9C66" \
+				-N "2.dnscrypt-cert.resolver1.dnscrypt.eu" \
+				-X `pwd`/.libs/dnscrypt_dowse.so,cache,debug \
+				-m 7 -d # log level informational (7 for debug)
+
+sleep 3
+
+notice own_address_reverse
+dig @127.0.0.1 -p 54540 $address
+notice dyne.org
+dig @127.0.0.1 -p 54540 dyne.org
+notice 10.0.0.1
+dig @127.0.0.1 -p 54540 -x 10.0.0.1
+notice 10.0.0.2
+dig @127.0.0.1 -p 54540 -x 10.0.0.2
+notice testlease1
+dig @127.0.0.1 -p 54540 testlease1
+notice testlease2
+dig @127.0.0.1 -p 54540 testlease2
