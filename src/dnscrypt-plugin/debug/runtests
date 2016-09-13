@@ -16,6 +16,7 @@ start redis-server
 cat <<EOF | redis dynamic
 SET dns-lease-testlease1 10.0.0.101
 SET dns-lease-testlease2 10.0.0.102
+SET dns-lease-${hostname} ${address}
 SET dns-reverse-10.0.0.101. testlease1
 SET dns-reverse-10.0.0.102. testlease2
 SET dns-reverse-${address}. ${hostname}
@@ -38,15 +39,23 @@ DOWSE_DOMAINLIST=`pwd`/../domain-list/data \
 
 sleep 3
 
+notice own_hostname
+dig @127.0.0.1 -p 54540 $hostname
+
 notice own_address_reverse
-dig @127.0.0.1 -p 54540 $address
+dig @127.0.0.1 -p 54540 -x $address
+
 notice dyne.org
 dig @127.0.0.1 -p 54540 dyne.org
+
 notice 10.0.0.1
 dig @127.0.0.1 -p 54540 -x 10.0.0.1
+
 notice 10.0.0.2
 dig @127.0.0.1 -p 54540 -x 10.0.0.2
+
 notice testlease1
 dig @127.0.0.1 -p 54540 testlease1
+
 notice testlease2
 dig @127.0.0.1 -p 54540 testlease2
