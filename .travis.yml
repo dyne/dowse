@@ -1,0 +1,14 @@
+language: c
+sudo: required
+dist: trusty
+before_install:
+  - sudo add-apt-repository ppa:chris-lea/libsodium -y
+  - sudo apt-get -qq update
+  - sudo apt-get install --no-install-recommends -y zsh iptables ebtables sqlite3 procps gettext-base procps net-tools autoconf libssl-dev libbind-dev libpcap-dev unzip wget gcc make liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc uuid-dev libldns-dev python-redis python-hiredis dnsutils valgrind
+
+script:
+  - make
+  - sudo make install
+  - sudo chown -R $USER $HOME/.dowse
+  - cd src/dnscrypt-plugin && ./debug/runtests
+
