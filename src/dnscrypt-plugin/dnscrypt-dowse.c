@@ -93,11 +93,21 @@ typedef struct {
 
 size_t trim(char *out, size_t len, const char *str);
 void load_domainlist(plugin_data_t *data);
-int free_domainlist_f(any_t arg, any_t element);
 char *extract_domain(plugin_data_t *data);
 int publish_query(plugin_data_t *data);
 
+// returns the answer in a wire format buffer (allocated in this function)
+// fills in wire packet lenght in *asize
+// returned buffer must be freed with LDNS_FREE
+uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, size_t *asize);
 
+
+// return a code valid for DCP and free all buffers in *data
+int return_packet(ldns_pkt *packet, plugin_data_t *data, int code) {
+	if(packet) ldns_pkt_free(packet);
+	if(data->reply) freeReplyObject(data->reply);
+	return code;
+}
 
 const char * dcplugin_description(DCPlugin * const dcplugin) {
 	return "Dowse plugin to filter dnscrypt queries";
@@ -143,9 +153,12 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	return 0;
 }
 
-int
-dcplugin_destroy(DCPlugin * const dcplugin)
-{
+
+// free all buffers of a loaded domainlist
+int free_domainlist_f(any_t arg, any_t element) {
+	free(element);
+	return MAP_OK; }
+int dcplugin_destroy(DCPlugin * const dcplugin) {
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
@@ -168,11 +181,13 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	socklen_t from_len;
 	uint8_t* wire;
 	size_t wirelen;
+	uint16_t packet_id;
 
 	ldns_pkt *packet = NULL;
 	ldns_rr_list *question_rr_list;
 	ldns_rr  *question_rr;
 	ldns_rdf *question_rdf;
+
 	char     question_str[MAX_QUERY];
 	int      question_len;
 
@@ -181,7 +196,8 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	wire = dcplugin_get_wire_data(dcp_packet);
 	wirelen = dcplugin_get_wire_data_len(dcp_packet);
 	// enforce max dns query size
-	if(wirelen > MAX_DNS) return DCP_SYNC_FILTER_RESULT_KILL;
+	if(wirelen > MAX_DNS)
+		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_KILL);
 
 	// TODO: throttling to something like 200 calls per second
 	// FUNCTION LIMIT_API_CALL(ip)
@@ -200,11 +216,13 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// import the wire packet to ldns format
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
-		return DCP_SYNC_FILTER_RESULT_FATAL;
+		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+
+	packet_id = ldns_pkt_id(packet);
 
 	// debug
 	if(data->debug) {
-		fprintf(stderr,"-- packet received:\n");
+		fprintf(stderr,"-- packet received with id %u:\n", packet_id);
 		ldns_pkt_print(stderr, packet);
 		fprintf(stderr,"-- \n");
 	}
@@ -220,7 +238,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	if (question_len == 0)
 		// this may be to drastic as FATAL? change if problems occur
-		return DCP_SYNC_FILTER_RESULT_FATAL;
+		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
 
 	// debug
 	if(data->debug)
@@ -243,7 +261,8 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			tmpname = ldns_dname_new_frm_str(question_str);
 			if (ldns_rdf_get_type(tmpname) != LDNS_RDF_TYPE_DNAME) {
 				fprintf(stderr, "dropped packet: .arpa address is not dname\n");
-				return DCP_SYNC_FILTER_RESULT_FATAL; }
+				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+			}
 
 			// reverse the domain
 			reverse = ldns_dname_reverse(tmpname);
@@ -263,68 +282,37 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 			// resolve locally leased hostnames with a O(1) operation on redis
 			data->reply = redisCommand(data->redis, "GET dns-reverse-%s", reverse_str);
-			fprintf(stderr,"QUA: %s\n", data->reply->str);
-
 			if(data->reply->len) { // it exists, return that
-				ldns_pkt *answer_pkt = NULL;
 				size_t answer_size = 0;
-				ldns_status status;
 				uint8_t *outbuf = NULL;
-				ldns_rr_list *answer_qr;
-				ldns_rr_list *answer_an;
-				ldns_rr *answer_an_rr;
 				char tmprr[1024];
 
 				fprintf(stderr, "found local reverse: %s\n", data->reply->str);
-				// clone the question_rr in answer_qr
-				answer_qr = ldns_rr_list_new();
-				ldns_rr_list_push_rr(answer_qr, ldns_rr_clone(question_rr));
-
-				// create the answer_an rr_list
-				answer_an = ldns_rr_list_new();
-				// answer_an_rdf = ldns_rdf_new_frm_str // makes a copy of data buffer
-				//  (LDNS_RDF_TYPE_A, data->reply->str);
-
-				// TODO: optimise by avoiding the string parsing and creating the rdf manually
-				//  i.e.    ldns_rr_set_rdf(answer_an_rr, answer_an_rdf, 0U);
-				snprintf(tmprr, 1024, "%s 0 IN PTR %s.", question_str, data->reply->str);
-				ldns_rr_new_frm_str(&answer_an_rr, tmprr, 0, NULL, NULL);
-				freeReplyObject(data->reply);       // we can free redis here
-
-
-				ldns_rr_list_push_rr(answer_an, answer_an_rr);
-
-				// create the packet and empty fields
-				answer_pkt = ldns_pkt_new();
-
-				ldns_pkt_set_qr(answer_pkt, 1);
-				ldns_pkt_set_aa(answer_pkt, 1);
-				ldns_pkt_set_ad(answer_pkt, 0);
-
-				ldns_pkt_set_id(answer_pkt, ldns_pkt_id(packet));
-
-				ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_QUESTION,   answer_qr);
-				ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_ANSWER,     answer_an);
+				snprintf(tmprr, 1024, "%s 0 IN PTR %s",
+				         question_str, data->reply->str);
 
 				// render the packet into wire format (outbuf is saved with a memcpy)
-				status = ldns_pkt2wire(&outbuf, answer_pkt, &answer_size);
+				outbuf = answer_to_question(packet_id, question_rr,
+				                            tmprr, &answer_size);
 
 				// free all the packet structure here, outbuf is the wire format result
-				ldns_pkt_free(answer_pkt);
 
-				if (status != LDNS_STATUS_OK) {
-					fprintf(stderr,"Error resolving lease: %s\n",
-					        ldns_get_errorstr_by_id(status));
-					return DCP_SYNC_FILTER_RESULT_FATAL; }
+				if(!outbuf)
+					return
+						return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
 
 				dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
 				if(outbuf) LDNS_FREE(outbuf);
-				return DCP_SYNC_FILTER_RESULT_DIRECT;
+
+				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+
 			}
 
 		}
 	}
+	// end of reverse resolution (PTR)
+	/////////////////////////////////
 
 	// save the query string in the user plugin_data structure
 	strncpy(data->query, question_str, MAX_QUERY);
@@ -342,66 +330,28 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// resolve locally leased hostnames with a O(1) operation on redis
 	data->reply = redisCommand(data->redis, "GET dns-lease-%s", data->query);
 	if(data->reply->len) { // it exists, return that
-		fprintf(stderr,"local lease found: %s\n", data->reply->str);
-		ldns_pkt *answer_pkt = NULL;
 		size_t answer_size = 0;
-		ldns_status status;
 		uint8_t *outbuf = NULL;
-		ldns_rr_list *answer_qr;
-		ldns_rr_list *answer_an;
-		ldns_rr *answer_an_rr;
 		char tmprr[1024];
 
-		// clone the question_rr in answer_qr
-		answer_qr = ldns_rr_list_new();
-		ldns_rr_list_push_rr(answer_qr, ldns_rr_clone(question_rr));
-
-		// create the answer_an rr_list
-		answer_an = ldns_rr_list_new();
-		// answer_an_rdf = ldns_rdf_new_frm_str // makes a copy of data buffer
-		//  (LDNS_RDF_TYPE_A, data->reply->str);
-
-		// TODO: optimise by avoiding the string parsing and creating the rdf manually
-		//  i.e.    ldns_rr_set_rdf(answer_an_rr, answer_an_rdf, 0U);
+		fprintf(stderr,"local lease found: %s\n", data->reply->str);
 		snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
-		ldns_rr_new_frm_str(&answer_an_rr, tmprr, 0, NULL, NULL);
-		freeReplyObject(data->reply);       // we can free redis here
 
+		outbuf = answer_to_question(packet_id, question_rr,
+		                            tmprr, &answer_size);
 
-		ldns_rr_list_push_rr(answer_an, answer_an_rr);
-
-		// create the packet and empty fields
-		answer_pkt = ldns_pkt_new();
-
-		ldns_pkt_set_qr(answer_pkt, 1);
-		ldns_pkt_set_aa(answer_pkt, 1);
-		ldns_pkt_set_ad(answer_pkt, 0);
-
-		ldns_pkt_set_id(answer_pkt, ldns_pkt_id(packet));
-
-		ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_QUESTION,   answer_qr);
-		ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_ANSWER,     answer_an);
-
-		// render the packet into wire format (outbuf is saved with a memcpy)
-		status = ldns_pkt2wire(&outbuf, answer_pkt, &answer_size);
-
-		// free all the packet structure here, outbuf is the wire format result
-		ldns_pkt_free(answer_pkt);
-
-		if (status != LDNS_STATUS_OK) {
-			fprintf(stderr,"Error resolving lease: %s\n",
-			        ldns_get_errorstr_by_id(status));
-			return DCP_SYNC_FILTER_RESULT_FATAL; }
-
+		if(!outbuf)
+			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+ 
 		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
 		if(outbuf) LDNS_FREE(outbuf);
-		return DCP_SYNC_FILTER_RESULT_DIRECT;
+		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
 	}
 
 	// free the buffers here in any case
-	freeReplyObject(data->reply);
-	ldns_pkt_free(packet);
+	// freeReplyObject(data->reply);
+	// ldns_pkt_free(packet);
 
 //  fprintf(stderr,"%s - query contained this question\n", data->query);
 
@@ -417,10 +367,8 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			data->reply->str[1] = wire[1];
 
 			dcplugin_set_wire_data(dcp_packet, data->reply->str, data->reply->len);
-			freeReplyObject(data->reply);
-			return DCP_SYNC_FILTER_RESULT_DIRECT;
-		} else
-			freeReplyObject(data->reply);
+			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+		}
 	}
 
 	// if(from_sa->ss_family == AF_PACKET) { // if contains mac address
@@ -429,9 +377,10 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	//           p[0], p[1], p[2], p[3], p[4], p[5]);
 	//  // this is here as a pro-memoria, since we never get AF_P
 
-	// dcplugin_set_user_data(dcplugin, data);
-
-	return DCP_SYNC_FILTER_RESULT_OK;
+	dcplugin_set_user_data(dcplugin, data);
+	fprintf(stderr, "%s (forwarding to dnscrypt)\n", data->query);
+	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
+	// return DCP_SYNC_FILTER_RESULT_OK;
 }
 
 
@@ -442,7 +391,7 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	size_t wirelen;
 
 	data = dcplugin_get_user_data(dcplugin);
-
+	fprintf(stderr, "%s (caching in post filter)\n", data->query);
 	if(data->cache) {
 		wire = dcplugin_get_wire_data(dcp_packet);
 		wirelen = dcplugin_get_wire_data_len(dcp_packet);
@@ -487,6 +436,60 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 
 	return DCP_SYNC_FILTER_RESULT_OK;
 
+
+}
+
+
+uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, size_t *asize) {
+	ldns_pkt *answer_pkt = NULL;
+	ldns_status status;
+	ldns_rr_list *answer_qr;
+	ldns_rr_list *answer_an;
+	ldns_rr *answer_an_rr;
+	uint8_t *outbuf = NULL;
+
+	// clone the question_rr in answer_qr
+	answer_qr = ldns_rr_list_new();
+	ldns_rr_list_push_rr(answer_qr, ldns_rr_clone(question_rr));
+
+	// create the answer_an rr_list
+	answer_an = ldns_rr_list_new();
+	// answer_an_rdf = ldns_rdf_new_frm_str // makes a copy of data buffer
+	//  (LDNS_RDF_TYPE_A, data->reply->str);
+
+	// TODO: optimise by avoiding the string parsing and creating the rdf manually
+	//  i.e.    ldns_rr_set_rdf(answer_an_rr, answer_an_rdf, 0U);
+	// this may need the creation of more functions rather than remove this one
+	ldns_rr_new_frm_str(&answer_an_rr, answer, 0, NULL, NULL);
+
+	ldns_rr_list_push_rr(answer_an, answer_an_rr);
+
+	// create the packet and empty fields
+	answer_pkt = ldns_pkt_new();
+
+	ldns_pkt_set_qr(answer_pkt, 1);
+	ldns_pkt_set_aa(answer_pkt, 1);
+	ldns_pkt_set_ad(answer_pkt, 0);
+
+	ldns_pkt_set_id(answer_pkt, pktid);
+
+	ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_QUESTION,   answer_qr);
+	ldns_pkt_push_rr_list(answer_pkt, LDNS_SECTION_ANSWER,     answer_an);
+
+	// render the packet into wire format (outbuf is saved with a memcpy)
+	status = ldns_pkt2wire(&outbuf, answer_pkt, asize);
+
+	// free all the packet structure here, outbuf is the wire format result
+	ldns_pkt_free(answer_pkt);
+
+	if (status != LDNS_STATUS_OK) {
+		fprintf(stderr,"Error in answer_to_question : %s\n",
+		        ldns_get_errorstr_by_id(status));
+		if(outbuf) LDNS_FREE(outbuf);
+		outbuf = NULL; // NULL on error
+	}
+
+	return outbuf;
 
 }
 
@@ -611,12 +614,6 @@ void load_domainlist(plugin_data_t *data) {
 	}
 	closedir(listdir);
 	fprintf(stderr,"size of parsed domain-list: %u\n", hashmap_length(data->domainlist));
-}
-
-
-int free_domainlist_f(any_t arg, any_t element) {
-	free(element);
-	return MAP_OK;
 }
 
 
