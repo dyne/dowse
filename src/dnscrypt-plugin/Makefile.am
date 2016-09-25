@@ -4,7 +4,7 @@ pkglib_LTLIBRARIES = dnscrypt_dowse.la
 
 dnscrypt_dowse_la_LIBTOOLFLAGS = --tag=disable-static
 
-dnscrypt_dowse_la_SOURCES = dnscrypt-dowse.c hashmap.c
+dnscrypt_dowse_la_SOURCES = dnscrypt-dowse.c domainlist.c hashmap.c
 
 dnscrypt_dowse_la_LIBADD = ../redis.o @LDNS_LIBS@ -lhiredis -ljemalloc
 
