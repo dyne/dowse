@@ -22,6 +22,9 @@ dnscrypt-proxy-exec() {
 
 	args=""
 	[[ $* =~ cache ]] && args+=",cache"
+	[[ $* =~ debug ]] && args+=",debug"
+	[[ $* =~ offline ]] && args+=",offline"
+
 
 	func "Launching dnscrypt-proxy to listen on port 53"
 
@@ -35,7 +38,8 @@ dnscrypt-proxy-exec() {
 						-k "25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21" \
 						-N "2.dnscrypt-cert.soltysiak.com" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
-						-m 7 -u $dowse_uid # log level informational (7 for debug)
+						-m 7 -u $dowse_uid
+		# log level informational (7 for debug)
 		return $?
 
     else
@@ -49,10 +53,12 @@ dnscrypt-proxy-exec() {
 						-k "25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21" \
 						-N "2.dnscrypt-cert.soltysiak.com" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
-						-d -m 4 -u $dowse_uid # log only warning conditions
+						-d -m 4 -u $dowse_uid
+		# log only warning conditions
 
     fi
-    sleep 1 # avoid race condition
+    sleep 1
+	# avoid race condition
 
     savepid dnscrypt-proxy $ztmpfile
 
