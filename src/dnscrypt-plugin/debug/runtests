@@ -24,6 +24,7 @@ SET dns-reverse-${wan}. gateway
 EOF
 
 DOWSE_DOMAINLIST=`pwd`/../domain-list/data \
+				DOWSE_LAN_ADDRESS_IP4=$address \
 				hostname=$hostname \
 				domain=$lan \
 			    valgrind --leak-check-heuristics=all \
