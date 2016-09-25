@@ -276,7 +276,7 @@ dowse-start() {
     start dnsmasq
 
     # start the dns encrypted tunneling
-    start dnscrypt-proxy
+    start dnscrypt-proxy cache
 
     # netdata dashboard for the technical status
     start netdata
