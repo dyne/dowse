@@ -79,7 +79,6 @@ execrules=(
     # TODO: sup list of authorized signals to emit (using killall)
     kill          root
     pgld          root
-    netdiscover   root
 )
 zkv.save execrules $S/build/db/execrules.zkv
 
@@ -104,7 +103,6 @@ execmap=(
     sysctl        /sbin/sysctl
     ip            /sbin/ip
     arp           /usr/sbin/arp
-    netdiscover   $PREFIX/bin/netdiscover
     # TODO: sup list of authorized modules (using libkmod)
     modprobe      $PREFIX/bin/modprobe
     pgld          $PREFIX/bin/pgld
