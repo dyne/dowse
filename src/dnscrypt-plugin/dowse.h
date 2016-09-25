@@ -70,7 +70,7 @@ typedef struct {
 
 	int reverse;
 
-	int debug;
+	FILE *debug;
 	int offline;
 }  plugin_data_t;
 
