@@ -359,7 +359,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	dcplugin_set_user_data(dcplugin, data);
 	if(data->debug)
-		verbose("%s (forwarding to dnscrypt)\n", data->query);
+		fprintf(stderr, "%s (forwarding to dnscrypt)\n", data->query);
 	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
 	// return DCP_SYNC_FILTER_RESULT_OK;
 }
