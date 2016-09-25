@@ -19,6 +19,7 @@
  *
  */
 
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,17 +111,31 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	}
 
 	data->listpath = getenv("DOWSE_DOMAINLIST");
-	if(!data->listpath)
+	if(strlen(data->listpath) == 0) {
 		debug(data,"warning: environmental variable DOWSE_DOMAINLIST not set\n");
-	else {
+		data->listpath = NULL;
+	} else {
 		debug(data,"Loading domainlist from: %s\n", data->listpath);
 		load_domainlist(data);
 	}
 
-	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+	{
+		char *stmp = getenv("DOWSE_LAN_ADDRESS_IP4");
+		if(strlen(stmp) == 0) {
+			debug(data,"warning: own IP4 on LAN not known, variable DOWSE_LAN_ADDRESS_IP4 not set");
+			data->ownip4[0] = 0x0;
+		} else {
+			strncpy(data->ownip4, stmp, NI_MAXHOST);
+			debug(data,"Own IPv4 address on LAN: %s", data->ownip4);
+		}
+	}
 
-	// TODO: use libshardcache in place of redis for caching
+	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+	// TODO: check when redis is not connected and abort with an error
+
+
 	if(data->caching > 0)
+		// TODO: use libshardcache in place of redis for caching
 		data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
 
 	dcplugin_set_user_data(dcplugin, data);
@@ -291,7 +306,43 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// save the query string in the user plugin_data structure
 	strncpy(data->query, question_str, MAX_QUERY);
-	data->query[strlen(data->query)-1] = '\0'; // eliminate terminating dot
+	data->query_len = strlen(data->query);
+	data->query[data->query_len-1] = '\0'; // eliminate terminating dot
+
+	// DIRECT ENDPOINT
+	// return own ip for all calls to dowse.it
+	if(data->ownip4[0] != 0x0) {
+		if(     data->query[data->query_len-9] == 'd' && // dowse.it query?
+			    data->query[data->query_len-8] == 'o' &&
+				data->query[data->query_len-7] == 'w' &&
+				data->query[data->query_len-6] == 's' &&
+				data->query[data->query_len-5] == 'e' &&
+				data->query[data->query_len-4] == '.' &&
+				data->query[data->query_len-3] == 'i' &&
+				data->query[data->query_len-2] == 't') {
+			size_t answer_size = 0;
+			uint8_t *outbuf = NULL;
+			char tmprr[1024];
+
+			snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->ownip4);
+
+			outbuf = answer_to_question(packet_id, question_rr,
+			                            tmprr, &answer_size);
+
+			if(!outbuf)
+				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+
+			dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+
+			if(outbuf) LDNS_FREE(outbuf);
+			// there is no redis reply to free here
+			data->reply = NULL;
+			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+		}
+	}
+	/////////////////
+
+
 
 	// get the source ip
 	from_sa = dcplugin_get_client_address(dcp_packet);
@@ -302,6 +353,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// publish info to redis channel
 	publish_query(data);
 
+	// DIRECT ENDPOINT
 	// resolve locally leased hostnames with a O(1) operation on redis
 	data->reply = redisCommand(data->redis, "GET dns-lease-%s", data->query);
 	if(data->reply->len) { // it exists, return that
@@ -325,6 +377,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		if(outbuf) LDNS_FREE(outbuf);
 		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
 	}
+	////////////////
 
 	// free the buffers here in any case
 	// freeReplyObject(data->reply);

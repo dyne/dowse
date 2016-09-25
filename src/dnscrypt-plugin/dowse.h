@@ -52,11 +52,15 @@ typedef struct {
 	// data
 
 	char query[MAX_QUERY]; // incoming query
+	size_t query_len; // size of incoming query string
+
 	char domain[MAX_DOMAIN]; // domain part parsed (2nd last dot)
 	char tld[MAX_TLD]; // tld (domain extension, 1st dot)
 
 	char from[NI_MAXHOST]; // hostname or ip originating the query
-	char mac[32]; // mac address (could be just 12 chars)
+    // char mac[32]; // mac address (could be just 12 chars)
+
+	char ownip4[NI_MAXHOST];
 
 	// map of known domains
 	char *listpath;

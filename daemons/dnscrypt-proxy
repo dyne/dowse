@@ -30,6 +30,7 @@ dnscrypt-proxy-exec() {
 
     if [[ $DEBUG = 1 ]]; then
 		DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
+						DOWSE_LAN_ADDRESS_IP4=$address \
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
@@ -45,6 +46,7 @@ dnscrypt-proxy-exec() {
     else
 		ztmp
 		DOWSE_DOMAINLIST=$R/domain-list/data \
+						DOWSE_LAN_ADDRESS_IP4=$address \
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
