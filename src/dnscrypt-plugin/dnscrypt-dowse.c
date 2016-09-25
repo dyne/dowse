@@ -41,59 +41,10 @@
 #include <database.h>
 #include <epoch.h>
 
-#include "hashmap.h"
+#include "dowse.h"
 
 DCPLUGIN_MAIN(__FILE__);
 
-// expiration in seconds for the domain hit counter
-#define DNS_HIT_EXPIRE 21600
-
-// expiration in seconds for the cache on dns replies
-#define DNS_CACHE_EXPIRE 60
-
-#define MAX_QUERY 512
-#define MAX_DOMAIN 256
-#define MAX_TLD 32
-#define MAX_DNS 512  // RFC 6891
-
-#define MAX_LINE 512
-
-// ldns/error.h
-void warning(const char *fmt, ...);
-void    error(const char *fmt, ...);
-void    mesg(const char *fmt, ...);
-
-typedef struct {
-	/////////
-	// flags
-	int caching;
-
-	////////
-	// data
-
-	char query[MAX_QUERY]; // incoming query
-	char domain[MAX_DOMAIN]; // domain part parsed (2nd last dot)
-	char tld[MAX_TLD]; // tld (domain extension, 1st dot)
-
-	char from[NI_MAXHOST]; // hostname or ip originating the query
-	char mac[32]; // mac address (could be just 12 chars)
-
-	// map of known domains
-	char *listpath;
-	map_t domainlist;
-
-	redisContext *redis;
-	redisReply   *reply;
-
-	// using db_runtime to store cached hits
-	redisContext *cache;
-
-	int debug;
-}  plugin_data_t;
-
-size_t trim(char *out, size_t len, const char *str);
-void load_domainlist(plugin_data_t *data);
-char *extract_domain(plugin_data_t *data);
 int publish_query(plugin_data_t *data);
 
 // returns the answer in a wire format buffer (allocated in this function)
@@ -138,26 +89,28 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 
 	data->cache = NULL;
 	data->caching=0;
+	data->offline=0;
+
 	for(i=0; i<argc; i++) {
 		fprintf(stderr,"%u arg: %s\n", i, argv[i]);
 
 		if( strncmp(argv[i], "cache", 5) == 0) data->caching=5;
-		// TODO: use libshardcache in place of redis for caching
-		data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
 
 		if( strncmp(argv[i], "debug", 5) == 0) data->debug=1;
+
+		if( strncmp(argv[i], "offline", 7) == 0) data->offline=1;
+
 	}
+
+	// TODO: use libshardcache in place of redis for caching
+	if(data->caching > 0)
+		data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
 
 	dcplugin_set_user_data(dcplugin, data);
 
 	return 0;
 }
 
-
-// free all buffers of a loaded domainlist
-int free_domainlist_f(any_t arg, any_t element) {
-	free(element);
-	return MAP_OK; }
 int dcplugin_destroy(DCPlugin * const dcplugin) {
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
@@ -165,8 +118,7 @@ int dcplugin_destroy(DCPlugin * const dcplugin) {
 	if(data->debug)
 		fprintf(stderr, "dnscrypt dowse plugin quit\n");
 
-	hashmap_iterate(data->domainlist, free_domainlist_f, NULL);
-	hashmap_free(data->domainlist);
+	free_domainlist(data);
 
 	redisFree(data->redis);
 	if(data->cache) redisFree(data->cache);
@@ -245,6 +197,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		fprintf(stderr,"%s (%u, last: '%c')\n", question_str, question_len,
 		        question_str[question_len-1]);
 
+	data->reverse = 0;
 	/////////////////////////////////////
 	// resolve reverse ip to domain (PTR)
 	///
@@ -257,6 +210,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			// this is now considered a reverse call
 			ldns_rdf    *tmpname, *reverse;
 			char reverse_str[MAX_QUERY];
+
+			data->reverse = 1;
+
 			// import in ldns dname format
 			tmpname = ldns_dname_new_frm_str(question_str);
 			if (ldns_rdf_get_type(tmpname) != LDNS_RDF_TYPE_DNAME) {
@@ -276,9 +232,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			snprintf(reverse_str, MAX_QUERY, "%s", ldns_rdf2str(reverse));
 
 			if(data->debug)
-			// debug
 				fprintf(stderr, "reverse: %s\n", reverse_str);
-			// TODO: lookup dns-reverse in redis dynamic
 
 			// resolve locally leased hostnames with a O(1) operation on redis
 			data->reply = redisCommand(data->redis, "GET dns-reverse-%s", reverse_str);
@@ -376,6 +330,27 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	//  snprintf(data->mac, 32, "%02x:%02x:%02x:%02x:%02x:%02x",
 	//           p[0], p[1], p[2], p[3], p[4], p[5]);
 	//  // this is here as a pro-memoria, since we never get AF_P
+
+	if(data->offline) {
+		size_t answer_size = 0;
+		uint8_t *outbuf = NULL;
+		char tmprr[1024];
+		if(data->reverse)
+			snprintf(tmprr, 1024, "%s 0 IN PTR localhost", question_str);
+		else
+			snprintf(tmprr, 1024, "%s 0 IN A 127.0.0.1", data->query);
+
+		outbuf = answer_to_question(packet_id, question_rr,
+		                            tmprr, &answer_size);
+		if(!outbuf)
+			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+ 
+		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+
+		if(outbuf) LDNS_FREE(outbuf);
+		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+	}		
+
 
 	dcplugin_set_user_data(dcplugin, data);
 	fprintf(stderr, "%s (forwarding to dnscrypt)\n", data->query);
@@ -495,41 +470,6 @@ uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, 
 
 
 
-// Stores the trimmed input string into the given output buffer, which must be
-// large enough to store the result.  If it is too small, the output is
-// truncated.
-size_t trim(char *out, size_t len, const char *str) {
-	if(len == 0)
-		return 0;
-
-	const char *end;
-	size_t out_size;
-
-	// Trim leading space
-	while(isspace(*str)) str++;
-
-	if(*str == 0)  // All spaces?
-	{
-		*out = 0;
-		return 1;
-	}
-
-	// Trim trailing space
-	end = str + strlen(str) - 1;
-	while(end > str && isspace(*end)) end--;
-	end++;
-
-	// Set output size to minimum of trimmed string length and buffer size minus 1
-	out_size = (end - str) < len-1 ? (end - str) : len-1;
-
-	// Copy trimmed string and add null terminator
-	memcpy(out, str, out_size);
-	out[out_size] = 0;
-
-	return out_size;
-}
-
-
 
 int publish_query(plugin_data_t *data) {
 	char *extracted;
@@ -573,87 +513,4 @@ int publish_query(plugin_data_t *data) {
 //  fprintf(stderr,"DNS: %s\n", outnew);
 
 	return 0;
-}
-
-
-void load_domainlist(plugin_data_t *data) {
-	char line[MAX_LINE];
-	char trimmed[MAX_LINE];
-	DIR *listdir = 0;
-	struct dirent *dp;
-	FILE *fp;
-
-	data->domainlist = hashmap_new();
-
-	// parse all files in directory
-	listdir = opendir(data->listpath);
-	if(!listdir) {
-		perror(data->listpath);
-		exit(1); }
-
-	// read file by file
-	dp = readdir (listdir);
-	while (dp) {
-		char fullpath[MAX_LINE];
-		snprintf(fullpath,MAX_LINE,"%s/%s",data->listpath,dp->d_name);
-		// open and read line by line
-		fp = fopen(fullpath,"r");
-		if(!fp) {
-			perror(fullpath);
-			continue; }
-		while(fgets(line,MAX_LINE, fp)) {
-			// save lines in hashmap with filename as value
-			if(line[0]=='#') continue; // skip comments
-			trim(trimmed, strlen(line), line);
-			if(trimmed[0]=='\0') continue; // skip blank lines
-			// logerr("(%u) %s\t%s", trimmed[0], trimmed, dp->d_name);
-			hashmap_put(data->domainlist, strdup(trimmed), strdup(dp->d_name));
-		}
-		fclose(fp);
-		dp = readdir (listdir);
-	}
-	closedir(listdir);
-	fprintf(stderr,"size of parsed domain-list: %u\n", hashmap_length(data->domainlist));
-}
-
-
-char *extract_domain(plugin_data_t *data) {
-	// extracts the last two or three strings of a dotted domain string
-
-	int c;
-	int dots = 0;
-	int first = 1;
-	char *last;
-	int positions = 2; // minimum, can become three if sld too short
-	int len;
-	char address[MAX_QUERY];
-
-	strncpy(address, data->query, MAX_QUERY);
-	len = strlen(address);
-
-	/* logerr("extract_domain: %s (%u)",address, len); */
-
-	if(len<3) return(NULL); // a.i
-
-	data->domain[len+1]='\0';
-	for(c=len; c>=0; c--) {
-		last=address+c;
-		if(*last=='.') {
-			dots++;
-			// take the tld as first dot hits
-			if(first) {
-				strncpy(data->tld,last,MAX_TLD);
-				first=0; }
-		}
-		if(dots>=positions) {
-			char *test = strtok(last+1,".");
-			if( strlen(test) > 3 ) break; // its not a short SLD
-			else positions++;
-		}
-		data->domain[c]=*last;
-	}
-
-	// logerr("extracted: %s (%p) (dots: %u)", domain+c+1, domain+c+1, dots);
-
-	return(data->domain+c+1);
 }

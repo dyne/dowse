@@ -27,7 +27,7 @@ DOWSE_DOMAINLIST=$HOME/devel/dowse/src/domain-list/data \
 				-r "178.216.201.222:2053" \
 				-k "25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21" \
 				-N "2.dnscrypt-cert.soltysiak.com" \
-				-X $R/.libs/dnscrypt_dowse.so,cache,debug \
+				-X $R/.libs/dnscrypt_dowse.so,cache,debug,$1 \
 				-m 7
 # log level informational (7 for debug)
 
