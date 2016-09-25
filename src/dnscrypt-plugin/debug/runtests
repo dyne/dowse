@@ -48,11 +48,14 @@ dig @127.0.0.1 -p 54540 -x $address || return 1
 notice dyne.org
 dig @127.0.0.1 -p 54540 dyne.org || return 1
 
+notice dnssec.vs.uni-due.de
+dig @127.0.0.1 -p 54540 sigok.verteiltesysteme.net || return 1
+
 notice 10.0.0.1
-dig @127.0.0.1 -p 54540 -x 10.0.0.1 || return 1
+dig @127.0.0.1 -p 54540 -x 10.0.0.101 || return 1
 
 notice 10.0.0.2
-dig @127.0.0.1 -p 54540 -x 10.0.0.2 || return 1
+dig @127.0.0.1 -p 54540 -x 10.0.0.102 || return 1
 
 notice testlease1
 dig @127.0.0.1 -p 54540 testlease1 || return 1
@@ -60,7 +63,10 @@ dig @127.0.0.1 -p 54540 testlease1 || return 1
 notice testlease2
 dig @127.0.0.1 -p 54540 testlease2 || return 1
 
+notice gateway
+dig @127.0.0.1 -p 54540 gateway || return 1
 
-notice "---- dnscrypt-plugin - all tests OK"
+
+notice "dnscrypt-plugin - all tests OK"
 return 0
 
