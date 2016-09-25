@@ -52,6 +52,18 @@ int publish_query(plugin_data_t *data);
 // returned buffer must be freed with LDNS_FREE
 uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, size_t *asize);
 
+void debug(plugin_data_t *data, const char *fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+
+	if(!data->debug) return;
+
+	vfprintf(data->debug,fmt,args);
+	fprintf(data->debug,"\n");
+	fflush(data->debug);
+
+	va_end(args);
+}
 
 // return a code valid for DCP and free all buffers in *data
 int return_packet(ldns_pkt *packet, plugin_data_t *data, int code) {
@@ -75,33 +87,37 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	plugin_data_t *data = malloc(sizeof(plugin_data_t));
 	memset(data, 0x0, sizeof(plugin_data_t));
 
-	data->listpath = getenv("DOWSE_DOMAINLIST");
-	if(!data->listpath)
-		fprintf(stderr,"warning: environmental variable DOWSE_DOMAINLIST not set\n");
-	else {
-		fprintf(stderr, "Loading domainlist from: %s\n", data->listpath);
-		load_domainlist(data);
-	}
-
-	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
 	// TODO: check succesful result or refuse to init
 
 	data->cache = NULL;
-	data->caching=0;
-	data->offline=0;
+	data->caching = 0;
+	data->offline = 0;
+	data->debug = NULL;
 
 	for(i=0; i<argc; i++) {
-		if(data->debug)
-			fprintf(stderr,"%u arg: %s\n", i, argv[i]);
+		debug(data,"%u arg: %s\n", i, argv[i]);
 
 		if( strncmp(argv[i], "cache", 5) == 0) data->caching=5;
 
-		if( strncmp(argv[i], "debug", 5) == 0) data->debug=1;
+		if( strncmp(argv[i], "debug", 5) == 0) {
+			data->debug = fopen("dowse-debug.log", "a+");
+			// TODO: check error
+		}
 
 		if( strncmp(argv[i], "offline", 7) == 0) data->offline=1;
 
 	}
+
+	data->listpath = getenv("DOWSE_DOMAINLIST");
+	if(!data->listpath)
+		debug(data,"warning: environmental variable DOWSE_DOMAINLIST not set\n");
+	else {
+		debug(data,"Loading domainlist from: %s\n", data->listpath);
+		load_domainlist(data);
+	}
+
+	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
 	// TODO: use libshardcache in place of redis for caching
 	if(data->caching > 0)
@@ -116,8 +132,10 @@ int dcplugin_destroy(DCPlugin * const dcplugin) {
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
-	if(data->debug)
-		fprintf(stderr, "dnscrypt dowse plugin quit\n");
+	if(data->debug) {
+		debug(data, "dnscrypt dowse plugin quit\n");
+		fclose(data->debug);
+	}
 
 	free_domainlist(data);
 
@@ -175,9 +193,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// debug
 	if(data->debug) {
-		fprintf(stderr,"-- packet received with id %u:\n", packet_id);
-		ldns_pkt_print(stderr, packet);
-		fprintf(stderr,"-- \n");
+		debug(data,"-- packet received with id %u:\n", packet_id);
+		ldns_pkt_print(data->debug, packet);
+		debug(data,"-- \n");
 	}
 
 	// retrieve the actual question string
@@ -195,7 +213,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// debug
 	if(data->debug)
-		fprintf(stderr,"%s (%u, last: '%c')\n", question_str, question_len,
+		debug(data,"%s (%u, last: '%c')\n", question_str, question_len,
 		        question_str[question_len-1]);
 
 	data->reverse = 0;
@@ -217,7 +235,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			// import in ldns dname format
 			tmpname = ldns_dname_new_frm_str(question_str);
 			if (ldns_rdf_get_type(tmpname) != LDNS_RDF_TYPE_DNAME) {
-				fprintf(stderr, "dropped packet: .arpa address is not dname\n");
+				debug(data, "dropped packet: .arpa address is not dname\n");
 				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
 			}
 
@@ -233,7 +251,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			snprintf(reverse_str, MAX_QUERY, "%s", ldns_rdf2str(reverse));
 
 			if(data->debug)
-				fprintf(stderr, "reverse: %s\n", reverse_str);
+				debug(data, "reverse: %s\n", reverse_str);
 
 			// resolve locally leased hostnames with a O(1) operation on redis
 			data->reply = redisCommand(data->redis, "GET dns-reverse-%s", reverse_str);
@@ -243,7 +261,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 				char tmprr[1024];
 
 				if(data->debug)
-					fprintf(stderr, "found local reverse: %s\n", data->reply->str);
+					debug(data, "found local reverse: %s\n", data->reply->str);
 
 				snprintf(tmprr, 1024, "%s 0 IN PTR %s",
 				         question_str, data->reply->str);
@@ -292,7 +310,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		char tmprr[1024];
 
 		if(data->debug)
-			fprintf(stderr,"local lease found: %s\n", data->reply->str);
+			debug(data,"local lease found: %s\n", data->reply->str);
 
 		snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
 
@@ -301,7 +319,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 		if(!outbuf)
 			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
- 
+
 		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
 		if(outbuf) LDNS_FREE(outbuf);
@@ -318,8 +336,8 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		// check if the answer is cached (the key is the domain string)
 		data->reply = redisCommand(data->cache, "GET dns-cache-%s", data->query);
 		if(data->reply->len) { // it exists in cache, return that
-//      fprintf(stderr,"%u bytes cache hit!\n", data->reply->len);
-			// TODO: a bit dangerous, working directly on the wire packet
+
+			// a bit dangerous, but veeery fast: working directly on the wire packet
 
 			// copy message ID (first 16 bits)
 			data->reply->str[0] = wire[0];
@@ -349,17 +367,17 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		                            tmprr, &answer_size);
 		if(!outbuf)
 			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
- 
+
 		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
 		if(outbuf) LDNS_FREE(outbuf);
 		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
-	}		
+	}
 
 
 	dcplugin_set_user_data(dcplugin, data);
 	if(data->debug)
-		fprintf(stderr, "%s (forwarding to dnscrypt)\n", data->query);
+		debug(data, "%s (forwarding to dnscrypt)\n", data->query);
 	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
 	// return DCP_SYNC_FILTER_RESULT_OK;
 }
@@ -373,7 +391,7 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 
 	data = dcplugin_get_user_data(dcplugin);
 	if(data->debug)
-		fprintf(stderr, "%s (caching in post filter)\n", data->query);
+		debug(data, "%s (caching in post filter)\n", data->query);
 	if(data->cache) {
 		wire = dcplugin_get_wire_data(dcp_packet);
 		wirelen = dcplugin_get_wire_data_len(dcp_packet);
