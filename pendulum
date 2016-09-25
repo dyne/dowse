@@ -267,7 +267,7 @@ case "$1" in
         # parse everything in this map
         obj=()
         pendulum_ip_neigh
-        pendulum_arp_scan
+        # pendulum_arp_scan
         _pendulum_commit_changes
         ;;
 

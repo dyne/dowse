@@ -10,7 +10,6 @@ all: config modprobe dowse-to-gource dowse-to-osc sup
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
 	@./compile.sh pgld
-	@./compile.sh netdiscover
 	@./compile.sh netdata
 	@./compile.sh kore
 	@./compile.sh webui
@@ -57,7 +56,6 @@ clean:
 	make -C dnscrypt-proxy       clean
 	make -C dnscrypt-plugin      clean
 	make -C pgl                  clean
-	make -C netdiscover          clean
 	make -C netdata              clean
 	make -C webdis				 clean
 	make -C kore				 clean
