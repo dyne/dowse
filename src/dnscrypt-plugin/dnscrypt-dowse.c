@@ -92,7 +92,8 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	data->offline=0;
 
 	for(i=0; i<argc; i++) {
-		fprintf(stderr,"%u arg: %s\n", i, argv[i]);
+		if(data->debug)
+			fprintf(stderr,"%u arg: %s\n", i, argv[i]);
 
 		if( strncmp(argv[i], "cache", 5) == 0) data->caching=5;
 
@@ -241,7 +242,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 				uint8_t *outbuf = NULL;
 				char tmprr[1024];
 
-				fprintf(stderr, "found local reverse: %s\n", data->reply->str);
+				if(data->debug)
+					fprintf(stderr, "found local reverse: %s\n", data->reply->str);
+
 				snprintf(tmprr, 1024, "%s 0 IN PTR %s",
 				         question_str, data->reply->str);
 
@@ -288,7 +291,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		uint8_t *outbuf = NULL;
 		char tmprr[1024];
 
-		fprintf(stderr,"local lease found: %s\n", data->reply->str);
+		if(data->debug)
+			fprintf(stderr,"local lease found: %s\n", data->reply->str);
+
 		snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
 
 		outbuf = answer_to_question(packet_id, question_rr,
@@ -353,7 +358,8 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 
 	dcplugin_set_user_data(dcplugin, data);
-	fprintf(stderr, "%s (forwarding to dnscrypt)\n", data->query);
+	if(data->debug)
+		verbose("%s (forwarding to dnscrypt)\n", data->query);
 	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
 	// return DCP_SYNC_FILTER_RESULT_OK;
 }
@@ -366,7 +372,8 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	size_t wirelen;
 
 	data = dcplugin_get_user_data(dcplugin);
-	fprintf(stderr, "%s (caching in post filter)\n", data->query);
+	if(data->debug)
+		fprintf(stderr, "%s (caching in post filter)\n", data->query);
 	if(data->cache) {
 		wire = dcplugin_get_wire_data(dcp_packet);
 		wirelen = dcplugin_get_wire_data_len(dcp_packet);
