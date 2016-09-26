@@ -6,14 +6,20 @@ dnscrypt-proxy-conf() {
 	# load dhcp leases in redis
 	for i in ${(f)"$(cat $H/run/leases)"}; do
 		rconf+="SET dns-lease-${i[(w)4]} ${i[(w)3]}\n"
+		rconf+="SET dns-lease-${i[(w)4]}.dowse.it ${i[(w)3]}\n"
+
 		# and the hosts reverses
 		rconf+="SET dns-reverse-${i[(w)3]}. ${i[(w)4]}\n"
+		
 	done
 	# load the local hosts known
-	rconf+="SET dns-lease-${hostname} ${address}\n"
-	rconf+="SET dns-lease-gateway ${wan}\n"
+	rconf+="SET dns-lease-${hostname}          ${address}\n"
+	rconf+="SET dns-lease-${hostname}.dowse.it ${address}\n"
+	rconf+="SET dns-lease-www.dowse.it         ${address}\n"
+	rconf+="SET dns-lease-dowse.it             ${address}\n"
+	rconf+="SET dns-lease-gateway    ${wan}\n"
 	# load the local hosts reverses
-	rconf+="SET dns-reverse-${address}. ${hostname}\n"
+	rconf+="SET dns-reverse-${address}. ${hostname}.dowse.it\n"
 	rconf+="SET dns-reverse-${wan}. gateway\n"
 	print $rconf | redis dynamic
 }

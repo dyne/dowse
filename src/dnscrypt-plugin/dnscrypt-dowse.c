@@ -29,7 +29,9 @@
 #include <sys/socket.h>
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
+#include <arpa/inet.h>
 
+#include <inttypes.h>
 #include <netdb.h>
 
 #include <dnscrypt/plugin.h>
@@ -121,12 +123,24 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 
 	{
 		char *stmp = getenv("DOWSE_LAN_ADDRESS_IP4");
-		if(strlen(stmp) == 0) {
+		if(!stmp) {
 			debug(data,"warning: own IP4 on LAN not known, variable DOWSE_LAN_ADDRESS_IP4 not set");
 			data->ownip4[0] = 0x0;
 		} else {
 			strncpy(data->ownip4, stmp, NI_MAXHOST);
 			debug(data,"Own IPv4 address on LAN: %s", data->ownip4);
+		}
+	}
+
+
+	{
+		char *stmp = getenv("DOWSE_LAN_NETMASK_IP4");
+		if(!stmp) {
+			debug(data,"warning: IP4 netmask not known, variable DOWSE_LAN_NETMASK_IP4 not set");
+			data->netmask_ip4[0] = 0x0;
+		} else {
+			strncpy(data->netmask_ip4, stmp, NI_MAXHOST);
+			debug(data,"Own IPv4 netmask for LAN: %s", data->ownip4);
 		}
 	}
 
@@ -299,6 +313,26 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 			}
 
+			// check if the ip is part of the LAN, if yes avoid forwarding it and return not-found
+			// {
+			// 	struct in_addr query_ip4_ia;
+			// 	inet_pton(AF_INET, reverse_str, &query_ip4_ia);
+			// 	inet_pton(AF_INET, reverse_str, &query_ip4_ia);
+
+			// 	inet_pton(AF_INET, data->netmask_ip4, &data->netmask_ip4_ia);
+			// 	inet_pton(AF_INET, data->network_ip4, &data->network_ip4_ia);
+			// 	if (
+			// 	    (
+			// 	     ((int32_t)query_ip4_ia) & ((int32_t)data->netmask_ip4_ia)
+			// 	     )
+			// 	    ==
+			// 	    (
+			// 	     ((int32_t)data->network_ip4_ia) & ((int32_t)data->netmask_ip4_ia)
+			// 	     )
+			// 	     ) {
+			// 		// request about LAN. TODO: Return here, don't go further
+			// 	}
+			// }
 		}
 	}
 	// end of reverse resolution (PTR)
@@ -308,41 +342,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	strncpy(data->query, question_str, MAX_QUERY);
 	data->query_len = strlen(data->query);
 	data->query[data->query_len-1] = '\0'; // eliminate terminating dot
-
-	// DIRECT ENDPOINT
-	// return own ip for all calls to dowse.it
-	if(data->ownip4[0] != 0x0) {
-		if(     data->query[data->query_len-9] == 'd' && // dowse.it query?
-			    data->query[data->query_len-8] == 'o' &&
-				data->query[data->query_len-7] == 'w' &&
-				data->query[data->query_len-6] == 's' &&
-				data->query[data->query_len-5] == 'e' &&
-				data->query[data->query_len-4] == '.' &&
-				data->query[data->query_len-3] == 'i' &&
-				data->query[data->query_len-2] == 't') {
-			size_t answer_size = 0;
-			uint8_t *outbuf = NULL;
-			char tmprr[1024];
-
-			snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->ownip4);
-
-			outbuf = answer_to_question(packet_id, question_rr,
-			                            tmprr, &answer_size);
-
-			if(!outbuf)
-				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
-
-			dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
-
-			if(outbuf) LDNS_FREE(outbuf);
-			// there is no redis reply to free here
-			data->reply = NULL;
-			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
-		}
-	}
-	/////////////////
-
-
 
 	// get the source ip
 	from_sa = dcplugin_get_client_address(dcp_packet);
