@@ -12,6 +12,28 @@ dnscrypt-proxy-conf() {
 		rconf+="SET dns-reverse-${i[(w)3]}. ${i[(w)4]}\n"
 		
 	done
+
+	for i in ${(f)"$(cat /etc/dowse/network)"}; do
+
+		print "$i" | grep '^#' > /dev/null
+		[[ $? = 0 ]] && continue
+
+		# first word may be a mac address
+		print "${i[(w)1]}" | grep '^..:..:..:..:..:..' > /dev/null
+		if [[ $? = 0 ]]; then
+			mac="${i[(w)1]}"
+			hostname="${i[(w)2]}"
+			ip4="${i[(w)3]}"
+	    else
+			mac=""
+			hostname="${i[(w)1]}"
+			ip4="${i[(w)2]}"
+		fi
+		rconf+="SET dns-lease-${hostname} ${ip4}\n"
+		rconf+="SET dns-lease-${hostname}.dowse.it ${ip4}\n"
+		func "+/etc/network: $mac $hostname $ip4"
+	done
+
 	# load the local hosts known
 	rconf+="SET dns-lease-${hostname}          ${address}\n"
 	rconf+="SET dns-lease-${hostname}.dowse.it ${address}\n"
