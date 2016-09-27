@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall -fPIC -Os
 LIBS = -ljemalloc -lhiredis
 
-all: config modprobe dowse-to-gource dowse-to-osc sup
+all: config modprobe dowse-to-gource dowse-to-osc dowse-to-mqtt sup
 	@make -C libparse-datetime
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
@@ -38,6 +38,9 @@ dowse-to-gource: dowse-to-gource.o redis.o epoch.o
 
 dowse-to-osc: dowse-to-osc.o redis.o epoch.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
+
+dowse-to-mqtt: dowse-to-mqtt.o redis.o epoch.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) mosquitto/lib/libmosquitto.a -lpthread
 
 install:
 	install -d ${DESTDIR}${PREFIX}
