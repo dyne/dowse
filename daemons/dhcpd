@@ -22,12 +22,15 @@
 # 02139, USA.
 
 dhcpd-conf() {
+	netzero=${dowse_net%/*}
+	netC=${netzero%.*}
+	netB=${netC%.*}
 cat <<EOF
 option routers $address;
 option domain-name "dowse.it";
 option domain-name-servers $address;
-subnet ${dowse_net%/*} netmask $netmask {
-  range 10.0.0.101 10.0.0.249;
+subnet ${netzero} netmask $netmask {
+  range ${netC}.101 ${netC}.249;
 }
 EOF
 }
