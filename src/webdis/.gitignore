@@ -1,7 +1,0 @@
-*.log
-*.swp
-*.o
-webdis
-websocket
-*.png
-pubsub

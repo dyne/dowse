@@ -46,13 +46,6 @@ case $1 in
         popd
         ;;
 
-    webdis)
-        pushd $R/src/webdis
-        make
-        install -s -p webdis $R/build/bin
-        popd
-        ;;
-
     # first kore, then webui (which is built with kore)
     kore)
         [[ -x $R/build/kore ]] || {
