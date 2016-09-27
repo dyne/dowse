@@ -1,0 +1,52 @@
+#!/usr/bin/env zsh
+#
+# Copyright (C) 2015-2016 Dyne.org Foundation
+#
+# Dowse is designed, written and maintained by Denis Roio <jaromil@dyne.org>
+#
+# This source code is free software; you can redistribute it
+# and/or modify it under the terms of the GNU Public License
+# as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# This source code is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.  Please refer to the GNU Public License for more
+# details.
+#
+# You should have received a copy of the GNU Public License
+# along with this source code; if not, write to: Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+# 02139, USA.
+
+mosquitto-conf() {
+cat <<EOF
+pid_file $H/run/mosquitto.pid
+user $dowse_uid
+bind_address $address
+port 1883
+protocol websockets
+persistence false
+log_dest none
+# websockets_log_level 0
+# connection_messages true
+allow_anonymous true
+EOF
+}
+
+mosquitto-exec() {
+	fn mosquitto-exec $*
+	req=(conf)
+    exe=${1:-${execmap[dhcpd]}}
+    freq=($exe $conf)
+	ckreq || return $?
+
+	launch mosquitto -c $conf -d
+
+	sleep 1
+
+	savepid mosquitto $H/run/mosquitto.pid
+
+}
