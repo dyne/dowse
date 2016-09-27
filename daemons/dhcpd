@@ -1,0 +1,72 @@
+#!/usr/bin/env zsh
+#
+# Copyright (C) 2015-2016 Dyne.org Foundation
+#
+# Dowse is designed, written and maintained by Denis Roio <jaromil@dyne.org>
+#
+# This source code is free software; you can redistribute it
+# and/or modify it under the terms of the GNU Public License
+# as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# This source code is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.  Please refer to the GNU Public License for more
+# details.
+#
+# You should have received a copy of the GNU Public License
+# along with this source code; if not, write to: Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+# 02139, USA.
+
+dhcpd-conf() {
+	netzero=${address%.*}.0
+	netC=${netzero%.*}
+	netB=${netC%.*}
+cat <<EOF
+option routers $address;
+option domain-name "dowse.it";
+option domain-name-servers $address;
+authoritative;
+db-time-format local;
+ddns-domainname "dowse.it";
+local-address $address;
+omapi-port 7911;
+
+subnet ${netzero} netmask $netmask {
+  range ${netC}.101 ${netC}.249;
+
+  on commit {
+    set clip = binary-to-ascii(10, 8, ".", leased-address);
+    set clhw  = binary-to-ascii(16, 8, ":", substring(hardware, 1, 6));
+    execute("$R/bin/pendulum", "lease", clip, clhw, host-decl-name);
+  }
+}
+EOF
+}
+
+dhcpd-exec() {
+	fn dhcpd-exec $*
+	req=(conf)
+    exe=${1:-${execmap[dhcpd]}}
+    freq=($exe $conf)
+	ckreq || return $?
+
+	leases=$H/run/isc.leases
+	touch $leases
+	ztmp
+
+	# chroot needs /proc/net/dev
+	# launch dhcpd -4 -pf $ztmpfile -user $dowse_uid -group $dowse_gid \
+	# 	   -chroot $H -lf $leases -cf $conf
+
+	launch dhcpd -4 -pf $ztmpfile -user $dowse_uid -group $dowse_gid \
+		   -lf $leases -cf $conf
+
+	sleep 1
+
+	savepid dhcpd $ztmpfile
+
+}

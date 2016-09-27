@@ -108,6 +108,7 @@ source $R/zlibs/sql
 
 # source $R/daemons/consul
 source $R/daemons/dnsmasq
+source $R/daemons/dhcpd
 # source $R/daemons/squid3
 # source $R/daemons/privoxy
 # source $R/daemons/polipo

@@ -23,6 +23,22 @@ LDFLAGS="-fPIC -fPIE -pie"
 notice "Compiling $1"
 
 case $1 in
+	dhcpd)
+		pushd $R/src/dhcp
+		autoreconf -i
+		CFLAGS="$CFLAGS" \
+			  LDFLAGS="$LDFLAGS" \
+			  ./configure --enable-paranoia --enable-execute
+		CFLAGS="$CFLAGS" \
+			  LDFLAGS="$LDFLAGS" \
+			  make && {
+			install -s -p server/dhcpd    $R/build/bin
+			install -s -p dhcpctl/omshell $R/build/bin
+		}
+
+		popd
+		;;
+
     seccrond)
         pushd $R/src/seccrond
         CFLAGS="$CFLAGS" make
