@@ -10,6 +10,7 @@ all: config modprobe dowse-to-gource dowse-to-osc sup
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
 	@./compile.sh pgld
+	@./compile.sh dhcpd
 	@./compile.sh netdata
 	@./compile.sh kore
 	@./compile.sh webui
@@ -52,6 +53,7 @@ clean:
 	rm -f *.zkv
 	rm -f database.h execrules.h
 	rm -f modprobe dowse-to-osc dowse-to-gource
+	make -C dhcp                 clean
 	make -C sup                  clean
 	make -C dnscrypt-proxy       clean
 	make -C dnscrypt-plugin      clean
