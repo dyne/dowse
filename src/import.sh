@@ -62,11 +62,11 @@ command -v apt-get >/dev/null && {
     act "using temporary directory: $tmp"
     pushd $tmp > /dev/null
 
-    [[ -r $S/build/dnsmasq ]] || {
-        act "fetching dnsmasq"
-        deb-download dnsmasq-base
-        cp $tmp/usr/sbin/dnsmasq $S/build/bin
-    }
+    # [[ -r $S/build/dnsmasq ]] || {
+    #     act "fetching dnsmasq"
+    #     deb-download dnsmasq-base
+    #     cp $tmp/usr/sbin/dnsmasq $S/build/bin
+    # }
 
     [[ -r $S/build/redis-server ]] || {
         act "fetching redis server"
