@@ -112,6 +112,7 @@ source $R/daemons/dhcpd
 # source $R/daemons/squid3
 # source $R/daemons/privoxy
 # source $R/daemons/polipo
+source $R/daemons/mosquitto
 source $R/daemons/dnscrypt-proxy
 source $R/daemons/netdata
 source $R/daemons/pgld

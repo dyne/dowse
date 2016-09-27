@@ -12,6 +12,8 @@ all: config modprobe dowse-to-gource dowse-to-osc sup
 	@./compile.sh pgld
 	@./compile.sh dhcpd
 	@./compile.sh netdata
+	@./compile.sh libwebsockets
+	@./compile.sh mosquitto
 	@./compile.sh kore
 	@./compile.sh webui
 	@./compile.sh seccrond
@@ -59,6 +61,8 @@ clean:
 	make -C pgl                  clean
 	make -C netdata              clean
 	make -C kore				 clean
+	make -C libwebsockets	     clean
+	make -C mosquitto            clean
 	make -C seccrond			 clean
 
 

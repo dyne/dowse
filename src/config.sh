@@ -63,6 +63,7 @@ execrules=(
     netdata      user
 	seccrond     user
 	omshell      user
+	mosquitto    user
 
 	dhcpd         root
     webui         root
@@ -97,6 +98,7 @@ execmap=(
     netdata       $PREFIX/bin/netdata
     webui         $PREFIX/bin/webui
 	seccrond      $PREFIX/bin/seccrond
+	mosquitto     $PREFIX/bin/mosquitto
 	dhcpd         $PREFIX/bin/dhcpd
 	omshell       $PREFIX/bin/omshell
     kill          /bin/kill
