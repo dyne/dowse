@@ -1,0 +1,4 @@
+/home/jrml/devel/dowse/src/libwebsockets/CMakeFiles/dist.dir
+/home/jrml/devel/dowse/src/libwebsockets/CMakeFiles/libwebsockets_rpm.dir
+/home/jrml/devel/dowse/src/libwebsockets/CMakeFiles/libwebsockets_srpm.dir
+/home/jrml/devel/dowse/src/libwebsockets/CMakeFiles/websockets.dir

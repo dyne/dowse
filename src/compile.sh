@@ -23,6 +23,30 @@ LDFLAGS="-fPIC -fPIE -pie"
 notice "Compiling $1"
 
 case $1 in
+	libwebsockets)
+		[[ -r $R/src/libwebsockets/lib/libwebsockets.a ]] && return 0
+		pushd $R/src/libwebsockets
+		CFLAGS="$CFLAGS" \
+			  LDFLAGS="$LDFLAGS" \
+			  cmake -DLWS_WITH_SSL=OFF -DLWS_WITH_SHARED=OFF \
+			  -DLWS_WITHOUT_TESTAPPS=ON -DLWS_IPV6=ON -DLWS_STATIC_PIC=ON . &&
+			make
+		popd
+		;;
+
+	mosquitto)
+		pushd $R/src/mosquitto
+		make -C lib
+		CFLAGS="$CFLAGS -I$R/src/libwebsockets -I$R/src/libwebsockets/lib" \
+			  LDFLAGS="$LDFLAGS $R/src/libwebsockets/lib/libwebsockets.a" \
+			  make WITH_WEBSOCKETS=yes WITH_DOCS=no WITH_TLS=no &&
+		install -s -p src/mosquitto $R/build/bin
+		# make WITH_BRIDGE=no WITH_TLS=no WITH_WEBSOCKETS=yes WITH_DOCS=no \
+		# LWS_LIBRARY_VERSION_NUMBER=2.0 &&
+
+		popd
+		;;
+
 	dhcpd)
 		pushd $R/src/dhcp
 		autoreconf -i
