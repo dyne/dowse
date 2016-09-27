@@ -63,16 +63,18 @@ https://www.youtube.com/watch?v=vquh3IXcduc
 
 # Installation
 
-Installation and activation takes a few steps and needs root:
+Installation and activation takes a few steps, only `make install` needs root:
 
 1. Download dowse on a GNU/Linux box (we use Devuan Jessie)
 
 	git clone https://github.com/dyne/dowse /usr/src/dowse
+    git submodule init
+	git submodule update
 
 2. Install all requirements, here below the list of packages:
 
 ```
-zsh iptables ebtables sqlite3 procps gettext-base procps net-tools autoconf libssl-dev libbind-dev libpcap-dev unzip wget gcc make liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc uuid-dev libldns-dev python-redis python-hiredis
+zsh iptables ebtables sqlite3 procps gettext-base procps net-tools autoconf libssl-dev libbind-dev libpcap-dev unzip wget gcc make libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc uuid-dev libldns-dev python-redis python-hiredis
 ```
 
 3. Choose which user should be running dowse: your own is fine, or
@@ -122,7 +124,7 @@ dowse-to-gource | gource --log-format custom -
 or from remote:
 
 ```
-ssh devuan@hub.dowse.it -- dowse-to-gource | gource --log-format custom - 
+ssh devuan@hub.dowse.it -- dowse-to-gource | gource --log-format custom -
 ```
 
 This will live render all the DNS activity occurring on your computer
@@ -187,4 +189,3 @@ Dowse is Copyright (C) 2012-2016 by the Dyne.org Foundation
 	You should have received a copy of the GNU Public License along
 	with this source code; if not, write to: Free Software Foundation,
 	Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
