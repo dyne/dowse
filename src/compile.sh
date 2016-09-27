@@ -37,10 +37,10 @@ case $1 in
 	mosquitto)
 		pushd $R/src/mosquitto
 		make -C lib
-		CFLAGS="$CFLAGS -I$R/src/libwebsockets -I$R/src/libwebsockets/lib" \
-			  LDFLAGS="$LDFLAGS $R/src/libwebsockets/lib/libwebsockets.a" \
-			  make WITH_WEBSOCKETS=yes WITH_DOCS=no WITH_TLS=no &&
-		install -s -p src/mosquitto $R/build/bin
+		CFLAGS="$CFLAGS" \
+			  LDFLAGS="$LDFLAGS" \
+			  make &&
+			install -s -p src/mosquitto $R/build/bin
 		# make WITH_BRIDGE=no WITH_TLS=no WITH_WEBSOCKETS=yes WITH_DOCS=no \
 		# LWS_LIBRARY_VERSION_NUMBER=2.0 &&
 
