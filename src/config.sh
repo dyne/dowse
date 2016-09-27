@@ -63,6 +63,7 @@ execrules=(
     netdata      user
     webdis       user
 	seccrond     user
+	omshell      user
 
 	dhcpd         root
     webui         root
@@ -99,6 +100,7 @@ execmap=(
     webdis        $PREFIX/bin/webdis
 	seccrond      $PREFIX/bin/seccrond
 	dhcpd         $PREFIX/bin/dhcpd
+	omshell       $PREFIX/bin/omshell
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables

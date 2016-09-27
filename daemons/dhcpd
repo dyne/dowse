@@ -37,6 +37,12 @@ omapi-port 7911;
 
 subnet ${netzero} netmask $netmask {
   range ${netC}.101 ${netC}.249;
+
+  on commit {
+    set clip = binary-to-ascii(10, 8, ".", leased-address);
+    set clhw  = binary-to-ascii(16, 8, ":", substring(hardware, 1, 6));
+    execute("$R/bin/pendulum", "lease", clip, clhw, host-decl-name);
+  }
 }
 EOF
 }

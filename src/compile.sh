@@ -28,11 +28,14 @@ case $1 in
 		autoreconf -i
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
-			  ./configure --enable-paranoia --disable-execute
+			  ./configure --enable-paranoia --enable-execute
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
-			  make &&
-			install -s -p server/dhcpd $R/build/bin
+			  make && {
+			install -s -p server/dhcpd    $R/build/bin
+			install -s -p dhcpctl/omshell $R/build/bin
+		}
+
 		popd
 		;;
 
