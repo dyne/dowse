@@ -14,7 +14,6 @@ all: config modprobe dowse-to-gource dowse-to-osc sup
 	@./compile.sh netdata
 	@./compile.sh kore
 	@./compile.sh webui
-	@./compile.sh webdis
 	@./compile.sh seccrond
 	@./import.sh
 	@install -s -p modprobe        ../build/bin
@@ -59,7 +58,6 @@ clean:
 	make -C dnscrypt-plugin      clean
 	make -C pgl                  clean
 	make -C netdata              clean
-	make -C webdis				 clean
 	make -C kore				 clean
 	make -C seccrond			 clean
 

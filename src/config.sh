@@ -61,7 +61,6 @@ execrules=(
     arp          user
     ip           user
     netdata      user
-    webdis       user
 	seccrond     user
 	omshell      user
 
@@ -97,7 +96,6 @@ execmap=(
 	tinyproxy     $PREFIX/bin/tinyproxy
     netdata       $PREFIX/bin/netdata
     webui         $PREFIX/bin/webui
-    webdis        $PREFIX/bin/webdis
 	seccrond      $PREFIX/bin/seccrond
 	dhcpd         $PREFIX/bin/dhcpd
 	omshell       $PREFIX/bin/omshell
