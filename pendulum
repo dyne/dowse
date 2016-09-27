@@ -250,7 +250,8 @@ case "$1" in
 	lease)
 		# called by dhcp daemon when adding a new lease 
 		touch $H/run/newleases
-		print "$*" >> $H/run/newleases
+		shift 1
+		print $* >> $H/run/newleases
 		return 0
 	;;
     newdb)
