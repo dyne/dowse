@@ -22,13 +22,19 @@
 # 02139, USA.
 
 dhcpd-conf() {
-	netzero=${dowse_net%/*}
+	netzero=${address%.*}.0
 	netC=${netzero%.*}
 	netB=${netC%.*}
 cat <<EOF
 option routers $address;
 option domain-name "dowse.it";
 option domain-name-servers $address;
+authoritative;
+db-time-format local;
+ddns-domainname "dowse.it";
+local-address $address;
+omapi-port 7911;
+
 subnet ${netzero} netmask $netmask {
   range ${netC}.101 ${netC}.249;
 }
