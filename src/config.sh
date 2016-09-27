@@ -64,6 +64,7 @@ execrules=(
     webdis       user
 	seccrond     user
 
+	dhcpd         root
     webui         root
     dnscrypt-proxy root
     dnsmasq       root
@@ -97,6 +98,7 @@ execmap=(
     webui         $PREFIX/bin/webui
     webdis        $PREFIX/bin/webdis
 	seccrond      $PREFIX/bin/seccrond
+	dhcpd         $PREFIX/bin/dhcpd
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
