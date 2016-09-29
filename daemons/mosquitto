@@ -25,11 +25,15 @@ mosquitto-conf() {
 cat <<EOF
 pid_file $H/run/mosquitto.pid
 user $dowse_uid
-bind_address $address
-port 1883
+# bind_address $address
+
+listener 1883
+protocol mqtt
+
+listener 1888
 protocol websockets
-persistence false
-log_dest none
+
+log_dest file $H/log/mosquitto.log
 # websockets_log_level 0
 # connection_messages true
 allow_anonymous true
@@ -43,7 +47,15 @@ mosquitto-exec() {
     freq=($exe $conf)
 	ckreq || return $?
 
-	launch mosquitto -c $conf -d
+	if [[ $DEBUG = 1 ]]; then
+
+		launch mosquitto -c $conf -v
+
+	else
+
+		launch mosquitto -c $conf -d
+
+	fi
 
 	sleep 1
 

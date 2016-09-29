@@ -39,9 +39,13 @@ static int quit = 0;
 redisContext *redis;
 redisReply   *reply;
 
+struct mosquitto *mosq = NULL;
+
 void ctrlc(int sig) {
     fprintf(stderr,"\nQuit.\n");
     redisFree(redis);
+    if(mosq) mosquitto_destroy(mosq);
+    mosquitto_lib_cleanup();
     quit = 1;
 }
 
@@ -49,48 +53,67 @@ int main(int argc, char **argv) {
     // settings for
     char *channel  = "dns-query-channel";
     char id[25] = "this_should_be_randomized"; //BUGBUG
-    char *host  = "127.0.0.1";
+    const char *host;
     int port    = 1883;
     int keepalive = 60;
-    struct mosquitto *mosq;
 
     char *dns, *ip, *action, *epoch, *domain, *tld, *group;
     long long int hits;
 
+    int mres;
 
+    if(argv[1] == NULL) {
+	    fprintf(stderr, "usage: dns-to-mqtt host [port]\n");
+	    exit(0);
+    }
+    host = argv[1];
+    // TODO: get port from argv[2] when present
+
+    signal(SIGINT, ctrlc);
 
     redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
     mosquitto_lib_init();
     mosq = mosquitto_new(id, true, NULL);
 
-    if(!mosq) {
-        fprintf(stderr, "failed to connect to local mosquitto mqtt server\n");
-    }
 
-    signal(SIGINT, ctrlc);
+    // libmosq_EXPORT int mosquitto_connect(   struct  mosquitto   *   mosq,
+    //                                         const   char    *   host,
+    //                                         int         port,
+    //                                         int         keepalive   )
+
+    mres = mosquitto_connect( mosq, host, port, keepalive);
+    if(mres != MOSQ_ERR_SUCCESS) {
+	    fprintf(stderr, "can't connect to mosquitto server %s on port %u\n",host, port);
+	    mosquitto_destroy(mosq);
+	    mosquitto_lib_cleanup();
+	    return(1);
+    } else {
+	    fprintf(stderr, "connected to mosquitto server %s on port %u\n", host, port);
+    }
 
     reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
+
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
         if(quit) break;
 
-        dns = strtok(reply->element[2]->str,",");
-        if(!dns) continue;
-        ip = strtok(NULL,",");
-        if(!ip) continue;
-        action = strtok(NULL,",");
-        if(!action) continue;
-        epoch = strtok(NULL,",");
-        if(!epoch) continue;
-        domain = strtok(NULL,",");
-        if(!domain) continue;
-        tld = strtok(NULL,",");
-        if(!tld) continue;
-        group = strtok(NULL,","); // optional
+        // dns = strtok(reply->element[2]->str,",");
+        // if(!dns) continue;
+        // ip = strtok(NULL,",");
+        // if(!ip) continue;
+        // action = strtok(NULL,",");
+        // if(!action) continue;
+        // epoch = strtok(NULL,",");
+        // if(!epoch) continue;
+        // domain = strtok(NULL,",");
+        // if(!domain) continue;
+        // tld = strtok(NULL,",");
+        // if(!tld) continue;
+        // group = strtok(NULL,","); // optional
 
 
-        hits = atoll(action);
+        // hits = atoll(action);
 
         // // render
         // if(!group)
@@ -100,9 +123,47 @@ int main(int argc, char **argv) {
         //     snprintf(output,MAX_OUTPUT,"%s|%s|%c|%s/%s/%s",
         //              epoch,ip,(hits==1)?'A':'M',tld,group,domain);
         //
-        // fprintf(stdout,"%s\n",output);
+        fprintf(stdout,"%s\n",reply->element[2]->str);
         // fflush(stdout);
-        mosquitto_publish(mosq, NULL, channel, reply->element[2]->len, reply->element[2]->str, 1/*qos*/, false);
+
+
+
+        // mosquitto_publish(  struct  mosquitto   *mosq,
+        //                     int                 *mid,
+        //                     const   char        *topic,
+        //                     int                 payloadlen,
+        //                     const   void        *payload,
+        //                     int                 qos,
+        //                     bool                retain  )
+
+        // Parameters
+	    //     mosq	a valid mosquitto instance.
+	    //     mid	pointer to an int.  If not NULL, the function will set this to the message id of this particular message.
+		//     payloadlen	the size of the payload (bytes).  Valid values are between 0 and 268,435,455.
+		// 	   payload	pointer to the data to send.  If payloadlen > 0 this must be a valid memory location.
+		// 	   qos	integer value 0, 1 or 2 indicating the Quality of Service to be used for the message.
+		// 	   retain	set to true to make the message retained.
+
+        mres = mosquitto_loop(mosq, -1, 1);
+        if(mres) mosquitto_reconnect(mosq);
+
+        mres = mosquitto_publish(mosq, NULL, channel,
+                                 reply->element[2]->len, reply->element[2]->str,
+                                 1 /*qos*/, false);
+        // Returns
+        //  MOSQ_ERR_SUCCESS	on success.
+        //  MOSQ_ERR_INVAL	if the input parameters were invalid.
+        // 	MOSQ_ERR_NOMEM	if an out of memory condition occurred.
+        // 	MOSQ_ERR_NO_CONN	if the client isn’t connected to a broker.
+        // 	MOSQ_ERR_PROTOCOL	if there is a protocol error communicating with the broker.
+        // 	MOSQ_ERR_PAYLOAD_SIZE	if payloadlen is too large.
+        if(mres != MOSQ_ERR_SUCCESS)
+	        fprintf(stderr, "error publishing message to mosquitto\n");
+    
+        mosquitto_loop(mosq, -1, 1);
+
+        // TODO: check returned value
+
 
         freeReplyObject(reply);
     }
