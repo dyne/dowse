@@ -49,6 +49,9 @@ case $1 in
 
 	dhcpd)
 		pushd $R/src/dhcp
+		act "please wait while preparing the build environment"
+		act "also prepare to wait more for the BIND export libs"
+		act "when you see ISC_LOG_ROLLINFINITE then is almost there"
 		autoreconf -i
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \

@@ -3,7 +3,7 @@
 
 S=${$(pwd)%/*}
 [[ -r $S/src ]] || {
-    print "error: config.sh must be run from the src"
+    print "error: import.sh must be run from the src subdirectory"
     return 1
 }
 
@@ -54,6 +54,12 @@ deb-download() {
 }
 
 
+[[ "$1" = "" ]] && {
+	notice "deb-download() function loaded from import.sh"
+	act "first argument name of package to be extracted in $S/debs"
+	return 0
+}
+
 
 # Check if Apt based
 command -v apt-get >/dev/null && {
@@ -67,23 +73,33 @@ command -v apt-get >/dev/null && {
     #     deb-download dnsmasq-base
     #     cp $tmp/usr/sbin/dnsmasq $S/build/bin
     # }
-
-    [[ -r $S/build/redis-server ]] || {
-        act "fetching redis server"
-        deb-download redis-server
-        cp $tmp/usr/bin/redis-server $S/build/bin }
-
-    [[ -r $S/build/redis-cli ]] || {
-        act "fetching redis tools"
-        deb-download redis-tools
-        cp $tmp/usr/bin/redis-cli $S/build/bin
-    }
+	case "$1" in
+		redis-server)
+			act "fetching redis server"
+			deb-download redis-server
+			cp $tmp/usr/bin/redis-server $S/build/bin
+			;;
+		redis-cli)
+			act "fetching redis cli"
+			deb-download redis-tools
+			cp $tmp/usr/bin/redis-cli $S/build/bin
+			;;
+		isc-dhcp-server)
+			act "fetching ISC dhcp server"
+			deb-download isc-dhcp-server
+			cp $tmp/usr/sbin/dhcpd $S/build/bin
+			;;
+		*)
+			error "package not known: $1"
+			act "add package extraction procedure to src/import.sh"
+			;;
 
     # [[ -r $S/build/tor ]] || {
     #     act "fetching tor"
     #     deb-download tor
     #     cp $tmp/usr/bin/tor $S/build/bin
     # }
+	esac
 
     popd
     rm -rf $tmp
