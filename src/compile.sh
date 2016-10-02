@@ -141,7 +141,9 @@ EOF
 
     dnscrypt_dowse.so)
         pushd $R/src/dnscrypt-plugin
-        ./configure && make && \
+		autoreconf -i &&
+			./configure &&
+			make &&
             install -s -p .libs/dnscrypt_dowse.so $R/build/bin
         popd
         ;;
