@@ -120,7 +120,6 @@ source $R/daemons/seccrond
 # source $R/daemons/tinyproxy
 # source $R/daemons/tor
 source $R/daemons/webui
-source $R/daemons/webdis
 
 # conclude initialization
 source /usr/share/zuper/zuper.init

@@ -68,7 +68,6 @@ execrules=(
 	dhcpd         root
     webui         root
     dnscrypt-proxy root
-    dnsmasq       root
     ifconfig      root
     route         root
     iptables      root
@@ -91,7 +90,6 @@ execmap=(
     ifconfig      /sbin/ifconfig
     route         /sbin/route
     dnscrypt-proxy $PREFIX/bin/dnscrypt-proxy
-    dnsmasq       $PREFIX/bin/dnsmasq
     redis-cli     $PREFIX/bin/redis-cli
     redis-server  $PREFIX/bin/redis-server
 	tinyproxy     $PREFIX/bin/tinyproxy
@@ -118,7 +116,6 @@ execmap=(
 command -v emerge >/dev/null && {
     execmap=(
         dnscrypt      /usr/sbin/dnscrypt-proxy
-        dnsmasq       /usr/sbin/dnsmasq
         redis-cli     /usr/bin/redis-cli
         redis-server  /usr/sbin/redis-server
         iptables      /sbin/iptables
