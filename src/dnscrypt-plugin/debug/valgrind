@@ -17,7 +17,7 @@ source ../../zuper/zuper.init
 notice "Valgrind debug session on Debugging"
 act "`date`"
 
-DOWSE_DOMAINLIST=$HOME/devel/dowse/src/domain-list/data \
+DOWSE_DOMAINLIST=$R/../domain-list/data \
 				DOWSE_LAN_ADDRESS_IP4=127.0.0.1 \
 				hostname=$hostname \
 				domain=$lan \

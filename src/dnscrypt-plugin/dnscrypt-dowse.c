@@ -113,7 +113,7 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	}
 
 	data->listpath = getenv("DOWSE_DOMAINLIST");
-	if(strlen(data->listpath) == 0) {
+	if(!data->listpath) {
 		debug(data,"warning: environmental variable DOWSE_DOMAINLIST not set\n");
 		data->listpath = NULL;
 	} else {

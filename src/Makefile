@@ -5,7 +5,16 @@ CC = gcc
 CFLAGS = -Wall -fPIC -Os
 LIBS = -ljemalloc -lhiredis
 
-all: config modprobe dowse-to-gource dowse-to-osc dowse-to-mqtt sup
+all: base springs
+	@./import.sh redis-server
+	@./import.sh redis-cli
+	@install -s -p modprobe        ../build/bin
+	@install -s -p dowse-to-gource ../build/bin
+	@install -s -p dowse-to-osc    ../build/bin
+	@./checksum.sh
+	@./compile.sh sup
+
+base: config modprobe sup
 	@make -C libparse-datetime
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
@@ -17,13 +26,9 @@ all: config modprobe dowse-to-gource dowse-to-osc dowse-to-mqtt sup
 	@./compile.sh kore
 	@./compile.sh webui
 	@./compile.sh seccrond
-	@./import.sh redis-server
-	@./import.sh redis-cli
-	@install -s -p modprobe        ../build/bin
-	@install -s -p dowse-to-gource ../build/bin
-	@install -s -p dowse-to-osc    ../build/bin
-	@./checksum.sh
-	@./compile.sh sup
+
+springs: dowse-to-gource dowse-to-osc dowse-to-mqtt
+	@echo "Dowse springs compiled"
 
 config:
 	@./config.sh ${DESTDIR}${PREFIX}
@@ -34,13 +39,13 @@ config:
 modprobe: modprobe.o log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
 
-dowse-to-gource: dowse-to-gource.o redis.o epoch.o
+dowse-to-gource: dowse-to-gource.o epoch.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-dowse-to-osc: dowse-to-osc.o redis.o epoch.o
+dowse-to-osc: dowse-to-osc.o epoch.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
-dowse-to-mqtt: dowse-to-mqtt.o redis.o epoch.o
+dowse-to-mqtt: dowse-to-mqtt.o epoch.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) mosquitto/lib/libmosquitto.a -lpthread
 
 install:
