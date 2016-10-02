@@ -24,8 +24,8 @@
 
 # {{{ GLOBALS
 
-dowse_version=0.9
-dowse_release_date="Apr/2016"
+dowse_version=0.10
+dowse_release_date="Oct/2016"
 
 # export DOWSE_PREFIX and DOWSE_HOME to override
 R=${DOWSE_PREFIX:-/usr/local/dowse}
@@ -107,7 +107,6 @@ source $R/zlibs/redis
 source $R/zlibs/sql
 
 # source $R/daemons/consul
-source $R/daemons/dnsmasq
 source $R/daemons/dhcpd
 # source $R/daemons/squid3
 # source $R/daemons/privoxy
@@ -119,7 +118,7 @@ source $R/daemons/pgld
 source $R/daemons/redis
 source $R/daemons/seccrond
 # source $R/daemons/tinyproxy
-source $R/daemons/tor
+# source $R/daemons/tor
 source $R/daemons/webui
 source $R/daemons/webdis
 
@@ -274,8 +273,8 @@ dowse-start() {
         fi
     }
 
-    # launch the dnsmasq daemon
-    start dnsmasq
+    # launch the dhcp daemon
+    start dhcpd
 
     # start the dns encrypted tunneling
     start dnscrypt-proxy cache
@@ -337,7 +336,7 @@ dowse-stop() {
     stop dnscrypt-proxy
 
     # stop the dhcp server
-    stop dnsmasq
+    stop dhcpd
 
     # stop the firewall peerguardian
     stop pgld

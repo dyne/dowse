@@ -22,7 +22,7 @@ DOWSE_DOMAINLIST=$HOME/devel/dowse/src/domain-list/data \
 				hostname=$hostname \
 				domain=$lan \
 			    valgrind --leak-check-heuristics=all --show-leak-kinds=all --track-origins=yes \
-				../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
+				--sigill-diagnostics=no ../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
 				-a 127.0.0.1:53530 \
 				-l debug/valgrind.log \
 				-r "178.216.201.222:2053" \

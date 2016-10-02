@@ -10,14 +10,15 @@ all: config modprobe dowse-to-gource dowse-to-osc dowse-to-mqtt sup
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
 	@./compile.sh pgld
-	@./compile.sh dhcpd
 	@./compile.sh netdata
 	@./compile.sh libwebsockets
 	@./compile.sh mosquitto
 	@./compile.sh kore
 	@./compile.sh webui
 	@./compile.sh seccrond
-	@./import.sh
+	@./import.sh redis-server
+	@./import.sh redis-cli
+	@./import.sh isc-dhcp-server
 	@install -s -p modprobe        ../build/bin
 	@install -s -p dowse-to-gource ../build/bin
 	@install -s -p dowse-to-osc    ../build/bin
