@@ -240,6 +240,46 @@ pendulum_arp_scan() {
     done
 }
 
+watchdog_daemons() {
+	# map all running pids
+	typeset -A pidmap
+	pidmap=()
+	for p in ${(f)"$(ps -o pid ax)"}; do
+		[[ "$p" =~ "PID" ]] && continue
+		pidmap+=($p 1)
+
+	done
+	act "${#pidmap} pids found running"
+
+	for d in ${(f)"$(print "KEYS daemon-*-pid" | redis runtime)"}; do
+		pid=`print "GET $d" | redis runtime`
+		act "$pid \t $d"
+		if [[ $pidmap[$pid] = 1 ]]; then
+			act "found running: $d"
+		else
+			err="$d not found running (crash?)"
+			error $err
+			print $err >> $H/log/watchdog.log
+			# delete old pid
+			print "DEL $d" | redis runtime
+			# remove daemon- prefix
+			daemon=${d#*-}
+			# remove -pid postfix
+			daemon=${daemon%-*}
+			act "attempting restart: $daemon"
+			start $daemon
+			if [[ $? = 0 ]]; then
+				err="succesfully restarted: $daemon"
+				notice $err
+				print $err >> $H/log/watchdog.log
+			else
+				err="watchdog fails to restart: $daemon"
+				error $err
+				print $err >> $H/log/watchdog.log
+			fi
+		fi
+	done
+}
 
 ################
 # MAIN functions
@@ -253,7 +293,8 @@ case "$1" in
 		shift 1
 		print $* >> $H/run/newleases
 		return 0
-	;;
+		;;
+
     newdb)
         # create a new things database if not existing
         [[ -r $H/run/things.db ]] || {
@@ -277,6 +318,12 @@ case "$1" in
         # pendulum_arp_scan
         _pendulum_commit_changes
         ;;
+
+	watchdog)
+		# check that all registered pids are running
+		# restart them if not running (and log that)
+		watchdog_daemons
+		;;
 
     procscan)
         # TODO: pgrep
