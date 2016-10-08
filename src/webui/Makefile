@@ -1,5 +1,6 @@
 
 all:
+	./map_assets > src/assetmap.h
 	kore flavor dev
 	kore build
 
