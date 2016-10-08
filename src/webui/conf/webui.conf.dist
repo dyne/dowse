@@ -9,12 +9,13 @@ pidfile     /var/run/dowse.pid
 # runas		$dowse_uid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
+validator   v_filename  regex   ^.*$
 
 domain * {
-    static  /                   welcome
-    static  /index              welcome
-    static  /logo.png           logo
-    static  /bootstrap.min.css  bootstrap_css
+    static  /                   serve_asset
+	params get / {	
+	    validate    o			v_filename
+	}
 
 	static	   /things/all      things_list
     static     /things          thing_show

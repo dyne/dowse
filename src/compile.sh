@@ -91,7 +91,13 @@ chroot    $HOME/.dowse
 runas     $USER
 EOF
         cat conf/webui.conf.dist >> conf/webui.conf
+
+		act "map all the assets"
+		./map_assets > src/assetmap.h
+
+		act "launch the actual build"
         $R/src/kore/kore build
+
         install -s -p webui $R/build/bin
         popd
         ;;
