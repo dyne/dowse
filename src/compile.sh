@@ -26,10 +26,15 @@ case $1 in
 	libwebsockets)
 		[[ -r $R/src/libwebsockets/lib/libwebsockets.a ]] && return 0
 		pushd $R/src/libwebsockets
+		# fix for broken path detection
+		cmakeflags=""
+		case `arch` in
+			arm*) cmakeflags+="-DZLIB_LIBRARY:FILEPATH=/usr/lib/arm-linux-gnueabih" ;;
+		esac
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
 			  cmake -DLWS_WITH_SSL=OFF -DLWS_WITH_SHARED=OFF \
-			  -DLWS_WITHOUT_TESTAPPS=ON -DLWS_IPV6=ON -DLWS_STATIC_PIC=ON . &&
+			  -DLWS_WITHOUT_TESTAPPS=ON -DLWS_IPV6=ON -DLWS_STATIC_PIC=ON $cmakeflags . &&
 			make
 		popd
 		;;
