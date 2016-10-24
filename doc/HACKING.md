@@ -52,13 +52,12 @@ Below is an updated list of existing types and their actions.
 
 ## DNS
 
+Channel: `dns-query-channel`
+
 Represents the event of a dns query by an object on the net.
 
 Sources:
 - dnscap (dowse plugin)
-
-Channel:
-- dns-query-channel
 
 Format:
 
@@ -104,10 +103,12 @@ Arguments:
 - `OS`: the operating system we guess is running on the object
 
 Sources
-- dnsmasq (dhcp server)
-- nmap (network scanner)
+- dhcp server
+
 
 ## PGL
+
+Channel: `pgl-info-channel`
 
 Peerguardian is a IP blocklist based firewall manager to protect the
 DOWSE network from connecting to known malware sources. It emits
