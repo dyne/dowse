@@ -39,13 +39,13 @@ config:
 modprobe: modprobe.o log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
 
-dowse-to-gource: dowse-to-gource.o epoch.o
+dowse-to-gource: dowse-to-gource.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-dowse-to-osc: dowse-to-osc.o epoch.o
+dowse-to-osc: dowse-to-osc.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
-dowse-to-mqtt: dowse-to-mqtt.o epoch.o
+dowse-to-mqtt: dowse-to-mqtt.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) mosquitto/lib/libmosquitto.a -lpthread
 
 install:

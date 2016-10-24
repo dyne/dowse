@@ -11,7 +11,7 @@ pgld_SOURCES = \
 	       src/pgld.c src/pgld.h \
 	       src/stream.c src/stream.h \
 	       src/blocklist.c src/blocklist.h \
-	       src/parser.c src/parser.h ../../redis.c
+	       src/parser.c src/parser.h
 pgld_LDADD = @PGLD_LIBS@ -lhiredis
 sbin_PROGRAMS = pgld
 
