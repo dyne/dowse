@@ -28,7 +28,7 @@ launch() {
             func "$_cmd (user) returns $_ret"
             return $_ret
             ;;
-        root) 
+        root)
             shift 1
             func "root launch: $_path $*"
             $R/bin/sup $_path $*
@@ -84,6 +84,25 @@ start() {
 
     if command -v $_daemon-exec > /dev/null; then
         # we preload jemalloc for better memory handling
+		# need to detect the path for it
+		case `arch` in
+			x86_64)
+				func "set LD_PRELOAD for jemalloc arch x84_64 ($_daemon)"
+				LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1 \
+							  $_daemon-exec $args
+					;;
+
+			i686)
+				func "set LD_PRELOAD for jemalloc arch i686 ($_daemon)"
+				LD_PRELOAD=/usr/lib/i386-linux-gnu/libjemalloc.so.1 \
+						  $_daemon-exec $args
+					;;
+
+			*) $_daemon-exec $args ;;
+
+		esac
+
+
 		func "$_daemon-exec $args"
         LD_PRELOAD=${execmap[libjemalloc]} $_daemon-exec $args
         return $?
@@ -156,7 +175,7 @@ getpid() {
 
     print QUIT | redis runtime && {
         _pid=`print "GET daemon-${_daemon}-pid" | redis runtime` }
- 
+
     # [[ "$_pid" = "" ]] && [[ -r $H/run/${_daemon}.pid ]] && {
     #     _pid=`cat $H/run/${_daemon}.pid` }
 
