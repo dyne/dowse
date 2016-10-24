@@ -98,20 +98,6 @@ int main(int argc, char **argv) {
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
         if(quit) break;
 
-        // dns = strtok(reply->element[2]->str,",");
-        // if(!dns) continue;
-        // ip = strtok(NULL,",");
-        // if(!ip) continue;
-        // action = strtok(NULL,",");
-        // if(!action) continue;
-        // epoch = strtok(NULL,",");
-        // if(!epoch) continue;
-        // domain = strtok(NULL,",");
-        // if(!domain) continue;
-        // tld = strtok(NULL,",");
-        // if(!tld) continue;
-        // group = strtok(NULL,","); // optional
-
 
         // hits = atoll(action);
 
