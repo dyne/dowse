@@ -133,7 +133,7 @@ accordingly.
 ```
 CMD,IP,{ACTION},EPOCH[,ARGS..]
 
-ACTION: SCAN
+ACTION: SCAN, ON, OFF
 ```
 
 Sources

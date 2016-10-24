@@ -182,7 +182,7 @@ UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
 pendulum_ip_neigh() {
     fn pendulum_ip_neigh $*
 
-    for o in "${(f)$(launch ip neigh)}"; do
+    for o in ${(f)"$(launch ip neigh)"}; do
         func "$o"
 
 
