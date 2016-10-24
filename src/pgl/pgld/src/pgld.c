@@ -34,34 +34,24 @@ static FILE *logfile;
 static const char *current_charset = 0, **blocklist_filenames = 0, **blocklist_charsets = 0;
 static FILE* pidfile = NULL;
 
-#ifdef HAVE_DBUS
-static int try_dbus = 0;
-// Default is no dbus, enable it with "-d"
-static int use_dbus = 0;
-//Declarations of dbus functions so that they can be dynamically loaded
-static int (*pgl_dbus_init)(void) = NULL;
-static void (*pgl_dbus_send)(const char *, va_list) = NULL;
-// TODO: static void (*do_dlsym(pgl_dbus_send_ipmatch)(xxxxxxxxxxxxxx) = NULL;
-#endif
-
 struct nfq_handle *nfqueue_h = 0;
 struct nfq_q_handle *nfqueue_qh = 0;
 
 redisContext *redis = NULL;
 redisReply *reply = NULL;
 
+void publish(const char *format, ...) {
+	char message[512];
+	va_list ap;
+	va_start(ap, format);
+	vsnprintf(message, 512, format, ap);
+	reply = redisCommand(redis, "PUBLISH pgl-info-channel %s", message);
+	freeReplyObject(reply);
+	va_end(ap);
+}
+
 // General logging function
 void do_log(int priority, const char *format, ...) {
-
-    if (redis) {
-        char message[512];
-        va_list ap;
-        va_start(ap, format);
-        vsnprintf(message, 512, format, ap);
-        reply = redisCommand(redis, "PUBLISH pgl-info-channel %s", message);
-        freeReplyObject(reply);
-        va_end(ap);
-    }
 
     if (use_syslog) {
         va_list ap;
@@ -85,15 +75,6 @@ void do_log(int priority, const char *format, ...) {
         fflush(logfile);
         va_end(ap);
     }
-
-#ifdef HAVE_DBUS
-    if (use_dbus) {
-        va_list ap;
-        va_start(ap, format);
-        pgl_dbus_send(format, ap);
-        va_end(ap);
-    }
-#endif
 
     if (opt_merge) {
         va_list ap;
@@ -104,92 +85,12 @@ void do_log(int priority, const char *format, ...) {
     }
 }
 
-#ifdef HAVE_DBUS
-// Logging function that does not log to dbus
-// (to be used e.g. in dbus functions for error messages)
-void do_log_xdbus(int priority, const char *format, ...) {
-
-    if (use_syslog) {
-        va_list ap;
-        va_start(ap, format);
-        vsyslog(LOG_MAKEPRI(LOG_DAEMON, priority), format, ap);
-        va_end(ap);
-    }
-
-    if (logfile) {
-        va_list ap;
-        va_start(ap, format);
-        time_t tv;
-        struct tm * timeinfo;
-        time( &tv );
-        timeinfo = localtime ( &tv );
-        strftime(timestr, 17, "%b %e %X", timeinfo);
-        timestr[16] = '\0';
-        fprintf(logfile,"%s ",timestr);
-        vfprintf(logfile, format, ap);
-        fprintf(logfile, "\n");
-        fflush(logfile);
-        va_end(ap);
-    }
-}
-#endif
 
 void int2ip (uint32_t ipint, char *ipstr) {
     ipint=htonl(ipint);
     inet_ntop(AF_INET, &ipint, ipstr, INET_ADDRSTRLEN);
 }
 
-#ifdef HAVE_DBUS
-static void *dbus_lh = NULL;
-
-#define do_dlsym(symbol)                                                       \
-    do {                                                                       \
-        dlerror(); /*clear error code*/                                        \
-        symbol = dlsym(dbus_lh, # symbol);                                     \
-        err = dlerror();                                                       \
-        if (err) {                                                             \
-            do_log_xdbus(LOG_ERR, "ERROR: Cannot get symbol %s: %s", # symbol, err); \
-            goto out_err;                                                      \
-        }                                                                      \
-    } while (0)
-
-static int open_dbus() {
-
-    char *err;
-
-    dbus_lh = dlopen(PLUGINDIR "/libdbus.so", RTLD_NOW);
-    if (!dbus_lh) {
-        do_log(LOG_ERR, "ERROR: dlopen() failed: %s", dlerror());
-        return -1;
-    }
-    dlerror(); // clear the error flag
-
-    do_dlsym(pgl_dbus_init);
-    do_dlsym(pgl_dbus_send);
-//  do_dlsym(pgl_dbus_send_ipmatch);
-    return 0;
-
-out_err:
-    dlclose(dbus_lh);
-    dbus_lh = 0;
-    return -1;
-}
-
-static int close_dbus() {
-    int ret = 0;
-
-
-    use_dbus = 0;
-
-    if (dbus_lh) {
-        ret = dlclose(dbus_lh);
-        dbus_lh = 0;
-    }
-
-    return ret;
-}
-
-#endif  /*HAVE_DBUS*/
 
 static FILE *create_pidfile(const char *name) {
     FILE *f;
@@ -216,7 +117,7 @@ static FILE *create_pidfile(const char *name) {
 }
 
 // Once daemonized stdout and stderr are no more available, only logging to
-// syslog, logfile and dbus.
+// syslog, logfile.
 static void daemonize() {
     /* Fork off and have parent exit. */
     switch (fork()) {
@@ -304,10 +205,6 @@ static void sighandler(int sig, siginfo_t *info, void *context) {
     case SIGINT:
         nfqueue_unbind();
         blocklist_stats(0);
-#ifdef HAVE_DBUS
-        if (use_dbus)
-            close_dbus();
-#endif
         blocklist_clear(0);
         free(blocklist_filenames);
         free(blocklist_charsets);
@@ -393,106 +290,111 @@ static void setipinfo (char *src, char *dst, char *proto, struct iphdr *ip, char
     }
 }
 
+
 static int nfqueue_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa, void *data) {
-    int id = 0, status = 0;
-    struct nfqnl_msg_packet_hdr *ph;
-    block_entry_t *found_range;
-    struct iphdr *ip;
-    unsigned char *payload;
-    char proto[5], src[23], dst[23];  //src and dst are 23 for IP(16)+port(5) + : + NULL
+	int id = 0, status = 0;
+	struct nfqnl_msg_packet_hdr *ph;
+	block_entry_t *found_range;
+	struct iphdr *ip;
+	unsigned char *payload;
+	char proto[5], src[23], dst[23];  //src and dst are 23 for IP(16)+port(5) + : + NULL
+	uint32_t saddr, daddr;
 
-    ph = nfq_get_msg_packet_hdr(nfa);
-    if (ph) {
-        id = ntohl(ph->packet_id);
-        nfq_get_payload(nfa, &payload);
-        ip = (struct iphdr*) payload;
-        switch (ph->hook) {
-        case NF_IP_LOCAL_IN:
-            found_range = blocklist_find(ntohl(ip->saddr));
-            if (found_range) {
-                // we set the user-defined reject_mark and set NF_REPEAT verdict
-                // it's up to other iptables rules to decide what to do with this marked packet
-                nfq_set_verdict2(qh, id, NF_REPEAT, reject_mark, 0, NULL);
-                found_range->hits++;
-                // NOTE: "setipinfo" sets the formats.
-                // TODO: Separate IP and port in there.
-                setipinfo(src, dst, proto, ip, payload);
-#ifndef LOWMEM
-                do_log(LOG_NOTICE, " IN: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
-#else
-                do_log(LOG_NOTICE, " IN: %-22s %-22s %-4s",src,dst,proto);
-#endif
-            } else {
-                // we set the user-defined accept_mark and set NF_REPEAT verdict
-                // it's up to other iptables rules to decide what to do with this marked packet
-                nfq_set_verdict2(qh, id, NF_REPEAT, accept_mark, 0, NULL);
-            }
-            break;
-        case NF_IP_LOCAL_OUT:
+	ph = nfq_get_msg_packet_hdr(nfa);
+	if (ph) {
+		id = ntohl(ph->packet_id);
+		nfq_get_payload(nfa, &payload);
+		ip = (struct iphdr*) payload;
+		saddr = ntohl(ip->saddr);
+		daddr = ntohl(ip->daddr);
 
-            found_range = blocklist_find(ntohl(ip->daddr));
-            if (found_range) {
-                // we set the user-defined reject_mark and set NF_REPEAT verdict
-                // it's up to other iptables rules to decide what to do with this marked packet
-                nfq_set_verdict2(qh, id, NF_REPEAT, reject_mark, 0, NULL);
-                found_range->hits++;
-                // NOTE: "setipinfo" sets the formats.
-                // TODO: Separate IP and port in there.
-                setipinfo(src, dst, proto, ip, payload);
-#ifndef LOWMEM
-//                 TODO: (here and in IN and FWD)
-// #ifdef HAVE_DBUS
-//                 do_log_xdbus(LOG_NOTICE, " IN: %-16s %-5s %-16s %-5s %-4s %s",src,srcport,dst,dstport,proto,found_range->name);
-//                 if (use_dbus) {
-//                     va_list ap;
-//                     va_start(ap, format);
-//                   //pgl_dbus_send(format, ap);
-//                     pgl_dbus_send_ipmatch("IN: %-16s %-5s %-16s %-5s %-4s %s",src,srcport,dst,dstport,proto,found_range->name);
-//                     va_end(ap);
-//                 }
-// #else
-                do_log(LOG_NOTICE, "OUT: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
-// #endif
-#else
-                do_log(LOG_NOTICE, "OUT: %-22s %-22s %-4su", src,dst,proto);
-#endif
-            } else {
-                // we set the user-defined accept_mark and set NF_REPEAT verdict
-                // it's up to other iptables rules to decide what to do with this marked packet
-                nfq_set_verdict2(qh, id, NF_REPEAT, accept_mark, 0, NULL);
-            }
-            break;
-        case NF_IP_FORWARD:
-            found_range = blocklist_find(ntohl(ip->saddr));
-            if (!found_range) {
-                found_range = blocklist_find(ntohl(ip->daddr));
-            }
-            if (found_range) {
-                // we set the user-defined reject_mark and set NF_REPEAT verdict
-                // it's up to other iptables rules to decide what to do with this marked packet
-                nfq_set_verdict2(qh, id, NF_REPEAT, reject_mark, 0, NULL);
-                found_range->hits++;
-                setipinfo(src, dst, proto, ip, payload);
-#ifndef LOWMEM
-                do_log(LOG_NOTICE, "FWD: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
-#else
-                do_log(LOG_NOTICE, "FWD: %-22s %-22s %-4s",src,dst,proto);
-#endif
-            } else {
-                // we set the user-defined accept_mark and set NF_REPEAT verdict
-                // it's up to other iptables rules to decide what to do with this marked packet
-                nfq_set_verdict2(qh, id, NF_REPEAT, accept_mark, 0, NULL);
-            }
-            break;
-        default:
-            do_log(LOG_NOTICE, "WARN: Not NF_LOCAL_IN/OUT/FORWARD packet!");
-            break;
-        }
-    } else {
-        do_log(LOG_ERR, "ERROR: NFQUEUE: can't get msg packet header.");
-        return 1;               // from nfqueue source: 0 = ok, >0 = soft error, <0 hard error
-    }
-    return 0;
+		switch (ph->hook) {
+
+		case NF_IP_LOCAL_IN:
+
+			found_range = blocklist_find(saddr);
+			if (found_range) {
+				struct timeval tv;
+				gettimeofday (&tv, NULL);
+
+				// we set the NF_DROP verdict, packet is dropped here
+				nfq_set_verdict2(qh, id, NF_DROP, reject_mark, 0, NULL);
+				found_range->hits++;
+				// NOTE: "setipinfo" sets the formats.
+				// TODO: Separate IP and port in there.
+				// setipinfo(src, dst, proto, ip, payload);
+				
+				publish("PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
+				        NIPQUAD(ip->daddr), tv.tv_sec, NIPQUAD(ip->saddr) );
+
+				// do_log(LOG_NOTICE, " IN: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
+
+
+			// } else {
+			// 	// we set the user-defined accept_mark and set NF_REPEAT verdict
+			// 	// it's up to other iptables rules to decide what to do with this marked packet
+				// nfq_set_verdict2(qh, id, NF_REPEAT, accept_mark, 0, NULL);
+			}
+			break;
+
+		case NF_IP_LOCAL_OUT:
+
+			found_range = blocklist_find(daddr);
+			if (found_range) {
+				struct timeval tv;
+				gettimeofday (&tv, NULL);
+
+				// we set the user-defined reject_mark and set NF_REPEAT verdict
+				// it's up to other iptables rules to decide what to do with this marked packet
+				nfq_set_verdict2(qh, id, NF_DROP, reject_mark, 0, NULL);
+				found_range->hits++;
+				// NOTE: "setipinfo" sets the formats.
+				// TODO: Separate IP and port in there.
+				// setipinfo(src, dst, proto, ip, payload);
+				publish("PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
+				        NIPQUAD(ip->saddr), tv.tv_sec, NIPQUAD(ip->daddr) );
+				// do_log(LOG_NOTICE, "OUT: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
+
+			// } else {
+			// 	// we set the user-defined accept_mark and set NF_REPEAT verdict
+			// 	// it's up to other iptables rules to decide what to do with this marked packet
+			// 	nfq_set_verdict2(qh, id, NF_REPEAT, accept_mark, 0, NULL);
+			}
+			break;
+		case NF_IP_FORWARD:
+			found_range = blocklist_find(daddr);
+			if (!found_range) {
+				found_range = blocklist_find(saddr);
+			}
+			if (found_range) {
+				struct timeval tv;
+				gettimeofday (&tv, NULL);
+
+				// we set the user-defined reject_mark and set NF_REPEAT verdict
+				// it's up to other iptables rules to decide what to do with this marked packet
+				nfq_set_verdict2(qh, id, NF_DROP, reject_mark, 0, NULL);
+				found_range->hits++;
+				// setipinfo(src, dst, proto, ip, payload);
+
+				publish("PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
+				        NIPQUAD(ip->saddr), tv.tv_sec, NIPQUAD(ip->daddr) );
+				// do_log(LOG_NOTICE, "FWD: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
+
+			// } else {
+			// 	// we set the user-defined accept_mark and set NF_REPEAT verdict
+			// 	// it's up to other iptables rules to decide what to do with this marked packet
+			// 	nfq_set_verdict2(qh, id, NF_REPEAT, accept_mark, 0, NULL);
+			}
+			break;
+		default:
+			 do_log(LOG_NOTICE, "WARN: Not NF_LOCAL_IN/OUT/FORWARD packet!");
+			break;
+		}
+	} else {
+		do_log(LOG_ERR, "ERROR: NFQUEUE: can't get msg packet header.");
+		return 1;               // from nfqueue source: 0 = ok, >0 = soft error, <0 hard error
+	}
+	return 0;
 }
 
 static int nfqueue_bind() {
@@ -583,17 +485,13 @@ static void print_usage() {
     fprintf(stderr, "free software, and you are welcome to modify and/or redistribute it.\n\n");
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, "  pgld [-s] [-l LOGFILE]");
-#ifdef HAVE_DBUS
-    fprintf(stderr, " [-d]");
-#endif
+
     fprintf(stderr, " [-c CHARSET] [-p PIDFILE] -a MARK -r MARK [-q 0-65535] [-Q queue_size] BLOCKLIST(S)\n");
     fprintf(stderr, "  pgld [-c CHARSET] -m [BLOCKLIST(S)]\n\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -s                Enable logging to syslog.\n");
     fprintf(stderr, "  -l LOGFILE        Enable logging to LOGFILE.\n");
-#ifdef HAVE_DBUS
-    fprintf(stderr, "  -d                Enable D-Bus support.\n");
-#endif
+
     fprintf(stderr, "  -c CHARSET        Specify blocklist file CHARSET.\n");
     fprintf(stderr, "  -p PIDFILE        Use a PIDFILE.\n");
     fprintf(stderr, "  -q 0-65535        Specify a 16-bit NFQUEUE number.\n");
@@ -619,11 +517,7 @@ void add_blocklist(const char *name, const char *charset) {
 int main(int argc, char *argv[]) {
     int opt, i;
 
-    while ((opt = getopt(argc, argv, "sl:"
-#ifdef HAVE_DBUS
-        "d"
-#endif
-        "c:p:q:Q:r:a:mh" )) != -1) {
+    while ((opt = getopt(argc, argv, "sl:c:p:q:Q:r:a:mh" )) != -1) {
         switch (opt) {
         case 's':
             use_syslog = 1;
@@ -633,11 +527,6 @@ int main(int argc, char *argv[]) {
             CHECK_OOM(logfile_name);
             strcpy(logfile_name,optarg);
             break;
-#ifdef HAVE_DBUS
-        case 'd':
-            try_dbus = 1;
-            break;
-#endif
         case 'c':
             current_charset = optarg;
             break;
@@ -714,23 +603,6 @@ int main(int argc, char *argv[]) {
     if (use_syslog) {
         openlog("pgld", 0, LOG_DAEMON);
     }
-
-    // connect to dbus
-#ifdef HAVE_DBUS
-    if (try_dbus) {
-        if (open_dbus() < 0) {
-            do_log(LOG_ERR, "ERROR: Cannot load D-Bus plugin");
-            try_dbus = 0;
-            exit(1);
-        }
-        if (pgl_dbus_init() < 0) {
-            do_log(LOG_ERR, "ERROR: Cannot initialize D-Bus");
-            try_dbus = 0;
-            exit(1);
-        }
-    }
-    use_dbus = try_dbus;
-#endif
 
     daemonize();
 
