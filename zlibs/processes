@@ -102,9 +102,7 @@ start() {
 
 		esac
 
-
 		func "$_daemon-exec $args"
-        LD_PRELOAD=${execmap[libjemalloc]} $_daemon-exec $args
         return $?
     else
         warning "daemon executable not found: $execpath"
@@ -237,4 +235,44 @@ waitpid() {
         return 1 }
 
     return 0
+}
+
+# prints a unique identifier of the lock used to unlock in case of success
+# else returns nonzero in case of failure (lock timeout)
+lock() {
+	fn lock $*
+	_lid="$1"
+	timeout=${2:-10}
+	req=(_lid)
+	ckreq || return $?
+
+	rand="$RANDOM$RANDOM"
+	[[ `print "SET lock_$_lid $rand NX PX ${timeout}000" | redis runtime` = "OK" ]] && {
+		print $rand
+		func "succesful lock: $* (key $rand)"
+		return 0 
+	}
+	func "failed lock: $*"
+	return 1
+}
+
+unlock() {
+	fn unlock $*
+	_lid="$1"
+	rand="$2"
+	req=(_lid rand)
+	ckreq || return $?
+
+	res=`print "GET lock_$_lid" | redis runtime`
+	[[ "$res" = "" ]] && {
+		func "no lock to unlock: $*"
+		return 0 }
+
+    [[ "$rand" = "$res" ]] && {
+		print "DEL lock_$_lid" | redis runtime
+		func "succesful unlock: $* (key $res)"
+		return 0
+	}
+	func "failed unlock: $* (key $res)"
+	return 1
 }

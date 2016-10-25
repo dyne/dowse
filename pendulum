@@ -254,14 +254,12 @@ watchdog_daemons() {
 		daemon=${d#*-}
 		# remove -pid postfix
 		daemon=${daemon%-*}
+
 		pid=`print "GET $d" | redis runtime`
 		act "$pid \t $d"
 		if [[ $pidmap[$pid] = 1 ]]; then
 			act "found running: $d"
 		else
-			[[ -r $H/run/$daemon.watchdog.lock ]] && continue
-			touch $H/run/$daemon.watchdog.lock
-
 			err="$d not found running (crash?)"
 			error $err
 			print $err >> $H/log/watchdog.log
@@ -278,7 +276,6 @@ watchdog_daemons() {
 				error $err
 				print $err >> $H/log/watchdog.log
 			fi
-			rm -f $H/run/$daemon.watchdog.lock
 		fi
 	done
 }
@@ -314,18 +311,32 @@ case "$1" in
         ;;
 
     netscan)
+		slid=`lock netscan 30`
+		[[ $? = 0 ]] || {
+			func "netscan already running"
+			return 1 }
+		
         # parse everything in this map
         obj=()
         pendulum_ip_neigh
         # pendulum_arp_scan
         _pendulum_commit_changes
+
+		unlock netscan $slid
         ;;
 
 	watchdog)
+		wlid=`lock watchdog 60`
+		[[ $? = 0 ]] || {
+			func "watchdog already running"
+			return 1 }
+
 		# check that all registered pids are running
 		# restart them if not running (and log that)
 		pidmap=()
 		watchdog_daemons
+
+		unlock watchdog $wlid
 		;;
 
     procscan)
