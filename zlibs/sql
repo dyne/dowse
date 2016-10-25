@@ -2,6 +2,19 @@
 
 # sql functions
 
+# creates a database for the current network
+# uses an unique hash to the network location
+sql_create_database() {
+	fn sql_create_database $*
+	name="$1"
+	req=(name)
+	ckreq || return $?
+
+	print "CREATE DATABASE $db[$name];" | $sql 2>/dev/null
+	# TODO: better check of error code if needed
+
+}
+
 # takes a table description from stdin
 # prints "create table" command on stdout
 sql_create_table() {
@@ -44,7 +57,7 @@ sql_search() {
         query+="${o[(w)1]} like '%$needle%'"
         c=$(( $c + 1 ))
     done
-    print - "$query;" | $sql -batch $H/run/things.db
+    print - "$query;" | $sql ${db[things]}
 }
 
 

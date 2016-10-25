@@ -24,11 +24,8 @@
 # This standalone program runs every N seconds and gathers current
 # information on network objects, updating it in redis
 
-vars+=(now interval quit sqlquery)
+vars+=(now sqlquery)
 maps+=(obj pidmap)
-destruens+=(exitloop)
-quit=0
-exitloop() { quit=1 }
 source /usr/local/dowse/zshrc
 
 # gather_network_info fills in global maps
@@ -38,8 +35,6 @@ net_ip4_addr=()
 net.scan_addresses
 
 now=`date --utc +'%s'`
-interval=10 # seconds
-
 
 pendulum_ip_to_network() {
     fn pendulum_ip_to_network $*
@@ -67,19 +62,9 @@ _pendulum_commit_changes() {
     fn pendulum_commit_changes $*
     [[ "$sqlquery" = "" ]] && return 0
 
-    if [[ $DEBUG = 1 ]]; then
-        print - "$sqlquery" | $sql --echo -batch $H/run/things.db
-    else
-        print - "$sqlquery" | $sql -batch $H/run/things.db
-    fi
-    [[ $? = 0 ]] || {
-        error "sql query failed on db: $H/run/things.db"
-        func "$sqlquery"
-        sqlquery=""
-        return 1
-    }
+    print - "$sqlquery" | $sql $db[things]
+
     sqlquery=""
-    return 0
 }
 
 _pendulum_update_changes() {
@@ -93,7 +78,7 @@ _pendulum_update_changes() {
     [[ "$macaddr" = "INCOMPLETE" ]] && return 1
 
     local info
-    info=`print - "SELECT * from found where macaddr is '$obj[macaddr]';" | $sql -batch $H/run/things.db`
+    info=`print - "SELECT * from found where macaddr = '$obj[macaddr]';" | $sql $db[things]`
 
     local nownow
     nownow=`date --utc '+%Y-%m-%dT%H:%M:%S'`
@@ -106,7 +91,7 @@ _pendulum_update_changes() {
         # no records found, this is a new one
         
         sqlquery+="
-INSERT OR IGNORE into found (macaddr,ip4,iface,hostname,state,last,age)
+INSERT IGNORE into found (macaddr,ip4,iface,hostname,state,last,age)
 values('$obj[macaddr]','$obj[ip4]','$obj[iface]','$obj[hostname]','$obj[state]','$nownow','$nownow');"
 
 
@@ -299,8 +284,7 @@ case "$1" in
         [[ -r $H/run/things.db ]] || {
             act "Creating new things database"
             cat $R/db/thing.idx |
-                sql_create_table found |
-                $sql -batch $H/run/things.db
+                sql_create_table found | $sql $db[things]
             [[ $? = 0 ]] || {
                 error "error creating database: $H/run/things.db"
                 return 1 }

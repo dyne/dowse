@@ -37,7 +37,7 @@ dbindex='
 mkdir -p $S/build/db
 
 thingindex='
-macaddr  text primary key
+macaddr  varchar(18) primary key
 ip4      text
 ip6      text
 hostname text

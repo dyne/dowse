@@ -55,9 +55,8 @@ vars+=(R H E debug quiet script fun settings network)
 vars+=(last_notice last_act last_func)
 vars+=(root sql)
 arrs+=(mods)
-
-# use sqlite
-sql="sqlite3"
+# use mysql
+sql=(mysql --defaults-file=$H/run/mysqld.conf -u root)
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
@@ -203,6 +202,10 @@ act "daemons running as user and group $dowse_uid:$dowse_gid"
 # func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
 # if touch $H/log/test; then rm -f $H/log/test; else return 1; fi
 
+act "initialise things database"
+dbname="${address}_${wan}_${dowse_net//\//_}"
+db[things]="things_${dbname//./_}"
+func "$db[things]"
 
 act "all requirements in place"
 
@@ -299,6 +302,13 @@ dowse-start() {
             pgld-conf > $H/run/pgld.conf
             start pgld
     }
+
+	# start the sql database
+	start mysqld && {
+		sql_create_database things
+        cat $R/db/thing.idx |
+            sql_create_table found | $sql $db[things] 2>/dev/null
+	}
 
     # start web interface
     start webui
@@ -423,7 +433,7 @@ dowse-status() {
         now=`date  "+%H:%M:%S"`
         notice "List things found online"
 #        for res in "${(f)$(print - "SELECT * from found WHERE strftime('%H:%M:%S', last) between '$minago' and '$now';" | $sql -batch $H/run/things.db)}"; do
-        for res in "${(f)$(print - "SELECT * from found;" | $sql -batch $H/run/things.db)}"; do
+        for res in "${(f)$(print - "SELECT * from found;" | $sql $db[things])}"; do
             [[ "$res" = "" ]] && continue
             local -A _obj
             _obj=( $(print - $res | sql_idx_parse $R/db/thing.idx) )
