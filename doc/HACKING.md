@@ -25,6 +25,19 @@ To list stored known and unknown objects from commandline, `source dowse` and th
 print - "SELECT * from found;" | $sql -batch $H/run/things.db
 ```
 
+## Services
+
+This table links all services found on an object with the object entry
+
+```
+macaddr:port  text foreign key
+service       text
+product       text
+version       text
+extra         text
+notes         text
+identity      text
+```
 
 # Events
 
