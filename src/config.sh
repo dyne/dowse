@@ -64,6 +64,7 @@ execrules=(
 	seccrond     user
 	omshell      user
 	mosquitto    user
+	mysqld       user
 
 	dhcpd         root
     webui         root
@@ -99,6 +100,7 @@ execmap=(
 	mosquitto     $PREFIX/bin/mosquitto
 	dhcpd         $PREFIX/bin/dhcpd
 	omshell       $PREFIX/bin/omshell
+	mysqld        $PREFIX/bin/mysqld
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables

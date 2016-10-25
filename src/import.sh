@@ -89,6 +89,24 @@ command -v apt-get >/dev/null && {
 			deb-download isc-dhcp-server
 			cp $tmp/usr/sbin/dhcpd $S/build/bin
 			;;
+		mariadb)
+			act "fetching mariadb sql server"
+			# deb-download mariadb-server-10.0
+			deb-download mariadb-server-core-10.0
+			deb-download mariadb-server-10.0
+			deb-download mariadb-client-core-10.0
+			mkdir -p $S/build/mysql/bin
+			mkdir -p $S/build/mysql/share
+			mkdir -p $S/build/mysql/plugin
+			cp -ra $tmp/usr/share/mysql/*      $S/build/mysql/share/
+			cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
+			cp $tmp/usr/sbin/mysqld    $S/build/mysql/bin
+			cp $tmp/usr/bin/mysql      $S/build/mysql/bin
+			cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
+			cp $tmp/usr/bin/mysql_install_db $S/build/mysql/bin
+			cp $tmp/usr/bin/my_print_defaults $S/build/mysql/bin
+
+			;;
 		*)
 			error "package not known: $1"
 			act "add package extraction procedure to src/import.sh"
@@ -102,6 +120,10 @@ command -v apt-get >/dev/null && {
 	esac
 
     popd
-    rm -rf $tmp
+	if [[ $DEBUG = 1 ]]; then
+		func "MariaDB packages downloaded in $tmp"
+	else
+		rm -rf $tmp
+	fi
 
 }

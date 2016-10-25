@@ -8,6 +8,7 @@ LIBS = -ljemalloc -lhiredis
 all: base springs
 	@./import.sh redis-server
 	@./import.sh redis-cli
+	@./import.sh mariadb
 	@install -s -p modprobe        ../build/bin
 	@install -s -p dowse-to-gource ../build/bin
 	@install -s -p dowse-to-osc    ../build/bin
