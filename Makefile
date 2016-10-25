@@ -29,6 +29,8 @@ install:
 	install -d ${DESTDIR}${PREFIX}/bin
 	install -p -m 644 dowse ${DESTDIR}${PREFIX}/zshrc
 	install -p -m 755 pendulum ${DESTDIR}${PREFIX}/bin/pendulum
+	install -d ${DESTDIR}${PREFIX}/mysql
+	cp -rav build/mysql/* ${DESTDIR}${PREFIX}/mysql
 	make -C src     install
 	make -C zlibs   install
 	make -C daemons install
