@@ -147,20 +147,29 @@ savepid() {
     req=(_daemon)
     ckreq || return $?
 
-	# make sure the pidfiles are written
-	sleep 2
-	# TODO: check if its a number we don't need to wait
+	_lock=${_daemon}-savepid
+	_key=`lock $_lock 20`
+	_pidnum=""
 
-    if [[ -r "$_pid" ]]; then
-        print "SET daemon-${_daemon}-pid \"`cat $_pid`\"" \
-            | redis runtime > /dev/null
-    elif [[ "$_pid[1]" = "/" ]]; then
-		warning "$_daemon pidfile wasn't created in $_pid"
+	while islocked $_lock $_key; do
+		sleep 1
+		[[ -r $_pid ]] && {
+			_pidnum=`cat $_pid`
+			[[ "$_pidnum" != "" ]] && {
+				func "$_pid contains $_pidnum"
+				unlock $_lock $_key }
+		}
+	done
+
+	[[ "$_pidnum" = "" ]] && {
+		error "$_daemon did not write pid in $_pid"
 		return 1
-	else
-        print "SET daemon-${_daemon}-pid \"$_pid\"" \
+	}
+
+    print "SET daemon-${_daemon}-pid \"$_pidnum\"" \
             | redis runtime > /dev/null
-    fi
+	# TODO: check redis result is OK?
+	return 0
 }
 
 getpid() {
@@ -274,5 +283,20 @@ unlock() {
 		return 0
 	}
 	func "failed unlock: $* (key $res)"
+	return 1
+}
+
+islocked() {
+	fn islocked $*
+	_lid="$1"
+	rand="$2"
+	req=(_lid rand)
+	ckreq || return $?
+
+	res=`print "GET lock_$_lid" | redis runtime`
+    [[ "$rand" = "$res" ]] && {
+		func "lock_${_lid} is still locked"
+		return 0 }
+	# else
 	return 1
 }
