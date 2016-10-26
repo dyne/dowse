@@ -6,7 +6,7 @@ socket		= $H/run/mysql/mysqld.sock
 
 [mysqld]
 user		= $dowse_uid
-pid-file	= $H/run/mysql/mysqld.pid
+pid-file	= $H/run/mysqld.pid
 socket		= $H/run/mysql/mysqld.sock
 port		= 63306
 basedir		= $R/mysql
@@ -94,7 +94,7 @@ mysqld-exec() {
 
 	launch mysqld --defaults-file="$conf" &!
 
-	savepid mysqld $H/run/mysql/mysqld.pid
+	savepid mysqld $H/run/mysqld.pid
 
 	# make sure the current database exists
 	sql_create_database things
@@ -112,7 +112,7 @@ mysqld-kill() {
 	print "SHUTDOWN;" | $sql
 	[[ $? = 0 ]] && {
 		waitpid $_pid
-		print "DEL daemon-mysqld-pid" | redis runtime
+		rm -f $H/run/mysqld.pid
 	}
 
 }

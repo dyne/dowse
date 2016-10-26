@@ -106,8 +106,8 @@ redis-server-exec() {
     launch redis-server $conf $*
 
     act "blank volatile databases"
-    print "flushdb" | redis runtime > /dev/null
-    print "flushdb" | redis dynamic > /dev/null
+    print "flushdb" | redis runtime 2>&1 > /dev/null
+    print "flushdb" | redis dynamic 2>&1 > /dev/null
 
     savepid redis-server $pidfile
 

@@ -276,6 +276,8 @@ dowse-start() {
         fi
     }
 
+	notice "Starting all daemons in Dowse"
+
     # launch the dhcp daemon
     start dhcpd
 
@@ -322,11 +324,14 @@ dowse-start() {
 dowse-stop() {
     fn dowse-stop
 
+	notice "Stopping all daemons in Dowse"
 	stop seccrond
 
 	# stop tinyproxy-reverse
 
     stop webui
+
+	stop mysqld
 
     for m in `dowse-module-list`; do
 
