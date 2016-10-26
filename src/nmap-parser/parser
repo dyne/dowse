@@ -1,0 +1,60 @@
+#!/bin/bash
+
+#xmlstartlet el -d  nmap.xml
+
+function selectXPath() {
+	XPATH=$1
+	INFILE=nmap.xml
+#	set -x
+	xmlstarlet sel -t -v $XPATH ${INFILE}
+#	set +x
+}
+
+COUNT=`selectXPath "count(/nmaprun/host)" `
+
+
+
+#--- Queste nmap non le tira fuori o non ci interessano
+_dhcp=""
+_gateway=""
+_network=""
+_last=""
+_age=""
+_iface=""
+_state=""
+		
+		
+#--- Queste stringhe le leggeremo dal file things.idx		
+LIST=(hostname macaddr ipv4 ipv6 os vendor)
+
+echo "Finding $COUNT hosts"
+
+for ((i=1;i<=$COUNT;i++)); do
+	STATUS=`selectXPath "/nmaprun/host[$i]/status/@state"`	
+	if [ "up" = ${STATUS} ]; then
+		#--- Queste stringhe le leggeremo dal file things.idx	
+		xpath_hostname=/nmaprun/host[$i]/hostnames/hostname[0]/@name
+xpath_macaddr=/nmaprun/host[$i]/address[@addrtype=\"mac\"]/@addr
+xpath_ipv4=/nmaprun/host[$i]/address[@addrtype=\"ipv4\"]/@addr
+xpath_ipv6=/nmaprun/host[$i]/address[@addrtype=\"ipv6\"]/@addr
+xpath_vendor=/nmaprun/host[$i]/address[@addrtype=\"mac\"]/@vendor
+
+#--- prenderemo il name del gruppo "os" che ha trovato nmap con maggiore accuracy
+xpath_os=/nmaprun/host[$i]/os/osmatch[1]/@name
+
+
+		for k in ${LIST[@]} ; do
+			A=xpath_$k
+			xpathStr=${!A}
+			val=`selectXPath ${xpathStr}`
+#			echo -e "$i : [${xpathStr}]\t> $k\t>\t[$val]"
+			echo -e "$i :> $k\t\t>[$val]"
+		done
+		echo ""
+#		echo -e "$i >[${_os}]\t[${_hostname}]\t[${ADDRTYPE}]\t[${_macaddr}]\t[${_ipv4}]\t[${_ipv6}]";
+
+	fi
+
+done
+# 
+#xmlstarlet el -a nmap.xml 
