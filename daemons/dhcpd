@@ -56,17 +56,17 @@ dhcpd-exec() {
 
 	leases=$H/run/isc.leases
 	touch $leases
-	ztmp
+	pid=$H/run/dhcpd.pid
 
 	# chroot needs /proc/net/dev
-	# launch dhcpd -4 -pf $ztmpfile -user $dowse_uid -group $dowse_gid \
+	# launch dhcpd -4 -pf $pid -user $dowse_uid -group $dowse_gid \
 	# 	   -chroot $H -lf $leases -cf $conf
 
-	launch dhcpd -4 -pf $ztmpfile -user $dowse_uid -group $dowse_gid \
+	launch dhcpd -4 -pf $pid -user $dowse_uid -group $dowse_gid \
 		   -lf $leases -cf $conf
 
 	sleep 1
 
-	savepid dhcpd $ztmpfile
+	savepid dhcpd $pid
 
 }
