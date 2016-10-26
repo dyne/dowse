@@ -48,9 +48,9 @@ pgld-exec() {
     freq=($conf)
     ckreq || return 1
 
-    ztmp
-    launch pgld -p $ztmpfile -r pgld_reject -a pgld_accept $conf
-    savepid pgld $ztmpfile
+    pid=$H/run/pgld.pid
+    launch pgld -p $pid -r pgld_reject -a pgld_accept $conf
+    savepid pgld $pid
 
     return $?
 

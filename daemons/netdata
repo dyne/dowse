@@ -57,9 +57,9 @@ netdata-exec() {
 	mkdir -p $H/lib/netdata/registry
 	mkdir -p $H/cache/netdata
 
-    ztmp
-    launch netdata -P $ztmpfile -c $conf -p 29999
-    savepid netdata $ztmpfile
+    pid=$H/run/netdata.pid
+    launch netdata -P $pid -c $conf -p 29999
+    savepid netdata $pid
 
     return $?
 }
