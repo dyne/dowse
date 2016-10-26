@@ -57,8 +57,6 @@ mosquitto-exec() {
 
 	fi
 
-	sleep 1
-
 	savepid mosquitto $H/run/mosquitto.pid
 
 }

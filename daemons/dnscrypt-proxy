@@ -92,8 +92,6 @@ dnscrypt-proxy-exec() {
 		# log only warning conditions
 
     fi
-    sleep 1
-	# avoid race condition
 
     savepid dnscrypt-proxy $pid
 

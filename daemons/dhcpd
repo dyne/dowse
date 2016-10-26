@@ -65,8 +65,6 @@ dhcpd-exec() {
 	launch dhcpd -4 -pf $pid -user $dowse_uid -group $dowse_gid \
 		   -lf $leases -cf $conf
 
-	sleep 1
-
 	savepid dhcpd $pid
 
 }
