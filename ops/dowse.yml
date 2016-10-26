@@ -23,6 +23,7 @@
         - libpcap-dev
         - libnetfilter-queue-dev
         - libnetfilter-conntrack3
+        - libreadline5
         - libjemalloc-dev
         - libsodium-dev
         - libseccomp2
