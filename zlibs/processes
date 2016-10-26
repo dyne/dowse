@@ -245,12 +245,13 @@ lock() {
 	ckreq || return $?
 
 	rand="$RANDOM$RANDOM"
-	[[ `print "SET lock_$_lid $rand NX PX ${timeout}000" | redis runtime` = "OK" ]] && {
-		print $rand
-		func "succesful lock: $* (key $rand)"
-		return 0
-	}
+	print "SET lock_$_lid $rand NX PX ${timeout}000" | redis runtime {
+			print "$rand"
+			func "succesful lock: $* (key $rand)"
+			return 0
+		}
 	func "failed lock: $*"
+	print "0"
 	return 1
 }
 
@@ -261,13 +262,13 @@ unlock() {
 	req=(_lid rand)
 	ckreq || return $?
 
-	res=`print "GET lock_$_lid" | redis runtime`
+	res=`print "GET lock_${_lid}" | redis runtime`
 	[[ "$res" = "" ]] && {
 		func "no lock to unlock: $*"
 		return 0 }
 
     [[ "$rand" = "$res" ]] && {
-		print "DEL lock_$_lid" | redis runtime
+		print "DEL lock_${_lid}" | redis runtime
 		func "succesful unlock: $* (key $res)"
 		return 0
 	}

@@ -24,14 +24,15 @@
 # This standalone program runs every N seconds and gathers current
 # information on network objects, updating it in redis
 
-[[ -r $H/run/redis-server.pid ]] || {
-	print "Dowse is not running"
-	print "pid not found: $H/run/redis-server.pid"
-	return 1 }
 
 vars+=(now sqlquery)
 maps+=(obj pidmap)
 source /usr/local/dowse/zshrc
+
+[[ -r $H/run/redis-server.pid ]] || {
+	error "Dowse is not running"
+	error "pid not found: $H/run/redis-server.pid"
+	return 1 }
 
 # gather_network_info fills in global maps
 net_devices=()
@@ -240,31 +241,33 @@ watchdog_daemons() {
 	act "${#pidmap} pids found running"
 
 	for d in ${(f)"$(find $H/run -name '*.pid')"}; do
-		# remove daemon- prefix
-		daemon=${d#*-}
-		# remove -pid postfix
-		daemon=${daemon%-*}
+		func "watchdog: $d"
+		# remove path prefix
+		daemon=${d##*/}
+		# remove .pid postfix
+		daemon=${daemon%.*}
+		func "daemon: $daemon"
 
 		[[ "$daemon" = "seccrond" ]] && {
 			func "watchdog skip seccrond parent"
 			continue }
 
-		pid=`print "GET $d" | redis runtime`
+		pid=`cat $d`
 		[[ "$pid" = "" ]] && {
 			err="$d found running but no pid (crash?)"
 			error $err
 			print $err >> $H/log/watchdog.log
 			continue
 		}
-		act "$pid \t $d"
+		act "$pid \t $daemon"
 		if [[ $pidmap[$pid] = 1 ]]; then
-			act "found running: $d"
+			act "found running: $daemon"
 		else
-			err="$d not found running (crash?)"
+			err="$daemon not found running (crash?)"
 			error $err
 			print $err >> $H/log/watchdog.log
 			# delete old pid
-			print "DEL $d" | redis runtime
+			rm -f $d
 			act "attempting restart: $daemon"
 			start $daemon
 			if [[ $? = 0 ]]; then
@@ -327,7 +330,7 @@ case "$1" in
 
 	watchdog)
 		wlid=`lock watchdog 60`
-		[[ $? = 0 ]] || {
+		[[ $wlid = 0 ]] && {
 			func "watchdog already running"
 			return 1 }
 
