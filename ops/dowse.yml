@@ -24,6 +24,8 @@
         - libnetfilter-queue-dev
         - libnetfilter-conntrack3
         - libreadline5
+        - libaio1
+        - libpcre3
         - libjemalloc-dev
         - libsodium-dev
         - libseccomp2
