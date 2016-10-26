@@ -7,7 +7,9 @@ redis() {
     req=(_db)
     ckreq || return 1
 
-    cat | launch redis-cli -n $_db --raw
+    res=`cat | launch redis-cli -n $_db --raw`
     [[ $? = 0 ]] || error "error sending commands via redis-cli"
-
+	[[ "$res" = "OK" ]] && return 0
+	[[ "$res" = "1"  ]] && return 0
+	return 1
 }

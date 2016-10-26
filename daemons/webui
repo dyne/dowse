@@ -14,7 +14,7 @@ webui-exec() {
 	func "launching webui on $hostname.$lan"
     # TODO: chroot and drop privs
     # https://github.com/jorisvink/kore/issues/123
-    if [[ $DEBUG = 1 ]]; then
+    if [[ $DEBUG = 2 ]]; then
 		hostname=$hostname \
 				domain=$lan \
 				launch  webui -n -r -f -d
@@ -22,21 +22,9 @@ webui-exec() {
 		hostname=$hostname \
 				domain=$lan \
 				launch  webui
-        savepid webui /var/run/dowse.pid
+		[[ $? = 0 ]] &&
+			savepid webui $H/run/webui.pid
     fi
-}
-
-webui-kill() {
-    fn webui-kill $*    
-    _pid=`getpid $_daemon`
-    req=(_pid)
-    ckreq || return $?
-
-    $R/bin/sup kill $_pid
-    waitpid $_pid || {
-        error "webui: could not stop pid $_pid"
-        return 1 }
-    print "DEL daemon-webui-pid" | redis runtime
 }
 
 

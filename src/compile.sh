@@ -94,6 +94,7 @@ case $1 in
         cat <<EOF > conf/webui.conf
 chroot    $HOME/.dowse
 runas     $USER
+pidfile   $HOME/.dowse/run/webui.pid
 EOF
         cat conf/webui.conf.dist >> conf/webui.conf
 

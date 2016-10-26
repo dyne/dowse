@@ -24,6 +24,11 @@
 # This standalone program runs every N seconds and gathers current
 # information on network objects, updating it in redis
 
+[[ -r $H/run/redis-server.pid ]] || {
+	print "Dowse is not running"
+	print "pid not found: $H/run/redis-server.pid"
+	return 1 }
+
 vars+=(now sqlquery)
 maps+=(obj pidmap)
 source /usr/local/dowse/zshrc
@@ -234,7 +239,7 @@ watchdog_daemons() {
 	done
 	act "${#pidmap} pids found running"
 
-	for d in ${(f)"$(print "KEYS daemon-*-pid" | redis runtime)"}; do
+	for d in ${(f)"$(find $H/run -name '*.pid')"}; do
 		# remove daemon- prefix
 		daemon=${d#*-}
 		# remove -pid postfix
@@ -277,6 +282,7 @@ watchdog_daemons() {
 
 ################
 # MAIN functions
+
 
 cmd="$1"
 

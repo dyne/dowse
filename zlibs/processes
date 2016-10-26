@@ -130,10 +130,8 @@ stop() {
             waitpid $_pid || {
                 error "$_daemon: could not stop pid $_pid"
                 return 1 }
-            [[ "$_daemon" = "redis-server" ]] || {
-                print "DEL daemon-$_daemon-pid" | redis runtime
-            }
         fi
+        rm -f $H/run/${_daemon}.pid
     fi
     # TODO: kill -9
     return 0
@@ -147,27 +145,20 @@ savepid() {
     req=(_daemon)
     ckreq || return $?
 
-	_lock=${_daemon}-savepid
-	_key=`lock $_lock 20`
-	_pidnum=""
-
-	while islocked $_lock $_key; do
+	freq=($_pid)
+	for c in {1..10}; do
+		ckreq 2>/dev/null && break
 		sleep 1
-		[[ -r $_pid ]] && {
-			_pidnum=`cat $_pid`
-			[[ "$_pidnum" != "" ]] && {
-				func "$_pid contains $_pidnum"
-				unlock $_lock $_key }
-		}
 	done
+	[[ -r $_pid ]] && _pidnum=`cat $_pid`
 
 	[[ "$_pidnum" = "" ]] && {
 		error "$_daemon did not write pid in $_pid"
 		return 1
 	}
 
-    print "SET daemon-${_daemon}-pid \"$_pidnum\"" \
-            | redis runtime > /dev/null
+    # print "SET daemon-${_daemon}-pid \"$_pidnum\"" \
+    #         | redis runtime > /dev/null
 	# TODO: check redis result is OK?
 	return 0
 }
@@ -180,11 +171,9 @@ getpid() {
 
     unset _pid
 
-    print QUIT | redis runtime && {
-        _pid=`print "GET daemon-${_daemon}-pid" | redis runtime` }
-
-    # [[ "$_pid" = "" ]] && [[ -r $H/run/${_daemon}.pid ]] && {
-    #     _pid=`cat $H/run/${_daemon}.pid` }
+	_pidfile=$H/run/$_daemon.pid
+	func "checking pidfile: $_pidfile"
+	_pid=`cat $_pidfile 2>/dev/null`
 
     if [[ "$_pid" = "" ]]; then
         func "$_daemon: pid not found"
@@ -259,7 +248,7 @@ lock() {
 	[[ `print "SET lock_$_lid $rand NX PX ${timeout}000" | redis runtime` = "OK" ]] && {
 		print $rand
 		func "succesful lock: $* (key $rand)"
-		return 0 
+		return 0
 	}
 	func "failed lock: $*"
 	return 1
