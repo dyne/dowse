@@ -91,7 +91,8 @@ _pendulum_update_changes() {
         # no records found, this is a new one
         
         sqlquery+="
-INSERT IGNORE into found (macaddr,ip4,iface,hostname,state,last,age)
+
+1INSERT IGNORE into found (macaddr,ip4,iface,hostname,state,last,age)
 values('$obj[macaddr]','$obj[ip4]','$obj[iface]','$obj[hostname]','$obj[state]','$nownow','$nownow');"
 
 
@@ -241,6 +242,12 @@ watchdog_daemons() {
 		daemon=${daemon%-*}
 
 		pid=`print "GET $d" | redis runtime`
+		[[ "$pid" = "" ]] && {
+			err="$d found running but no pid (crash?)"
+			error $err
+			print $err >> $H/log/watchdog.log
+			continue
+		}
 		act "$pid \t $d"
 		if [[ $pidmap[$pid] = 1 ]]; then
 			act "found running: $d"
