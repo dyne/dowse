@@ -94,6 +94,5 @@ mysqld-exec() {
 
 	launch mysqld --defaults-file="$conf" &!
 
-	sleep 1
 	savepid mysqld $H/run/mysql/mysqld.pid
 }
