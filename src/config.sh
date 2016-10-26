@@ -100,7 +100,7 @@ execmap=(
 	mosquitto     $PREFIX/bin/mosquitto
 	dhcpd         $PREFIX/bin/dhcpd
 	omshell       $PREFIX/bin/omshell
-	mysqld        $PREFIX/bin/mysql/mysqld
+	mysqld        $PREFIX/mysql/bin/mysqld
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
