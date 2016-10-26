@@ -241,6 +241,10 @@ watchdog_daemons() {
 		# remove -pid postfix
 		daemon=${daemon%-*}
 
+		[[ "$daemon" = "seccrond" ]] && {
+			func "watchdog skip seccrond parent"
+			continue }
+
 		pid=`print "GET $d" | redis runtime`
 		[[ "$pid" = "" ]] && {
 			err="$d found running but no pid (crash?)"
