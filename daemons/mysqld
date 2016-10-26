@@ -95,4 +95,24 @@ mysqld-exec() {
 	launch mysqld --defaults-file="$conf" &!
 
 	savepid mysqld $H/run/mysql/mysqld.pid
+
+	# make sure the current database exists
+	sql_create_database things
+    cat $R/db/thing.idx |
+        sql_create_table found | $sql $db[things] 2>/dev/null
+
+}
+
+mysqld-kill() {
+	fn mysqld-kill $*
+	_pid=`getpid mysqld`
+	req=(_pid)
+	ckreq || return $?
+
+	print "SHUTDOWN;" | $sql
+	[[ $? = 0 ]] && {
+		waitpid $_pid
+		print "DEL daemon-mysqld-pid" | redis runtime
+	}
+
 }

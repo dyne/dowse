@@ -56,7 +56,7 @@ vars+=(last_notice last_act last_func)
 vars+=(root sql)
 arrs+=(mods)
 # use mysql
-sql=(launch mysql --defaults-file=$H/run/mysqld.conf -u root)
+sql=(launch mysql --defaults-file=$H/run/mysqld.conf -u root -A)
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
@@ -304,11 +304,7 @@ dowse-start() {
     }
 
 	# start the sql database
-	start mysqld && {
-		sql_create_database things
-        cat $R/db/thing.idx |
-            sql_create_table found | $sql $db[things] 2>/dev/null
-	}
+	start mysqld
 
     # start web interface
     start webui
