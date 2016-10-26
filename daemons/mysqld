@@ -1,0 +1,99 @@
+mysqld-conf() {
+cat << EOF
+[client]
+port		= 63306
+socket		= $H/run/mysql/mysqld.sock
+
+[mysqld]
+user		= $dowse_uid
+pid-file	= $H/run/mysql/mysqld.pid
+socket		= $H/run/mysql/mysqld.sock
+port		= 63306
+basedir		= $R/mysql
+datadir		= $H/run/mysql
+tmpdir		= /tmp
+lc-messages-dir	= $R/mysql/share
+skip-external-locking
+bind-address		= 127.0.0.1
+
+key_buffer		= 16M
+max_allowed_packet	= 16M
+thread_stack		= 192K
+thread_cache_size       = 8
+
+myisam-recover         = BACKUP
+#max_connections        = 100
+#table_cache            = 64
+#thread_concurrency     = 10
+
+query_cache_limit	= 1M
+query_cache_size        = 16M
+
+# Be aware that this log type is a performance killer.
+# As of 5.1 you can enable the log at runtime!
+#general_log_file        = $H/log/mysql.log
+#general_log             = 1
+
+# Error log - should be very few entries.
+log_error = $H/log/mysql_error.log
+
+# Here you can see queries with especially long duration
+#slow_query_log_file = $H/log/mysql-slow.log
+#slow_query_log      = 1
+#long_query_time = 2
+#log_queries_not_using_indexes
+
+# The following can be used as easy to replay backup logs or for replication.
+# note: if you are setting up a replication slave, see README.Debian about
+#       other settings you may need to change.
+#server-id		= 1
+#log_bin			= /var/log/mysql/mysql-bin.log
+expire_logs_days	= 10
+max_binlog_size     = 100M
+#binlog_do_db		= include_database_name
+#binlog_ignore_db	= include_database_name
+
+# InnoDB is enabled by default with a 10MB datafile in /var/lib/mysql/.
+# Read the manual for more InnoDB related options. There are many!
+#
+# * Security Features
+#
+# Read the manual, too, if you want chroot!
+# chroot = /var/lib/mysql/
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet	= 16M
+
+[mysql]
+# faster start of mysql but no tab completition
+no-auto-rehash
+
+[isamchk]
+key_buffer		= 16M
+EOF
+}
+
+mysqld-exec() {
+	fn mysqld-exec $*
+	req=(conf)
+	exe=${1:-${execmap[mysqld]}}
+    freq=($exe $conf)
+	ckreq || return $?
+
+	mkdir -p $H/run/mysql
+
+	[[ -r $H/run/mysql/ibdata1 ]] || {
+		notice "Initialisation of MySQL databases"
+		$R/mysql/mysql_install_db --user=$dowse_uid \
+								  --force \
+								  --basedir=$R/mysql \
+								  --datadir=$H/run/mysql
+	}
+
+	launch mysqld --defaults-file="$conf" &!
+
+	sleep 1
+	savepid mysqld $H/run/mysql/mysqld.pid
+}
