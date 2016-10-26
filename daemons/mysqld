@@ -86,10 +86,10 @@ mysqld-exec() {
 
 	[[ -r $H/run/mysql/ibdata1 ]] || {
 		notice "Initialisation of MySQL databases"
-		$R/mysql/mysql_install_db --user=$dowse_uid \
-								  --force \
-								  --basedir=$R/mysql \
-								  --datadir=$H/run/mysql
+		$R/mysql/bin/mysql_install_db --user=$dowse_uid \
+									  --force \
+									  --basedir=$R/mysql \
+									  --datadir=$H/run/mysql
 	}
 
 	launch mysqld --defaults-file="$conf" &!

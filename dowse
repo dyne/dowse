@@ -56,7 +56,7 @@ vars+=(last_notice last_act last_func)
 vars+=(root sql)
 arrs+=(mods)
 # use mysql
-sql=(mysql --defaults-file=$H/run/mysqld.conf -u root)
+sql=(launch mysql --defaults-file=$H/run/mysqld.conf -u root)
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
