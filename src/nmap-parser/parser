@@ -1,7 +1,10 @@
 #!/bin/bash
 
-#xmlstartlet el -d  nmap.xml
+#--- Purge host in state = "down"
+cat nmap.xml| xmlstarlet ed -d '/nmaprun/host[status[@state="down"]]'  > nmap2.xml
+mv nmap2.xml nmap.xml
 
+#--- 
 function selectXPath() {
 	XPATH=$1
 	INFILE=nmap.xml
@@ -14,7 +17,7 @@ COUNT=`selectXPath "count(/nmaprun/host)" `
 
 
 
-#--- Queste nmap non le tira fuori o non ci interessano
+#--- Queste nmap non le tira fuori e/o non ci interessano
 _dhcp=""
 _gateway=""
 _network=""
@@ -24,37 +27,52 @@ _iface=""
 _state=""
 		
 		
+THINGS_DB=../../build/db/thing.idx
+
+export LIST=()
 #--- Queste stringhe le leggeremo dal file things.idx		
-LIST=(hostname macaddr ipv4 ipv6 os vendor)
-
-echo "Finding $COUNT hosts"
-
-for ((i=1;i<=$COUNT;i++)); do
-	STATUS=`selectXPath "/nmaprun/host[$i]/status/@state"`	
-	if [ "up" = ${STATUS} ]; then
-		#--- Queste stringhe le leggeremo dal file things.idx	
-		xpath_hostname=/nmaprun/host[$i]/hostnames/hostname[0]/@name
-xpath_macaddr=/nmaprun/host[$i]/address[@addrtype=\"mac\"]/@addr
-xpath_ipv4=/nmaprun/host[$i]/address[@addrtype=\"ipv4\"]/@addr
-xpath_ipv6=/nmaprun/host[$i]/address[@addrtype=\"ipv6\"]/@addr
-xpath_vendor=/nmaprun/host[$i]/address[@addrtype=\"mac\"]/@vendor
-
-#--- prenderemo il name del gruppo "os" che ha trovato nmap con maggiore accuracy
-xpath_os=/nmaprun/host[$i]/os/osmatch[1]/@name
+for i in $(cat $THINGS_DB |grep "/"| awk '{print $1}'); do
+ LIST+=$i" "
+done	
+echo "--- Finding value for ($LIST) on $COUNT hosts in \"up\" state..."
 
 
-		for k in ${LIST[@]} ; do
-			A=xpath_$k
-			xpathStr=${!A}
-			val=`selectXPath ${xpathStr}`
-#			echo -e "$i : [${xpathStr}]\t> $k\t>\t[$val]"
-			echo -e "$i :> $k\t\t>[$val]"
-		done
-		echo ""
-#		echo -e "$i >[${_os}]\t[${_hostname}]\t[${ADDRTYPE}]\t[${_macaddr}]\t[${_ipv4}]\t[${_ipv6}]";
+#---- Creiamo un file che "source" istanzia le variabili 
+VAR_FILE=.var_file ; rm -f $VAR_FILE
+COL_DECL=""
+for k in $LIST ; do
+ A=xpath_$k
+ STR=$(grep "/" $THINGS_DB |grep ";" |grep "\b$k\b"|awk -F\; '{print $2}' | tr -d ' ')
+ echo "export xpath_$k=$STR">> $VAR_FILE
+ if [ "x" == "x$COL_DECL" ]; then
+	export COL_DECL="$k"
+ else
+	export COL_DECL="$COL_DECL,$k"
+ fi
+done
 
-	fi
+source $VAR_FILE
+#------
 
+for ((i=1;i<=$COUNT;i++)); do	
+	echo "--- $i :> $LIST"
+	source $VAR_FILE	
+	echo -n "INSERT INTO found ( $COL_DECL ) VALUES ("
+	export VALUES=""
+	for column in $LIST ; do 
+		A=xpath_$column
+		xpathStr=${!A}
+#		echo "[$xpathStr]"
+		val=`selectXPath ${xpathStr}`
+		if [ "x" == "x$VALUES" ]; then
+			export VALUES="'$val'"
+		else
+			export VALUES="$VALUES,'$val'"
+		fi
+#		echo "[$val]"
+	done 
+	echo " $VALUES );"
+	echo " "
 done
 # 
 #xmlstarlet el -a nmap.xml 
