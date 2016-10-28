@@ -17,10 +17,12 @@ webui-exec() {
     if [[ $DEBUG = 2 ]]; then
 		hostname=$hostname \
 				domain=$lan \
+				address=$address \
 				launch  webui -n -r -f -d
     else
 		hostname=$hostname \
 				domain=$lan \
+				address=$address \
 				launch  webui
 		[[ $? = 0 ]] &&
 			savepid webui $H/run/webui.pid

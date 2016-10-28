@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/types.h>
 
 // libmosquitto
 #include "mosquitto/lib/mosquitto.h"
@@ -40,6 +41,8 @@ redisContext *redis;
 redisReply   *reply;
 
 struct mosquitto *mosq = NULL;
+
+extern int optind;
 
 void ctrlc(int sig) {
     fprintf(stderr,"\nQuit.\n");
@@ -62,11 +65,25 @@ int main(int argc, char **argv) {
 
     int mres;
 
-    if(argv[1] == NULL) {
-	    fprintf(stderr, "usage: dns-to-mqtt host [port]\n");
+    int opt;
+    char pidfile[MAX_OUTPUT];
+    pid_t pid;
+
+    pidfile[0]=0x0;
+
+    while((opt = getopt(argc, argv, "p:")) != -1) {
+	    switch(opt) {
+		    case 'p':			    
+			    snprintf(pidfile,MAX_OUTPUT,"%s",optarg);
+			    break;
+	    }
+    }
+
+    if(argv[optind] == NULL) {
+	    fprintf(stderr, "usage: dns-to-mqtt [-p pidfile] host [port]\n");
 	    exit(0);
     }
-    host = argv[1];
+    host = argv[optind];
     // TODO: get port from argv[2] when present
 
     signal(SIGINT, ctrlc);
@@ -94,6 +111,18 @@ int main(int argc, char **argv) {
 
     reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
+
+    if(pidfile[0]) {
+	    pid_t pid;
+	    FILE *fpid;
+	    pid = getpid();
+	    fpid = fopen(pidfile,"w");
+	    if(!fpid) perror("writing pidfile");
+	    else {
+		    fprintf(fpid,"%u\n",pid);
+		    fclose(fpid);
+	    }
+    }
 
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
         if(quit) break;

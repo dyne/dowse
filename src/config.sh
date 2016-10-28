@@ -67,6 +67,9 @@ execrules=(
 	mysqld       user
 	mysql        user
 
+# springs
+	dowse-to-mqtt user
+
 	dhcpd         root
     webui         root
     dnscrypt-proxy root
@@ -103,6 +106,9 @@ execmap=(
 	omshell       $PREFIX/bin/omshell
 	mysqld        $PREFIX/mysql/bin/mysqld
 	mysql         $PREFIX/mysql/bin/mysql
+
+	dowse-to-mqtt $PREFIX/bin/dowse-to-mqtt
+	dowse-to-osc  $PREFIX/bin/dowse-to-osc
 
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
