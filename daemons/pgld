@@ -49,7 +49,7 @@ pgld-exec() {
     ckreq || return 1
 
     pid=$H/run/pgld.pid
-    launch pgld -p $pid -r pgld_reject -a pgld_accept $conf
+    launch pgld -p $pid -r dowse_reject -a dowse_accept $conf
     savepid pgld $pid
 
     return $?
