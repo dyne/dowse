@@ -311,6 +311,9 @@ dowse-start() {
     # start web interface
     start webui
 
+	# start the mqtt/websocket hub
+	start mosquitto
+
 	# start the reverse proxy
 	# start tinyproxy-reverse
 
@@ -329,6 +332,8 @@ dowse-stop() {
 	# stop seccrond
 
 	# stop tinyproxy-reverse
+
+	stop mosqitto
 
     stop webui
 

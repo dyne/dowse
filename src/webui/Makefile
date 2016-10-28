@@ -11,4 +11,5 @@ debug:
 	kore -c conf/webui.conf -d -r -n -f
 
 clean:
+	rm -f webui
 	kore clean
