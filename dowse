@@ -314,7 +314,7 @@ dowse-start() {
 	# start the reverse proxy
 	# start tinyproxy-reverse
 
-	start seccrond
+	# start seccrond
 
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
@@ -325,7 +325,8 @@ dowse-stop() {
     fn dowse-stop
 
 	notice "Stopping all daemons in Dowse"
-	stop seccrond
+
+	# stop seccrond
 
 	# stop tinyproxy-reverse
 
