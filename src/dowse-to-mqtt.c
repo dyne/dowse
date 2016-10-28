@@ -127,22 +127,6 @@ int main(int argc, char **argv) {
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
         if(quit) break;
 
-
-        // hits = atoll(action);
-
-        // // render
-        // if(!group)
-        //     snprintf(output,MAX_OUTPUT,"%s|%s|%c|%s/%s",
-        //              epoch,ip,(hits==1)?'A':'M',tld,domain);
-        // else
-        //     snprintf(output,MAX_OUTPUT,"%s|%s|%c|%s/%s/%s",
-        //              epoch,ip,(hits==1)?'A':'M',tld,group,domain);
-        //
-        fprintf(stdout,"%s\n",reply->element[2]->str);
-        // fflush(stdout);
-
-
-
         // mosquitto_publish(  struct  mosquitto   *mosq,
         //                     int                 *mid,
         //                     const   char        *topic,
