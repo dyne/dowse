@@ -264,15 +264,17 @@ dowse-start() {
             iptables-snat-on
 
             # make sure the dowse host uses his own dns
-#             mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
-#             cat <<EOF > /etc/resolv.conf
-# nameserver 127.0.0.1
-# # domain $lan
-# # search $lan
-# EOF
-            # this is problematic, we cannot sup mv or cat or tee
-            # so perhaps take another approach: fw rule to redirect
-            # all traffic to configured dns to our own until is up?
+			[[ -r /etc/resolv.conf.dowse-backup ]] ||
+				# this is problematic, we cannot sup mv or cat or tee
+				# so perhaps take another approach: fw rule to redirect
+				# all traffic to configured dns to our own until is up?
+				mv /etc/resolv.conf /etc/resolv.conf.dowse-backup
+
+            cat <<EOF > /etc/resolv.conf
+nameserver $address
+domain dowse.it
+search dowse.it
+EOF
         fi
     }
 
@@ -287,23 +289,9 @@ dowse-start() {
     # netdata dashboard for the technical status
     start netdata
 
-    mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
-    for m in "${(f)mods}"; do
-        dowse-module-load $m || continue
-        dowse-module-setup || continue
-    done
-
-    for m in "${(f)mods}"; do
-        dowse-module-load $m || continue
-        dowse-module-start || continue
-    done
-
-    [[ "$firewall" = "yes" ]] && {
-            # start peerguardian (must be at end, after any other
-            # iptables setting)
-            pgld-conf > $H/run/pgld.conf
-            start pgld
-    }
+    [[ "$firewall" = "yes" ]] &&
+        # start peerguardian (must be at end, after any other iptables setting)
+        start pgld
 
 	# start the sql database
 	# start mysqld
