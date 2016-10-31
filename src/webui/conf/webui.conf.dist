@@ -22,5 +22,8 @@ domain * {
 	params get /things {
 		validate	macaddr		v_macaddr
 	}
-# 	accesslog		/dev/null
+
+	# example assets
+	static     /example/websocket.html  websocket_example
+
 }
