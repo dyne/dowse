@@ -45,6 +45,7 @@ apt-get clean
 
 sudo -u dowse git clone https://github.com/dyne/dowse.git /home/dowse/dowse-src
 cd /home/dowse/dowse-src
+sudo -u dowse git submodule update --init
 sudo -u dowse make
 make install
 
