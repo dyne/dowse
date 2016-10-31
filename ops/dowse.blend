@@ -40,7 +40,7 @@ chsh -s /usr/bin/zsh dowse
 
 apt-get update
 apt-get --yes --force-yes upgrade
-apt-get --yes --force-yes --no-install-recommends ${blend_packages}
+apt-get --yes --force-yes --no-install-recommends install ${blend_packages}
 apt-get clean
 
 sudo -u dowse git clone https://github.com/dyne/dowse.git /home/dowse/dowse-src
