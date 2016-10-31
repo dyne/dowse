@@ -1,0 +1,107 @@
+#!/usr/bin/env zsh
+# Copyright (C) 2012-2015 Dyne.org Foundation
+#
+# Dowse is designed, written and maintained by Denis Roio <jaromil@dyne.org>
+# nmap-parser is written and maintained by Nicola Rossi <nicola@dyne.org>
+#
+# This source code is free software; you can redistribute it
+# and/or modify it under the terms of the GNU Public License
+# as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# This source code is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.  Please refer to the GNU Public License for more
+# details.
+#
+# You should have received a copy of the GNU Public License
+# along with this source code; if not, write to: Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+# 02139, USA.
+
+## nmap-parser
+
+vars+=(nmapfile processedfile thingsdb)
+arrs+=(nmap_array)
+
+nmapfile="$H/run/nmap.xml"
+processedfile="$(mktemp)"
+thingsdb="$H/run/things.db"
+nmap_array=()
+
+
+nmap-preprocess() {
+	fn nmap-preprocess
+	freq=(nmapfile)
+	req=(processedfile)
+	ckreq || return 1
+
+	cat $nmapfile | xmlstarlet ed -d '/nmaprun/host[status[@state="down"]]' > "$processedfile"
+
+	count=$(nmap-selectXPath "count(/nmaprun/host)")
+	print "\--- Finding value for nmap_array on ${count} hosts in 'up' state..."
+}
+
+nmap-selectXPath() {
+	fn nmap-selectXPath
+	req=(xpath)
+	local xpath=$1
+	freq=(processedfile)
+	ckreq || return 1
+
+	xmlstarlet sel -t -v $xpath $processedfile
+}
+
+nmap-fill-list() {
+	fn nmap-fill-list
+	freq=(thingsdb)
+	ckreq || return 1
+
+	nmap_array=()
+	for i in $(awk '/\// {print $1}' $thingsdb); do
+		nmap_array+=($i)
+	done
+}
+
+nmap-createvar() {
+	fn nmap-createvar
+	req=(nmap_array item)
+	freq=(thingsdb)
+	ckreq || return 1
+
+	#varfile="$H/run/nmapvar"
+	varfile="$(mktemp)"
+
+	COL_DECL=""
+	for item in ${nmap_array}; do
+		A=xpath_${item}
+		STR=$(awk -F\; '/^[\ \t]*'"$item"'/ {print $2}' $thingsdb | tr -d ' ')
+		local printstr="export xpath_$item=$STR"
+		print $printstr  >> $varfile
+		[[ -z $COL_DECL ]] && COL_DECL="$item" || COL_DECL="${COL_DECL},${item}"
+	done
+}
+
+nmap-parse() {
+	fn nmap-parse
+
+	nmap-preprocess
+	nmap-fill-list
+	nmap-createvar
+
+	for ((i=1;i<=$count;i++)); do
+		source $varfile
+		local VALUES=""
+		for column in $nmap_array; do
+			A=xpath_$column
+			xpathStr=${(P)A}
+			local val=$(nmap-selectXPath ${xpathStr})
+			[[ -z $VALUES ]] && VALUES="'$val'" || VALUES="${VALUES},'${val}'"
+		done
+
+		print "INSERT INTO found ( $COL_DECL ) VALUES ( $VALUES );\n"
+	done
+	unset $COL_DECL
+}
