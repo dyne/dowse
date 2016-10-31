@@ -313,6 +313,27 @@ case "$1" in
         return 1
         ;;
 
+	nmap)
+		# nlock=`lock nmap 30`
+		# [[ $nlock = 0 ]] && {
+		# 	func "nmap already running"
+		# 	return 1 }
+
+		nmapfile=$H/run/nmap_scan.xml
+		processedfile="$(mktemp)"
+		varfile="$(mktemp)"
+
+# 		sudo nmap -v -F -sS -oX $nmapfile 172.16.17.0/24
+ # $dowse_net
+
+		nmap-parse
+
+		rm -f "${varfile}"
+		rm -f "${processedfile}"
+
+		#		unlock nmap $nlock
+		;;
+
     netscan)
 		slid=`lock netscan 30`
 		[[ $? = 0 ]] || {

@@ -36,20 +36,26 @@ dbindex='
 
 mkdir -p $S/build/db
 
+# index of all database fields for a thing in the index
+# fields to the right of semicolon are for parsing the nmap xml output
+# TODO: perhaps no need to write this as a file, just print and pipe
+
+# id     SQL                       NMAP
 thingindex='
-macaddr  varchar(18) primary key
-ip4      text
-ip6      text
-hostname text
+macaddr  varchar(18) primary key ; /address[@addrtype=\"mac\"]/@addr
+ip4      text                    ; /address[@addrtype=\"ipv4\"]/@addr
+ip6      text                    ; /address[@addrtype=\"ipv6\"]/@addr
+hostname text                    ; /hostnames/hostname[0]/@name
 iface    text
 state    text
-os       text
+os       text                    ; /os/osmatch[1]/@name
 dhcp     text
 gateway  text
 network  text
 notes    text
 last     date
 age      date
+vendor   text                    ; /address[@addrtype=\"mac\"]/@vendor
 '
 print - "$thingindex" > $S/build/db/thing.idx
 
