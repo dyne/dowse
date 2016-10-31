@@ -295,6 +295,9 @@ iptables-start() {
     iptables -A INPUT -p tcp --dport ssh  -j ACCEPT
 	iptables -A INPUT -p tcp --dport 29999 -j ACCEPT
 
+	# Allow websockets (TODO: ACL)
+	iptables -A INPUT -p tcp --dport 1888 -j ACCEPT
+
     # Keep state of connections from local machine and private subnets
     iptables -A OUTPUT  -m state --state NEW -o ${interface} -j ACCEPT
     iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT

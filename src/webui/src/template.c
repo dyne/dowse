@@ -101,11 +101,11 @@ static struct entry *parse_string(const char *str, unsigned len) {
 		str++;
 		len--;
 		ch=*str;
-		if(len && (ch=='(' || ch=='{')) {
+		if(len && (ch=='{')) {
 			/* $(...) or ${...} found */
 			str++;
 			len--;
-			end=memchr(str, ch=='('?')':'}' , len);
+			end=memchr(str, '}' , len);
 			if(end) {
 				*curr=create_entry(1, str, (unsigned)(end-str));
 				curr=&(*curr)->next;

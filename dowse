@@ -306,15 +306,15 @@ dowse-start() {
     }
 
 	# start the sql database
-	start mysqld
+	# start mysqld
 
     # start web interface
     start webui
 
-	# start the reverse proxy
-	# start tinyproxy-reverse
+	# start the mqtt/websocket hub
+	start mosquitto
 
-	start seccrond
+	# start seccrond
 
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
@@ -325,20 +325,19 @@ dowse-stop() {
     fn dowse-stop
 
 	notice "Stopping all daemons in Dowse"
-	stop seccrond
 
-	# stop tinyproxy-reverse
+	# stop seccrond
+
+	stop mosqitto
 
     stop webui
 
-	stop mysqld
+	# stop mysqld
 
-    for m in `dowse-module-list`; do
-
-        dowse-module-load $m || continue
-        dowse-module-stop
-
-    done
+    # for m in `dowse-module-list`; do
+    #     dowse-module-load $m || continue
+    #     dowse-module-stop
+    # done
 
     # stop the dashboard
     stop netdata
@@ -369,30 +368,6 @@ dowse-stop() {
     notice "Dowse has stopped running."
 
 }
-
-# dowse-reload() {
-#     fn dowse-reload
-#     freq=($E/modules/enabled)
-#     ckreq || return 1
-
-#     mods=`find -L $E/modules/enabled -maxdepth 1 -type d | grep -v 'enabled$'`
-#     func "modules enabled: $mods"
-#     for m in "${(f)mods}"; do
-#         dowse-module-load $m || continue
-#         dowse-module-stop
-#     done
-
-#     for m in "${(f)mods}"; do
-#         dowse-module-load $m || continue
-#         dowse-module-setup
-#     done
-
-#     for m in "${(f)mods}"; do
-#         dowse-module-load $m || continue
-#         dowse-module-start
-#     done
-
-# }
 
 # dowse-parse-leases() {
 #     awk '
@@ -461,26 +436,5 @@ dowse-status() {
     fi
     return 0
 }
-
-# dowse-scan() {
-#     fn dowse-scan
-#     freq=($H/run/leases)
-#     ckreq || return $?
-
-#     notice "Scanning unknown network objects"
-#     eval `dowse-parse-leases`
-
-#     for s in {0..${#mac}}; do
-#         [[ $mac[$s] == "" ]] && { continue }
-#         grep "${mac[$s]}" $E/network > /dev/null
-#         [[ $? == 1 ]] && { # unknown
-#             act "Running scan on ::1 ip:: (::2 host::)" ${ip[$s]} ${host[$s]}
-#             func "$s: nmap -A -F -sT -Pn -T5 \"${ip[$s]}\""
-#             nmap -A -F -sT -Pn -T5 -n "${ip[$s]}"
-#             print
-#         }
-#     done
-
-# }
 
 # }}}

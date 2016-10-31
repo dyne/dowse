@@ -55,9 +55,9 @@ deb-download() {
 
 
 [[ "$1" = "" ]] && {
-	notice "deb-download() function loaded from import.sh"
-	act "first argument name of package to be extracted in $S/debs"
-	return 0
+    notice "deb-download() function loaded from import.sh"
+    act "first argument name of package to be extracted in $S/debs"
+    return 0
 }
 
 
@@ -73,57 +73,65 @@ command -v apt-get >/dev/null && {
     #     deb-download dnsmasq-base
     #     cp $tmp/usr/sbin/dnsmasq $S/build/bin
     # }
-	case "$1" in
-		redis-server)
-			act "fetching redis server"
-			deb-download redis-server
-			cp $tmp/usr/bin/redis-server $S/build/bin
-			;;
-		redis-cli)
-			act "fetching redis cli"
-			deb-download redis-tools
-			cp $tmp/usr/bin/redis-cli $S/build/bin
-			;;
-		isc-dhcp-server)
-			act "fetching ISC dhcp server"
-			deb-download isc-dhcp-server
-			cp $tmp/usr/sbin/dhcpd $S/build/bin
-			;;
-		mariadb)
-			act "fetching mariadb sql server"
-			# deb-download mariadb-server-10.0
-			deb-download mariadb-server-core-10.0
-			deb-download mariadb-server-10.0
-			deb-download mariadb-client-core-10.0
-			mkdir -p $S/build/mysql/bin
-			mkdir -p $S/build/mysql/share
-			mkdir -p $S/build/mysql/plugin
-			cp -ra $tmp/usr/share/mysql/*      $S/build/mysql/share/
-			cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
-			cp $tmp/usr/sbin/mysqld    $S/build/mysql/bin
-			cp $tmp/usr/bin/mysql      $S/build/mysql/bin
-			cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
-			cp $tmp/usr/bin/mysql_install_db $S/build/mysql/bin
-			cp $tmp/usr/bin/my_print_defaults $S/build/mysql/bin
+    case "$1" in
+        redis-server)
+            [[ -r $S/build/bin/redis-server ]] || {
+                act "fetching redis server"
+                deb-download redis-server
+                cp $tmp/usr/bin/redis-server $S/build/bin
+            }
+            ;;
+        redis-cli)
+            [[ -r $S/build/bin/redis-cli ]] || {
+                act "fetching redis cli"
+                deb-download redis-tools
+                cp $tmp/usr/bin/redis-cli $S/build/bin
+            }
+            ;;
+        isc-dhcp-server)
+            [[ -r $S/build/bin/dhcpd ]] || {
+                act "fetching ISC dhcp server"
+                deb-download isc-dhcp-server
+                cp $tmp/usr/sbin/dhcpd $S/build/bin
+            }
+            ;;
 
-			;;
-		*)
-			error "package not known: $1"
-			act "add package extraction procedure to src/import.sh"
-			;;
+        mariadb)
+            [[ -r $S/build/mysql/bin/mysqld ]] || {
+				act "fetching mariadb sql server"
+				# deb-download mariadb-server-10.0
+				deb-download mariadb-server-core-10.0
+				deb-download mariadb-server-10.0
+				deb-download mariadb-client-core-10.0
+				mkdir -p $S/build/mysql/bin
+				mkdir -p $S/build/mysql/share
+				mkdir -p $S/build/mysql/plugin
+				cp -ra $tmp/usr/share/mysql/*      $S/build/mysql/share/
+				cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
+				cp $tmp/usr/sbin/mysqld    $S/build/mysql/bin
+				cp $tmp/usr/bin/mysql      $S/build/mysql/bin
+				cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
+				cp $tmp/usr/bin/mysql_install_db $S/build/mysql/bin
+				cp $tmp/usr/bin/my_print_defaults $S/build/mysql/bin
+            }
+            ;;
+        *)
+            error "package not known: $1"
+            act "add package extraction procedure to src/import.sh"
+            ;;
 
-    # [[ -r $S/build/tor ]] || {
-    #     act "fetching tor"
-    #     deb-download tor
-    #     cp $tmp/usr/bin/tor $S/build/bin
-    # }
-	esac
+        # [[ -r $S/build/tor ]] || {
+        #     act "fetching tor"
+        #     deb-download tor
+        #     cp $tmp/usr/bin/tor $S/build/bin
+        # }
+    esac
 
     popd
-	if [[ $DEBUG = 1 ]]; then
-		func "MariaDB packages downloaded in $tmp"
-	else
-		rm -rf $tmp
-	fi
+    if [[ $DEBUG = 1 ]]; then
+        func "MariaDB packages downloaded in $tmp"
+    else
+        rm -rf $tmp
+    fi
 
 }

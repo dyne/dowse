@@ -12,6 +12,7 @@ all: base springs
 	@install -s -p modprobe        ../build/bin
 	@install -s -p dowse-to-gource ../build/bin
 	@install -s -p dowse-to-osc    ../build/bin
+	@install -s -p dowse-to-mqtt   ../build/bin
 	@./checksum.sh
 	@./compile.sh sup
 
