@@ -1,8 +1,8 @@
 
 
-macaddr  text primary key     ; /nmaprun/host[$i]/address[@addrtype=\"mac\"]/@addr
-ip4      text                 ; /nmaprun/host[$i]/address[@addrtype=\"ipv4\"]/@addr
-ip6      text                 ; /nmaprun/host[$i]/address[@addrtype=\"ipv6\"]/@addr
+macaddr  text primary key     ; /nmaprun/host[$i]/address[@addrtype=\\"mac\\"]/@addr
+ip4      text                 ; /nmaprun/host[$i]/address[@addrtype=\\"ipv4\\"]/@addr
+ip6      text                 ; /nmaprun/host[$i]/address[@addrtype=\\"ipv6\\"]/@addr
 hostname text                 ; /nmaprun/host[$i]/hostnames/hostname[0]/@name
 iface    text
 state    text
@@ -13,5 +13,5 @@ network  text
 notes    text
 last     date
 age      date
-vendor   text                 ; /nmaprun/host[$i]/address[@addrtype=\"mac\"]/@vendor
+vendor   text                 ; /nmaprun/host[$i]/address[@addrtype=\\"mac\\"]/@vendor
 
