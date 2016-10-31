@@ -18,20 +18,12 @@ COUNT=`selectXPath "count(/nmaprun/host)" `
 
 
 #--- Queste nmap non le tira fuori e/o non ci interessano
-_dhcp=""
-_gateway=""
-_network=""
-_last=""
-_age=""
-_iface=""
-_state=""
-		
-		
+	
 THINGS_DB=../../build/db/thing.idx
 
 export LIST=()
 #--- Queste stringhe le leggeremo dal file things.idx		
-for i in $(cat $THINGS_DB |grep "/"| awk '{print $1}'); do
+for i in $(cat $THINGS_DB | awk '/\// {print $1}'); do
  LIST+=$i" "
 done	
 echo "--- Finding value for ($LIST) on $COUNT hosts in \"up\" state..."
