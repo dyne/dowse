@@ -64,15 +64,12 @@ DEBUG=${DEBUG:-0}
 QUIET=${QUIET:-0}
 LOG=${LOG:-""}
 
+# index of fields in the things database
+vars+=(thingidx)
 
 # globals filled by lease parser
 arrs+=(host mac ip)
 
-# globals used when loading modules
-# vars+=(dowse_mod_name dowse_mod_desc dowse_mod_version)
-# arrs+=(dowse_mod_type dowse_mod_ports dowse_mod_deps)
-# arrs+=(dowse_mod_authors dowse_mod_tags)
-maps+=(dowse_mod)
 
 # consul's configuration map
 # maps+=(consul_conf consul_watch)
@@ -103,6 +100,7 @@ source $R/zlibs/iptables
 source $R/zlibs/ebtables
 source $R/zlibs/confstore
 source $R/zlibs/redis
+source $R/zlibs/nmap
 source $R/zlibs/sql
 
 # source $R/daemons/consul
@@ -207,6 +205,10 @@ dbname="${address}_${wan}_${dowse_net//\//_}"
 db[things]="things_${dbname//./_}"
 func "$db[things]"
 
+# the global index of things database, path to it
+# see: dowse/build/db/thing.idx
+thingidx=$R/db/thing.idx
+
 act "all requirements in place"
 
 fn dowse-running
@@ -245,7 +247,7 @@ dowse-start() {
         iptables-start
 
         iptables-base-protection
-        
+
         loopback-on
         if loopback-only; then
             act "dry run on localhost only"
@@ -426,3 +428,4 @@ dowse-status() {
 }
 
 # }}}
+

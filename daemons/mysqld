@@ -1,3 +1,6 @@
+#!/usr/bin/env zsh
+
+
 mysqld-conf() {
 cat << EOF
 [client]
@@ -98,9 +101,9 @@ mysqld-exec() {
 
 	# make sure the current database exists
 	sql_create_database things
-    cat $R/db/thing.idx |
+	# cut used to parse out what follows semicolon
+    cut -d\; -f1 $thingidx |
         sql_create_table found | $sql $db[things] 2>/dev/null
-
 }
 
 mysqld-kill() {
