@@ -58,6 +58,8 @@ dnscrypt-proxy-exec() {
 	[[ $* =~ debug ]] && args+=",debug"
 	[[ $* =~ offline ]] && args+=",offline"
 
+	# grab a random server
+	dnscrypt-roundrobin
 
 	func "Launching dnscrypt-proxy to listen on port 53"
 
@@ -68,9 +70,9 @@ dnscrypt-proxy-exec() {
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
 						-l $H/log/dnscrypt.log \
-						-r "178.216.201.222:2053" \
-						-k "25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21" \
-						-N "2.dnscrypt-cert.soltysiak.com" \
+						-r "$dnscrypt_ipaddr" \
+						-k "$dnscrypt_key" \
+						-N "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
 						-m 7 -u $dowse_uid
 		# log level informational (7 for debug)
@@ -84,9 +86,9 @@ dnscrypt-proxy-exec() {
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
 						-p $pid -l $H/log/dnscrypt.log \
-						-r "178.216.201.222:2053" \
-						-k "25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21" \
-						-N "2.dnscrypt-cert.soltysiak.com" \
+						-r "$dnscrypt_ipaddr" \
+						-k "$dnscrypt_key" \
+						-N "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
 						-d -m 4 -u $dowse_uid
 		# log only warning conditions
@@ -96,4 +98,27 @@ dnscrypt-proxy-exec() {
     savepid dnscrypt-proxy $pid
 
     # TODO: offer a list of hosts from the csv list provided in dnscrypt source
+}
+
+dnscrypt-roundrobin() {
+	local servertype=",.,yes,yes" ## DNSSEC + No logs
+	#local servertype=",.,yes,no"  ## DNSSEC
+	#local servertype=",.,no,yes"  ## No logs
+
+	func "Choosing a random available dnscrypt server"
+
+	sed 1q $R/share/dnscrypt-resolvers.csv > $R/share/dnscrypt-resolvers-grepped.csv
+	grep $servertype $R/share/dnscrypt-resolvers.csv >> $R/share/dnscrypt-resolvers-grepped.csv
+
+	# prints a random line from the resolvers csv file
+	local _rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers-grepped.csv)"
+
+	# check if alive
+	eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers-grepped.csv -R ${_rndresolv[(ws:,:)1]} -t 720 -m 1"
+
+	[[ $? = 0 ]] || dnscrypt-roundrobin
+
+	dnscrypt_ipaddr="${_rndresolv[(ws:,:)12]}" ## -r arg
+	dnscrypt_name="${_rndresolv[(ws:,:)13]}"   ## -N arg
+	dnscrypt_key="${_rndresolv[(ws:,:)14]}"    ## -k arg
 }

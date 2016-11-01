@@ -54,6 +54,8 @@ install:
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/domain-list/data
 	install -p -m 644 domain-list/data/* ${DESTDIR}${PREFIX}/domain-list/data
+	install -d ${DESTDIR}${PREFIX}/share
+	install dnscrypt-proxy/dnscrypt-resolvers.csv ${DESTDIR}${PREFIX}/share/
 	install -d ${DESTDIR}${PREFIX}/webui
 	cp -rav webui/* ${DESTDIR}${PREFIX}/webui/
 	make -C netdata install

@@ -67,6 +67,9 @@ LOG=${LOG:-""}
 # index of fields in the things database
 vars+=(thingidx)
 
+# dnscrypt-proxy server settings
+vars+=(dnscrypt_ipaddr dnscrypt_key dnscrypt_name)
+
 # globals filled by lease parser
 arrs+=(host mac ip)
 
