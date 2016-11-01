@@ -101,9 +101,9 @@ dnscrypt-proxy-exec() {
 }
 
 dnscrypt-roundrobin() {
-	local servertype=",.,yes,yes" ## DNSSEC + No logs
+	#local servertype=",.,yes,yes" ## DNSSEC + No logs
 	#local servertype=",.,yes,no"  ## DNSSEC
-	#local servertype=",.,no,yes"  ## No logs
+	local servertype=",.,no,yes"  ## No logs
 
 	func "Choosing a random available dnscrypt server"
 
