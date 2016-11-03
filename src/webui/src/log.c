@@ -4,6 +4,7 @@
 #include <string.h>
 
 void func(const char *fmt, ...) {
+#if (DEBUG==1)
 	va_list args;
 
 	char msg[512];
@@ -18,4 +19,5 @@ void func(const char *fmt, ...) {
 	fsync(2);
 
 	va_end(args);
+#endif
 }
