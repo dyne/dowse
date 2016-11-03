@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
+vars+=(dnscrypt_ipaddr dnscrypt_name dnscrypt_key)
 
 dnscrypt-proxy-conf() {
 	rconf=""
@@ -59,7 +60,12 @@ dnscrypt-proxy-exec() {
 	[[ $* =~ offline ]] && args+=",offline"
 
 	# grab a random server
-	dnscrypt-roundrobin
+	# dnscrypt-roundrobin
+
+	# temporary hard-code dyne.org until roundrobin is fixed
+	dnscrypt_ipaddr=198.199.70.248:5553
+	dnscrypt_name=2.dnscrypt-cert.dyne.org
+	dnscrypt_key=162F:051A:BACA:A042:A0C9:7769:91B4:BBA8:FE10:8F72:53CB:5077:A055:9BCF:AD39:73C5
 
 	func "Launching dnscrypt-proxy to listen on port 53"
 
