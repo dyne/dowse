@@ -174,8 +174,9 @@ done
 # done
 
 rm -rf $S/src/thingsdb.h
+touch $S/src/thingsdb.h
 c=1
-print "#define THINGS_DB \"$HOME/.dowse/run/things.db\"" > $S/src/thingsdb.h
+#print "#define THINGS_DB \"$db[things]\"" > $S/src/thingsdb.h
 
 # for i in "${(f)thingindex}"; do
 #     [[ "$i" = "" ]] && continue

@@ -9,10 +9,10 @@ sql_create_database() {
 	name="$1"
 	req=(name)
 	ckreq || return $?
-
-	print "CREATE DATABASE $db[$name];" | $sql 2>/dev/null
+	act "Debug"
+        print "CREATE DATABASE IF NOT EXISTS $db[$name];" | $sql 2>/dev/null
 	# TODO: better check of error code if needed
-
+	
 }
 
 # takes a table description from stdin
@@ -23,7 +23,7 @@ sql_create_table() {
     req=(name)
     ckreq || return $?
 
-    local cmd="CREATE TABLE $name ("
+    local cmd="CREATE TABLE IF NOT EXISTS $name ("
     for t in "${(f)$(cat)}"; do
         [[ "$t" = "" ]] && continue
         cmd+="${t},"

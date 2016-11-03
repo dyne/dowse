@@ -126,7 +126,7 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
-dnscrypt_dowse_la_DEPENDENCIES = ../redis.o
+dnscrypt_dowse_la_DEPENDENCIES =
 am_dnscrypt_dowse_la_OBJECTS = dnscrypt_dowse_la-dnscrypt-dowse.lo \
 	dnscrypt_dowse_la-domainlist.lo dnscrypt_dowse_la-hashmap.lo
 dnscrypt_dowse_la_OBJECTS = $(am_dnscrypt_dowse_la_OBJECTS)
@@ -340,7 +340,7 @@ ACLOCAL_AMFLAGS = -I m4
 pkglib_LTLIBRARIES = dnscrypt_dowse.la
 dnscrypt_dowse_la_LIBTOOLFLAGS = --tag=disable-static
 dnscrypt_dowse_la_SOURCES = dnscrypt-dowse.c domainlist.c hashmap.c
-dnscrypt_dowse_la_LIBADD = ../redis.o @LDNS_LIBS@ -lhiredis -ljemalloc
+dnscrypt_dowse_la_LIBADD = @LDNS_LIBS@ -lhiredis -ljemalloc
 dnscrypt_dowse_la_CFLAGS = -Os -Wall -I../dnscrypt-proxy/src/include -I..
 dnscrypt_dowse_la_LDFLAGS = $(AM_LDFLAGS) \
 -avoid-version \
