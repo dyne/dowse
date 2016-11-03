@@ -56,7 +56,7 @@ vars+=(last_notice last_act last_func)
 vars+=(root sql)
 arrs+=(mods)
 # use mysql
-sql=(launch mysql --defaults-file=$H/run/mysqld.conf -u root -A)
+sql=(launch mysql --defaults-file=$H/run/mysqld.conf -u root -pp4ssw0rd -A)
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
@@ -204,8 +204,9 @@ act "daemons running as user and group $dowse_uid:$dowse_gid"
 # if touch $H/log/test; then rm -f $H/log/test; else return 1; fi
 
 act "initialise things database"
-dbname="${address}_${wan}_${dowse_net//\//_}"
-db[things]="things_${dbname//./_}"
+#dbname="${address}_${wan}_${dowse_net//\//_}"
+#db[things]="things_${dbname//./_}"
+db[things]="things"
 func "$db[things]"
 
 # the global index of things database, path to it

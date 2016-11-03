@@ -15,5 +15,5 @@ debug:
 	./webui -r -n -f
 
 clean:
-	rm -f webui
+	rm -f webui 
 	../kore/kore clean

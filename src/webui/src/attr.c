@@ -87,7 +87,17 @@ static attr_t *attrlookup(attrlist_t al, int type)
 
 static attr_t *attradd(attrlist_t al, int type)
 {
+	//--- Ne aggiungo uno vuoto di tipo type in fondo e lo restituisco
     attr_t *at;
+
+    void *old_buf,*new_buf;
+    old_buf=al->data;
+    new_buf=kore_buf_alloc((al->len+1)*sizeof(*(al->data)));
+    if (old_buf!=NULL) {
+        memcpy(new_buf,old_buf,sizeof(*(al->data)));
+        kore_buf_free(old_buf);
+    }
+    al->data=new_buf;
 
     al->data=kore_realloc(al->data, (al->len+1)*sizeof *al->data);
     at=al->data+al->len;

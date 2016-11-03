@@ -6,11 +6,13 @@ cat << EOF
 [client]
 port		= 63306
 socket		= $H/run/mysql/mysqld.sock
+#socket		= /tmp/mysqld.sock
 
 [mysqld]
 user		= $dowse_uid
 pid-file	= $H/run/mysqld.pid
 socket		= $H/run/mysql/mysqld.sock
+#socket		= /tmp/mysqld.sock
 port		= 63306
 basedir		= $R/mysql
 datadir		= $H/run/mysql

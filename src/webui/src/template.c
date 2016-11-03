@@ -163,7 +163,7 @@ void template_apply(template_t *t, attrlist_t al, kore_buf_t *out) {
 	// fflush(stdout); /* we'll be using posix i/o instead of iso c */
 	for(e=t->entry_list;e;e=e->next) {
         // kore_log(LOG_DEBUG,"::%u:%u:%.*s",
-        //          e->type, e->len, e->len, e->data);
+          //        e->type, e->len, e->len, e->data);
 
 		/* ignore macro type if the macro is too large */
 		if(al && e->type && (e->len<(sizeof buf-1))) {
@@ -175,7 +175,9 @@ void template_apply(template_t *t, attrlist_t al, kore_buf_t *out) {
 		} else if(!al && e->type) { /* debug mode because al==NULL */
 			kore_log(LOG_DEBUG,"%s (%u)", e->data, e->len);
 		} else { /* raw data */
-            if(e->data) kore_buf_append(out,e->data,e->len);
+            if(e->data) {
+            	kore_buf_append(out,e->data,e->len);
+            }
         }
 	}
 }
