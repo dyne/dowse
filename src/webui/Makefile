@@ -1,19 +1,19 @@
 
 all:
 	./map_assets > src/assetmap.h
-	kore flavor prod
-	kore build
+	../kore/kore flavor prod
+	../kore/kore build
 
 run:
-	kore run
+	../kore/kore run
 
 debug:
-	kore flavor dev
+	../kore/kore flavor dev
 	./map_assets > src/assetmap.h
 	cp -f conf/webui-debug.conf.dist conf/webui.conf
 	../kore/kore build
-	./webui -d -r -n -f
+	./webui -r -n -f
 
 clean:
 	rm -f webui
-	kore clean
+	../kore/kore clean
