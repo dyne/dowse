@@ -23,6 +23,12 @@ LDFLAGS="-fPIC -fPIE -pie"
 notice "Compiling $1"
 
 case $1 in
+	mustache)
+		[[ -r $R/src/mustache/src/libmustache.a ]]
+		pushd $R/src/mustache
+		CFLAGS="$CFLAGS -I." make
+		popd
+		;;
 	libwebsockets)
 		[[ -r $R/src/libwebsockets/lib/libwebsockets.a ]] && return 0
 		pushd $R/src/libwebsockets
