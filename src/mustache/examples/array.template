@@ -1,3 +1,4 @@
 Members:
-{{#members}}  - {{name}}
+{{#members}}
+- {{name}}
 {{/members}}
