@@ -5,7 +5,7 @@
 
 int websocket_example(struct http_request *req) {
 	template_t tmpl;
-	attrlist_t attributes;
+	attributes_hm_t attributes;
 	struct kore_buf *buf;
 	char *address;
 
@@ -20,7 +20,7 @@ int websocket_example(struct http_request *req) {
 	address = getenv("address");
 	if(!address) address = "127.0.0.1";
 
-	attrset(attributes, "address", address);
+	attrcat(attributes, "address", address);
 
 
 	template_apply(&tmpl,attributes,buf);

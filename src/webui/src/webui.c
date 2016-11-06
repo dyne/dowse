@@ -38,6 +38,7 @@
 
 #include <parse-datetime.h>
 #include "template.h"
+#include "webui_debug.h"
 
 #define mb (1024*500)
 #define ml (1024*3)
@@ -53,14 +54,14 @@ MYSQL *db = NULL;
 
 map_t thing = NULL;
 
-#define WEBUI_DEBUG {}
-
-//{fprintf(stderr,"WEBUI_DEBUG: %s>%s:%d\n",__FILE__,__func__,__LINE__);}
+//typedef int (*callback_type)(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)  ;
 
 char *thing_get(char *key);
 int sqlquery(char *query,
-             int (*callback)(void*,int,char**,char**),
-             attrlist_t attrl);
+		int (*callback)(void *data, int , MYSQL_ROW , MYSQL_FIELD *),
+             //int (*callback)(void*,int,char**,char**),
+//		callback_type callback,
+		attributes_hm_t attrl);
 
 int relative_time(char *utc, char *out) {
     time_t nowutc;
@@ -111,73 +112,84 @@ int relative_time(char *utc, char *out) {
 
 #define blankify(s) (((s==NULL) || (strcmp("",s)==0)) ?"n/a":s)
 
-int thing_show_cb(void *data, int argc, char **argv, char **azColName)
+
+//int thing_show_cb(void *data, int argc, char **argv, char **azColName)
+int thing_show_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
 {
     int i;
     char humandate[256];
     memset(humandate,0,256);
+    attributes_hm_t t;
+    t=attrinit();
+
     for(i=0; i<argc; i++){ // save all fields into the template
         if(!(argv[i])) continue;
 
-        if(strcmp(azColName[i],"last")==0) {
+        if(strcmp(azColName[i].name,"last")==0) {
              kore_log(LOG_DEBUG,"last: %s",argv[i]);
             relative_time(argv[i],humandate);
-            attrset(data, "last", humandate);
-        } else if(strcmp(azColName[i],"age")==0) {
+//            attrset(data, "last", humandate);
+            attrcat(t, "last", humandate);
+        } else if(strcmp(azColName[i].name,"age")==0) {
              kore_log(LOG_DEBUG,"age: %s",argv[i]);
             relative_time(argv[i],humandate);
-            attrset(data, "age",  humandate);
+//            attrset(data, "age",  humandate);
+            attrcat(t, "age",  humandate);
         } else {
-          kore_log(LOG_DEBUG,"%s: [%s]",azColName[i],argv[i]);
-        //  	attrprintf(data, azColName[i], "%s",blankify(argv[i]));
-          	attrprintf(data, azColName[i], "%s","n/a");
+          kore_log(LOG_DEBUG,"%s: [%s]",azColName[i].name,argv[i]);
+           	//attrprintf(data, azColName[i].name, "%s","n/a");
+           	attrcat(t, azColName[i].name,argv[i]);
         }
     }
+    //--- In the hashmap data we add to the key "things" the hm element we created.
+    attr_add(data,"things",t);
     WEBUI_DEBUG
     return 0;
 
 }
-int things_list_cb(void *data, int argc, char **argv, char **azColName){
+
+
+//int things_list_cb(void *data, int argc, char **argv, char **azColName)
+int things_list_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
+{
     int i;
     struct tm tt;
     char *laststr;
     char humandate[256];
-    const char *button_group_start="<div class=\"btn-group\" role=\"group\" aria-label=\"actions\">";
-    const char *button_start="<div type=\"button\" class=\"btn btn-default\">";
+     char *button_group_start="<div class=\"btn-group\" role=\"group\" aria-label=\"actions\">";
+     char *button_start="<div type=\"button\" class=\"btn btn-default\">";
     WEBUI_DEBUG
 
-    // fprintf(stderr, "callback: %s\n", (const char*)data);
-
     for(i=0; i<argc; i++){ // save all fields into the hashmap
-        hashmap_put(thing , azColName[i],
-                    argv[i] ? argv[i] : "NULL");
+        hashmap_put(thing , azColName[i].name,
+                    (argv[i] ? argv[i] : "NULL"));
     }
-    attrcat(data,"list_of_things","<tr>");
+    attrcat((attributes_hm_t)data,"list_of_things","<tr>");
 
     snprintf(line,ml,
 "<td><a href=\"/things?macaddr=%s\">"
 "%s</td><td>%s</td></a>",
              thing_get("macaddr"),
              thing_get("hostname"), thing_get("os"));
-    attrcat(data,"list_of_things",line);
+    attrcat((attributes_hm_t)data,"list_of_things",line);
 
     // get last datestamp
     laststr = thing_get("last");
     if(laststr) relative_time(laststr,humandate);
     snprintf(line, ml, "<td>%s</td><td>", humandate);
-    attrcat(data,"list_of_things",line);
+    attrcat((attributes_hm_t)data,"list_of_things",line);
 
     // action buttons
-    attrcat(data,"list_of_things",button_group_start);
+    attrcat((attributes_hm_t)data,"list_of_things",button_group_start);
 
     // info button
-    attrcat(data,"list_of_things",button_start);
+    attrcat((attributes_hm_t)data,"list_of_things",button_start);
     snprintf(line,ml,
              "<a href=\"/things?macaddr=%s\">info</a></div>",
              thing_get("macaddr"));
-    attrcat(data,"list_of_things",line);
+    attrcat((attributes_hm_t)data,"list_of_things",line);
 
-    attrcat(data,"list_of_things","</div></td></tr>");
+    attrcat((attributes_hm_t)data,"list_of_things","</div></td></tr>");
 
     // snprintf(line,ml,"<td>%s</td><td>%s</td>\n",
     //          thing_get("macaddr"), thing_get("ip4"));
@@ -189,12 +201,16 @@ int things_list_cb(void *data, int argc, char **argv, char **azColName){
 }
 char *macaddr;
 template_t tmpl;
-attrlist_t attributes;
+
+attributes_hm_t attributes;
+
 
 int thing_show(struct http_request *req) {
     int rc;
     u_int8_t	 *data;
     int len;
+    char *mess;
+    attributes_hm_t studente,studente2;
 
     WEBUI_DEBUG
 	http_populate_get(req);
@@ -211,34 +227,74 @@ int thing_show(struct http_request *req) {
 		snprintf(where_condition,ml,"");
     }
 
+	WEBUI_DEBUG
     // prepare query
 	snprintf(line,ml,"SELECT * FROM found %s ORDER BY age DESC",where_condition);
     
+    WEBUI_DEBUG
     // allocate output buffer
     buf = kore_buf_alloc(mb);
 
+    WEBUI_DEBUG
     // load template
     template_load
         (asset_thing_show_html, asset_len_thing_show_html, &tmpl);
+    WEBUI_DEBUG
     attributes = attrinit();
 
-    attrcat(attributes, "title", "Dowse information panel");
+    WEBUI_DEBUG
 
+    attrcat(attributes, "title", "Dowse information panel");
+    attrcat(attributes, "title", "Secondo titolo ");
+
+    studente =attrinit();
+    attrcat(studente,"nome","Nicola");
+    attrcat(studente,"cognome","Rossi");
+    attrcat(studente,"indirizzo","Casa Sua");
+    attr_add(attributes,"studente",studente);
+
+    studente2 =attrinit();
+    attrcat(studente2,"nome","Mario");
+    attrcat(studente2,"cognome","Bianchi");
+    attrcat(studente2,"indirizzo","Un altro posto");
+    attr_add(attributes,"studente",studente2);
+
+//        attr_add(attributes,"studente",studente);
+
+    WEBUI_DEBUG
+    kore_log(LOG_DEBUG," Il cielo cade? %d",((hashmap_map*)(attributes))->size );
+    WEBUI_DEBUG
+
+    debug_attributes(attributes);
+	attrget(attributes,"title",0,(any_t*)&mess);
+    WEBUI_DEBUG
+    kore_log(LOG_DEBUG," title[%s]",mess);
+    WEBUI_DEBUG
+
+/*
     // SQL query
     sqlquery(line, thing_show_cb, attributes);
+    WEBUI_DEBUG;
 
     template_apply(&tmpl,attributes,buf);
+    WEBUI_DEBUG;
 
     data=kore_buf_release(buf,&len);
 
 //	http_response(req, 200, buf->data, buf->offset);
 	http_response(req, 200, data,len);
+    WEBUI_DEBUG;
 
     template_free(&tmpl);
-    attrfree(attributes);
+    WEBUI_DEBUG;
+    kore_log(LOG_DEBUG,"Log attributes [%p %d]",attributes->data,attributes->len);*/
+    WEBUI_DEBUG
+     attrfree(attributes);
 
-    kore_free(data);
-
+//    kore_buf_free(buf);
+   WEBUI_DEBUG;
+//  kore_free(data);
+  WEBUI_DEBUG;
 	return (KORE_RESULT_OK);
 
 }
@@ -248,7 +304,7 @@ int things_list(struct http_request *req) {
     char *zErrMsg = 0;
     char *query = "SELECT * FROM found ORDER BY last DESC";
     template_t tmpl;
-	attrlist_t attributes;
+	attributes_hm_t attributes;
 
     struct timespec when;
     WEBUI_DEBUG
@@ -312,9 +368,12 @@ inline void show_error(MYSQL *mysql) {
 
 // same as sqlite3_exec
 int sqlquery(char *query,
-             int (*callback)(void*,int,char**,char**),
-             attrlist_t attrl) {
-	MYSQL_RES * result;
+		int (*callback)( void*,int , MYSQL_ROW , MYSQL_FIELD *),
+		//             int (*callback)(void*,int,MYSQL_ROW,MYSQL_FIELD *),
+//		callback_type callback,
+//             int (*callback)(void*,int,char**,char**),
+             attributes_hm_t attrl) {
+	MYSQL_RES *result;
 	MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
 	MYSQL_FIELD*column;
 	unsigned int num_fields;
@@ -369,28 +428,28 @@ int sqlquery(char *query,
 
 	column= mysql_fetch_fields(result);
 
-	/**/
+	/*
 	char **keys=(char **)kore_buf_alloc(num_fields*sizeof(char*));
 	for (i=0;i<num_fields;i++) {
 		keys[i]=(char*)kore_buf_alloc((strlen(column[i].name)+1)*sizeof(char));
 		sprintf(keys[i],"%s",column[i].name);
-	}
+	}*/
 
 	while ((values = mysql_fetch_row(result))!=0) {
 	   for (i=0;i<num_fields;i++){
-		   kore_log(LOG_DEBUG,"[%d][%s][%s]",i,keys[i],values[i]);
+		   kore_log(LOG_DEBUG,"[%d][%s][%s]",i,column[i].name,values[i]);
    	   }
-   	   //--- executing "callback" function pointer
-   	//   callback((void*)attrl,(int)num_fields,(char**)values, (char**)keys);
+
+   	   //--- executing "callback" function pointer that add result in the attributes_hm
+   	   callback((void*)attrl,(int)num_fields,values,column);
 	}
     WEBUI_DEBUG ;
 
-	for ( i=0;i<num_fields;i++) {
-		kore_free(keys[i]);
-	}
-//    kore_free(keys);
+//    kore_buf_free(keys);
+	  WEBUI_DEBUG ;
 
 	mysql_free_result(result);
+	WEBUI_DEBUG ;
 	return 0;
 
 }

@@ -26,12 +26,34 @@ typedef void *any_t;
  */
 typedef int (*PFany)(any_t, any_t);
 
+/* */
+#define INITIAL_SIZE (16)
+#define MAX_CHAIN_LENGTH (8)
+
+/* We need to keep keys and values */
+typedef struct _hashmap_element{
+	char* key;
+	int in_use;
+	any_t data;
+} hashmap_element;
+
+/* A hashmap has some maximum size and current size,
+ * as well as the data to hold. */
+typedef struct _hashmap_map{
+	int table_size;
+	int size;
+	hashmap_element *data;
+} hashmap_map;
+
 /*
  * map_t is a pointer to an internally maintained data structure.
  * Clients of this package do not need to know how hashmaps are
  * represented.  They see and manipulate only map_t's.
  */
-typedef any_t map_t;
+/*typedef any_t map_t;*/
+
+/* Nicola: it's beautiful typing . Type is your friend*/
+typedef hashmap_map *map_t;
 
 /*
  * Return an empty hashmap. Returns NULL if empty.

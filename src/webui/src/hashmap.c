@@ -6,33 +6,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "webui_debug.h"
 
-#define INITIAL_SIZE (256)
-#define MAX_CHAIN_LENGTH (8)
-
-/* We need to keep keys and values */
-typedef struct _hashmap_element{
-	char* key;
-	int in_use;
-	any_t data;
-} hashmap_element;
-
-/* A hashmap has some maximum size and current size,
- * as well as the data to hold. */
-typedef struct _hashmap_map{
-	int table_size;
-	int size;
-	hashmap_element *data;
-} hashmap_map;
+/*
+void hashmap_element_init(hashmap_element *p){
+	p->in_use=0;
+	p->key=NULL;
+	p->data=NULL;
+}*/
 
 /*
  * Return an empty hashmap, or NULL on failure.
  */
 map_t hashmap_new() {
+	int _i;
 	hashmap_map* m = (hashmap_map*) malloc(sizeof(hashmap_map));
 	if(!m) goto err;
+	m->data = (hashmap_element*) calloc(INITIAL_SIZE,sizeof(hashmap_element));
 
-	m->data = (hashmap_element*) calloc(INITIAL_SIZE, sizeof(hashmap_element));
 	if(!m->data) goto err;
 
 	m->table_size = INITIAL_SIZE;
@@ -258,7 +249,7 @@ int hashmap_rehash(map_t in){
 /*
  * Add a pointer to the hashmap with some key
  */
-int hashmap_put(map_t in, char* key, any_t value){
+int hashmap_put(map_t in, char* key,  any_t value){
 	int index;
 	hashmap_map* m;
 
@@ -299,14 +290,15 @@ int hashmap_get(map_t in, char* key, any_t *arg){
 
 	/* Linear probing, if necessary */
 	for(i = 0; i<MAX_CHAIN_LENGTH; i++){
-
         int in_use = m->data[curr].in_use;
         if (in_use == 1){
             if (strcmp(m->data[curr].key,key)==0){
-                *arg = (m->data[curr].data);
-                return MAP_OK;
+                *arg = (((m->data)[curr]).data);
+
+				return MAP_OK;
             }
 		}
+
 
 		curr = (curr + 1) % m->table_size;
 	}
@@ -341,6 +333,32 @@ int hashmap_iterate(map_t in, PFany f, any_t item) {
                         return status;
                     }
 		}
+
+    return MAP_OK;
+}
+
+typedef int(*PFany2)(any_t,any_t,any_t);
+
+int hashmap_foreach(map_t in, PFany2 f, any_t item) {
+	int i;
+
+	/* Cast the hashmap */
+	hashmap_map* m = (hashmap_map*) in;
+
+	/* On empty hashmap, return immediately */
+	if (hashmap_length(m) <= 0)
+		return MAP_MISSING;
+
+	/* Linear probing */
+	for(i = 0; i< m->table_size; i++) {
+		if(m->data[i].in_use != 0) {
+			any_t data = (any_t) (m->data[i].data);
+                    int status = f(item, m->data[i].key , data);
+                    if (status != MAP_OK) {
+                        return status;
+                    }
+		}
+	}
 
     return MAP_OK;
 }

@@ -22,7 +22,7 @@
 
 #ifndef ESCAPE_H
 #define ESCAPE_H
-#include "attr.h"
+typedef unsigned char _char;
 unsigned uri_escape_len(const _char *s, size_t len);
 char *uri_escape(char *dest, size_t dest_len, const char *src, int src_len);
 char *uri_unescape(char *dest, size_t dest_len, const _char *src, int src_len);
