@@ -3,20 +3,34 @@ pidfile     webui-debug.pid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 validator   v_filename  regex   ^.*$
+validator   v_command   regex   ^(on)|(off)|(monitor)|(admin)$
 
 domain * {
-    static  /                   serve_asset
-	params get / {	
-	    validate    o			v_filename
-	}
 
+	# test endpoints
+    static /test/mustache  test_mustache
+
+    # generic assets
+    static /		serve_asset
+	params get / {
+	    validate o v_filename
+		    }
+
+    # command pipeline
+	static     /cmd	   queue_command
+	params get /cmd {
+		validate op  v_command
+		validate macaddr v_macaddr
+			}
+
+	# dynamic pages
 	static	   /things/all      things_list
     static     /things          thing_show
 	params get /things {
-		validate	macaddr		v_macaddr
-	}
+		validate macaddr v_macaddr
+			}
 
-	# example assets
+	# special static assets
 	static     /example/websocket.html  websocket_example
 
 }
