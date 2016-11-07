@@ -153,8 +153,7 @@ void attrfree(attributes_hm_t hm) {
 	return hashmap_free(hm);
 }
 
-/***/
-//#define __KO_MESSAGE "<h1><strong>Sorry it doesn't work test [" ## NAME ## "]<strong></h1>" \
+/*
 
 #define __OK_MESSAGE "<h1>Ok</h1>"
 #define __KO_MESSAGE "<h1><strong>Sorry it doesn't work test [" #NAME "]<strong></h1>"
@@ -203,4 +202,4 @@ WEBUI_TEST_UNIT(A001){
     return (strcmp(name,"Mario")==0);
 }
 
-
+*/
