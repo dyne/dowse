@@ -20,3 +20,4 @@ void template_apply(template_t *t, attributes_set_t al, struct kore_buf *out);
 void template_free(template_t *t);
 
 #endif
+

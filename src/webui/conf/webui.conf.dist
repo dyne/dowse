@@ -10,20 +10,25 @@ bind		0 80
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 validator   v_filename  regex   ^.*$
+validator   v_command   regex   ^(on)|(off)|(monitor)|(admin)$
 
 domain * {
-    static  /                   serve_asset
-	params get / {	
-	    validate    o			v_filename
-	}
 
+    # generic assets
+    static /		serve_asset
+	params get / { 	validate o v_filename }
+
+    # command pipeline
+	static /cmd		queue_command
+	params get / {  validate op  v_command
+		   	   	    validate mac v_macaddr }
+
+	# dynamic pages
 	static	   /things/all      things_list
     static     /things          thing_show
-	params get /things {
-		validate	macaddr		v_macaddr
-	}
+	params get /things { validate macaddr v_macaddr }
 
-	# example assets
+	# special static assets
 	static     /example/websocket.html  websocket_example
 
 }
