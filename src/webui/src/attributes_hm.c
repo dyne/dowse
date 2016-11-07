@@ -7,7 +7,11 @@
 #define MAX_PREFIX_SIZE (256)
 
 void _print_k_idx_v_attributes(any_t nop,any_t key,int idx,any_t val){
-	kore_log(LOG_DEBUG,"[%s]%s[%d]\t->\t[%s]",(char*)(nop!=NULL?nop:""),(char*)key,idx,(char*)val);
+	kore_log(LOG_DEBUG,"%s/%s[%d]\t->\t[%s]",
+			(char*)(nop?nop:""),
+			(char*)key,
+			idx,
+			(val?(char*)val:""));
 }
 
 int _debug_attributes(char*prefix,attributes_hm_t hm){
@@ -25,7 +29,6 @@ int _debug_attributes(char*prefix,attributes_hm_t hm){
 				}
 			} else {
 				char *prefix2;
-				int _elem;
 				prefix2=(char*)malloc(MAX_PREFIX_SIZE );
 				for (idx=0;idx<a->size;idx++){
 					snprintf(prefix2,MAX_PREFIX_SIZE,"%s>%s[%d]",prefix,p->data[i].key,idx);
@@ -53,9 +56,24 @@ void attrget(attributes_hm_t hm,char*key,int index,any_t *value) {
 	attributes_vect_t *a;
 
 	WEBUI_DEBUG
-	hashmap_get(hm,key,(any_t*)&a);
+	kore_log(LOG_DEBUG,"%s Looking for %s[%d]",__where_i_am__,key,index);
+	if (index<0) {
+		*value=NULL;
+		return;
+	}
+	int rv=hashmap_get(hm,key,(any_t*)&a);
+
+	if (rv == MAP_MISSING) {
+		WEBUI_DEBUG
+		*value=NULL;
+		return;
+	}
 	WEBUI_DEBUG
 	any_t *p;
+	if (index>=a->size) {
+		*value=NULL;
+		return;
+	}
 	if (!a->isSimple) {
 		p=(any_t*)a->complex_;
 	} else {
@@ -103,7 +121,6 @@ void _attr_add(attributes_hm_t hm, char*key,any_t value,int _is_simple){
 	}
 	_vect[present->size]=value;
 	present->size++;
-	attributes_hm_t *_hm;
 	present->isSimple=_is_simple;
 }
 
@@ -127,6 +144,7 @@ int _free_attributes_vect_t(any_t nop, any_t v){
 		}
 	}
 	kore_free(p);
+	return 0;
 }
 
 void attrfree(attributes_hm_t hm) {
@@ -135,5 +153,54 @@ void attrfree(attributes_hm_t hm) {
 	return hashmap_free(hm);
 }
 
+/***/
+//#define __KO_MESSAGE "<h1><strong>Sorry it doesn't work test [" ## NAME ## "]<strong></h1>" \
+
+#define __OK_MESSAGE "<h1>Ok</h1>"
+#define __KO_MESSAGE "<h1><strong>Sorry it doesn't work test [" #NAME "]<strong></h1>"
+
+
+#define RETURN_ASSERT(a,val) {\
+	if ((val)==(a)) {\
+		http_response(__webui_req, 200, , strlen(__OK_MESSAGE));\
+	} else {\
+		http_response(__webui_req, 404, __KO_MESSAGE, strlen(__KO_MESSAGE));\
+	}\
+}
+
+#define WEBUI_TEST_UNIT(NAME) int ___webui___test_unit__ ## NAME (struct http_request *__webui_req)
+
+WEBUI_TEST_UNIT(A001){
+	attributes_hm_t _attributes;
+	char *titolo;
+    attrcat(_attributes, "title", "Dowse information panel");
+    attrget(_attributes,"title",0,(any_t*)&titolo);
+    RETURN_ASSERT(strcmp(titolo,"Dowse information panel"),0);
+}
+
+
+
+ WEBUI_TEST_UNIT(A002)
+ {
+    attributes_hm_t studente,studente2,stud,_attributes;
+	char *name;
+	_attributes=attrinit();
+
+    studente =attrinit();
+    attrcat(studente,"nome","Antonio");
+    attrcat(studente,"cognome","Rossi");
+    attrcat(studente,"indirizzo","Casa Sua");
+    attr_add(_attributes,"studente",studente);
+
+    studente2 =attrinit();
+    attrcat(studente2,"nome","Mario");
+    attrcat(studente2,"cognome","Bianchi");
+    attrcat(studente2,"indirizzo","Un altro posto");
+    attr_add(_attributes,"studente",studente2);
+
+    attrget(_attributes,"studente",1,(any_t*)&stud);
+    attrget(stud,"nome",0,(any_t*)&name);
+    return (strcmp(name,"Mario")==0);
+}
 
 

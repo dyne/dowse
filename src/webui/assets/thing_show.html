@@ -1,58 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>${title}</title>
+    <title>{{title}}</title>
 
     <link rel="stylesheet" href="/?o=bootstrap.min.css">
-
   </head>
   <body>
 
     <div class="container">
 
       <div class="panel panel-default">
-        <!-- Default panel contents -->
-        <div class="panel-heading">${title}</div>
+        <!-- Default panel contents 
+        <div class="panel-heading">{{title}}</div>
+	-->
         <div class="panel-body">
-          <p>Show all info gathered on ${hostname}</p>
+          <p>Show all info gathered </p>
         </div>
 
         <table class="table">
-<tr>
-<td>last seen</td><td>${last}</td>
-</tr><tr>
+        <thead>
+        <td>Hostname</td>
+<td>last seen
+</td><td>
+first seen
+</td><td>
+notes
+</td><td>
+os
+</td><td>
+ip4
+</td><td>
+macaddr
+</td><td>
+ip6
+</td><td>
+iface
+</td><td>
+state
+</td>
 
-<td>first seen</td><td>${age}</td>
-</tr><tr>
-
-<td>notes</td><td>${notes}</td>
-</tr><tr>
-
-<td>os</td><td>${os}</td>
-</tr><tr>
-
-<td>ip4</td><td>${ip4}</td>
-</tr><tr>
-
-<td>macaddr</td><td>${macaddr}</td>
-</tr><tr>
-
-<td>ip6</td><td>${ip6}</td>
-</tr><tr>
-
-<td>iface</td><td>${iface}</td>
-</tr><tr>
-
-<td>state</td><td>${state}<td>
-</tr>
+        </thead>
+        <tbody>
+        </tbody>
+{{#things}} <tr><td>{{hostname}}</td><td>{{last}}</td><td>{{age}}</td><td>{{notes}}</td><td>{{os}}</td><td>{{ip4}}</td><td>{{macaddr}}</td><td>{{ip6}}</td><td>{{iface}}</td><td>{{state}}</td></tr>
+{{/things}} 
 
         </table>
+
+
       </div>
 
     </div>
   </body>
 </html>
+<!--  -->
+<!--  -->
+<!--  -->
+<!--  -->
+<!---->
+<!--   -->
+<!-- -->
+<!--  -->
+ 
