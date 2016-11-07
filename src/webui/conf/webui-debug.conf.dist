@@ -8,7 +8,7 @@ validator   v_command   regex   ^(on)|(off)|(monitor)|(admin)$
 domain * {
 
 	# test endpoints
-    static /test/mustache  test_mustache
+    # static /test/mustache  test_mustache
 
     # generic assets
     static /		serve_asset
