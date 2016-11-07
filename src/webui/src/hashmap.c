@@ -19,7 +19,6 @@ void hashmap_element_init(hashmap_element *p){
  * Return an empty hashmap, or NULL on failure.
  */
 map_t hashmap_new() {
-	int _i;
 	hashmap_map* m = (hashmap_map*) malloc(sizeof(hashmap_map));
 	if(!m) goto err;
 	m->data = (hashmap_element*) calloc(INITIAL_SIZE,sizeof(hashmap_element));

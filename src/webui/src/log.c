@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
 
 void func(const char *fmt, ...) {
 #if (DEBUG==1)
