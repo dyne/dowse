@@ -26,6 +26,7 @@ base: config modprobe sup
 	@./compile.sh libwebsockets
 	@./compile.sh mosquitto
 	@./compile.sh kore
+	@./compile.sh mustache
 	@./compile.sh webui
 	@./compile.sh seccrond
 
