@@ -39,7 +39,7 @@ config:
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
-modprobe: modprobe.o log.o
+modprobe: modprobe.o kmod_log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
 
 dowse-to-gource: dowse-to-gource.o

@@ -45,7 +45,7 @@
 #include <libkmod.h>
 
 #include "macro.h"
-#include "log.h"
+#include "kmod_log.h"
 
 #define program_invocation_short_name "modprobe"
 

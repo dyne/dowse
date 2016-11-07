@@ -27,7 +27,7 @@
 #include <libkmod.h>
 
 #include "macro.h"
-#include "log.h"
+#include "kmod_log.h"
 
 #define PRIO_MAX_SIZE 32
 
