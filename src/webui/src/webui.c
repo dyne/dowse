@@ -48,19 +48,16 @@ struct kore_buf *buf;
 char line[ml];
 char where_condition[ml];
 char *thingsdb;
-
 MYSQL *db = NULL;
-
 map_t thing = NULL;
+char *macaddr;
+template_t tmpl;
 
-//typedef int (*callback_type)(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)  ;
 
 char *thing_get(char *key);
 int sqlquery(char *query,
-		int (*callback)(void *data, int , MYSQL_ROW , MYSQL_FIELD *),
-             //int (*callback)(void*,int,char**,char**),
-//		callback_type callback,
-		attributes_set_t attrl);
+		int (*callback)(attributes_set_t *data, int , MYSQL_ROW , MYSQL_FIELD *),
+		attributes_set_t *ptr_attrl);
 
 int relative_time(char *utc, char *out) {
     time_t nowutc;
@@ -111,57 +108,55 @@ int relative_time(char *utc, char *out) {
 
 
 
-//int thing_show_cb(void *data, int argc, char **argv, char **azColName)
-int thing_show_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
+int thing_show_cb( attributes_set_t  *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
 {
 #define SIZE (256)
     int i;
 
-    attributes_set_t t;
+    attributes_set_t t;   
     t=attrinit();
-
+   
     for(i=0; i<argc; i++){ // save all fields into the template
-        if(!(argv[i])) continue;
-
-        if(strcmp(azColName[i].name,"last")==0) {
-            char *humandate;
-        	humandate=(char*)calloc(1,SIZE);
-
-        	kore_log(LOG_DEBUG,"last: %s",argv[i]);
-            relative_time(argv[i],humandate);
-            attrcat(t, "last", humandate);
-        } else if(strcmp(azColName[i].name,"age")==0) {
-            char *humandate;
-        	humandate=(char*)calloc(1,SIZE);
-
-        	kore_log(LOG_DEBUG,"age: %s",argv[i]);
-            relative_time(argv[i],humandate);
-            attrcat(t, "age",  humandate);
-        } else {
-            char *key,*value;
-        	key=(char*)calloc(1,SIZE);
-        	value=(char*)calloc(1,SIZE);
-
-        	snprintf(key,SIZE,"%s",azColName[i].name);
-        	snprintf(value,SIZE,"%s",argv[i]);
-        	kore_log(LOG_DEBUG,"%s: [%s]",key,value);
-           	attrcat(t, key,value);
-        }
+      if(!(argv[i])) continue;
+      
+      if(strcmp(azColName[i].name,"last")==0) {
+	char *humandate;
+	humandate=(char*)calloc(1,SIZE);
+	
+	kore_log(LOG_DEBUG,"last: %s",argv[i]);
+	relative_time(argv[i],humandate);
+	t=attrcat(t, "last", humandate);
+      } else if(strcmp(azColName[i].name,"age")==0) {
+	char *humandate;
+	humandate=(char*)calloc(1,SIZE);
+	
+	kore_log(LOG_DEBUG,"age: %s",argv[i]);
+	relative_time(argv[i],humandate);
+	t=attrcat(t, "age",  humandate);
+      } else {
+	char *key,*value;
+	key=(char*)calloc(1,SIZE);
+	value=(char*)calloc(1,SIZE);
+	
+	snprintf(key,SIZE,"%s",azColName[i].name);
+	snprintf(value,SIZE,"%s",argv[i]);
+	kore_log(LOG_DEBUG,"%s: [%s]",key,value);
+	t=attrcat(t, key,value);
+      }
     }
     //--- In the hashmap data we add to the key "things" the hm element we created.
-    attr_add(data,"things",t);
+    (*data)=attr_add(*data,"things",t);
     WEBUI_DEBUG
     return 0;
 
 }
 
-
-//int things_list_cb(void *data, int argc, char **argv, char **azColName)
-int things_list_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
+int things_list_cb(attributes_set_t *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
 {
     int i;
     char *laststr;
     char humandate[256];
+    attributes_set_t *attr;
      char *button_group_start="<div class=\"btn-group\" role=\"group\" aria-label=\"actions\">";
      char *button_start="<div type=\"button\" class=\"btn btn-default\">";
     WEBUI_DEBUG
@@ -170,6 +165,8 @@ int things_list_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
         hashmap_put(thing , azColName[i].name,
                     (argv[i] ? argv[i] : "NULL"));
     }
+
+    attr=data;
     attrcat((attributes_set_t)data,"list_of_things","<tr>");
 
     snprintf(line,ml,
@@ -205,90 +202,75 @@ int things_list_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
 
     return 0;
 }
-char *macaddr;
-template_t tmpl;
-
-attributes_set_t attributes;
-
 
 int thing_show(struct http_request *req) {
-    u_int8_t	 *data;
-    size_t len;
+  u_int8_t	 *response;
+  size_t len;  
+  attributes_set_t attributes;
+ 
+  WEBUI_DEBUG;
+  http_populate_get(req);
+  
+  // we shouldn't free the result in macaddr
+  if (http_argument_get_string(req, "macaddr", &macaddr)) {
+    kore_log(LOG_DEBUG, "thing_show macaddr %s",macaddr);
+    //--- prepare where condition
+    snprintf(where_condition,ml,"WHERE macaddr='%s'",macaddr);
+  } else {
+    kore_log(LOG_ERR,"thing_show get argument error");
+    kore_log(LOG_DEBUG,"thing_show called without argument");
+    //--- prepare where condition
+    snprintf(where_condition,ml," ");
+  }
+  
+  WEBUI_DEBUG;
+  // prepare query
+  snprintf(line,ml,"SELECT * FROM found %s ORDER BY age DESC",where_condition);
+  
+  WEBUI_DEBUG;
+  buf = kore_buf_alloc(mb);
+  
+  WEBUI_DEBUG;
+  // load template
+  template_load
+    (asset_thing_show_html, asset_len_thing_show_html, &tmpl);
+  WEBUI_DEBUG;
+  attributes = attrinit();
 
-    WEBUI_DEBUG
-	http_populate_get(req);
-
-    // we shouldn't free the result in macaddr
-	if (http_argument_get_string(req, "macaddr", &macaddr)) {
-		kore_log(LOG_DEBUG, "thing_show macaddr %s",macaddr);
-		//--- prepare where condition
-		snprintf(where_condition,ml,"WHERE macaddr='%s'",macaddr);
-	} else {
-        kore_log(LOG_ERR,"thing_show get argument error");
-        kore_log(LOG_DEBUG,"thing_show called without argument");
-		//--- prepare where condition
-		snprintf(where_condition,ml," ");
-    }
-
-	WEBUI_DEBUG
-    // prepare query
-	snprintf(line,ml,"SELECT * FROM found %s ORDER BY age DESC",where_condition);
+  WEBUI_DEBUG;
+  attributes=attrcat(attributes, "title", "Dowse information panel");
+  
+  WEBUI_DEBUG;
+  // SQL query
+  sqlquery(line, thing_show_cb, &attributes);
+  
+  template_apply(&tmpl,attributes,buf);
+  
+  WEBUI_DEBUG;
+  response=kore_buf_release(buf,&len);
+  
+  http_response(req, 200, response,len);
+  WEBUI_DEBUG;
+  
+  template_free(&tmpl);
+  
+  WEBUI_DEBUG;
+  attrfree(attributes);
     
-    WEBUI_DEBUG
-    // allocate output buffer
-    buf = kore_buf_alloc(mb);
-
-    WEBUI_DEBUG
-    // load template
-    template_load
-        (asset_thing_show_html, asset_len_thing_show_html, &tmpl);
-    WEBUI_DEBUG
-    attributes = attrinit();
-
-    WEBUI_DEBUG
-
-    attrcat(attributes, "title", "Dowse information panel");
-
-
-
-    WEBUI_DEBUG
-
-    // SQL query
-    sqlquery(line, thing_show_cb, attributes);
-
-
-    template_apply(&tmpl,attributes,buf);
-    WEBUI_DEBUG;
-
-    data=kore_buf_release(buf,&len);
-
-	http_response(req, 200, data,len);
-    WEBUI_DEBUG;
-
-    template_free(&tmpl);
-
-/*
-#define MESSAGE "Hello world"
-	http_response(req, 200, MESSAGE,strlen(MESSAGE));*/
-
-	  WEBUI_DEBUG
-     attrfree(attributes);
-
-//    kore_buf_free(buf);
-
-//  kore_free(data);
-
-	return (KORE_RESULT_OK);
-
+  //    kore_buf_free(buf);
+  
+  //  kore_free(data);
+    
+  return (KORE_RESULT_OK);
 }
 
 int things_list(struct http_request *req) {
     char *query = "SELECT * FROM found ORDER BY last DESC";
     template_t tmpl;
-	attributes_set_t attributes;
+    attributes_set_t attributes;
 
     struct timespec when;
-    WEBUI_DEBUG
+    WEBUI_DEBUG;
     buf = kore_buf_alloc(mb);
 
     if(!thing) thing = hashmap_new();
@@ -310,7 +292,7 @@ int things_list(struct http_request *req) {
         attrcat(attributes, "title", line);
     }
     
-    sqlquery(query, things_list_cb, attributes);
+    sqlquery(query, things_list_cb, &attributes);
 
     template_apply(&tmpl, attributes, buf);
 
@@ -349,87 +331,67 @@ inline void show_error(MYSQL *mysql) {
 
 // same as sqlite3_exec
 int sqlquery(char *query,
-		int (*callback)( void*,int , MYSQL_ROW , MYSQL_FIELD *),
-		//             int (*callback)(void*,int,MYSQL_ROW,MYSQL_FIELD *),
-//		callback_type callback,
-//             int (*callback)(void*,int,char**,char**),
-             attributes_set_t attrl) {
-	MYSQL_RES *result;
-	MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
-	MYSQL_FIELD*column;
-	unsigned int num_fields;
-    unsigned int i;
+		int (*callback)( attributes_set_t*,int , MYSQL_ROW , MYSQL_FIELD *),
+             attributes_set_t *ptr_attrl) {
+  MYSQL_RES *result;
+  MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
+  MYSQL_FIELD*column;
+  unsigned int num_fields;
+  unsigned int i;
 
-//    thingsdb=getenv("db_things");
-    thingsdb="things";
-    if (thingsdb==NULL) {
-    	kore_log(LOG_ERR,
-    			"Error db_things(=$db[things]) environment variable not defined %s>%s:%d",
-				__FILE__,__func__,__LINE__);
-    	return KORE_RESULT_ERROR;
+  thingsdb="things";
+  if (thingsdb==NULL) {
+    kore_log(LOG_ERR,
+	     "Error db_things(=$db[things]) environment variable not defined %s>%s:%d",
+	     __FILE__,__func__,__LINE__);
+    return KORE_RESULT_ERROR;
+  }
+  WEBUI_DEBUG; ;
+  // open db connection
+  if(!db) {
+    db=mysql_init(NULL);
+    if (!mysql_real_connect(db, "localhost", "root","p4ssw0rd",
+			    thingsdb, 0, "/home/nop/.dowse/run/mysql/mysqld.sock", 0))
+      {
+	show_error(db);
+	return(KORE_RESULT_ERROR);
+      }
+  }
+  
+  WEBUI_DEBUG; ;  
+  // Execute the statement
+  if (mysql_real_query(db, query, strlen(query))) {
+    show_error(db);
+    return KORE_RESULT_ERROR;
+  }
+  
+  WEBUI_DEBUG; ;  
+  result=mysql_store_result(db);
+
+  WEBUI_DEBUG; ;
+  num_fields = mysql_num_fields(result);
+  if (num_fields == 0) {
+    kore_log(LOG_ERR,"The query [%s] has returned 0 fields. Is it correct?",query);
+    return KORE_RESULT_ERROR;
+  }
+
+  WEBUI_DEBUG; ;  
+  kore_log(LOG_DEBUG,"The query [%s] has returned [%d] row with [%u] columns.",
+	   query, (int)mysql_affected_rows(db), num_fields);
+  
+  column= mysql_fetch_fields(result);
+  
+  
+  while ((values = mysql_fetch_row(result))!=0) {
+    for (i=0;i<num_fields;i++){
+      kore_log(LOG_DEBUG,"[%d][%s][%s]",i,column[i].name,values[i]);
     }
-    WEBUI_DEBUG ;
-    // open db connection
-    if(!db) {
-    	db=mysql_init(NULL);
-    	if (!mysql_real_connect(db, "localhost", "root","p4ssw0rd",
-    	                          thingsdb, 0, "/home/nop/.dowse/run/mysql/mysqld.sock", 0))
-    	{
-			show_error(db);
-            return(KORE_RESULT_ERROR);
-    	}
-    }
+    
+    //--- executing "callback" function pointer that add result in the attributes_set
+    callback(ptr_attrl,(int)num_fields,values,column);
+  }
+  WEBUI_DEBUG; 
+  mysql_free_result(result);
 
-    WEBUI_DEBUG ;
-	//    sqlite3_exec(db, query, callback, attrl, &zErrMsg);
-
-    // Execute the statement
-	if (mysql_real_query(db, query, strlen(query))) {
-	    show_error(db);
-	   	return KORE_RESULT_ERROR;
-	}
-
-    WEBUI_DEBUG ;
-
-	result=mysql_store_result(db);
-
-    WEBUI_DEBUG ;
-
-    num_fields = mysql_num_fields(result);
-	if (num_fields == 0) {
-		kore_log(LOG_ERR,"The query [%s] has returned 0 fields. Is it correct?",query);
-		return KORE_RESULT_ERROR;
-	}
-
-    WEBUI_DEBUG ;
-
-	kore_log(LOG_DEBUG,"The query [%s] has returned [%d] row with [%u] columns.",
-			query, (int)mysql_affected_rows(db), num_fields);
-
-	column= mysql_fetch_fields(result);
-
-	/*
-	char **keys=(char **)kore_buf_alloc(num_fields*sizeof(char*));
-	for (i=0;i<num_fields;i++) {
-		keys[i]=(char*)kore_buf_alloc((strlen(column[i].name)+1)*sizeof(char));
-		sprintf(keys[i],"%s",column[i].name);
-	}*/
-
-	while ((values = mysql_fetch_row(result))!=0) {
-	   for (i=0;i<num_fields;i++){
-		   kore_log(LOG_DEBUG,"[%d][%s][%s]",i,column[i].name,values[i]);
-   	   }
-
-   	   //--- executing "callback" function pointer that add result in the attributes_set
-   	   callback((void*)attrl,(int)num_fields,values,column);
-	}
-    WEBUI_DEBUG ;
-
-//    kore_buf_free(keys);
-	  WEBUI_DEBUG ;
-
-	mysql_free_result(result);
-	WEBUI_DEBUG ;
-	return 0;
-
+  return 0;
 }
