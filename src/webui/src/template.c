@@ -17,19 +17,52 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
   char out_name[]="/tmp/out_stream_XXXXXX";
   char err_name[]="/tmp/err_stream_XXXXXX";
   FILE*out_stream,*err_stream;
+  char buf_str[1024],end;
+  unsigned long int size;
+  int some_error,rv;
 
   mkstemp(out_name);
   mkstemp(err_name);
 
   kore_log(LOG_DEBUG," out [%s] err[%s] ",out_name,err_name);
 
-  out_stream=fopen(out_name,"w");
-  err_stream=fopen(err_name,"w");
+  out_stream=fopen(out_name,"rw+");
+  err_stream=fopen(err_name,"rw+");
+
   TMPL_write(NULL,tmpl->data, 0, al, out_stream,err_stream);
 
+  size=ftell(out_stream);
+  kore_log(LOG_DEBUG," out [%s] [%d] ",__where_i_am__,ftell(out_stream));
+
+  some_error=0;
+  if (size>0) {
+    rewind(out_stream);
+    rewind(err_stream);
+
+    
+    while ((rv=fread(buf_str,1,sizeof(buf_str),err_stream))>0) {
+      buf_str[rv]=0;
+      kore_log(LOG_ERR,"%s %s",__where_i_am__,buf_str);
+      some_error=1;
+    }
+    if (!some_error) {
+	while ((rv=fread(buf_str,1,sizeof(buf_str),out_stream))>0) {
+	  buf_str[rv]=0;
+	  kore_log(LOG_DEBUG,"%s %s",__where_i_am__,buf_str);
+	  kore_buf_append(out,buf_str,rv);
+	}
+    }
+  }
+
+  end=0;
+
+  kore_buf_append(out,&end,1);
+ 
   fclose(out_stream);
   fclose(err_stream);
   
+  unlink(out_name);
+  unlink(err_name);
 }
 
 void template_free(template_t *t){
@@ -40,44 +73,68 @@ void template_free(template_t *t){
 
 WEBUI_TEST_UNIT(A001){
     attributes_set_t _attributes;
-    char *titolo;
-     char template[]="<TMPL_var name=\"title\"";
-     template_t t;
-     struct kore_buf *out;
-
-     _attributes=attrinit();
+    char *rendered;
+    char template[]="<TMPL_var name=\"title\">";
+    template_t t;
+    int size;
+    struct kore_buf *out;
+    
+    out=kore_buf_alloc(0);
+    _attributes=attrinit();
     _attributes=attrcat(_attributes, "title", "Dowse information panel");
-
+    
     template_load(template,strlen(template),&t);
 
     template_apply(&t,_attributes,out);
 
-    RETURN_ASSERT(1);
-      //    RETURN_ASSERT(strcmp(titolo,"Dowse information panel"),0);
+    rendered=(char*)kore_buf_release(out,&size);
+    
+    RETURN_ASSERT(strcmp(rendered,"Dowse information panel")==0);
 }
 
 
-/*
  WEBUI_TEST_UNIT(A002)
  {
-    attributes_set_t studente,studente2,stud,_attributes;
-	char *name;
-	_attributes=attrinit();
+    attributes_set_t studente,studente2,_attributes;
+    char template[]="<html>"
+"<table>"
+"<TMPL_LOOP name=\"studente\">"
+"<tr>"
+"<td><TMPL_VAR name=\"nome\"></td>"
+"<td><TMPL_VAR name=\"cognome\"></td>"
+"<td><TMPL_VAR name=\"indirizzo\"></td>"
+"</tr>"
+"</TMPL_LOOP>"
+"</table>"
+"</html>"
+;    
+    
+    char *rendered;
+    template_t t;
+    int size;
+    struct kore_buf *out;
+    
+    out=kore_buf_alloc(0);
+    _attributes=attrinit();
 
     studente =attrinit();
-    attrcat(studente,"nome","Antonio");
-    attrcat(studente,"cognome","Rossi");
-    attrcat(studente,"indirizzo","Casa Sua");
-    attr_add(_attributes,"studente",studente);
+    studente=attrcat(studente,"nome","Antonio");
+    studente=attrcat(studente,"cognome","Rossi");
+    studente=attrcat(studente,"indirizzo","Casa Sua");
+    _attributes=attr_add(_attributes,"studente",studente);
 
     studente2 =attrinit();
-    attrcat(studente2,"nome","Mario");
-    attrcat(studente2,"cognome","Bianchi");
-    attrcat(studente2,"indirizzo","Un altro posto");
-    attr_add(_attributes,"studente",studente2);
+    studente2=attrcat(studente2,"nome","Mario");
+    studente2=attrcat(studente2,"cognome","Bianchi");
+    studente2=attrcat(studente2,"indirizzo","Un altro posto");
+    _attributes=attr_add(_attributes,"studente",studente2);
 
-    attrget(_attributes,"studente",1,(any_t*)&stud);
-    attrget(stud,"nome",0,(any_t*)&name);
-    return (strcmp(name,"Mario")==0);
+      template_load(template,strlen(template),&t);
+    template_apply(&t,_attributes,out);
+
+    rendered=(char*)kore_buf_release(out,&size);
+
+    RETURN_ASSERT(strcmp(rendered,"<html><table><tr><td>Mario</td><td>Bianchi</td><td>Un altro posto</td></tr></table></html>")==0);
+   
 }
-*/
+
