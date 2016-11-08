@@ -1,11 +1,10 @@
 #include <kore.h>
 #include <http.h>
-#include <assets.h>
 #include <template.h>
 
 int websocket_example(struct http_request *req) {
 	template_t tmpl;
-	attributes_hm_t attributes;
+	attributes_set_t attributes;
 	struct kore_buf *buf;
 	char *address;
 
