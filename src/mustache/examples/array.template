@@ -1,4 +1,0 @@
-Members:
-{{#members}}
-- {{name}}
-{{/members}}
