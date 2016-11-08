@@ -33,4 +33,7 @@ domain * {
 	# special static assets
 	static     /example/websocket.html  websocket_example
 
+static /test/1 ___webui___test_unit__A001
+static /test/2 ___webui___test_unit__A002
+
 }
