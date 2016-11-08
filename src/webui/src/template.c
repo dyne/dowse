@@ -5,7 +5,6 @@
 #include "attributes_set.h"
 #include "test_unit.h"
 
-extern attributes_set_t attributes;
 /********/
 int template_load( u_int8_t *str, int len, template_t *tmpl){
 	tmpl->data=str;
@@ -29,7 +28,7 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
   out_stream=fopen(out_name,"rw+");
   err_stream=fopen(err_name,"rw+");
 
-  TMPL_write(NULL,tmpl->data, 0, al, out_stream,err_stream);
+  TMPL_write(NULL,tmpl->data, 0, al->varlist, out_stream,err_stream);
 
   size=ftell(out_stream);
   kore_log(LOG_DEBUG," out [%s] [%d] ",__where_i_am__,ftell(out_stream));
@@ -92,10 +91,9 @@ WEBUI_TEST_UNIT(A001){
     RETURN_ASSERT(strcmp(rendered,"Dowse information panel")==0);
 }
 
-
+ 
  WEBUI_TEST_UNIT(A002)
  {
-    attributes_set_t studente,studente2,_attributes;
     char template[]="<html>"
 "<table>"
 "<TMPL_LOOP name=\"studente\">"
@@ -108,11 +106,11 @@ WEBUI_TEST_UNIT(A001){
 "</table>"
 "</html>"
 ;    
-    
-    char *rendered;
+    attributes_set_t studente,studente2,_attributes;   
     template_t t;
     int size;
     struct kore_buf *out;
+    char *rendered;
     
     out=kore_buf_alloc(0);
     _attributes=attrinit();
@@ -129,12 +127,13 @@ WEBUI_TEST_UNIT(A001){
     studente2=attrcat(studente2,"indirizzo","Un altro posto");
     _attributes=attr_add(_attributes,"studente",studente2);
 
-      template_load(template,strlen(template),&t);
+    template_load(template,strlen(template),&t);
+
     template_apply(&t,_attributes,out);
 
     rendered=(char*)kore_buf_release(out,&size);
 
-    RETURN_ASSERT(strcmp(rendered,"<html><table><tr><td>Mario</td><td>Bianchi</td><td>Un altro posto</td></tr></table></html>")==0);
+    RETURN_ASSERT(strcmp(rendered,"<html><table><tr><td>Antonio</td><td>Rossi</td><td>Casa Sua</td></tr><tr><td>Mario</td><td>Bianchi</td><td>Un altro posto</td></tr></table></html>")==0);
    
 }
 
