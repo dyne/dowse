@@ -9,7 +9,7 @@
 #include <string.h>
 
 #include <kore.h>
-#include <assets.h>
+/*#include <assets.h>*/
 
 #include "hashmap.h"
 

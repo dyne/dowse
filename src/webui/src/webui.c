@@ -23,7 +23,6 @@
 
 #include <kore.h>
 #include <http.h>
-#include <assets.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +33,6 @@
 
 #include <mysql.h>
 
-#include "thingsdb.h"
 #include "hashmap.h"
 
 #include <parse-datetime.h>
@@ -62,7 +60,7 @@ int sqlquery(char *query,
 		int (*callback)(void *data, int , MYSQL_ROW , MYSQL_FIELD *),
              //int (*callback)(void*,int,char**,char**),
 //		callback_type callback,
-		attributes_hm_t attrl);
+		attributes_set_t attrl);
 
 int relative_time(char *utc, char *out) {
     time_t nowutc;
@@ -119,7 +117,7 @@ int thing_show_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
 #define SIZE (256)
     int i;
 
-    attributes_hm_t t;
+    attributes_set_t t;
     t=attrinit();
 
     for(i=0; i<argc; i++){ // save all fields into the template
@@ -172,32 +170,32 @@ int things_list_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
         hashmap_put(thing , azColName[i].name,
                     (argv[i] ? argv[i] : "NULL"));
     }
-    attrcat((attributes_hm_t)data,"list_of_things","<tr>");
+    attrcat((attributes_set_t)data,"list_of_things","<tr>");
 
     snprintf(line,ml,
 "<td><a href=\"/things?macaddr=%s\">"
 "%s</td><td>%s</td></a>",
              thing_get("macaddr"),
              thing_get("hostname"), thing_get("os"));
-    attrcat((attributes_hm_t)data,"list_of_things",line);
+    attrcat((attributes_set_t)data,"list_of_things",line);
 
     // get last datestamp
     laststr = thing_get("last");
     if(laststr) relative_time(laststr,humandate);
     snprintf(line, ml, "<td>%s</td><td>", humandate);
-    attrcat((attributes_hm_t)data,"list_of_things",line);
+    attrcat((attributes_set_t)data,"list_of_things",line);
 
     // action buttons
-    attrcat((attributes_hm_t)data,"list_of_things",button_group_start);
+    attrcat((attributes_set_t)data,"list_of_things",button_group_start);
 
     // info button
-    attrcat((attributes_hm_t)data,"list_of_things",button_start);
+    attrcat((attributes_set_t)data,"list_of_things",button_start);
     snprintf(line,ml,
              "<a href=\"/things?macaddr=%s\">info</a></div>",
              thing_get("macaddr"));
-    attrcat((attributes_hm_t)data,"list_of_things",line);
+    attrcat((attributes_set_t)data,"list_of_things",line);
 
-    attrcat((attributes_hm_t)data,"list_of_things","</div></td></tr>");
+    attrcat((attributes_set_t)data,"list_of_things","</div></td></tr>");
 
     // snprintf(line,ml,"<td>%s</td><td>%s</td>\n",
     //          thing_get("macaddr"), thing_get("ip4"));
@@ -210,7 +208,7 @@ int things_list_cb(void *data, int argc, MYSQL_ROW argv, MYSQL_FIELD *azColName)
 char *macaddr;
 template_t tmpl;
 
-attributes_hm_t attributes;
+attributes_set_t attributes;
 
 
 int thing_show(struct http_request *req) {
@@ -257,8 +255,7 @@ int thing_show(struct http_request *req) {
 
     // SQL query
     sqlquery(line, thing_show_cb, attributes);
-    WEBUI_DEBUG;
-    debug_attributes(attributes);
+
 
     template_apply(&tmpl,attributes,buf);
     WEBUI_DEBUG;
@@ -288,7 +285,7 @@ int thing_show(struct http_request *req) {
 int things_list(struct http_request *req) {
     char *query = "SELECT * FROM found ORDER BY last DESC";
     template_t tmpl;
-	attributes_hm_t attributes;
+	attributes_set_t attributes;
 
     struct timespec when;
     WEBUI_DEBUG
@@ -356,7 +353,7 @@ int sqlquery(char *query,
 		//             int (*callback)(void*,int,MYSQL_ROW,MYSQL_FIELD *),
 //		callback_type callback,
 //             int (*callback)(void*,int,char**,char**),
-             attributes_hm_t attrl) {
+             attributes_set_t attrl) {
 	MYSQL_RES *result;
 	MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
 	MYSQL_FIELD*column;
@@ -423,7 +420,7 @@ int sqlquery(char *query,
 		   kore_log(LOG_DEBUG,"[%d][%s][%s]",i,column[i].name,values[i]);
    	   }
 
-   	   //--- executing "callback" function pointer that add result in the attributes_hm
+   	   //--- executing "callback" function pointer that add result in the attributes_set
    	   callback((void*)attrl,(int)num_fields,values,column);
 	}
     WEBUI_DEBUG ;
