@@ -20,12 +20,17 @@
 
         <table class="table">
         <thead>
-        <td>Hostname</td><td>last seen</td><td>first seen</td><td>notes</td><td>os</td><td>ip4</td><td>macaddr</td><td>ip6</td><td>iface</td><td>state</td>
+        <td>Hostname</td><td>Last seen</td><td>First seen</td><td>Notes</td><td>os</td><td>Ip4</td><td>macaddr</td><td>Ip6</td><td>iface</td>
+<td>State</td>
+<td>Vendor</td>
         </thead>
         <tbody>
         </tbody>
 	<!--TMPL_LOOP name="things"-->
-	<tr><td><!--TMPL_VAR name="hostname"--></td><td><!--TMPL_VAR name="last"--></td><td><!--TMPL_VAR name="age"--></td><td><!--TMPL_VAR name="notes"--></td><td><!--TMPL_VAR name="os"--></td><td><!--TMPL_VAR name="ipv4"--></td><td><!--TMPL_VAR name="macaddr"--></td><td><!--TMPL_VAR name="ipv6"--></td><td><!--TMPL_VAR name="iface"--></td><td><!--TMPL_VAR name="state"--></td></tr>
+	<tr><td><!--TMPL_VAR name="hostname"--></td><td><!--TMPL_VAR name="last"--></td><td><!--TMPL_VAR name="age"--></td><td><!--TMPL_VAR name="notes"--></td><td><!--TMPL_VAR name="os"--></td><td><!--TMPL_VAR name="ip4"--></td><td><!--TMPL_VAR name="macaddr"--></td><td><!--TMPL_VAR name="ip6"--></td><td><!--TMPL_VAR name="iface"--></td>
+<td><!--TMPL_VAR name="state"--></td>
+<td><!--TMPL_VAR name="vendor"--></td>
+</tr>
 <!--/TMPL_LOOP--> 
 
         </table>
