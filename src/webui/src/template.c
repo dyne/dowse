@@ -9,6 +9,8 @@
 int template_load( u_int8_t *str, int len, template_t *tmpl){
 	tmpl->data=str;
 	tmpl->len=len;
+	tmpl->fmtlist = TMPL_add_fmt(0, ENTITY, TMPL_encode_entity);
+
 	return 0;
 }
 
@@ -28,7 +30,8 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
   out_stream=fopen(out_name,"rw+");
   err_stream=fopen(err_name,"rw+");
 
-  TMPL_write(NULL,tmpl->data, 0, al->varlist, out_stream,err_stream);
+  WEBUI_DEBUG;
+  TMPL_write(NULL,tmpl->data, tmpl->fmtlist, al->varlist, out_stream,err_stream);
 
   size=ftell(out_stream);
   kore_log(LOG_DEBUG," out [%s] [%d] ",__where_i_am__,ftell(out_stream));
@@ -52,7 +55,7 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
 	}
     }
   }
-
+  WEBUI_DEBUG;
   end=0;
 
   kore_buf_append(out,&end,1);
@@ -137,3 +140,51 @@ WEBUI_TEST_UNIT(A001){
    
 }
 
+
+
+ WEBUI_TEST_UNIT(A003)
+ {
+    char template[]="<html>"
+"<table>"
+"<TMPL_LOOP name=\"studente\">"
+"<tr>"
+"<td><TMPL_VAR name=\"nome\" fmt=\"" ENTITY "\"></td>"
+"<td><TMPL_VAR name=\"cognome\" fmt=\"" ENTITY "\"></td>"
+"<td><TMPL_VAR name=\"indirizzo\" fmt=\"" ENTITY "\"></td>"
+"</tr>"
+"</TMPL_LOOP>"
+"</table>"
+"</html>"
+;
+    attributes_set_t studente,studente2,_attributes;
+    template_t t;
+    int size;
+    struct kore_buf *out;
+    char *rendered;
+
+    out=kore_buf_alloc(0);
+    _attributes=attrinit();
+
+    studente =attrinit();
+    studente=attrcat(studente,"nome","Antonio");
+    studente=attrcat(studente,"cognome","Rossi");
+    studente=attrcat(studente,"indirizzo","Casa Sua");
+    _attributes=attr_add(_attributes,"studente",studente);
+
+    studente2 =attrinit();
+    studente2=attrcat(studente2,"nome","<<Mario>>");
+    studente2=attrcat(studente2,"cognome","Bianchi>>");
+    studente2=attrcat(studente2,"indirizzo","Un altro posto");
+    _attributes=attr_add(_attributes,"studente",studente2);
+
+    template_load(template,strlen(template),&t);
+
+    template_apply(&t,_attributes,out);
+
+    rendered=(char*)kore_buf_release(out,&size);
+
+    http_response(__webui_req,200,rendered,size);
+    return 1;
+    RETURN_ASSERT(1);
+
+}
