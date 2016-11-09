@@ -7,11 +7,14 @@
 #include "assetmap.h"
 #include "ctemplate.h"
 
+#define ENTITY "entity"
 
 typedef struct template_t {
 	u_int8_t *data;
 	int len;
-}template_t;
+	TMPL_fmtlist *fmtlist; /* It's present here, the format function pointer list, because the
+	HTML template might be reused with different value of "attributes" */
+} template_t;
 
 int template_load( u_int8_t *str, int len, template_t *tmpl);
 
