@@ -216,14 +216,14 @@ waitpid() {
 
     local lastnewline=0
     for c in {1..$_timeout}; do
-        # here check if pid its running
-        if ps -p $_pid > /dev/null; then
+        # here check if pid its running	   
+        if [[ -r /proc/$_pid/stat ]]; then
             print -n . ; lastnewline=1
             sleep 1
         else
             break
         fi
-        # todo: timeout with kill -9
+        # TODO: timeout with kill -9
     done
     # this because we care to look good on the console
     [[ $lastnewline = 1 ]] && print
@@ -245,12 +245,12 @@ lock() {
 	ckreq || return $?
 
 	rand="$RANDOM$RANDOM"
-	print "SET lock_$_lid $rand NX PX ${timeout}000" | redis runtime {
-			print "$rand"
-			func "succesful lock: $* (key $rand)"
-			return 0
-		}
-	func "failed lock: $*"
+	print "SET lock_${_lid} $rand NX PX ${timeout}000" | redis runtime && {
+		print "$rand"
+		func "succesful lock: $* (key $rand)"
+		return 0
+	}
+	warning "failed lock: $*"
 	print "0"
 	return 1
 }
@@ -272,7 +272,7 @@ unlock() {
 		func "succesful unlock: $* (key $res)"
 		return 0
 	}
-	func "failed unlock: $* (key $res)"
+	func "failed unlock: $* != $res"
 	return 1
 }
 
