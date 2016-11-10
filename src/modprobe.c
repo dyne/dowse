@@ -871,7 +871,7 @@ static int do_modprobe(int argc, char **orig_argv)
             root = "";
         if (kversion == NULL) {
             if (uname(&u) < 0) {
-                ERR("uname() failed: %m\n");
+                ERR("uname() failed\n");
                 err = -1;
                 goto done;
             }
