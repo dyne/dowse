@@ -9,8 +9,8 @@
 int template_load( u_int8_t *str, int len, template_t *tmpl){
 	tmpl->data=str;
 	tmpl->len=len;
-	tmpl->fmtlist = TMPL_add_fmt(0, ENTITY, TMPL_encode_entity);
-
+	tmpl->fmtlist = TMPL_add_fmt(0, ENTITY_ESCAPE, TMPL_encode_entity);
+	tmpl->fmtlist = TMPL_add_fmt(tmpl->fmtlist,URL_ESCAPE,TMPL_encode_url);
 	return 0;
 }
 
@@ -25,7 +25,7 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
   mkstemp(out_name);
   mkstemp(err_name);
 
-  kore_log(LOG_DEBUG," out [%s] err[%s] ",out_name,err_name);
+  kore_log(LOG_DEBUG,"[%s] Template applying out file was [%s] err file was [%s] ",__where_i_am__,out_name,err_name);
 
   out_stream=fopen(out_name,"rw+");
   err_stream=fopen(err_name,"rw+");
@@ -76,9 +76,9 @@ void template_free(template_t *t){
 WEBUI_TEST_UNIT(A001){
     attributes_set_t _attributes;
     char *rendered;
-    char template[]="<TMPL_var name=\"title\">";
+    u_int8_t template[]="<TMPL_var name=\"title\">";
     template_t t;
-    int size;
+    size_t size;
     struct kore_buf *out;
     
     out=kore_buf_alloc(0);
@@ -148,9 +148,9 @@ WEBUI_TEST_UNIT(A001){
 "<table>"
 "<TMPL_LOOP name=\"studente\">"
 "<tr>"
-"<td><TMPL_VAR name=\"nome\" fmt=\"" ENTITY "\"></td>"
-"<td><TMPL_VAR name=\"cognome\" fmt=\"" ENTITY "\"></td>"
-"<td><TMPL_VAR name=\"indirizzo\" fmt=\"" ENTITY "\"></td>"
+"<td><TMPL_VAR name=\"nome\" fmt=\"" ENTITY_ESCAPE "\"></td>"
+"<td><TMPL_VAR name=\"cognome\" fmt=\"" ENTITY_ESCAPE "\"></td>"
+"<td><TMPL_VAR name=\"indirizzo\" fmt=\"" ENTITY_ESCAPE "\"></td>"
 "</tr>"
 "</TMPL_LOOP>"
 "</table>"
