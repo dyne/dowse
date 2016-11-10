@@ -23,6 +23,15 @@ LDFLAGS="-fPIC -fPIE -pie"
 notice "Compiling $1"
 
 case $1 in
+	log)
+		[[ -r $R/src/log/liblog.a ]] && return 0
+		pushd $R/src/log
+		CFLAGS="$CFLAGS" \
+			  LDFLAGS="$LDFLAGS" \
+			  make
+		popd
+		;;
+
 	libwebsockets)
 		[[ -r $R/src/libwebsockets/lib/libwebsockets.a ]] && return 0
 		pushd $R/src/libwebsockets
@@ -174,6 +183,6 @@ EOF
         ;;
 
     *)
-        act "usage; ./src/compile.sh [ clean ]"
+        act "usage: ./src/compile.sh [ clean ]"
         ;;
 esac
