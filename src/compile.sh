@@ -108,7 +108,7 @@ EOF
         cat conf/webui.conf.dist >> conf/webui.conf
 
 		act "map all the assets"
-		./map_assets > src/assetmap.h
+		./map_assets > src/assetmap.c
 
 		act "launch the actual build"
         $R/src/kore/kore build
