@@ -319,13 +319,18 @@ char *thing_get(char *key) {
 
 
 
-inline void show_error(MYSQL *mysql) {
- char log_message[2048];
- snprintf(log_message, sizeof(log_message),
+inline void show_error(MYSQL *mysql,attributes_set_t *ptr_attrl) {
+#define __SIZE (2048)
+ char *log_message=kore_malloc(__SIZE);
+
+ snprintf(log_message, __SIZE,
                        "Error(%d) [%s] \"%s\"", mysql_errno(mysql),
                                                 mysql_sqlstate(mysql),
                                                 mysql_error(mysql));
-  kore_log(LOG_ERR, "%s: [%s]\n", log_message, thingsdb);
+ kore_log(LOG_ERR, "%s: [%s]\n", log_message, thingsdb);
+ *ptr_attrl=attrcat(*ptr_attrl,TMPL_VAR_SOME_ERROR_HAPPENED,"true");
+ *ptr_attrl=attrcat(*ptr_attrl,TMPL_VAR_ERROR_MESSAGE,log_message);
+
   mysql_close(mysql);
 }
 
@@ -346,14 +351,14 @@ int sqlquery(char *query,
 	     __FILE__,__func__,__LINE__);
     return KORE_RESULT_ERROR;
   }
-  WEBUI_DEBUG; ;
+  WEBUI_DEBUG;
   // open db connection
   if(!db) {
     db=mysql_init(NULL);
     if (!mysql_real_connect(db, "localhost", "root","p4ssw0rd",
 			    thingsdb, 0, "/home/nop/.dowse/run/mysql/mysqld.sock", 0))
       {
-	show_error(db);
+	show_error(db,ptr_attrl);
 	return(KORE_RESULT_ERROR);
       }
   }
@@ -361,7 +366,7 @@ int sqlquery(char *query,
   WEBUI_DEBUG; ;  
   // Execute the statement
   if (mysql_real_query(db, query, strlen(query))) {
-    show_error(db);
+    show_error(db,ptr_attrl);
     return KORE_RESULT_ERROR;
   }
   
