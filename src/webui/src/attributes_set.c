@@ -1,6 +1,7 @@
 #include <kore.h>
-#include <hashmap.h>
 #include <attributes_set.h>
+
+#include "hashmap.h"
 #include "webui_debug.h"
 
 
