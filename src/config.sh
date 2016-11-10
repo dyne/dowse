@@ -72,7 +72,10 @@ execrules=(
 	mosquitto    user
 	mysqld       user
 	mysql        user
-
+	# to be reviewed if suid needed
+	start-stop-daemon user
+	supervise-daemon  user
+	
 # springs
 	dowse-to-mqtt user
 
@@ -115,6 +118,9 @@ execmap=(
 
 	dowse-to-mqtt $PREFIX/bin/dowse-to-mqtt
 	dowse-to-osc  $PREFIX/bin/dowse-to-osc
+
+	supervise-daemon  $PREFIX/bin/supervise-daemon
+	start-stop-daemon $PREFIX/bin/start-stop-daemon
 
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi

@@ -19,6 +19,8 @@ all: base springs
 base: config modprobe sup
 	@make -C libparse-datetime
 	@./compile.sh log
+	@./compile.sh start-stop-daemon
+	@./compile.sh supervise-daemon
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
 	@./compile.sh pgld

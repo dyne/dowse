@@ -23,6 +23,24 @@ LDFLAGS="-fPIC -fPIE -pie"
 notice "Compiling $1"
 
 case $1 in
+	start-stop-daemon)
+		pushd $R/src/openrc
+		CFLAGS="-Wall -fPIC -fPIE -Os" \
+			  LDFLAGS="-fPIC -fPIE -pie" \
+			  make start-stop-daemon
+		install -s -p start-stop-daemon    $R/build/bin
+		popd
+		;;
+
+	supervise-daemon)
+		pushd $R/src/openrc
+		CFLAGS="-Wall -fPIC -fPIE -Os" \
+			  LDFLAGS="-fPIC -fPIE -pie" \
+			  make supervise-daemon
+		install -s -p supervise-daemon    $R/build/bin
+		popd
+		;;
+
 	log)
 		[[ -r $R/src/log/liblog.a ]] && return 0
 		pushd $R/src/log

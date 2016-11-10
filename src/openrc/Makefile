@@ -7,10 +7,10 @@ libs:
 	make -C librc
 	make -C libeinfo
 
-start-stop-daemon: start-stop-daemon.o _usage.o rc-misc.o
+start-stop-daemon: libs start-stop-daemon.o _usage.o rc-misc.o
 	$(CC) $(CFLAGS) -o start-stop-daemon start-stop-daemon.o _usage.o rc-misc.o librc/librc.a libeinfo/libeinfo.a
 
-supervise-daemon: supervise-daemon.o _usage.o rc-misc.o
+supervise-daemon: libs supervise-daemon.o _usage.o rc-misc.o
 	$(CC) $(CFLAGS) -o supervise-daemon supervise-daemon.o _usage.o rc-misc.o librc/librc.a libeinfo/libeinfo.a
 
 .c.o:
