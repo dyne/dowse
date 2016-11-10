@@ -64,6 +64,10 @@ DEBUG=${DEBUG:-0}
 QUIET=${QUIET:-0}
 LOG=${LOG:-""}
 
+# pendulum
+vars+=(now sqlquery)
+maps+=(obj pidmap)
+
 # index of fields in the things database
 vars+=(thingidx)
 

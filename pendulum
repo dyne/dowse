@@ -25,8 +25,6 @@
 # information on network objects, updating it in redis
 
 
-vars+=(now sqlquery)
-maps+=(obj pidmap)
 source /usr/local/dowse/zshrc
 
 [[ -r $H/run/redis-server.pid ]] || {
@@ -254,14 +252,19 @@ watchdog_daemons() {
 
 		pid=`cat $d`
 		[[ "$pid" = "" ]] && {
-			err="$d found running but no pid (crash?)"
+			err="$d pidfile found empty"
 			error $err
 			print $err >> $H/log/watchdog.log
 			continue
 		}
 		act "$pid \t $daemon"
 		if [[ $pidmap[$pid] = 1 ]]; then
-			act "found running: $daemon"
+
+			[[ $DEBUG = 1 ]] && {
+				func "found running: $daemon"
+				func "`cat /proc/$pid/cmdline`"
+			}
+
 		else
 			err="$daemon not found running (crash?)"
 			error $err
