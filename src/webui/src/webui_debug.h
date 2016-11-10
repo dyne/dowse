@@ -1,8 +1,8 @@
 #include <kore.h>
+#include <http.h>
 
-#ifndef __WHERE_I_AM_
-#define __WHERE_I_AM_
-static char __buf_where_i_am__[256];
+#ifndef __where_i_am__
+static uint8_t __buf_where_i_am__[256];
 
 #define __where_i_am__\
 	(\
