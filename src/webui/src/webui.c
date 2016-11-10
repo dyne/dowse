@@ -210,8 +210,9 @@ int thing_show(struct http_request *req) {
  
   WEBUI_DEBUG;
   http_populate_get(req);
-  
+
   // we shouldn't free the result in macaddr
+
   if (http_argument_get_string(req, "macaddr", &macaddr)) {
     kore_log(LOG_DEBUG, "thing_show macaddr %s",macaddr);
     //--- prepare where condition
@@ -318,7 +319,6 @@ char *thing_get(char *key) {
 }
 
 
-
 inline void show_error(MYSQL *mysql,attributes_set_t *ptr_attrl) {
 #define __SIZE (2048)
  char *log_message=kore_malloc(__SIZE);
@@ -328,8 +328,9 @@ inline void show_error(MYSQL *mysql,attributes_set_t *ptr_attrl) {
                                                 mysql_sqlstate(mysql),
                                                 mysql_error(mysql));
  kore_log(LOG_ERR, "%s: [%s]\n", log_message, thingsdb);
- *ptr_attrl=attrcat(*ptr_attrl,TMPL_VAR_SOME_ERROR_HAPPENED,"true");
- *ptr_attrl=attrcat(*ptr_attrl,TMPL_VAR_ERROR_MESSAGE,log_message);
+
+ webui_add_error_message(ptr_attrl,log_message);
+ webui_add_warning_message(ptr_attrl,log_message);
 
   mysql_close(mysql);
 }
@@ -354,16 +355,20 @@ int sqlquery(char *query,
   WEBUI_DEBUG;
   // open db connection
   if(!db) {
-    db=mysql_init(NULL);
-    if (!mysql_real_connect(db, "localhost", "root","p4ssw0rd",
-			    thingsdb, 0, "/home/nop/.dowse/run/mysql/mysqld.sock", 0))
-      {
-	show_error(db,ptr_attrl);
-	return(KORE_RESULT_ERROR);
+      db=mysql_init(NULL);
+      if (db==NULL) {
+
+      }
+      if (!mysql_real_connect(db, "localhost", "root","p4ssw0rd",
+                  thingsdb, 0, "/home/nop/.dowse/run/mysql/mysqld.sock", 0))  {
+          show_error(db,ptr_attrl);
+          db=NULL;
+          return(KORE_RESULT_ERROR);
       }
   }
   
-  WEBUI_DEBUG; ;  
+
+  WEBUI_DEBUG;
   // Execute the statement
   if (mysql_real_query(db, query, strlen(query))) {
     show_error(db,ptr_attrl);

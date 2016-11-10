@@ -1,63 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-
     <title><!--TMPL_VAR name="title"--></title>
-
     <link rel="stylesheet" href="/?o=bootstrap.min.css">
   </head>
   <body>
 
     <div class="container">
 
-      <div class="panel panel-default">
-        <!-- Default panel contents 
-        <div class="panel-heading"><!--TMPL_VAR name="title"--></div>
-	-->
+	<!--TMPL_IF name="message_loop"-->	
         <div class="panel-body">
-          <p>Show all info gathered </p>
-        </div>
-
-	<!--TMPL_IF name="some_error"-->
-	<div class="panel panel-error">
-	  <div class="panel-heading">
-	    Something was gone wrong.
-	  </div>
-	  <div class="panel-body">
-	    <p><!--TMPL_VAR name="error_message"--></p>
+	  <div class="panel panel-error">
+	    <div class="panel-heading">
+	      something was gone wrong.
+	    </div>
+	    <div class="panel-body">
+		<!--TMPL_LOOP name="message_loop"-->
+		<div class="alert alert-<!--TMPL_VAR name="level"-->">
+		  <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong><p><!--TMPL_VAR name="text"--></p>
+		</div>
+		  <!--/TMPL_LOOP-->
+	    </div>
 	  </div>
 	</div>
 	<!--TMPL_ELSE -->
-	<table class="table">
-        <thead>
-        <td>Hostname</td><td>Last seen</td><td>First seen</td><td>Notes</td><td>os</td><td>Ip4</td><td>macaddr</td><td>Ip6</td><td>iface</td>
-<td>State</td>
-<td>Vendor</td>
-        </thead>
-        <tbody>
-        </tbody>
-	<!--TMPL_LOOP name="things"-->
-	<tr><td><!--TMPL_VAR name="hostname"--></td><td><!--TMPL_VAR name="last"--></td><td><!--TMPL_VAR name="age"--></td><td><!--TMPL_VAR name="notes"--></td><td><!--TMPL_VAR name="os"--></td><td><!--TMPL_VAR name="ip4"--></td><td><!--TMPL_VAR name="macaddr"--></td><td><!--TMPL_VAR name="ip6"--></td><td><!--TMPL_VAR name="iface"--></td>
-<td><!--TMPL_VAR name="state"--></td>
-<td><!--TMPL_VAR name="vendor"--></td>
-</tr>
-<!--/TMPL_LOOP--> 
-
-        </table>
-<!--/TMPL_IF-->
-        
-
+      <div class="panel panel-default">
+        <div class="panel-heading"> <!--TMPL_VAR name="title"--></div>
+        <div class="panel-body">
+          <p>Show all info gathered </p>
+	  <table class="table table-striped" >
+            <thead>
+              <td>Hostname</td><td>Last seen</td><td>First seen</td><td>Notes</td><td>os</td><td>Ip4</td>
+	      <td>macaddr</td><td>Ip6</td><td>iface</td>
+	      <td>State</td>
+	      <td>Vendor</td>
+            </thead>
+            <tbody>
+            </tbody>
+	    <!--TMPL_LOOP name="things"-->
+	    <tr><td><!--TMPL_VAR name="hostname"--></td><td><!--TMPL_VAR name="last"--></td><td><!--TMPL_VAR name="age"--></td><td><!--TMPL_VAR name="notes"--></td><td><!--TMPL_VAR name="os"--></td><td><!--TMPL_VAR name="ip4"--></td><td><!--TMPL_VAR name="macaddr"--></td><td><!--TMPL_VAR name="ip6"--></td><td><!--TMPL_VAR name="iface"--></td>
+	      <td><!--TMPL_VAR name="state"--></td>
+	      <td><!--TMPL_VAR name="vendor"--></td>
+	    </tr>
+	    <!--/TMPL_LOOP--> 
+	    
+          </table>
+	</div>
       </div>
-
-    </div>
+      </div>
+    <!--/TMPL_IF-->	  
   </body>
 </html>
-<!--  -->
-<!--  -->
-<!--  -->
-<!--  -->
-<!---->
-<!--   -->
-<!-- -->
-<!--  -->
  

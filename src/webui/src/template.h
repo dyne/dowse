@@ -7,8 +7,6 @@
 #include "assetmap.h"
 #include "ctemplate.h"
 
-#define TMPL_VAR_SOME_ERROR_HAPPENED "some_error"
-#define TMPL_VAR_ERROR_MESSAGE "error_message"
 
 #define ENTITY_ESCAPE "entity"
 #define URL_ESCAPE "url"
