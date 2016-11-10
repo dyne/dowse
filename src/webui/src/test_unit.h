@@ -14,7 +14,6 @@
 
 #define __OK_MESSAGE "<h1>Ok</h1>"
 #define __KO_MESSAGE(NAME) "<h1><strong>Sorry it doesn't work test [" #NAME "]<strong></h1>"
-//" #NAME "
 
 #define RETURN_ASSERT(test) {\
 	if (test) {\
