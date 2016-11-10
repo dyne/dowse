@@ -1,0 +1,16 @@
+CFLAGS ?= -ggdb -Wall -DDEBUG=1 -fPIE -fPIC -pie
+CC = gcc
+AR = ar
+OBJS = log.o redis.o hashmap.o
+
+all: libdowse.a
+
+libdowse.a: ${OBJS}
+	${AR} rcs libdowse.a ${OBJS}
+
+.c.o:
+	$(CC) $(CFLAGS) -I. -I.. -c $< -o $@
+
+clean:
+	rm -f *.o
+	rm -f libdowse.a
