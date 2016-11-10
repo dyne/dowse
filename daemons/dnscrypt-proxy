@@ -76,7 +76,7 @@ dnscrypt-proxy-exec() {
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
 						-l $H/log/dnscrypt.log \
-						-L $R/share/dnscrypt-resolvers-grepped.csv \
+						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
 						-m 7 -u $dowse_uid
@@ -91,7 +91,7 @@ dnscrypt-proxy-exec() {
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
 						-p $pid -l $H/log/dnscrypt.log \
-						-L $R/share/dnscrypt-resolvers-grepped.csv \
+						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
 						-d -m 4 -u $dowse_uid
@@ -116,9 +116,11 @@ dnscrypt-roundrobin() {
 	local _rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers-grepped.csv)"
 
 	# check if alive
-	eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers-grepped.csv -R ${_rndresolv[(ws:,:)1]} -t 720 -m 1"
+	eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R ${_rndresolv[(ws:,:)1]} -t 720 -m 1"
 
 	[[ $? = 0 ]] || dnscrypt-roundrobin
 
 	dnscrypt_name="${_rndresolv[(ws:,:)1]}"
+
+	rm -f $R/share/dnscrypt-resolvers-grepped.csv
 }
