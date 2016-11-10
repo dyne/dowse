@@ -21,13 +21,9 @@ int serve_asset(struct http_request *req) {
 	char *asset_name;
 	asset_t *rasset;
 
-	// void **back;
-	// int backlen;
 	
 	func("CALL: serve_asset");
-	// write(2 , "CALL: serve_asset\n", 18);
-	// backtrace(back, backlen);
-	// backtrace_symbols_fd(back, backlen, 0);
+
 
 	http_populate_get(req);
 
