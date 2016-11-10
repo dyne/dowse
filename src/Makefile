@@ -2,8 +2,8 @@ DESTDIR ?=
 PREFIX ?= /usr/local/dowse
 
 CC = gcc
-CFLAGS = -Wall -fPIC -Os -Ilog
-LIBS = -ljemalloc -lhiredis
+CFLAGS = -Wall -fPIE -fPIC -pie -Os -Ilibdowse
+LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a
 
 all: base springs
 	@./import.sh redis-server
@@ -17,9 +17,8 @@ all: base springs
 	@./checksum.sh
 	@./compile.sh sup
 
-base: config modprobe sup hiredis-lock
+base: config libdowse modprobe sup hiredis-lock
 	@make -C libparse-datetime
-	@./compile.sh log
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
 	@./compile.sh pgld
@@ -40,20 +39,23 @@ config:
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
+libdowse:
+	make -C libdowse
+
 hiredis-lock: hiredis-lock.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lhiredis log/liblog.a
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 modprobe: modprobe.o kmod_log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
 
 dowse-to-gource: dowse-to-gource.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lhiredis
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 dowse-to-osc: dowse-to-osc.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lhiredis -llo
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
 dowse-to-mqtt: dowse-to-mqtt.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lhiredis mosquitto/lib/libmosquitto.a -lpthread
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) mosquitto/lib/libmosquitto.a -lpthread
 
 install:
 	install -d ${DESTDIR}${PREFIX}

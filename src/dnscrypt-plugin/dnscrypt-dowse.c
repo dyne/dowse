@@ -40,11 +40,13 @@
 #include <hiredis/hiredis.h>
 #include <jemalloc/jemalloc.h>
 
-#include <redis.h>
-#include <database.h>
 #include <epoch.h>
 
-#include "dowse.h"
+#include "dnscrypt-dowse.h"
+#include "database.h"
+#include "redis.h"
+#include "log.h"
+
 
 DCPLUGIN_MAIN(__FILE__);
 
