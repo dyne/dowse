@@ -21,11 +21,15 @@
 // You should have received a copy of the GNU General Public License
 // along with pgl.  If not, see <http://www.gnu.org/licenses/>.
 
+#define PACKAGE_NAME "dowse-pgld"
+#define VERSION "1.0"
+#define PIDFILE "pgld.pid"
+#define CHANNEL "pgl-info-channel"
 
-#include "../../../database.h"
-#include "../../../redis.h"
+#include "database.h"
+#include "dowse.h"
 
-#include "pgld.h"
+#include <pgld.h>
 
 static unsigned int accept_mark = 0, reject_mark = 0, use_syslog = 0, queue_length = 0, opt_merge = 0, blockfile_count = 0;
 static unsigned short queue_num = 0;
@@ -37,18 +41,8 @@ static FILE* pidfile = NULL;
 struct nfq_handle *nfqueue_h = 0;
 struct nfq_q_handle *nfqueue_qh = 0;
 
-redisContext *redis = NULL;
-redisReply *reply = NULL;
-
-void publish(const char *format, ...) {
-	char message[512];
-	va_list ap;
-	va_start(ap, format);
-	vsnprintf(message, 512, format, ap);
-	reply = redisCommand(redis, "PUBLISH pgl-info-channel %s", message);
-	freeReplyObject(reply);
-	va_end(ap);
-}
+static redisContext *redis = NULL;
+static redisReply *reply = NULL;
 
 // General logging function
 void do_log(int priority, const char *format, ...) {
@@ -97,13 +91,13 @@ static FILE *create_pidfile(const char *name) {
 
     f = fopen(name, "w");
     if (f == NULL) {
-        do_log(LOG_ERR, "Unable to create PID file %s: %s\n", name, strerror(errno));
+        err("Unable to create PID file %s: %s\n", name, strerror(errno));
         return NULL;
     }
 
     /* this works even if pidfile is stale after daemon is sigkilled */
     if (lockf(fileno(f), F_TLOCK, 0) == -1) {
-        do_log(LOG_ERR, "Unable to set exclusive lock for pidfile %s: %s\n", name, strerror(errno));
+        err("Unable to set exclusive lock for pidfile %s: %s\n", name, strerror(errno));
         return NULL;
     }
 
@@ -138,7 +132,7 @@ static void daemonize() {
     close(fileno(stdout));
     close(fileno(stderr));
 
-    do_log(LOG_INFO, "INFO: Started.");
+    act("INFO: Started.");
 }
 
 static int load_all_lists() {
@@ -148,7 +142,7 @@ static int load_all_lists() {
     if (blockfile_count) {
         for (i = 0; i < blockfile_count; i++) {
             if (load_list(blocklist_filenames[i], blocklist_charsets[i])) {
-                do_log(LOG_ERR, "ERROR: Error loading %s", blocklist_filenames[i]);
+                err("ERROR: Error loading %s", blocklist_filenames[i]);
                 ret = -1;
             }
         }
@@ -158,17 +152,17 @@ static int load_all_lists() {
     }
     blocklist_sort();
     blocklist_merge();
-    do_log(LOG_INFO, "INFO: Blocking %u IP ranges (%u IPs).", blocklist.count, blocklist.numips);
+    act("INFO: Blocking %u IP ranges (%u IPs).", blocklist.count, blocklist.numips);
     return ret;
 }
 
 static void nfqueue_unbind() {
     if (!nfqueue_h)
         return;
-    do_log(LOG_INFO, "INFO: Unbinding from nfqueue: %hu", queue_num);
+    act("INFO: Unbinding from nfqueue: %hu", queue_num);
     nfq_destroy_queue(nfqueue_qh);
     if (nfq_unbind_pf(nfqueue_h, AF_INET) < 0) {
-        do_log(LOG_ERR, "ERROR: Error during nfq_unbind_pf(): %s", strerror(errno));
+        err("ERROR: Error during nfq_unbind_pf(): %s", strerror(errno));
     }
     nfq_close(nfqueue_h);
 }
@@ -185,21 +179,21 @@ static void sighandler(int sig, siginfo_t *info, void *context) {
         break;
     case SIGHUP:
         if (logfile_name != NULL) {
-            do_log(LOG_INFO, "INFO: Closing logfile: %s", logfile_name);
+            act("INFO: Closing logfile: %s", logfile_name);
             fclose(logfile);
             logfile=NULL;
             if ((logfile=fopen(logfile_name,"a")) == NULL) {
-                do_log(LOG_ERR, "ERROR: Unable to open logfile: %s", logfile_name);
+                err("ERROR: Unable to open logfile: %s", logfile_name);
                 perror(" ");
                 exit(-1);
             } else {
-                do_log(LOG_INFO, "INFO: Reopened logfile: %s", logfile_name);
+                act("INFO: Reopened logfile: %s", logfile_name);
             }
         }
         if (load_all_lists() < 0) {
-            do_log(LOG_ERR, "ERROR: Cannot reload the blocklist(s).");
+            err("ERROR: Cannot reload the blocklist(s).");
         }
-        do_log(LOG_INFO, "INFO: Blocklist(s) reloaded.");
+        act("INFO: Blocklist(s) reloaded.");
         break;
     case SIGTERM:
     case SIGINT:
@@ -324,8 +318,8 @@ static int nfqueue_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nf
 				// TODO: Separate IP and port in there.
 				// setipinfo(src, dst, proto, ip, payload);
 				
-				publish("PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
-				        NIPQUAD(ip->daddr), tv.tv_sec, NIPQUAD(ip->saddr) );
+				cmd_redis(redis, "publish %s PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
+				        CHANNEL, NIPQUAD(ip->daddr), tv.tv_sec, NIPQUAD(ip->saddr) );
 
 				// do_log(LOG_NOTICE, " IN: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
 
@@ -351,8 +345,8 @@ static int nfqueue_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nf
 				// NOTE: "setipinfo" sets the formats.
 				// TODO: Separate IP and port in there.
 				// setipinfo(src, dst, proto, ip, payload);
-				publish("PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
-				        NIPQUAD(ip->saddr), tv.tv_sec, NIPQUAD(ip->daddr) );
+				cmd_redis(redis, "publish %s PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
+				        CHANNEL, NIPQUAD(ip->saddr), tv.tv_sec, NIPQUAD(ip->daddr) );
 				// do_log(LOG_NOTICE, "OUT: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
 
 			// } else {
@@ -376,8 +370,8 @@ static int nfqueue_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nf
 				found_range->hits++;
 				// setipinfo(src, dst, proto, ip, payload);
 
-				publish("PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
-				        NIPQUAD(ip->saddr), tv.tv_sec, NIPQUAD(ip->daddr) );
+				cmd_redis(redis, "publish %s PGL,%u.%u.%u.%u,BLOCK,%lu,%u.%u.%u.%u",
+				        CHANNEL, NIPQUAD(ip->saddr), tv.tv_sec, NIPQUAD(ip->daddr) );
 				// do_log(LOG_NOTICE, "FWD: %-22s %-22s %-4s || %s",src,dst,proto,found_range->name);
 
 			// } else {
@@ -625,4 +619,5 @@ int main(int argc, char *argv[]) {
     }
 
     nfqueue_loop();
+    return(0);
 }
