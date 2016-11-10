@@ -30,23 +30,24 @@
 // libmosquitto
 #include "mosquitto/lib/mosquitto.h"
 
+#include "log.h"
 #include "redis.h"
 #include "database.h"
 
-static char output[MAX_OUTPUT];
+// static char output[MAX_OUTPUT];
 static int quit = 0;
 
 
-redisContext *redis;
-redisReply   *reply;
+redisContext *redis = NULL;
+redisReply   *reply = NULL;
 
 struct mosquitto *mosq = NULL;
 
 extern int optind;
 
 void ctrlc(int sig) {
-    fprintf(stderr,"\nQuit.\n");
-    redisFree(redis);
+	act("\nQuit.");
+    if(redis) redisFree(redis);
     if(mosq) mosquitto_destroy(mosq);
     mosquitto_lib_cleanup();
     quit = 1;
@@ -60,14 +61,14 @@ int main(int argc, char **argv) {
     int port    = 1883;
     int keepalive = 60;
 
-    char *dns, *ip, *action, *epoch, *domain, *tld, *group;
-    long long int hits;
+    // char *dns, *ip, *action, *epoch, *domain, *tld, *group;
+    // long long int hits;
 
     int mres;
 
     int opt;
     char pidfile[MAX_OUTPUT];
-    pid_t pid;
+    // pid_t pid;
 
     pidfile[0]=0x0;
 
@@ -80,8 +81,8 @@ int main(int argc, char **argv) {
     }
 
     if(argv[optind] == NULL) {
-	    fprintf(stderr, "usage: dns-to-mqtt [-p pidfile] host [port]\n");
-	    exit(0);
+	    err("usage: %s [-p pidfile] host [port]", argv[0]);
+	    exit(1);
     }
     host = argv[optind];
     // TODO: get port from argv[2] when present
@@ -101,15 +102,15 @@ int main(int argc, char **argv) {
 
     mres = mosquitto_connect( mosq, host, port, keepalive);
     if(mres != MOSQ_ERR_SUCCESS) {
-	    fprintf(stderr, "can't connect to mosquitto server %s on port %u\n",host, port);
+	    err("can't connect to mosquitto server %s on port %u",host, port);
 	    mosquitto_destroy(mosq);
 	    mosquitto_lib_cleanup();
 	    return(1);
     } else {
-	    fprintf(stderr, "connected to mosquitto server %s on port %u\n", host, port);
+	    err("connected to mosquitto server %s on port %u", host, port);
     }
 
-    reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
+    reply = cmd_redis(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
 
     if(pidfile[0]) {
@@ -157,7 +158,7 @@ int main(int argc, char **argv) {
         // 	MOSQ_ERR_PROTOCOL	if there is a protocol error communicating with the broker.
         // 	MOSQ_ERR_PAYLOAD_SIZE	if payloadlen is too large.
         if(mres != MOSQ_ERR_SUCCESS)
-	        fprintf(stderr, "error publishing message to mosquitto\n");
+	        err("error publishing message to mosquitto");
     
         mosquitto_loop(mosq, -1, 1);
 

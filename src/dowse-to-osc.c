@@ -31,29 +31,30 @@
 // jemalloc
 #include <jemalloc/jemalloc.h>
 
+#include "log.h"
 #include "redis.h"
 #include "database.h"
 
-redisContext *redis;
-redisReply   *reply;
+redisContext *redis = NULL;
+redisReply   *reply = NULL;
 
 static int quit = 0;
 void ctrlc(int sig) {
-    fprintf(stderr,"\nQuit.\n");
-    redisFree(redis);
+    act("\nQuit.");
+    if(redis) redisFree(redis);
     quit = 1;
 }
 
 int main(int argc, char **argv) {
 
-    int err;
+    int res;
     lo_address osc;
     char *dns, *ip, *action, *epoch, *domain, *tld;
     unsigned int hits;
 
     if(argv[1] == NULL) {
-        fprintf(stderr, "usage: dns-to-osc osc.URL (i.e: osc.udp://localhost:666/pd)\n");
-        exit(0);
+        err("usage: %s osc.URL (i.e: osc.udp://localhost:666/pd)", argv[0]);
+        exit(1);
     }
 
     osc = lo_address_new_from_url( argv[1] );
@@ -61,7 +62,7 @@ int main(int argc, char **argv) {
 
     redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
-    reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
+    reply = cmd_redis(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
 
     signal(SIGINT, ctrlc);
@@ -86,14 +87,14 @@ int main(int argc, char **argv) {
         hits = atoll(action);
 
         // TODO: use a more refined lo_send with low-latency flags
-        err = lo_send(osc, "/dowse/dns", "siss", 
+        res = lo_send(osc, "/dowse/dns", "siss", 
                       ip, hits, domain, tld);
-        if(err == -1)
-            fprintf(stderr,"OSC send error: %s\n",lo_address_errstr(osc));
+        if(res == -1)
+            err("OSC send error: %s",lo_address_errstr(osc));
         // just for console debugging
         else
-            fprintf(stderr,"/dowse/dns %s %u %s %s\n",
-                    ip, hits, domain, tld);
+            func("/dowse/dns %s %u %s %s",
+                 ip, hits, domain, tld);
 
         fflush(stderr);
 

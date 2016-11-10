@@ -27,6 +27,7 @@
 #include <signal.h>
 #include <string.h>
 
+#include "log.h"
 #include "redis.h"
 #include "database.h"
 
@@ -34,11 +35,11 @@ static char output[MAX_OUTPUT];
 static int quit = 0;
 
 
-redisContext *redis;
-redisReply   *reply;
+redisContext *redis = NULL;
+redisReply   *reply = NULL;
 
 void ctrlc(int sig) {
-    fprintf(stderr,"\nQuit.\n");
+    act("\nQuit.");
     redisFree(redis);
     quit = 1;
 }
@@ -52,7 +53,7 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, ctrlc);
 
-    reply = redisCommand(redis,"SUBSCRIBE dns-query-channel");
+    reply = cmd_redis(redis,"SUBSCRIBE dns-query-channel");
     freeReplyObject(reply);
     while(redisGetReply(redis,(void**)&reply) == REDIS_OK) {
         if(quit) break;
