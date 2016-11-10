@@ -47,11 +47,6 @@
 #include "blocklist.h"
 #include "parser.h"
 
-#ifdef HAVE_DBUS
-#include <dlfcn.h>
-#include "dbus.h"
-#endif
-
 
 #define RECVBUFFSIZE 1500
 #define PAYLOADSIZE 24
@@ -76,7 +71,6 @@
     } while(0);                                             \
 
 void do_log(int priority, const char *format, ...);
-void do_log_xdbus(int priority, const char *format, ...);
 void int2ip (uint32_t ipint, char *ipstr);
 
 #endif /* INC_PGLD_H */

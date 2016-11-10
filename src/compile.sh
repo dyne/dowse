@@ -170,15 +170,11 @@ EOF
         ;;
 
     pgld)
-        pushd $R/src/pgl
-        ./configure --without-qt4 --disable-dbus --enable-lowmem \
-                    --disable-networkmanager \
-                    --prefix ${PREFIX}/pgl \
-                    --sysconfdir ${HOME}/.dowse/pgl/etc \
-                    --with-initddir=${PREFIX}/pgl/init.d \
-            && \
-            make -C pgld && \
-            install -s -p $R/src/pgl/pgld/pgld $R/build/bin
+        pushd $R/src/pgld
+		CFLAGS="$CFLAGS" \
+			  LDFLAGS="$LDFLAGS" \
+              make
+        install -s -p $R/src/pgld/pgld $R/build/bin
         popd
         ;;
 
