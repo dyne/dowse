@@ -75,7 +75,8 @@ execrules=(
 	hiredis-lock user
 
 	# springs
-	dowse-to-mqtt user
+	dowse-to-mqtt  user
+	dowse-cmd-fifo user
 
 	dhcpd         root
     webui         root
@@ -114,9 +115,11 @@ execmap=(
 	mysqld        $PREFIX/mysql/bin/mysqld
 	mysql         $PREFIX/mysql/bin/mysql
 
-	dowse-to-mqtt $PREFIX/bin/dowse-to-mqtt
-	dowse-to-osc  $PREFIX/bin/dowse-to-osc
-	hiredis-lock  $PREFIX/bin/hiredis-lock
+	dowse-to-mqtt  $PREFIX/bin/dowse-to-mqtt
+	dowse-to-osc   $PREFIX/bin/dowse-to-osc
+	dowse-cmd-fifo $PREFIX/bin/dowse-cmd-fifo
+
+	hiredis-lock   $PREFIX/bin/hiredis-lock
 
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
