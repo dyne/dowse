@@ -312,7 +312,7 @@ EOF
 	# start the mqtt/websocket hub
 	start mosquitto
 
-	# start seccrond
+	start seccrond
 
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"

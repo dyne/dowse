@@ -24,7 +24,7 @@
 seccrond-conf() {
 	fn seccrond-conf
 	cat <<EOF
-*/15 * * * * * $R/bin/pendulum netscan
+# */15 * * * * * $R/bin/pendulum netscan
 */10 * * * * * $R/bin/pendulum watchdog
 EOF
 }
