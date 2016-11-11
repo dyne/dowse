@@ -34,7 +34,8 @@ map_t asset_init() {
 
   assetmap = hashmap_new();
 EOF
-for i in ${(f)"$(ls assets)"}; do
+for i in ${(f)"$(find assets -type f)"}; do
+	i=`basename $i`
 	func $i
 	inorm=${i//./_};
 	inorm=${inorm//-/_};
