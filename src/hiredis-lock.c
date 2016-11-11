@@ -72,10 +72,16 @@ int main(int argc, char **argv) {
 
 	if( strncmp(action, "on", 2) == 0 ) {
 		srandom( time(NULL) );
-
 		key = random();
-		reply = cmd_redis(redis, "SET lock_%s %lu NX PX %s", name, key, timeout);
-		if(!reply) { redisFree(redis); exit(1); }
+
+		if(timeout[0] == '0') {
+			// 0 means no timeout for lock expiration
+			reply = cmd_redis(redis, "SET lock_%s %lu NX", name, key);
+			if(!reply) { redisFree(redis); exit(1); }
+		} else {
+			reply = cmd_redis(redis, "SET lock_%s %lu NX PX %s", name, key, timeout);
+			if(!reply) { redisFree(redis); exit(1); }
+		}
 
 		switch(reply->type) {
 
