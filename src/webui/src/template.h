@@ -7,7 +7,9 @@
 #include "assetmap.h"
 #include "ctemplate.h"
 
-#define ENTITY "entity"
+
+#define ENTITY_ESCAPE "entity"
+#define URL_ESCAPE "url"
 
 typedef struct template_t {
 	u_int8_t *data;

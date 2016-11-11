@@ -210,8 +210,9 @@ int thing_show(struct http_request *req) {
  
   WEBUI_DEBUG;
   http_populate_get(req);
-  
+
   // we shouldn't free the result in macaddr
+
   if (http_argument_get_string(req, "macaddr", &macaddr)) {
     kore_log(LOG_DEBUG, "thing_show macaddr %s",macaddr);
     //--- prepare where condition
@@ -329,7 +330,6 @@ inline void show_error(MYSQL *mysql,attributes_set_t *ptr_attrl) {
  kore_log(LOG_ERR, "%s: [%s]\n", log_message, thingsdb);
 
  webui_add_error_message(ptr_attrl,log_message);
- webui_add_warning_message(ptr_attrl,log_message);
 
   mysql_close(mysql);
 }

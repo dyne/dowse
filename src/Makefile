@@ -18,7 +18,11 @@ all: base springs
 	@./checksum.sh
 	@./compile.sh sup
 
-base: config libdowse modprobe sup hiredis-lock
+libs:
+	make -C libdowse
+	make -C libparse-datetime
+
+base: libs config modprobe sup hiredis-lock
 	@make -C libparse-datetime
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
@@ -39,9 +43,6 @@ config:
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
-
-libdowse:
-	make -C libdowse
 
 dowse-cmd-fifo: dowse-cmd-fifo.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
@@ -77,16 +78,17 @@ clean:
 	rm -f *.o
 	rm -f *.zkv
 	rm -f database.h execrules.h
-	rm -f modprobe dowse-to-osc dowse-to-gource
+	rm -f modprobe dowse-to-osc dowse-to-gource dowse-to-mqtt
+	rm -f hiredis-lock
 	make -C dhcp                 clean
 	make -C sup                  clean
 	make -C dnscrypt-proxy       clean
 	make -C dnscrypt-plugin      clean
-	make -C pgl                  clean
+	make -C pgld                 clean
 	make -C netdata              clean
 	make -C kore				 clean
 	make -C libwebsockets	     clean
 	make -C mosquitto            clean
 	make -C seccrond			 clean
-
-
+	make -C libdowse			 clean
+	make -C libparse-datetime    clean

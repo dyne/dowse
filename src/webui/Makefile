@@ -13,7 +13,6 @@ asset src/assetmap.c:
 
 debug: cproto src/assetmap.c
 	rm -f assets/*~
-	rm -f assets/*~
 	../kore/kore flavor dev
 	cp -f conf/webui-debug.conf.dist conf/webui.conf
 	../kore/kore build
