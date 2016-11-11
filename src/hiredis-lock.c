@@ -78,14 +78,19 @@ int main(int argc, char **argv) {
 		if(!reply) { redisFree(redis); exit(1); }
 
 		switch(reply->type) {
+
 		case REDIS_REPLY_STATUS:
 			if( strncmp(reply->str, "OK", 2) == 0) {
 				fprintf(stdout,"%lu\n", key);
 				res = 0;
 			}
 			break;
+
 		default: break;
 		}
+
+		// prints out "0" as key on failure
+		if(res==1) fprintf(stdout,"0\n");
 
 	} else if(strncmp(action, "off", 3) == 0 ) {
 
