@@ -285,13 +285,109 @@ watchdog_daemons() {
 	done
 }
 
+exec_next_cmd() {
+	fn exec_next_cmd $*
+	local cmd
+	cmd=`launch dowse-cmd-fifo`
+	[[ "$cmd" = "" ]] && return 1
+
+	# all uppercase
+	cmd=$cmd:u
+	func "cmd: $cmd"
+
+	# check if valid command (prefix CMD)
+	[[ "${cmd[1,4]}" = "CMD," ]] || {
+		error "invalid command: $cmd"
+		return 1 }
+
+	# TODO: ACL check if IP (2nd field) is authorised
+
+	local action
+	action=${cmd[(ws:,:)3]}
+	[[ "$action" = "" ]] && {
+		error "no action found: $cmd"
+		return 1 }
+	func "action: $action"
+
+	case $action in
+		IP4BLOCK)
+			# 1st arg is the ip to block
+			ipb=${cmd[(ws:,:)5]}
+			[[ "$ipb" = "" ]] && {
+				error "invalid ip4block cmd: $cmd"
+				return 1 }
+			# TODO: check if valid ip4 ip
+			launch xtables-multi iptables -A FORWARD -s $ipb -j DROP
+			launch xtables-multi iptables -A FORWARD -d $ipb -j DROP
+		;;
+
+		IP6BLOCK)
+			# 1st arg is the ip to block
+			ipb=${cmd[(ws:,:)5]}
+			[[ "$ipb" = "" ]] && {
+				error "invalid ip6block cmd: $cmd"
+				return 1 }
+			# TODO: check if valid ip6 ip
+			launch xtables-multi ip6tables -A FORWARD -s $ipb -j DROP
+			launch xtables-multi ip6tables -A FORWARD -d $ipb -j DROP
+		;;
+
+		MACBLOCK)
+			# 1st arg is the mac to block
+			macb=${cmd[(ws:,:)5]}
+			[[ "$macb" = "" ]] && {
+				error "invalid macblock cmd: $cmd"
+				return 1 }
+			# TODO: check if valid mac
+			launch ebtables -A FORWARD -s $macb -j DROP
+			launch ebtables -A FORWARD -d $macb -j DROP
+
+		;;
+		DOMAINBLOCK)
+			error "TODO: domainblock command"
+		;;
+		*)
+			error "unknown action: $cmd"
+			;;
+	esac	 
+
+	return 0
+}
+	
 ################
 # MAIN functions
 
 
-cmd="$1"
+fn "pendulum $*"
 
 case "$1" in
+
+	watchdog)
+		wlid=`lock watchdog 60`
+		[[ $wlid = 0 ]] && {
+			func "watchdog already running"
+			return 1 }
+
+		# check that all registered pids are running
+		# restart them if not running (and log that)
+		pidmap=()
+		watchdog_daemons
+
+		unlock watchdog $wlid
+		;;
+
+	nextcmd)
+		ncmd=`lock nextcmd 0`
+		[[ "$ncmd" = "0" ]] && {
+			func "nextcmd is locked"
+			return 1 }
+
+		exec_next_cmd
+
+		unlock nextcmd $ncmd
+	
+		;;
+
 	lease)
 		# called by dhcp daemon when adding a new lease 
 		touch $H/run/newleases
@@ -299,21 +395,6 @@ case "$1" in
 		print $* >> $H/run/newleases
 		return 0
 		;;
-
-    newdb)
-        # create a new things database if not existing
-        [[ -r $H/run/things.db ]] || {
-            act "Creating new things database"
-            cat $R/db/thing.idx |
-                sql_create_table found | $sql $db[things]
-            [[ $? = 0 ]] || {
-                error "error creating database: $H/run/things.db"
-                return 1 }
-            return 0
-        }
-        error "$H/run/things.db already exists, newdb aborted"
-        return 1
-        ;;
 
 	nmap)
 		# nlock=`lock nmap 30`
@@ -350,20 +431,6 @@ case "$1" in
 
 		unlock netscan $slid
         ;;
-
-	watchdog)
-		wlid=`lock watchdog 60`
-		[[ $wlid = 0 ]] && {
-			func "watchdog already running"
-			return 1 }
-
-		# check that all registered pids are running
-		# restart them if not running (and log that)
-		pidmap=()
-		watchdog_daemons
-
-		unlock watchdog $wlid
-		;;
 
     procscan)
         # TODO: pgrep

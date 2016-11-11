@@ -14,6 +14,7 @@ all: base springs
 	@install -s -p dowse-to-osc    ../build/bin
 	@install -s -p dowse-to-mqtt   ../build/bin
 	@install -s -p hiredis-lock    ../build/bin
+	@install -s -p dowse-cmd-fifo  ../build/bin
 	@./checksum.sh
 	@./compile.sh sup
 
@@ -30,7 +31,7 @@ base: config libdowse modprobe sup hiredis-lock
 	@./compile.sh webui
 	@./compile.sh seccrond
 
-springs: dowse-to-gource dowse-to-osc dowse-to-mqtt
+springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
 
 config:
@@ -41,6 +42,9 @@ config:
 
 libdowse:
 	make -C libdowse
+
+dowse-cmd-fifo: dowse-cmd-fifo.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 hiredis-lock: hiredis-lock.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
