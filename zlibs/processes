@@ -244,15 +244,14 @@ lock() {
 	req=(_lid)
 	ckreq || return $?
 
-	rand="$RANDOM$RANDOM"
-	print "SET lock_${_lid} $rand NX PX ${timeout}000" | redis runtime && {
-		print "$rand"
-		func "succesful lock: $* (key $rand)"
+	local lkey
+	lkey=`launch hiredis-lock on ${_lid} "${timeout}000"`
+	print "$lkey"
+	if [[ "$lkey" = "0" ]]; then
+		return 1
+	else
 		return 0
-	}
-	warning "failed lock: $*"
-	print "0"
-	return 1
+	fi
 }
 
 unlock() {
@@ -262,31 +261,7 @@ unlock() {
 	req=(_lid rand)
 	ckreq || return $?
 
-	res=`print "GET lock_${_lid}" | redis runtime`
-	[[ "$res" = "" ]] && {
-		func "no lock to unlock: $*"
-		return 0 }
-
-    [[ "$rand" = "$res" ]] && {
-		print "DEL lock_${_lid}" | redis runtime
-		func "succesful unlock: $* (key $res)"
-		return 0
-	}
-	func "failed unlock: $* != $res"
-	return 1
+	launch hiredis-lock off ${_lid} ${rand}
+	return $?
 }
 
-islocked() {
-	fn islocked $*
-	_lid="$1"
-	rand="$2"
-	req=(_lid rand)
-	ckreq || return $?
-
-	res=`print "GET lock_$_lid" | redis runtime`
-    [[ "$rand" = "$res" ]] && {
-		func "lock_${_lid} is still locked"
-		return 0 }
-	# else
-	return 1
-}

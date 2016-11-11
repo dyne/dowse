@@ -72,8 +72,9 @@ execrules=(
 	mosquitto    user
 	mysqld       user
 	mysql        user
+	hiredis-lock user
 
-# springs
+	# springs
 	dowse-to-mqtt user
 
 	dhcpd         root
@@ -115,6 +116,7 @@ execmap=(
 
 	dowse-to-mqtt $PREFIX/bin/dowse-to-mqtt
 	dowse-to-osc  $PREFIX/bin/dowse-to-osc
+	hiredis-lock  $PREFIX/bin/hiredis-lock
 
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi

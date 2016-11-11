@@ -231,12 +231,12 @@ pendulum_arp_scan() {
 
 watchdog_daemons() {
 	# map all running pids
-	for p in ${(f)"$(ps -o pid ax)"}; do
-		[[ "$p" =~ "PID" ]] && continue
-		pidmap+=($p 1)
+	# for p in ${(f)"$(ps -o pid ax)"}; do
+	# 	[[ "$p" =~ "PID" ]] && continue
+	# 	pidmap+=($p 1)
 
-	done
-	act "${#pidmap} pids found running"
+	# done
+	# act "${#pidmap} pids found running"
 
 	for d in ${(f)"$(find $H/run -name '*.pid')"}; do
 		func "watchdog: $d"
@@ -258,8 +258,7 @@ watchdog_daemons() {
 			continue
 		}
 		act "$pid \t $daemon"
-		if [[ $pidmap[$pid] = 1 ]]; then
-
+		if [[ -r /proc/${pid}/stat ]]; then
 			[[ $DEBUG = 1 ]] && {
 				func "found running: $daemon"
 				func "`cat /proc/$pid/cmdline`"
