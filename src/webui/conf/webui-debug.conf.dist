@@ -16,12 +16,12 @@ domain * {
 	    validate o v_filename
 		    }
 
-    # command pipeline
-	static     /cmd	   queue_command
-	params get /cmd {
-		validate op  v_command
-		validate macaddr v_macaddr
-			}
+    # TODO: command pipeline
+	# static     /cmd	   queue_command
+	# params get /cmd {
+	# 	validate op  v_command
+	# 	validate macaddr v_macaddr
+	# 		}
 
 	# dynamic pages
 	static	   /things/all      things_list
