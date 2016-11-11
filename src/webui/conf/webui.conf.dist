@@ -16,17 +16,21 @@ domain * {
 
     # generic assets
     static /		serve_asset
-	params get / { 	validate o v_filename }
+	params get / {
+		   validate o v_filename
+	}
 
-    # command pipeline
-	static /cmd		queue_command
-	params get / {  validate op  v_command
-		   	   	    validate mac v_macaddr }
+    # TODO: command pipeline
+	# static /cmd		queue_command
+	# params get / {  validate op  v_command
+	# 	   	   	    validate mac v_macaddr }
 
 	# dynamic pages
 	static	   /things/all      things_list
     static     /things          thing_show
-	params get /things { validate macaddr v_macaddr }
+	params get /things {
+		   validate macaddr v_macaddr
+	}
 
 	# special static assets
 	static     /example/websocket.html  websocket_example
