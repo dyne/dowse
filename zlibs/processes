@@ -72,8 +72,12 @@ start() {
 
     _pid=`getpid $_daemon`
     [[ "$_pid" = "" ]] || {
-		warning "$_daemon already running (pid $_pid)"
-        return 0
+		if [[ -r /proc/${_pid}/stat ]]; then
+			warning "$_daemon already running (pid $_pid)"
+			return 0
+		else
+			warning "$_daemon crashed, overwriting old pid"
+		fi
 	}
 
     act "generating configuration for $_daemon"
