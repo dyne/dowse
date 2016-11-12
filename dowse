@@ -172,7 +172,7 @@ EOF
 }
 
 # global file path to settings
-settings=${1:-/etc/dowse/settings}
+settings=${1:-$DOWSE_CONF/settings}
 conf-load
 # TODO: using first argument here breaks ~/.zshrc auto-load
 
