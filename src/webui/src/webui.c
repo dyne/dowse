@@ -355,8 +355,9 @@ int sqlquery(char *query,
   // open db connection
   if(!db) {
       db=mysql_init(NULL);
-      if (!mysql_real_connect(db, "localhost", "root","p4ssw0rd",
-                  thingsdb, 0, "/home/nop/.dowse/run/mysql/mysqld.sock", 0))  {
+//     Constant parameted created at compile time
+      if (!mysql_real_connect(db, DB_HOST, DB_USER,DB_PASSWORD,
+                  thingsdb, 0, DB_SOCK_DIRECTORY , 0))  {
           show_error(db,ptr_attrl);
           db=NULL;
           return(KORE_RESULT_ERROR);
