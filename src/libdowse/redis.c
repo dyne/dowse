@@ -41,6 +41,7 @@ redisContext *connect_redis(char *host, int port, int db) {
 		if (rx) {
 			err("Connection error: %s", rx->errstr);
 			redisFree(rx);
+			return NULL;
 		} else {
 			err("Connection error: can't allocate redis context");
 		}
