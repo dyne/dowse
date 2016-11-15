@@ -56,6 +56,7 @@ notes    text
 last     date
 age      date
 vendor   text                    ; /address[@addrtype=\"mac\"]/@vendor
+admin    text
 '
 print - "$thingindex" > $S/build/db/thing.idx
 
