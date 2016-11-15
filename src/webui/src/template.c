@@ -50,7 +50,7 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
     if (!some_error) {
 	while ((rv=fread(buf_str,1,sizeof(buf_str),out_stream))>0) {
 	  buf_str[rv]=0;
-	  kore_log(LOG_DEBUG,"%s %s",__where_i_am__,buf_str);
+//	  kore_log(LOG_DEBUG,"%s %s",__where_i_am__,buf_str);
 	  kore_buf_append(out,buf_str,rv);
 	}
     }
