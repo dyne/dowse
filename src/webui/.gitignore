@@ -4,3 +4,5 @@
 webui.so
 assets.h
 cert
+/.cproject
+/.project
