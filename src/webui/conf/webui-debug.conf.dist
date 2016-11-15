@@ -4,17 +4,22 @@ pidfile     webui-debug.pid
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 validator   v_filename  regex   ^.*$
 validator   v_command   regex   ^(on)|(off)|(monitor)|(admin)$
+validator   v_ip_valid  function v_ip_validate
+
+authentication auth_admin {
+	authentication_type request
+	authentication_validator	v_ip_valid	
+
+
 
 domain * {
-
-	# test endpoints
-    # static /test/mustache  test_mustache
+	 static     /test	   test
 
     # generic assets
     static /		serve_asset
 	params get / {
 	    validate o v_filename
-		    }
+	}
 
     # TODO: command pipeline
 	# static     /cmd	   queue_command
@@ -27,8 +32,14 @@ domain * {
 	static	   /things/all      things_list
     static     /things          thing_show
 	params get /things {
-		validate macaddr v_macaddr
-			}
+		validate macaddr v_macaddr			
+	}
+
+	# Configure admin page
+	static /configure_admin configure_admin
+	
+	# Test Admin authentication
+	static /test_admin test_admin auth_admin
 
 	# special static assets
 	static     /example/websocket.html  websocket_example
