@@ -91,3 +91,23 @@ void act(const char *fmt, ...) {
 
 	va_end(args);
 }
+
+
+
+void warn(const char *fmt, ...) {
+	va_list args;
+
+	char msg[256];
+	size_t len;
+
+	va_start(args, fmt);
+
+	vsnprintf(msg, 512, fmt, args);
+	len = strlen(msg);
+	write(2, ANSI_COLOR_YELLOW " (*) " ANSI_COLOR_RESET, 5+5+4);
+	write(2, msg, len);
+	write(2, "\n", 1);
+	fsync(2);
+
+	va_end(args);
+}

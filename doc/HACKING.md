@@ -139,6 +139,7 @@ Sources
 ## CMD
 
 Channel: `cmd-fifo-pipe`
+
 Command is a request for operations that can be executed on
 request. Commands end up in a FIFO pipe which functions as Closure of
 function calls during runtime: the worker thread will then take out
@@ -171,7 +172,6 @@ As the listener API shapes up, this namespace may change in the close
 future. Here below some examples for commandline use:
 
 ## DNS (dns-query-channel)
-
 
 ## PGL (pgl-info-channel)
 

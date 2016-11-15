@@ -45,16 +45,21 @@ conf-load() {
 		wan=`ip route show dev $d`
 		wan=${wan[(w)3]}
 
-		if [[ range == 24 ]]; then
+		if [[ $range == 24 ]]; then
 			subn=${wan[(ws:.:)1]}.${wan[(ws:.:)2]}.${wan[(ws:.:)3]}
 			dowse_net=$subn.0/24
 			netmask=255.255.255.0
 			dowse_guests=$subn.101,$subn.199,48h
-		elif [[ range == 16 ]]; then
+		elif [[ $range == 16 ]]; then
 			subn=${wan[(ws:.:)1]}.${wan[(ws:.:)2]}
 			dowse_net=$subn.0.0/16
 			netmask=255.255.0.0
 			dowse_guests=$subn.0.101,$subn.255.199,48h
+		elif [[ $range == 8 ]]; then
+			subn=${wan[(ws:.:)1]}
+			dowsenet=${subn}.0.0.0/8
+			netmask=255.0.0.0
+			dowse_guests=$subn.0.0.101,$subn.255.255.199,48h			
 		fi
 	done
 

@@ -10,6 +10,7 @@
 // for use in debugging
 #define FLAG func("reached: %s:%u, %s()", __FILE__, __LINE__, __func__)
 
+void warn(const char *fmt, ...);
 
 void func(const char *fmt, ...);
 
