@@ -9,12 +9,14 @@ validator   v_ip_valid  function v_ip_validate
 authentication auth_admin {
 	authentication_type request
 	authentication_validator	v_ip_valid	
+# from kore.io source code: Authentication types of "request" send their own HTTP responses. 
+#	authentication_uri /configure_admin
 
-
+}
 
 domain * {
-	 static     /test	   test
-
+	accesslog webui_access.log
+	
     # generic assets
     static /		serve_asset
 	params get / {
