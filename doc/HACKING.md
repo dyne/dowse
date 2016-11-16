@@ -147,14 +147,19 @@ the commands and execute them one by one, treating the results
 accordingly.
 
 ```
-CMD,IP,{ACTION},EPOCH[,ARGS..]
+CMD,SRC_IP,{ACTION},EPOCH[,ARGS..]
 
-ACTION: SCAN, ON, OFF
+ACTIONS: IP4_OFF, IP6_OFF, MAC_OFF, DOMAIN_OFF
+	     IP4_ON,  IP6_ON,  MAC_ON,  DOMAIN_ON
+
+ALL ACTIONS REQUIRE 1ST ARG IP OR DOMAIN STRING TO ON/OFF
 ```
 
-Sources
+Source
 - web interface
-- rest api
+
+Sink
+- pendulum nextcmd -> dowse-cmd-fifo
 
 # Channels
 
