@@ -1,7 +1,7 @@
 CFLAGS ?= -ggdb -Wall -DDEBUG=1 -fPIE -fPIC -pie
 CC = gcc
 AR = ar
-OBJS = log.o redis.o hashmap.o
+OBJS = log.o redis.o hashmap.o parsetime.o
 
 all: libdowse.a
 
