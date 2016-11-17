@@ -29,7 +29,7 @@ int _scan_proc_net_tcp_file(char *proc_file,int inode_socket,char *ipaddr_value,
             column++;
 
             switch(column) {
-                case (2) :
+                case (3) :
                         _ip_addr=field;
                         break;
                 case (14):

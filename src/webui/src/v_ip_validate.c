@@ -19,11 +19,11 @@ int v_ip_validate(struct http_request * req,char*data) {
      * prendono 1 parametro che è il valore da validare nel caso delle function è la req stessa
      *
      * */
-    char ipaddr_type[6];
-    char ipaddr_value[256];
+    char *ipaddr_type;
+    char *ipaddr_value;
     attributes_set_t*ptr_attrl;
 
-    get_ip_from_request(req,ipaddr_type,sizeof(ipaddr_type),ipaddr_value,sizeof(ipaddr_value));
+    get_ip_from_request(req,&ipaddr_type,ipaddr_value);
     if ((strcmp(ipaddr_type,"ipv4")!=0)&&(strcmp(ipaddr_type,"ipv6")!=0)) {
         kore_log(LOG_ERR,"Can retrieve IP address from request and proc file system");
         return KORE_RESULT_ERROR;
@@ -41,6 +41,9 @@ int v_ip_validate(struct http_request * req,char*data) {
 //TODO Siamo arrivati qua
     http_response_header(req, "location", "/configure_admin");
     http_response(req, 302, NULL, 0);
+
+    free(ipaddr_type);
+    free(ipaddr_value);
 
     WEBUI_DEBUG;
     return (KORE_RESULT_ERROR);
