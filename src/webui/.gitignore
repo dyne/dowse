@@ -6,3 +6,8 @@ assets.h
 cert
 /.cproject
 /.project
+dh2048.pem
+webui
+core
+.settings/
+conf/webui.conf
