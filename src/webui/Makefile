@@ -1,5 +1,5 @@
-FILE=$(shell find src -type f  -name *.c )
-INCLUDEOPTS=$(shell awk -F= -f ./tool/extract_include.awk conf/build.conf |tr -d '\n' )
+FILE=$(shell find './src' -type f -name '*.c' )
+INCLUDEOPTS=$(shell awk -F'=' -f ./tool/extract_include.awk conf/build.conf |tr -d '\n' )
 INCLUDEOPTS+=-I./src
 WEBUI_PROTOTYPE_H=src/webui_prototype.h
 

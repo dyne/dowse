@@ -107,6 +107,11 @@ pidfile   $HOME/.dowse/run/webui.pid
 EOF
         cat conf/webui.conf.dist >> conf/webui.conf
 
+		cat <<EOF > conf/build.conf
+# generated at build time
+cflags = -DDB_SOCK_DIRECTORY="$HOME/.dowse/run/mysqld.sock"
+EOF
+        cat conf/build.conf.dist >> conf/build.conf
 		act "map all the assets"
 		./map_assets > src/assetmap.c
 
