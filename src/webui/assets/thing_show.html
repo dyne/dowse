@@ -3,8 +3,6 @@
   <head>
     <title><!--TMPL_VAR name="title"--></title>
     <link rel="stylesheet" href="/?o=bootstrap.min.css">
-    <script src="/?o=jquery-3.1.1.min.js"></script>
-    <script src="/?o=bootstrap.min.js"></script>
   </head>
   <body>
     <div class="container">
@@ -41,32 +39,19 @@
 	    <tr><td><!--TMPL_VAR name="hostname"--></td><td><!--TMPL_VAR name="last"--></td><td><!--TMPL_VAR name="age"--></td><td><!--TMPL_VAR name="notes"--></td><td><!--TMPL_VAR name="os"--></td><td><!--TMPL_VAR name="ip4"--></td><td><!--TMPL_VAR name="macaddr"--></td><td><!--TMPL_VAR name="ip6"--></td><td><!--TMPL_VAR name="iface"--></td>
 
 	      <!--TMPL_IF name="state" value="on"--> <!-- If we recognize the state we print it otherwise we print na_state.png -->
-	      <td>
-		<div class="btn-group">
-		  <button type="button" class="btn btn-success">
-    <img src='/?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->'/>
-<!--     -->
-		  </button>
-		  <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
-		    <span class="caret"></span>
-		  </button>
-		  <ul class="dropdown-menu" role="menu">
-		    <li><a href='/cmd?op=on&macaddr=<!--TMPL_VAR name="macaddr"-->'> Switch to &#x22;On&#x22; state</a></li>
-		    <li><a href='/cmd?op=monitor&macaddr=<!--TMPL_VAR name="macaddr"-->'> Switch to &#x22;Monitor&#x22; state</a></li>
-		    <li><a href='/cmd?op=off&macaddr=<!--TMPL_VAR name="macaddr"-->'> Switch to &#x22;Off&#x22; state</a></li>
-		  </ul>
-		</div>
+	      <td>		
+		    <a role="button"  class="btn btn-success" href='/cmd?op=off&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+		      <img src='/?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state"/>
+		    </a>
 	      </td>
 	      <!--TMPL_ELSIF name="state" value="off"-->
 	      <td>
-		<img src='/?o=BTN-<!--TMPL_VAR name="state"-->.png' height='64px' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->'/>		
-	      </td>
-	      <!--TMPL_ELSIF name="state" value="monitor"-->
-	      <td>	
-		<img src='/?o=BTN-<!--TMPL_VAR name="state"-->.png' height='64px' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->'/>
+		    <a role="button"  class="btn btn-danger" href='/cmd?op=on&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+		      <img src='/?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
+		    </a>
 	      </td>
 	      <!--TMPL_ELSE -->
-	      <td><img src="/?o=na_state.png"></img></td>
+	      <td><img src="/?o=na_state-16x16.png"></img></td>
 	      <!--/TMPL_IF-->
 	      <td><!--TMPL_VAR name="vendor"--></td>
 	    </tr>

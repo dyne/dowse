@@ -10,10 +10,10 @@
 #include <parse-datetime.h>
 #include <hashmap.h>
 #include <time.h>
+#include <log.h>
 #include <kore.h>
 #include <http.h>
 #include <stdio.h>
-
 #include <template.h>
 
 #define mb (1024*500)
