@@ -324,7 +324,7 @@ dowse-stop() {
 
 	notice "Stopping all daemons in Dowse"
 
-	# stop seccrond
+	stop seccrond
 
 	stop mosqitto
 

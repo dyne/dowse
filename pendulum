@@ -238,6 +238,7 @@ watchdog_daemons() {
 	# done
 	# act "${#pidmap} pids found running"
 
+	# generic restart of any daemon that has left pids behind
 	for d in ${(f)"$(find $H/run -name '*.pid')"}; do
 		func "watchdog: $d"
 		# remove path prefix
@@ -282,6 +283,24 @@ watchdog_daemons() {
 				print $err >> $H/log/watchdog.log
 			fi
 		fi
+	done
+
+	# daemons that should always be running
+	core_daemons=(redis-server dnscrypt-proxy)
+	for $d in $core_daemons; do
+		pidfile=$H/run/$d.pid
+		[[ -r $pidfile ]] || {
+			start $d
+			if [[ $? = 0 ]]; then
+				err="succesfully restarted: $daemon"
+				notice $err
+				print $err >> $H/log/watchdog.log
+			else
+				err="watchdog fails to restart: $daemon"
+				error $err
+				print $err >> $H/log/watchdog.log
+			fi
+		}
 	done
 }
 
