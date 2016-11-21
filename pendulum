@@ -287,7 +287,7 @@ watchdog_daemons() {
 
 	# daemons that should always be running
 	core_daemons=(redis-server dnscrypt-proxy)
-	for $d in $core_daemons; do
+	for d in $core_daemons; do
 		pidfile=$H/run/$d.pid
 		[[ -r $pidfile ]] || {
 			start $d
