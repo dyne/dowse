@@ -109,7 +109,7 @@ EOF
 
 		cat <<EOF > conf/build.conf
 # generated at build time
-cflags = -DDB_SOCK_DIRECTORY="$HOME/.dowse/run/mysqld.sock"
+cflags = -DDB_SOCK_DIRECTORY="$HOME/.dowse/run/mysql/mysqld.sock"
 EOF
         cat conf/build.conf.dist >> conf/build.conf
 		act "map all the assets"
