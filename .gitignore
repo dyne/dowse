@@ -88,3 +88,6 @@ autom4te.cache
 
 dnscrypt-proxy/src/proxy/probes.h
 dnscrypt-proxy/test/Makefile
+/.cproject
+/.project
+src/webui/conf/build.conf
