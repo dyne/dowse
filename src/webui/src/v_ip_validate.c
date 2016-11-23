@@ -23,7 +23,7 @@ int v_ip_validate(struct http_request * req,char*data) {
     char *ipaddr_value;
     attributes_set_t*ptr_attrl;
 
-    get_ip_from_request(req,&ipaddr_type,ipaddr_value);
+    get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
     if ((strcmp(ipaddr_type,"ipv4")!=0)&&(strcmp(ipaddr_type,"ipv6")!=0)) {
         kore_log(LOG_ERR,"Can retrieve IP address from request and proc file system");
         return KORE_RESULT_ERROR;
@@ -38,7 +38,7 @@ int v_ip_validate(struct http_request * req,char*data) {
     //_grant_ip_admin_privileges(ipaddr_type,ipaddr_value);
 
     /* from kore.io source code: Authentication types of "request" send their own HTTP responses. */
-//TODO Siamo arrivati qua
+
     http_response_header(req, "location", "/configure_admin");
     http_response(req, 302, NULL, 0);
 
@@ -72,7 +72,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     //     Constant parameted created at compile time
     if (!mysql_real_connect(db, DB_HOST, DB_USER, DB_PASSWORD, DB_SID, 0,
             DB_SOCK_DIRECTORY, 0)) {
-        show_error(db, ptr_attrl);
+        show_mysql_error(db, ptr_attrl);
         db = NULL;
         return _IP_IS_NOT_ADMIN_;
     }
@@ -80,7 +80,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     WEBUI_DEBUG
     // Execute the statement
     if (mysql_real_query(db, query, strlen(query))) {
-        show_error(db, ptr_attrl);
+        show_mysql_error(db, ptr_attrl);
         return _IP_IS_NOT_ADMIN_;
     }
 

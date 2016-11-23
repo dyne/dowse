@@ -15,7 +15,7 @@ int sqlquery(char *query,
     //     Constant parameted created at compile time
     if (!mysql_real_connect(db, DB_HOST, DB_USER, DB_PASSWORD, DB_SID, 0,
             DB_SOCK_DIRECTORY, 0)) {
-        show_error(db, ptr_attrl);
+        show_mysql_error(db, ptr_attrl);
         db = NULL;
         return (KORE_RESULT_ERROR);
     }
@@ -24,7 +24,7 @@ int sqlquery(char *query,
     ;
     // Execute the statement
     if (mysql_real_query(db, query, strlen(query))) {
-        show_error(db, ptr_attrl);
+        show_mysql_error(db, ptr_attrl);
         return KORE_RESULT_ERROR;
     }
 
