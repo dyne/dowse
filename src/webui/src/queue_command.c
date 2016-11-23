@@ -50,8 +50,13 @@ int queue_command(struct http_request * req) {
     /* Connecting with Redis */
     redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
     if(!redis) {
-        err("Dowse is not running");
-        exit(1);
+
+        attributes_set_t att=attrinit();
+        const char m[]="Redis server is not running";
+        webui_add_error_message(&att,m);
+        err(m);
+
+        return show_generic_message_page(req,att);
     }
 
     /* Calculating calling IP extracting from request */
