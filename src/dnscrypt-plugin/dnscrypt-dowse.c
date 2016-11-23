@@ -43,10 +43,16 @@
 #include <epoch.h>
 
 #include "dnscrypt-dowse.h"
+
+
 #include "database.h"
+
+// from libdowse
 #include "redis.h"
 #include "log.h"
 
+// 24 hours
+#define CACHE_EXPIRY 86400
 
 DCPLUGIN_MAIN(__FILE__);
 
@@ -56,19 +62,6 @@ int publish_query(plugin_data_t *data);
 // fills in wire packet lenght in *asize
 // returned buffer must be freed with LDNS_FREE
 uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, size_t *asize);
-
-void debug(plugin_data_t *data, const char *fmt, ...) {
-	va_list args;
-	va_start(args, fmt);
-
-	if(!data->debug) return;
-
-	vfprintf(data->debug,fmt,args);
-	fprintf(data->debug,"\n");
-	fflush(data->debug);
-
-	va_end(args);
-}
 
 // return a code valid for DCP and free all buffers in *data
 int return_packet(ldns_pkt *packet, plugin_data_t *data, int code) {
@@ -98,15 +91,15 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	data->cache = NULL;
 	data->caching = 0;
 	data->offline = 0;
-	data->debug = NULL;
+	data->debug = 0;
 
 	for(i=0; i<argc; i++) {
-		debug(data,"%u arg: %s\n", i, argv[i]);
+		func("%u arg: %s", i, argv[i]);
 
-		if( strncmp(argv[i], "cache", 5) == 0) data->caching=5;
+		if( strncmp(argv[i], "cache", 5) == 0) data->caching = CACHE_EXPIRY;
 
 		if( strncmp(argv[i], "debug", 5) == 0) {
-			data->debug = fopen("dowse-debug.log", "a+");
+			data->debug = 1;
 			// TODO: check error
 		}
 
@@ -116,21 +109,21 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 
 	data->listpath = getenv("DOWSE_DOMAINLIST");
 	if(!data->listpath) {
-		debug(data,"warning: environmental variable DOWSE_DOMAINLIST not set\n");
+		warn("environmental variable DOWSE_DOMAINLIST not set");
 		data->listpath = NULL;
 	} else {
-		debug(data,"Loading domainlist from: %s\n", data->listpath);
+		act("Loading domainlist from: %s", data->listpath);
 		load_domainlist(data);
 	}
 
 	{
 		char *stmp = getenv("DOWSE_LAN_ADDRESS_IP4");
 		if(!stmp) {
-			debug(data,"warning: own IP4 on LAN not known, variable DOWSE_LAN_ADDRESS_IP4 not set");
+			warn("own IP4 on LAN not known, variable DOWSE_LAN_ADDRESS_IP4 not set");
 			data->ownip4[0] = 0x0;
 		} else {
 			strncpy(data->ownip4, stmp, NI_MAXHOST);
-			debug(data,"Own IPv4 address on LAN: %s", data->ownip4);
+			act("Own IPv4 address on LAN: %s", data->ownip4);
 		}
 	}
 
@@ -138,11 +131,11 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	{
 		char *stmp = getenv("DOWSE_LAN_NETMASK_IP4");
 		if(!stmp) {
-			debug(data,"warning: IP4 netmask not known, variable DOWSE_LAN_NETMASK_IP4 not set");
+			warn("IP4 netmask not known, variable DOWSE_LAN_NETMASK_IP4 not set");
 			data->netmask_ip4[0] = 0x0;
 		} else {
 			strncpy(data->netmask_ip4, stmp, NI_MAXHOST);
-			debug(data,"Own IPv4 netmask for LAN: %s", data->ownip4);
+			act("Own IPv4 netmask for LAN: %s", data->ownip4);
 		}
 	}
 
@@ -164,8 +157,7 @@ int dcplugin_destroy(DCPlugin * const dcplugin) {
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
 	if(data->debug) {
-		debug(data, "dnscrypt dowse plugin quit\n");
-		fclose(data->debug);
+		act("dnscrypt dowse plugin quit");
 	}
 
 	free_domainlist(data);
@@ -224,9 +216,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// debug
 	if(data->debug) {
-		debug(data,"-- packet received with id %u:\n", packet_id);
-		ldns_pkt_print(data->debug, packet);
-		debug(data,"-- \n");
+		func("-- packet received with id %u:\n", packet_id);
+		ldns_pkt_print(stderr, packet);
+		func("-- \n");
 	}
 
 	// retrieve the actual question string
@@ -244,7 +236,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// debug
 	if(data->debug)
-		debug(data,"%s (%u, last: '%c')\n", question_str, question_len,
+		func("%s (%u, last: '%c')\n", question_str, question_len,
 		        question_str[question_len-1]);
 
 	data->reverse = 0;
@@ -266,7 +258,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			// import in ldns dname format
 			tmpname = ldns_dname_new_frm_str(question_str);
 			if (ldns_rdf_get_type(tmpname) != LDNS_RDF_TYPE_DNAME) {
-				debug(data, "dropped packet: .arpa address is not dname\n");
+				func("dropped packet: .arpa address is not dname");
 				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
 			}
 
@@ -282,17 +274,17 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			snprintf(reverse_str, MAX_QUERY, "%s", ldns_rdf2str(reverse));
 
 			if(data->debug)
-				debug(data, "reverse: %s\n", reverse_str);
+				func("reverse: %s\n", reverse_str);
 
 			// resolve locally leased hostnames with a O(1) operation on redis
-			data->reply = redisCommand(data->redis, "GET dns-reverse-%s", reverse_str);
+			data->reply = cmd_redis(data->redis, "GET dns-reverse-%s", reverse_str);
 			if(data->reply->len) { // it exists, return that
 				size_t answer_size = 0;
 				uint8_t *outbuf = NULL;
 				char tmprr[1024];
 
 				if(data->debug)
-					debug(data, "found local reverse: %s\n", data->reply->str);
+					func("found local reverse: %s", data->reply->str);
 
 				snprintf(tmprr, 1024, "%s 0 IN PTR %s",
 				         question_str, data->reply->str);
@@ -356,14 +348,14 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// DIRECT ENDPOINT
 	// resolve locally leased hostnames with a O(1) operation on redis
-	data->reply = redisCommand(data->redis, "GET dns-lease-%s", data->query);
+	data->reply = cmd_redis(data->redis, "GET dns-lease-%s", data->query);
 	if(data->reply->len) { // it exists, return that
 		size_t answer_size = 0;
 		uint8_t *outbuf = NULL;
 		char tmprr[1024];
 
 		if(data->debug)
-			debug(data,"local lease found: %s\n", data->reply->str);
+			func("local lease found: %s", data->reply->str);
 
 		snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
 
@@ -388,7 +380,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	if(data->cache) {
 		// check if the answer is cached (the key is the domain string)
-		data->reply = redisCommand(data->cache, "GET dns-cache-%s", data->query);
+		data->reply = cmd_redis(data->cache, "GET dns-cache-%s", data->query);
 		if(data->reply->len) { // it exists in cache, return that
 
 			// a bit dangerous, but veeery fast: working directly on the wire packet
@@ -431,7 +423,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	dcplugin_set_user_data(dcplugin, data);
 	if(data->debug)
-		debug(data, "%s (forwarding to dnscrypt)\n", data->query);
+		func("%s (forwarding to dnscrypt)", data->query);
 	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
 	// return DCP_SYNC_FILTER_RESULT_OK;
 }
@@ -445,7 +437,7 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 
 	data = dcplugin_get_user_data(dcplugin);
 	if(data->debug)
-		debug(data, "%s (caching in post filter)\n", data->query);
+		func("%s (caching in post filter)\n", data->query);
 	if(data->cache) {
 		wire = dcplugin_get_wire_data(dcp_packet);
 		wirelen = dcplugin_get_wire_data_len(dcp_packet);
@@ -454,10 +446,10 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 
 
 		// check if the query is cached
-		data->reply = redisCommand(data->cache, "SETEX dns-cache-%s %u %b", data->query, data->caching, wire, wirelen);
+		data->reply = cmd_redis(data->cache, "SETEX dns-cache-%s %u %b", data->query, data->caching, wire, wirelen);
 		// TODO: check redis reply
 		freeReplyObject(data->reply);
-		// data->reply = redisCommand(data->cache, "EXPIRE dns_cache_%s %u", data->query, data->caching); // DNS_HIT_EXPIRE
+		// data->reply = cmd_redis(data->cache, "EXPIRE dns_cache_%s %u", data->query, data->caching); // DNS_HIT_EXPIRE
 		// freeReplyObject(data->reply);
 	}
 
@@ -560,17 +552,17 @@ int publish_query(plugin_data_t *data) {
 
 	// domain hit count
 	extracted = extract_domain(data);
-	data->reply = redisCommand(data->redis, "INCR dns_query_%s", extracted);
+	data->reply = cmd_redis(data->redis, "INCR dns_query_%s", extracted);
 	val = data->reply->integer;
 	freeReplyObject(data->reply);
-	data->reply = redisCommand(data->redis, "EXPIRE dns_query_%s %u", extracted, DNS_HIT_EXPIRE); // DNS_HIT_EXPIRE
+	data->reply = cmd_redis(data->redis, "EXPIRE dns_query_%s %u", extracted, DNS_HIT_EXPIRE); // DNS_HIT_EXPIRE
 	freeReplyObject(data->reply);
 
 	// timestamp
 	time(&epoch_t);
 
 	// compose the path of the detected query
-	snprintf(outnew,MAX_OUTPUT,
+	snprintf(outnew, MAX_OUTPUT,
 	         "DNS,%s,%d,%lu,%s,%s",
 	         data->from, val,
 	         epoch_t, extracted, data->tld);
@@ -585,7 +577,7 @@ int publish_query(plugin_data_t *data) {
 		}
 	}
 
-	data->reply = redisCommand(data->redis, "PUBLISH dns-query-channel %s", outnew);
+	data->reply = cmd_redis(data->redis, "PUBLISH dns-query-channel %s", outnew);
 	freeReplyObject(data->reply);
 
 
