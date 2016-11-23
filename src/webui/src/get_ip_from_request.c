@@ -13,10 +13,9 @@ int get_ip_from_request(struct http_request *req,
         ) {
 
 #ifndef PROC_FILE_FOR_NETWORK
-//    req->owner->addr->ipv4.sin_addr ;
     char _ip[64];
     memset(_ip,0,sizeof(_ip));
-    char *s;
+    const char *s;
 #define S 6
     (*ipaddr_type)=kore_malloc(S);
 
