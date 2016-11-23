@@ -92,6 +92,7 @@ dnscrypt-proxy/src/proxy/probes.h
 dnscrypt-proxy/test/Makefile
 /.cproject
 */.project
+.project
 src/webui/conf/build.conf
 
 .settings/
