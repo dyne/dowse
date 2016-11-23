@@ -12,6 +12,6 @@
 #include "attributes_set.h"
 
 
-inline void show_error(MYSQL *mysql,attributes_set_t *ptr_attrl);
+inline void show_mysql_error(MYSQL *mysql,attributes_set_t *ptr_attrl);
 
 #endif /* SRC_SHOW_ERROR_H_ */

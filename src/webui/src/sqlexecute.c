@@ -19,7 +19,7 @@ int sqlexecute(char*command,attributes_set_t *ptr_attrl){
 //     Constant parameted created at compile time
       if (!mysql_real_connect(db, DB_HOST, DB_USER,DB_PASSWORD,
                   DB_SID, 0, DB_SOCK_DIRECTORY , 0))  {
-          show_error(db,ptr_attrl);
+          show_mysql_error(db,ptr_attrl);
           db=NULL;
           return(KORE_RESULT_ERROR);
   }
@@ -27,7 +27,7 @@ int sqlexecute(char*command,attributes_set_t *ptr_attrl){
   WEBUI_DEBUG;
   // Execute the statement
   if (mysql_query(db, command)) {
-    show_error(db,ptr_attrl);
+    show_mysql_error(db,ptr_attrl);
     return KORE_RESULT_ERROR;
   }
 

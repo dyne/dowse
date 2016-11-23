@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Dowse - Some message(s) for you ...</title>
+    <link rel="stylesheet" href="/?o=bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+	<!--TMPL_IF name="message_loop"-->	
+        <div class="panel-body">
+	  <div class="panel panel-error">
+	    <div class="panel-heading">
+	      something was gone wrong.
+	    </div>
+	    <div class="panel-body">
+		<!--TMPL_LOOP name="message_loop"-->
+		<div class="alert alert-<!--TMPL_VAR name="level"-->">
+		  <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong><p><!--TMPL_VAR name="text"--></p>
+		</div>
+		  <!--/TMPL_LOOP-->
+	    </div>
+	  </div>
+	</div>	    
+          </table>
+	</div>
+      </div>
+      </div>
+    <!--/TMPL_IF-->	  
+  </body>
+</html>
+ 
