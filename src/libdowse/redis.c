@@ -6,6 +6,18 @@
 #include "redis.h"
 #include "log.h"
 
+int okredis(redisContext *r, redisReply *res) {
+	if(!res) {
+		err("redis error: %s", r->errstr);
+		return(0);
+	} else if( res->type == REDIS_REPLY_ERROR ) {
+		err("redis error: %s", res->str);
+		return(0);
+	} else {
+		return(1);
+	}
+}
+
 redisReply *cmd_redis(redisContext *redis, const char *format, ...) {
 	va_list args;
 
@@ -18,15 +30,10 @@ redisReply *cmd_redis(redisContext *redis, const char *format, ...) {
 	res = redisCommand(redis, command);
 	va_end(args);
 
-	if(!res) {
-		err("redis error: %s", redis->errstr);
-		return(NULL);
-	} else if( res->type == REDIS_REPLY_ERROR ) {
-		err("redis error: %s", res->str);
-		return(NULL);
-	} else {
-		return(res);
-	}
+	if( okredis(redis, res) )
+		return res;
+	else
+		return NULL;
 }
 
 redisContext *connect_redis(char *host, int port, int db) {
@@ -50,7 +57,7 @@ redisContext *connect_redis(char *host, int port, int db) {
 	reply = cmd_redis(rx, "SELECT %u", db);
 	// TODO: check if result is OK
 	// fprintf(stderr,"SELECT: %s\n", reply->str);
-	freeReplyObject(reply);
+	if(reply) freeReplyObject(reply);
 	return rx;
 }
 
