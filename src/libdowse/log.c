@@ -15,6 +15,16 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+#include <hiredis/hiredis.h>
+
+redisContext *log_redis = NULL;
+
+void toredis(char *pfx, char *msg) {
+	if(log_redis) {
+		redisCommand(log_redis, "PUBLISH log-channel %s: %s", pfx, msg);
+	}
+}
+
 void func(const char *fmt, ...) {
 #if (DEBUG==1)
 	va_list args;
@@ -32,6 +42,9 @@ void func(const char *fmt, ...) {
 	fsync(2);
 
 	va_end(args);
+
+	toredis("DEBUG", msg);
+
 #endif
 	return;
 }
@@ -52,6 +65,9 @@ void err(const char *fmt, ...) {
 	fsync(2);
 
 	va_end(args);
+
+	toredis("ERROR", msg);
+
 }
 
 
@@ -71,6 +87,8 @@ void notice(const char *fmt, ...) {
 	fsync(2);
 
 	va_end(args);
+
+	toredis("NOTICE", msg);
 }
 
 
@@ -90,6 +108,8 @@ void act(const char *fmt, ...) {
 	fsync(2);
 
 	va_end(args);
+
+	toredis("ACT", msg);
 }
 
 
@@ -110,4 +130,6 @@ void warn(const char *fmt, ...) {
 	fsync(2);
 
 	va_end(args);
+
+	toredis("WARN", msg);
 }

@@ -1,6 +1,10 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
+#include <hiredis/hiredis.h>
+
+extern redisContext *log_redis;
+
 // to quickly return 404
 #define HTTP404 err("HTTP 404, %s:%u, %s()",	  \
                       __FILE__, __LINE__, __func__);	  \

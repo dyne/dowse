@@ -17,6 +17,8 @@
 /*     struct redisReply **element; // elements vector for REDIS_REPLY_ARRAY */
 /* } redisReply; */
 
+int okredis(redisContext *r, redisReply *res);
+
 redisReply *cmd_redis(redisContext *redis, const char *format, ...);
 
 redisContext *connect_redis(char *host, int port, int db);

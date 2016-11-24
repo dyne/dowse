@@ -45,11 +45,9 @@
 #include "dnscrypt-dowse.h"
 
 
-#include "database.h"
+#include <database.h>
 
-// from libdowse
-#include "redis.h"
-#include "log.h"
+#include <libdowse/dowse.h>
 
 // 24 hours
 #define CACHE_EXPIRY 86400
@@ -140,12 +138,15 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	}
 
 	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+	if(!data->redis) return 1;
 	// TODO: check when redis is not connected and abort with an error
 
+	// TODO: maybe use libshardcache in place of redis for caching
+	data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
+	if(!data->cache) return 1;
 
-	if(data->caching > 0)
-		// TODO: use libshardcache in place of redis for caching
-		data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
+	// save the cache connection to runtime db as logger
+	log_redis = data->cache;
 
 	dcplugin_set_user_data(dcplugin, data);
 
@@ -442,15 +443,11 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 		wire = dcplugin_get_wire_data(dcp_packet);
 		wirelen = dcplugin_get_wire_data_len(dcp_packet);
 
-//  fprintf(stderr,"%u bytes reply from dnscrypt received\n", wirelen);
-
-
 		// check if the query is cached
-		data->reply = cmd_redis(data->cache, "SETEX dns-cache-%s %u %b", data->query, data->caching, wire, wirelen);
-		// TODO: check redis reply
-		freeReplyObject(data->reply);
-		// data->reply = cmd_redis(data->cache, "EXPIRE dns_cache_%s %u", data->query, data->caching); // DNS_HIT_EXPIRE
-		// freeReplyObject(data->reply);
+		data->reply = redisCommand(data->cache, "SETEX dns-cache-%s %u %b",
+		                           data->query, data->caching, wire, wirelen);
+		okredis(data->cache, data->reply);
+		if(data->reply) freeReplyObject(data->reply);
 	}
 
 #if 0

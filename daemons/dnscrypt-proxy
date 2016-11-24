@@ -88,6 +88,7 @@ dnscrypt-proxy-exec() {
 		pid=$H/run/dnscrypt-proxy.pid
 		DOWSE_DOMAINLIST=$R/domain-list/data \
 						DOWSE_LAN_ADDRESS_IP4=$address \
+						DOWSE_LAN_NETMASK_IP4=$netmask \
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \

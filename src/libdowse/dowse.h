@@ -1,7 +1,8 @@
-#ifndef __DOWSE_H__
-#define __DOWSE_H__
+#ifndef __LIBDOWSE_H__
+#define __LIBDOWSE_H__
 
 #include <hiredis/hiredis.h>
+#include <database.h>
 
 // to quickly return 404
 #define HTTP404 err("HTTP 404, %s:%u, %s()",	  \
@@ -12,6 +13,8 @@
 // for use in debugging
 #define FLAG func("reached: %s:%u, %s()", __FILE__, __LINE__, __func__)
 
+// log functions
+void warn(const char *fmt, ...);
 
 void func(const char *fmt, ...);
 
@@ -19,6 +22,10 @@ void err(const char *fmt, ...);
 
 void act(const char *fmt, ...);
 
+
+
+// parsetime
+int relative_time(char *utc, char *out);
 
 #define REDIS_HOST "127.0.0.1"
 #define REDIS_PORT 6379
