@@ -4,6 +4,10 @@
 #include <hiredis/hiredis.h>
 #include <database.h>
 
+// logging channel singleton in libdowse
+extern redisContext *log_redis;
+
+
 // to quickly return 404
 #define HTTP404 err("HTTP 404, %s:%u, %s()",	  \
                     __FILE__, __LINE__, __func__);	  \
@@ -40,6 +44,8 @@ int relative_time(char *utc, char *out);
 /*     size_t elements; // number of elements, for REDIS_REPLY_ARRAY */
 /*     struct redisReply **element; // elements vector for REDIS_REPLY_ARRAY */
 /* } redisReply; */
+
+int okredis(redisContext *r, redisReply *res);
 
 redisReply *cmd_redis(redisContext *redis, const char *format, ...);
 
