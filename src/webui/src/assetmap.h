@@ -11,7 +11,7 @@
 #include <kore.h>
 #include <assets.h>
 
-#include "hashmap.h"
+#include <libdowse/dowse.h>
 
 typedef struct {
   char type[256];

@@ -7,14 +7,14 @@
 #include <string.h>
 #include <math.h>
 #include <mysql.h>
-#include <parse-datetime.h>
-#include <hashmap.h>
 #include <time.h>
-#include <log.h>
+
 #include <kore.h>
 #include <http.h>
 #include <stdio.h>
 #include <template.h>
+
+#include <libdowse/dowse.h>
 
 #define mb (1024*500)
 #define ml (1024*3)

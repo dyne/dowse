@@ -1,8 +1,9 @@
 #include <kore.h>
-#include <hashmap.h>
+
 #include <attributes_set.h>
 #include "webui_debug.h"
 
+#include <libdowse/dowse.h>
 
 /**/
 attributes_set_t attrinit(){  
