@@ -22,7 +22,7 @@ libs:
 	make -C libdowse
 	make -C libparse-datetime
 
-base: libs config modprobe sup hiredis-lock
+base: config libs modprobe sup hiredis-lock
 	@make -C libparse-datetime
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
