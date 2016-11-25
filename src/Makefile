@@ -2,7 +2,7 @@ DESTDIR ?=
 PREFIX ?= /usr/local/dowse
 
 CC = gcc
-CFLAGS = -Wall -fPIE -fPIC -pie -Os -I. -Ilibdowse
+CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
 LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a
 
 all: base springs

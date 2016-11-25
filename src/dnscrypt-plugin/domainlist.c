@@ -32,8 +32,8 @@
 #include <hiredis/hiredis.h>
 #include <jemalloc/jemalloc.h>
 
-#include "dnscrypt-dowse.h"
-#include "hashmap.h"
+#include <dnscrypt-dowse.h>
+
 
 // Stores the trimmed input string into the given output buffer, which must be
 // large enough to store the result.  If it is too small, the output is

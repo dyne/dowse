@@ -42,12 +42,7 @@
 
 #include <epoch.h>
 
-#include "dnscrypt-dowse.h"
-
-
-#include <database.h>
-
-#include <libdowse/dowse.h>
+#include <dnscrypt-dowse.h>
 
 // 24 hours
 #define CACHE_EXPIRY 86400

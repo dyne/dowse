@@ -3,7 +3,7 @@
 
 #include <execinfo.h>
 
-#include <log.h>
+#include <libdowse/dowse.h>
 #include "assetmap.h"
 
 int free_assetmap_f(any_t arg, any_t element) {
