@@ -439,6 +439,8 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 		wirelen = dcplugin_get_wire_data_len(dcp_packet);
 
 		// check if the query is cached
+		func("SETEX dns-cache-%s %u (wire of %u bytes)",
+		     data->query, data->caching, wirelen);
 		data->reply = redisCommand(data->cache, "SETEX dns-cache-%s %u %b",
 		                           data->query, data->caching, wire, wirelen);
 		okredis(data->cache, data->reply);
