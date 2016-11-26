@@ -82,14 +82,11 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	// TODO: check succesful result or refuse to init
 
 	data->cache = NULL;
-	data->caching = 0;
 	data->offline = 0;
 	data->debug = 0;
 
 	for(i=0; i<argc; i++) {
 		func("%u arg: %s", i, argv[i]);
-
-		if( strncmp(argv[i], "cache", 5) == 0) data->caching = CACHE_EXPIRY;
 
 		if( strncmp(argv[i], "debug", 5) == 0) {
 			data->debug = 1;
@@ -440,9 +437,9 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 
 		// check if the query is cached
 		func("SETEX dns-cache-%s %u (wire of %u bytes)",
-		     data->query, data->caching, wirelen);
+		     data->query, CACHE_EXPIRY, wirelen);
 		data->reply = redisCommand(data->cache, "SETEX dns-cache-%s %u %b",
-		                           data->query, data->caching, wire, wirelen);
+		                           data->query, CACHE_EXPIRY, wire, wirelen);
 		okredis(data->cache, data->reply);
 		if(data->reply) freeReplyObject(data->reply);
 	}

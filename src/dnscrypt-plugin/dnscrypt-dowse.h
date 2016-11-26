@@ -42,10 +42,6 @@
 #define MAX_LINE 512
 
 typedef struct {
-	/////////
-	// flags
-	int caching;
-
 	////////
 	// data
 
