@@ -35,16 +35,18 @@ conf-load() {
 
 	for d in $net_devices; do
 		local _addr=${net_ip4_addr[$d]}
-		_addr=${_addr[(ws:/:)1]}
 		range=${_addr[(ws:/:)2]}
+		_addr=${_addr[(ws:/:)1]}
 		[[ "$_addr" = "" ]] && continue
-		act "$d $_addr # detected network config"
+
+		wan=`ip route show dev $d | awk '/default/ {print $3}'`
+		[[ "$wan" = "" ]] && continue
+
+		act "$d $_addr $range # detected network config"
 		address=$_addr
 		interface=$d
 
-		wan=`ip route show dev $d`
-		wan=${wan[(w)3]}
-
+		# render the dowse_net
 		if [[ $range == 24 ]]; then
 			subn=${wan[(ws:.:)1]}.${wan[(ws:.:)2]}.${wan[(ws:.:)3]}
 			dowse_net=$subn.0/24
