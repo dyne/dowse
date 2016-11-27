@@ -58,8 +58,14 @@ uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, 
 
 // return a code valid for DCP and free all buffers in *data
 int return_packet(ldns_pkt *packet, plugin_data_t *data, int code) {
-	if(packet) ldns_pkt_free(packet);
-	if(data->reply) freeReplyObject(data->reply);
+	if(packet) {
+		ldns_pkt_free(packet);
+		packet=NULL;
+	}
+	if(data->reply) {
+		freeReplyObject(data->reply);
+		data->reply=NULL;
+	}
 	return code;
 }
 
@@ -125,7 +131,7 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 			data->netmask_ip4[0] = 0x0;
 		} else {
 			strncpy(data->netmask_ip4, stmp, NI_MAXHOST);
-			act("Own IPv4 netmask for LAN: %s", data->ownip4);
+			act("Own IPv4 netmask for LAN: %s", data->netmask_ip4);
 		}
 	}
 
@@ -183,7 +189,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	wire = dcplugin_get_wire_data(dcp_packet);
 	wirelen = dcplugin_get_wire_data_len(dcp_packet);
 	// enforce max dns query size
-	if(wirelen > MAX_DNS)
+	if(wirelen > MAX_DNS) // (RFC 6891)
 		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_KILL);
 
 	// TODO: throttling to something like 200 calls per second
@@ -376,8 +382,11 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		data->reply = cmd_redis(data->cache, "GET dns-cache-%s", data->query);
 		if(data->reply->len) { // it exists in cache, return that
 
-			// a bit dangerous, but veeery fast: working directly on the wire packet
+			if(data->debug)
+				func("found in cache wire packet of %u bytes", data->reply->len);
 
+
+			// a bit dangerous, but veeery fast: working directly on the wire packet
 			// copy message ID (first 16 bits)
 			data->reply->str[0] = wire[0];
 			data->reply->str[1] = wire[1];
@@ -428,12 +437,29 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	uint8_t *wire;
 	size_t wirelen;
 
+	ldns_pkt *packet = NULL;
+	ldns_rr_list *answers;
+	ldns_rr      *answer;
+	size_t        answers_count;
+
+
 	data = dcplugin_get_user_data(dcplugin);
-	if(data->debug)
-		func("%s (caching in post filter)\n", data->query);
-	if(data->cache) {
-		wire = dcplugin_get_wire_data(dcp_packet);
-		wirelen = dcplugin_get_wire_data_len(dcp_packet);
+	wire = dcplugin_get_wire_data(dcp_packet);
+	wirelen = dcplugin_get_wire_data_len(dcp_packet);
+
+	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
+		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+
+	// just cache if return packet contains an answer
+	answers = ldns_pkt_answer(packet);
+	answers_count = ldns_rr_list_rr_count(answers);
+	if(answers_count && data->cache) {
+
+		if(data->debug) {
+			func("-- caching reply for: %s", data->query);
+			ldns_pkt_print(stderr, packet);
+			func("-- \n");
+		}
 
 		// check if the query is cached
 		func("SETEX dns-cache-%s %u (wire of %u bytes)",
@@ -441,8 +467,9 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 		data->reply = redisCommand(data->cache, "SETEX dns-cache-%s %u %b",
 		                           data->query, CACHE_EXPIRY, wire, wirelen);
 		okredis(data->cache, data->reply);
-		if(data->reply) freeReplyObject(data->reply);
 	}
+	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
+
 
 #if 0
 	// test print out ip from packet
@@ -465,13 +492,11 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 			if ((answer_str = ldns_rdf2str(ldns_rr_a_address(answer))) == NULL) {
 				return DCP_SYNC_FILTER_RESULT_FATAL;
 			}
-			fprintf(stderr,"ip: %s\n", answer_str);
+			func("ip: %s", answer_str);
 			free(answer_str);
 		}
 	}
 #endif
-
-	return DCP_SYNC_FILTER_RESULT_OK;
 
 
 }
@@ -520,7 +545,7 @@ uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, 
 	ldns_pkt_free(answer_pkt);
 
 	if (status != LDNS_STATUS_OK) {
-		fprintf(stderr,"Error in answer_to_question : %s\n",
+		err("Error in answer_to_question : %s",
 		        ldns_get_errorstr_by_id(status));
 		if(outbuf) LDNS_FREE(outbuf);
 		outbuf = NULL; // NULL on error
@@ -543,10 +568,10 @@ int publish_query(plugin_data_t *data) {
 
 	// domain hit count
 	extracted = extract_domain(data);
-	data->reply = cmd_redis(data->redis, "INCR dns_query_%s", extracted);
+	data->reply = cmd_redis(data->redis, "INCR dns-query-%s", extracted);
 	val = data->reply->integer;
 	freeReplyObject(data->reply);
-	data->reply = cmd_redis(data->redis, "EXPIRE dns_query_%s %u", extracted, DNS_HIT_EXPIRE); // DNS_HIT_EXPIRE
+	data->reply = cmd_redis(data->redis, "EXPIRE dns-query-%s %u", extracted, DNS_HIT_EXPIRE); // DNS_HIT_EXPIRE
 	freeReplyObject(data->reply);
 
 	// timestamp
