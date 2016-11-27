@@ -139,12 +139,12 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	if(!data->redis) return 1;
 	// TODO: check when redis is not connected and abort with an error
 
-	// TODO: maybe use libshardcache in place of redis for caching
-	data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
-	if(!data->cache) return 1;
+	// CACHING DISABLED
+	// data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
+	// if(!data->cache) return 1;
 
-	// save the cache connection to runtime db as logger
-	log_redis = data->cache;
+	// // save the cache connection to runtime db as logger
+	// log_redis = data->cache;
 
 	dcplugin_set_user_data(dcplugin, data);
 
@@ -433,6 +433,10 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginDNSPacket *dcp_packet) {
 
+	return DCP_SYNC_FILTER_RESULT_OK;
+
+#if 0
+
 	plugin_data_t *data;
 	uint8_t *wire;
 	size_t wirelen;
@@ -471,7 +475,6 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
 
 
-#if 0
 	// test print out ip from packet
 	{
 		ldns_rr_list *answers;
