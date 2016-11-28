@@ -57,6 +57,7 @@ typedef struct {
 	char ownip4[NI_MAXHOST];
 	char netmask_ip4[NI_MAXHOST];
 	char network_ip4[NI_MAXHOST];
+
 	struct in_addr ownip4_ia;
 	struct in_addr netmask_ip4_ia;
 	struct in_addr network_ip4_ia;

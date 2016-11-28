@@ -93,7 +93,7 @@ _pendulum_update_changes() {
     if [[ ${#info} = 0 ]]; then
         act "new: ${obj[macaddr]} ${obj[hostname]:-${obj[ip4]}} :: ${obj[os]}"
         # no records found, this is a new one
-        
+
         sqlquery+="
 INSERT IGNORE into found (macaddr,ip4,iface,hostname,state,last,age)
 values('$obj[macaddr]','$obj[ip4]','$obj[iface]','$obj[hostname]','$obj[state]','$nownow','$nownow');"
@@ -104,7 +104,7 @@ values('$obj[macaddr]','$obj[ip4]','$obj[iface]','$obj[hostname]','$obj[state]',
     else
         sqlquery+="
 UPDATE found SET last = '$nownow' WHERE macaddr = '$obj[macaddr]';"
-    fi        
+    fi
 
     # check all changes on each property one by one
     for i in "${(f)$(print $info | sql_idx_parse $R/db/thing.idx)}"; do
@@ -139,7 +139,7 @@ UPDATE found SET last = '$nownow' WHERE macaddr = '$obj[macaddr]';"
                 # update in database
                 sqlquery+="
 UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
-            
+
             }
 
             # delete from object as done
@@ -149,7 +149,7 @@ UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
 
 
     # for _k in ${(k)obj}; do
-    #     act "analysis $_k = $obj[$_k]" 
+    #     act "analysis $_k = $obj[$_k]"
     # done
 
     # update all informations that are left in object
@@ -373,11 +373,11 @@ exec_next_cmd() {
 		*)
 			error "unknown action: $cmd"
 			;;
-	esac	 
+	esac
 
 	return 0
 }
-	
+
 ################
 # MAIN functions
 
@@ -409,11 +409,11 @@ case "$1" in
 		exec_next_cmd
 
 		unlock nextcmd $ncmd
-	
+
 		;;
 
 	lease)
-		# called by dhcp daemon when adding a new lease 
+		# called by dhcp daemon when adding a new lease
 		print "PUBLISH dhcp-lease-channel $*" | redis dynamic
 		# shift 1
 		return 0
@@ -426,12 +426,18 @@ case "$1" in
 		# 	return 1 }
 
 		nmapfile=$H/run/nmap_scan.xml
-		processedfile="$(mktemp)"
-		varfile="$(mktemp)"
-#TODO ? A better network mask management ?
- 		sudo nmap -v -F -sS -oX $nmapfile 192.168.0.0/24
-# $dowse_net
+		ztmp
+		processedfile=$ztmpfile
 
+		ztmp
+		varfile=$ztmpfile
+
+		notice "Starting nmap scap of $dowse_net"
+		act "results saved in $nmapfile"
+
+ 		sup nmap -vv -n -F -sS -oX $nmapfile $dowse_net
+
+		nmap-preprocess
 		nmap-parse
 
 		rm -f "${varfile}"
@@ -445,7 +451,7 @@ case "$1" in
 		[[ $? = 0 ]] || {
 			func "netscan already running"
 			return 1 }
-		
+
         # parse everything in this map
         obj=()
         pendulum_ip_neigh

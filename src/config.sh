@@ -79,6 +79,7 @@ execrules=(
 	dowse-to-mqtt  user
 	dowse-cmd-fifo user
 
+	nmap          root
 	dhcpd         root
     webui         root
     dnscrypt-proxy root
