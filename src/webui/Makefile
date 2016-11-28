@@ -3,7 +3,7 @@ INCLUDEOPTS=$(shell awk -F'=' -f ./tool/extract_include.awk conf/build.conf |tr 
 INCLUDEOPTS+=-I./src
 WEBUI_PROTOTYPE_H=src/webui_prototype.h
 
-all: cproto asset
+all: asset cproto
 	rm -f assets/*~
 	../kore/kore flavor prod
 	../kore/kore build

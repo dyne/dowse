@@ -1,10 +1,41 @@
+/*  Dowse - hiredis helpers
+ *
+ *  (c) Copyright 2016 Dyne.org foundation, Amsterdam
+ *  Written by Denis Roio aka jaromil <jaromil@dyne.org>
+ *
+ * This source code is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Public License as published
+ * by the Free Software Foundation; either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Please refer to the GNU Public License for more details.
+ *
+ * You should have received a copy of the GNU Public License along with
+ * this source code; if not, write to:
+ * Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "redis.h"
-#include "log.h"
+#include <dowse.h>
+
+int okredis(redisContext *r, redisReply *res) {
+	if(!res) {
+		err("redis error: %s", r->errstr);
+		return(0);
+	} else if( res->type == REDIS_REPLY_ERROR ) {
+		err("redis error: %s", res->str);
+		return(0);
+	} else {
+		return(1);
+	}
+}
 
 redisReply *cmd_redis(redisContext *redis, const char *format, ...) {
 	va_list args;
@@ -18,15 +49,10 @@ redisReply *cmd_redis(redisContext *redis, const char *format, ...) {
 	res = redisCommand(redis, command);
 	va_end(args);
 
-	if(!res) {
-		err("redis error: %s", redis->errstr);
-		return(NULL);
-	} else if( res->type == REDIS_REPLY_ERROR ) {
-		err("redis error: %s", res->str);
-		return(NULL);
-	} else {
-		return(res);
-	}
+	if( okredis(redis, res) )
+		return res;
+	else
+		return NULL;
 }
 
 redisContext *connect_redis(char *host, int port, int db) {
@@ -50,7 +76,7 @@ redisContext *connect_redis(char *host, int port, int db) {
 	reply = cmd_redis(rx, "SELECT %u", db);
 	// TODO: check if result is OK
 	// fprintf(stderr,"SELECT: %s\n", reply->str);
-	freeReplyObject(reply);
+	if(reply) freeReplyObject(reply);
 	return rx;
 }
 

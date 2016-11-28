@@ -6,7 +6,7 @@
 # cflags=-Wpointer-arith -Wsign-compare
 # cflags=-Wall -D_XOPEN_SOURCE
 
-cflags = -I.. -I../libdowse -I../libparse-datetime -I../kore/includes
+cflags = -I.. -I../libparse-datetime -I../kore/includes
 cflags = -I/usr/include/mariadb 
 ldflags = ../libparse-datetime/libparse-datetime.a -L../libdowse -l:libdowse.a
 ldflags = -lm -lssl -lcrypto -lmariadb -lhiredis

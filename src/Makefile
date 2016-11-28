@@ -2,7 +2,7 @@ DESTDIR ?=
 PREFIX ?= /usr/local/dowse
 
 CC = gcc
-CFLAGS = -Wall -fPIE -fPIC -pie -Os -Ilibdowse
+CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
 LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a
 
 all: base springs
@@ -22,7 +22,7 @@ libs:
 	make -C libdowse
 	make -C libparse-datetime
 
-base: libs config modprobe sup hiredis-lock
+base: config libs modprobe sup hiredis-lock
 	@make -C libparse-datetime
 	@./compile.sh dnscrypt-proxy
 	@./compile.sh dnscrypt_dowse.so
@@ -43,6 +43,9 @@ config:
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
+
+dowse-log: dowse-log.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 dowse-cmd-fifo: dowse-cmd-fifo.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)

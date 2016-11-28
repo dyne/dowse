@@ -30,9 +30,7 @@
 // libmosquitto
 #include "mosquitto/lib/mosquitto.h"
 
-#include "log.h"
-#include "redis.h"
-#include "database.h"
+#include <libdowse/dowse.h>
 
 // static char output[MAX_OUTPUT];
 static int quit = 0;
