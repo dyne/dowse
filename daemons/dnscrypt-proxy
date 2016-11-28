@@ -55,7 +55,6 @@ dnscrypt-proxy-conf() {
 dnscrypt-proxy-exec() {
 
 	args=""
-	[[ $* =~ cache ]] && args+=",cache"
 	[[ $* =~ debug ]] && args+=",debug"
 	[[ $* =~ offline ]] && args+=",offline"
 
@@ -63,16 +62,18 @@ dnscrypt-proxy-exec() {
 	# dnscrypt-roundrobin
 
 	# temporary hard-code dyne.org until roundrobin is fixed
-	dnscrypt_name="dyne.org"
+	dnscrypt_name=${DOWSE_DNS_PROXY:-dnscrypt.eu-nl}
 	#dnscrypt_ipaddr=198.199.70.248:5553
 	#dnscrypt_name=2.dnscrypt-cert.dyne.org
 	#dnscrypt_key=162F:051A:BACA:A042:A0C9:7769:91B4:BBA8:FE10:8F72:53CB:5077:A055:9BCF:AD39:73C5
 
 	func "Launching dnscrypt-proxy to listen on port 53"
+	act "dnscrypt proxy server: $dnscrypt_name"
 
     if [[ $DEBUG = 1 ]]; then
 		DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
 						DOWSE_LAN_ADDRESS_IP4=$address \
+						DOWSE_LAN_NETMASK_IP4=$netmask \
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
@@ -88,6 +89,7 @@ dnscrypt-proxy-exec() {
 		pid=$H/run/dnscrypt-proxy.pid
 		DOWSE_DOMAINLIST=$R/domain-list/data \
 						DOWSE_LAN_ADDRESS_IP4=$address \
+						DOWSE_LAN_NETMASK_IP4=$netmask \
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \

@@ -31,9 +31,7 @@
 // jemalloc
 #include <jemalloc/jemalloc.h>
 
-#include "log.h"
-#include "redis.h"
-#include "database.h"
+#include <libdowse/dowse.h>
 
 redisContext *redis = NULL;
 redisReply   *reply = NULL;

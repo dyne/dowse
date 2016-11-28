@@ -6,8 +6,8 @@
  */
 
 #include <webui.h>
-#include <redis.h>
-#include <database.h>
+
+#include <libdowse/dowse.h>
 
 #define CHAN "command-fifo-pipe"
 

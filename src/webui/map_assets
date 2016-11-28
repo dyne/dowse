@@ -23,7 +23,7 @@ cat<<EOF
 #include <kore.h>
 #include <assets.h>
 
-#include "hashmap.h"
+#include <libdowse/dowse.h>
 #include "assetmap.h"
 
 

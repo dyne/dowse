@@ -10,7 +10,7 @@ redis() {
 	cat | launch redis-cli -n $_db --raw
     [[ $? = 0 ]] && return 0
 
-	error "error sending commands via redis-cli"
+	print "ERROR sending commands via redis-cli"
 	return 1
 
 }
