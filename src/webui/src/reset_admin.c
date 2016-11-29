@@ -47,11 +47,28 @@ int reset_admin(struct http_request * req) {
     if (rv == _ADMIN_NOT_CONFIGURED_) {
         /* admin is not configured so take the ip from connection and grant it the admin privileges */
         char m[1024];
+
+        /* TODO CHANGE with mac address */
         snprintf(m,sizeof(m),
-                "UPDATE found SET admin='yes' WHERE %s == '%s'",
+                "UPDATE found SET admin='yes' WHERE %s = '%s'",
                 (strcmp(ipaddr_type,"ipv4")==0?"ip4":"ip6"),
                 ipaddr_value
         );
+
+        rv=sqlexecute(m,&attr);
+        if (rv==KORE_RESULT_ERROR) {
+            return show_generic_message_page(req,attr);
+        } else {
+            load_global_attributes();
+
+
+            /* HTML message to say new admin device */
+            http_response_header(req, "location", "/");
+            http_response(req, 302, NULL, 0);
+
+
+            return KORE_RESULT_OK;
+       }
 
 
     } else {
@@ -74,9 +91,9 @@ int reset_admin(struct http_request * req) {
         kore_free(html_rendered);
         attrfree(attr);
 
+        return (KORE_RESULT_OK);
     }
 
-    return (KORE_RESULT_OK);
 }
 
 int check_if_ip_admin_configured(attributes_set_t *ptr_attrl) {

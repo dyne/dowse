@@ -19,7 +19,6 @@ authentication auth_admin {
 	authentication_type request
 	authentication_validator	v_ip_valid	
 # from kore.io source code: Authentication types of "request" send their own HTTP responses. 
-#	authentication_uri /reset_admin
 
 }
 
@@ -48,6 +47,7 @@ domain * {
 	}
 
 	# Configure admin page
+	# Browse this you
 	static /reset_admin reset_admin
 	static /start_reset_procedure start_reset_procedure
 	static /configure_admin reset_admin

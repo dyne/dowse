@@ -16,7 +16,6 @@
 
 
 // used with kore_buf_(create/appendf/free)
-__WEBUI_EXTERN__ struct kore_buf *buf;
 
 __WEBUI_EXTERN__ char line[ml];
 __WEBUI_EXTERN__ char where_condition[ml];
