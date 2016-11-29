@@ -7,6 +7,7 @@ TMP=src/.tmp_file
 
 all: asset cproto
 	rm -f assets/*~
+	cp -f conf/webui.conf.dist conf/webui.conf
 	../kore/kore flavor prod
 	../kore/kore build
 echo:
