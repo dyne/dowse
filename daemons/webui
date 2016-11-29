@@ -23,7 +23,7 @@ webui-exec() {
 		hostname=$hostname \
 				domain=$lan \
 				address=$address \
-				launch  webui 
+				launch  webui $*
 		[[ $? = 0 ]] &&
 			savepid webui $H/run/webui.pid
     fi
