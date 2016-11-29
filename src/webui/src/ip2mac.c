@@ -54,6 +54,7 @@ int convert_from_ipv4(char *ipaddr_value, char**mac_addr) {
     struct arpreq areq;
     struct sockaddr_in *sin;
     struct in_addr ipaddr;
+    char buf[256];
 
     /* Get an internet domain socket. */
     if ((sockef_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
@@ -83,9 +84,13 @@ int convert_from_ipv4(char *ipaddr_value, char**mac_addr) {
         perror("-- Error: unable to make ARP request, error");
         return (1);
     }
+    struct sockaddr_in * p;
+    p=(struct sockaddr_in *) &(areq.arp_pa);
+
+    inet_ntop(AF_INET,&(p->sin_addr),buf,sizeof(buf));
 
     printf("%s (%s) -> %s\n", ipaddr_value,
-            inet_ntoa(&((struct sockaddr_in *) &areq.arp_pa)->sin_addr),
+            inet_ntoa(p->sin_addr),
             ethernet_mactoa(&areq.arp_ha));
     return 0;
 }
@@ -94,7 +99,7 @@ int convert_from_ipv6(char *ipaddr_value, char**mac_addr) {
     int s;
     struct arpreq areq;
     struct sockaddr_in6 *sin;
-    struct in_addr ipaddr;
+    struct in6_addr ipaddr;
 
     /* Get an internet domain socket. */
     if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
@@ -105,26 +110,32 @@ int convert_from_ipv6(char *ipaddr_value, char**mac_addr) {
     /* Make the ARP request. */
     memset(&areq, 0, sizeof(areq));
     sin = (struct sockaddr_in6 *) &areq.arp_pa;
-    sin->sin6__family = AF_INET6;
+    sin->sin6_family = AF_INET6;
 
-    if (inet_aton(ipaddr_value, &ipaddr) == 0) {
+    if (inet_pton(AF_INET6,ipaddr_value, &ipaddr) == 0) {
         fprintf(stderr, "-- Error: invalid numbers-and-dots IP address %s.\n",
                 ipaddr_value);
         return (1);
     }
 
-    sin->sin_addr = ipaddr;
+    sin->sin6_addr= ipaddr;
     sin = (struct sockaddr_in6 *) &areq.arp_ha;
-    sin->sin_family = ARPHRD_ETHER;
+    sin->sin6_family = ARPHRD_ETHER;
 
+    /* TODO definizione di device su cui è attestata webui */
     strncpy(areq.arp_dev, "eth0", 15);
 
     if (ioctl(s, SIOCGARP, (caddr_t) &areq) == -1) {
         perror("-- Error: unable to make ARP request, error");
         return (1);
     }
+    char buf[256];
+    struct sockaddr_in6 * p;
+    p=(struct sockaddr_in6 *) &(areq.arp_pa);
+    inet_ntop(AF_INET6,&(p->sin6_addr),buf,sizeof(buf));
+
     printf("%s (%s) -> %s\n", ipaddr_value,
-            inet_ntoa(&((struct sockaddr_in6 *) &areq.arp_pa)->sin_addr),
-            ethernet_mactoa(&areq.arp_ha));
+               buf,
+               ethernet_mactoa(&areq.arp_ha));
     return 0;
 }

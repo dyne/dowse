@@ -40,6 +40,9 @@ int serve_asset(struct http_request *req) {
 		free_assetmap(assetmap);
 		return(KORE_RESULT_OK);
 	}
+
+    return apply_template_and_return(req, global_attributes,asset_welcome_html,asset_len_welcome_html,200);
+	/*
 	struct kore_buf*out;
 	struct template_t tmpl;
 	out=kore_buf_alloc(0);
@@ -55,5 +58,5 @@ int serve_asset(struct http_request *req) {
 	kore_free(html_rendered);
 
 	return(KORE_RESULT_OK);
-
+	 */
 }

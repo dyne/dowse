@@ -14,6 +14,9 @@
 #include <stdio.h>
 #include <attributes_set.h>
 #include <template.h>
+#include <redis.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <libdowse/dowse.h>
 

@@ -24,16 +24,24 @@ inline void show_mysql_error(MYSQL *mysql,attributes_set_t *ptr_attrl) {
 }
 
 int show_generic_message_page(struct http_request *req, attributes_set_t error_messages_attribute_list){
+    return apply_template_and_return(
+            req,
+            error_messages_attribute_list,
+            asset_generic_message_list_html,
+            asset_len_generic_message_list_html,404);
+}
+
+int apply_template_and_return(struct http_request *req, attributes_set_t attribute_list,char*asset_template_html,int asset_len_html,int ret_value){
     template_t tmpl;
     struct kore_buf*out;
     int len;
     char*data;
     out=kore_buf_alloc(0);
 
-    template_load(asset_generic_message_list_html,asset_len_generic_message_list_html,&tmpl);
-    template_apply(&tmpl,error_messages_attribute_list,out);
+    template_load(asset_template_html,asset_len_html,&tmpl);
+    template_apply(&tmpl,attribute_list,out);
 
     data=kore_buf_release(out,&len);
-    http_response(req,404,data,len);
+    http_response(req,ret_value,data,len);
     return KORE_RESULT_OK;
 }
