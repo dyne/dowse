@@ -11,8 +11,23 @@ sql_create_database() {
 	ckreq || return $?
 	act "Debug"
         print "CREATE DATABASE IF NOT EXISTS $db[$name];" | $sql 2>/dev/null
-	# TODO: better check of error code if needed
+	# TODO: better check of error code if needed	
+}
+
+# Set the root password 
+sql_set_root_password() {
+	fn sql_set_root_password $*
+	password="$1"
+	setted_up="$2"
+	req=(password setted_up sql_wp)
+	ckreq || return $?
+	act " Set the root password "
 	
+	[[ -r "$setted_up" ]] || {
+            print "update mysql.user set password=password('"$password"') where user = 'root';flush privileges;" | $sql_wp 2>/dev/null
+	    touch $setted_up ;
+	}
+	# TODO: better check of error code if needed	
 }
 
 # takes a table description from stdin

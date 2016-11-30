@@ -95,16 +95,21 @@ mysqld-exec() {
 									  --force \
 									  --basedir=$R/mysql \
 									  --datadir=$H/run/mysql
+		
 	}
 
 	launch mysqld --defaults-file="$conf" &!
 
 	savepid mysqld $H/run/mysqld.pid
 
+	# set root password
+	sql_set_root_password 'p4ssw0rd' $H/run/mysqld.setted_password
+	
 	# make sure the current database exists
 	sql_create_database things
+	
 	# cut used to parse out what follows semicolon
-    cut -d\; -f1 $thingidx |
+	cut -d\; -f1 $thingidx |
         sql_create_table found | $sql $db[things] 2>/dev/null
 }
 
