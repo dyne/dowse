@@ -47,7 +47,7 @@ ip4      text                    ; /address[@addrtype=\"ipv4\"]/@addr
 ip6      text                    ; /address[@addrtype=\"ipv6\"]/@addr
 hostname text                    ; /hostnames/hostname[0]/@name
 iface    text
-state    text
+state    varchar(16) default "on"
 os       text                    ; /os/osmatch[1]/@name
 dhcp     text
 gateway  text
