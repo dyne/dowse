@@ -5,9 +5,12 @@ INCLUDEOPTS+=-I/usr/include
 WEBUI_PROTOTYPE_H=src/webui_prototype.h
 TMP=src/.tmp_file
 
+#--- Keep in mind . When the dowse building is executed the webui.conf.dist file is copied adding some parameter ...
+#--- so you _CANT_ use "make all" after "make debug" but you need to execute ./compile.sh webui from ../src parent directory.
+
 all: asset cproto
 	rm -f assets/*~
-	cp -f conf/webui.conf.dist conf/webui.conf
+#	cp -f conf/webui.conf.dist conf/webui.conf
 	../kore/kore flavor prod
 	../kore/kore build
 echo:
