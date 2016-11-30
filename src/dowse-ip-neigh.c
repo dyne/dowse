@@ -1,3 +1,24 @@
+/*  Dowse - IP neigh parser
+ *
+ *  (c) Copyright 2016 Dyne.org foundation, Amsterdam
+ *  Written by Nicola Rossi <nicola@dyne.org>
+ *
+ * This source code is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Public License as published
+ * by the Free Software Foundation; either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Please refer to the GNU Public License for more details.
+ *
+ * You should have received a copy of the GNU Public License along with
+ * this source code; if not, write to:
+ * Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
+
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,11 +38,6 @@ char probes_str[128];
 int n_fields,i;
 
 int is_deleted,is_missing,is_router,is_proxy;
-
-int reset_fields_value(){
-  is_deleted=0;
-  is_missing=0;
-}
 
 void parse_constant(char**fields,char*value,int*ptr_idx,int*out_value){
   if (strcmp(fields[*ptr_idx],value)==0) {
@@ -71,7 +87,7 @@ IS_##S = (strstr(fields[n_fields-1], #S )!=0);\
 
 
 
-int main(){
+int main() {
 
   for (;!feof(stdin);fgets(line,sizeof(line),stdin)) {
     #ifdef _DEBUG
@@ -85,7 +101,6 @@ int main(){
     }
     fields[n_fields]=field;
 
-    reset_fields_value();
     #ifdef _DEBUG
     for (i=0;i<n_fields;i++) {
       fprintf(stderr,"%d\t[%s]\n",i,fields[i]);
@@ -121,8 +136,11 @@ int main(){
     parse_state(PERMANENT);
 
     /* TODO Generate the SQL code */
-    fprintf(stderr,"MAC [%s]\tIP4 [%s]\tIP6 [%s]\tState:[%s] [%s]\n",macaddr,ip4,ip6,(IS_REACHABLE?"reachable":""),(IS_FAILED?"failed":""));
+    fprintf(stderr,"MAC [%s]\tIP4 [%s]\tIP6 [%s]\tState:[%s] [%s]\n",
+            macaddr,ip4,ip6,(IS_REACHABLE?"reachable":""),(IS_FAILED?"failed":""));
 
+    // free all allocated memory
+    for(i=0;i<n_fields;i++) free( fields[i] );
   }
 
 }
