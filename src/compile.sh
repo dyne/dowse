@@ -112,11 +112,9 @@ EOF
 cflags = -DDB_SOCK_DIRECTORY="$HOME/.dowse/run/mysql/mysqld.sock"
 EOF
         cat conf/build.conf.dist >> conf/build.conf
-		act "map all the assets"
-		./map_assets > src/assetmap.c
 
-		act "launch the actual build"
-        $R/src/kore/kore build
+	act "launch the actual build"
+	make all
 
         install -s -p webui $R/build/bin
         popd
