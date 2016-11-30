@@ -171,62 +171,8 @@ UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
 pendulum_ip_neigh() {
     fn pendulum_ip_neigh $*
 
-    for o in ${(f)"$(launch ip neigh)"}; do
-        func "$o"
+	ip neigh | dowse-ip-neigh
 
-
-        # not interesting if no mac found (REVIEW)
-        obj[macaddr]="${o[(w)5]}"
-        [[ "$obj[mac]" = "FAILED" ]] && continue
-
-        # get the ip address
-        if [[ "$o{[(w)1]}" =~ "::" ]]; then
-            obj[ip6]="${o[(w)1]}"
-        else
-            obj[ip4]="${o[(w)1]}"
-        fi
-
-        # we keep track only of ipv4 on the LAN for now
-        [[ "${obj[ip4]}" = "" ]] && continue
-
-        obj[iface]="${o[(w)3]}"
-
-        obj[state]="${o[(w)6]}"
-
-        _pendulum_resolve_hostname
-
-        _pendulum_update_changes
-
-    done
-}
-
-pendulum_arp_scan() {
-    fn pendulum_arp_scan $*
-
-    ###### Active ARP scan
-    ## using netdiscover, retrieves OS from MAC fingerprints
-    for _dev in ${(k)net_ip4_addr}; do
-        _addr=${net_ip4_addr[$_dev]}
-        _net=`pendulum_ip_to_network $_addr`
-        func "arp scan $_net ($_dev)"
-        for t in "${(f)$(launch netdiscover -i $_dev -r $_net -P -N)}"; do
-            [[ "$t" = "" ]] && continue
-            [[ "$t" =~ "^--" ]] && continue
-            obj[macaddr]=${t[(w)2]}
-            obj[ip4]=${t[(w)1]}
-            obj[iface]=$_dev
-            obj[last]=$nownow
-            obj[os]=$(print - $t | awk '
-{
-  for(c=5;c<=NF;c++) {
-    printf("%s_", $c)
-  }
-}')
-            _pendulum_resolve_hostname
-
-            _pendulum_update_changes
-        done
-    done
 }
 
 watchdog_daemons() {
@@ -435,7 +381,7 @@ case "$1" in
 		notice "Starting nmap scap of $dowse_net"
 		act "results saved in $nmapfile"
 
- 		sup nmap -vv -n -F -sS -oX $nmapfile $dowse_net
+ 		sup nmap -n -F -sS -oX $nmapfile $dowse_net
 
 		nmap-preprocess
 		nmap-parse
