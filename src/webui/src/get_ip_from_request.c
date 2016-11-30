@@ -16,23 +16,23 @@ int get_ip_from_request(struct http_request *req,
     char _ip[64];
     memset(_ip,0,sizeof(_ip));
     const char *s;
-#define S 6
-    (*ipaddr_type)=kore_malloc(S);
+#define _SIZE 16
+    (*ipaddr_type)=kore_malloc(_SIZE);
 
     if (req->owner->addrtype==AF_INET) {
         s=inet_ntop(req->owner->addrtype,
                 &(req->owner->addr.ipv4.sin_addr),
                 _ip,sizeof(_ip)
         );
-        snprintf(*ipaddr_type,S,"ipv4");
+        snprintf(*ipaddr_type,_SIZE,"ipv4");
     } else {
         s=inet_ntop(req->owner->addrtype,
                 &(req->owner->addr.ipv6.sin6_addr),
                 _ip,sizeof(_ip)
         );
-        snprintf(*ipaddr_type,S,"ipv6");
+        snprintf(*ipaddr_type,_SIZE,"ipv6");
     }
-    (*ipaddr_value)=kore_malloc(strlen(_ip));
+    (*ipaddr_value)=kore_malloc(strlen(_ip)+1);
     sprintf( *ipaddr_value,"%s",_ip);
 
     kore_log(LOG_DEBUG,"%s connection from %s",__where_i_am__,s);

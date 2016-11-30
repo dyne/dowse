@@ -9,7 +9,7 @@
 #include <mysql.h>
 #include <webui.h>
 
-
+/* execute a SQL statement and return error message on ptr_attrl */
 int sqlexecute(char*command,attributes_set_t *ptr_attrl){
   MYSQL *db ;
 
@@ -34,5 +34,5 @@ int sqlexecute(char*command,attributes_set_t *ptr_attrl){
   WEBUI_DEBUG;
   mysql_close(db);
 
-  return 0;
+  return KORE_RESULT_OK;
 }

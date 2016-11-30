@@ -56,7 +56,8 @@ vars+=(last_notice last_act last_func)
 vars+=(root sql)
 arrs+=(mods)
 # use mysql
-sql=(launch mysql --defaults-file=$H/run/mysqld.conf -u root -pp4ssw0rd -A)
+sql_wp=(launch mysql --defaults-file=$H/run/mysqld.conf -A -u root)
+sql=(launch mysql --defaults-file=$H/run/mysqld.conf -A -u root -pp4ssw0rd)
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
@@ -303,8 +304,8 @@ EOF
         # start peerguardian (must be at end, after any other iptables setting)
         start pgld
 
-	# start the sql database
-	# start mysqld
+    # start the sql database
+    start mysqld
 
     # start web interface
     start webui

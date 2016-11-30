@@ -16,11 +16,15 @@
 
 
 // used with kore_buf_(create/appendf/free)
-__WEBUI_EXTERN__ struct kore_buf *buf;
 
 __WEBUI_EXTERN__ char line[ml];
 __WEBUI_EXTERN__ char where_condition[ml];
 __WEBUI_EXTERN__ char *macaddr;
-__WEBUI_EXTERN__ template_t tmpl;
+__WEBUI_EXTERN__ struct template_t tmpl;
+__WEBUI_EXTERN__  attributes_set_t global_attributes;
+
+/* To wrote global_messages we wrote on global_attributes set
+ * __WEBUI_EXTERN__ attributes_set_t global_messages;
+ * */
 
 #endif /* WEBUI_COMMON_VAR_H_ */

@@ -11,3 +11,4 @@ webui
 core
 .settings/
 conf/webui.conf
+reset_admin_file
