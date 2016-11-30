@@ -1,52 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Welcome to Dowse: a digital rod for your local area network</title>
+<title>Welcome to Dowse: a digital rod for your local area
+	network</title>
 
-    <link rel="stylesheet" href="/?o=bootstrap.min.css">
+<link rel="stylesheet" href="/?o=bootstrap.min.css">
 
-  </head>
-  <body>
+</head>
+<body>
 
-    <div class="container">
-
-	  <div class="row">
-		<div class="span5 pull-left">
-          <img src="/?o=dowse-logo.png" alt="dowse logo">
-
-		</div>
-		<div class="span5" style="padding-top:4em">
-
-          <div class="btn-group-vertical btn-group-lg" role="group" aria-label="actions">
-
-			<!-- <div type="button" class="btn btn-default" aria-label="things"> -->
-			<!--   <a href="/things/all"> -->
-			<!-- 	Things found -->
-			<!--   </a> -->
-			<!-- </div> -->
-
-			<div type="button" class="btn btn-default" aria-label="statistics">
-			  <a href="http://dowse.it:29999/">
-				Statistics
-			  </a>
+	<div class="container">
+		<!--TMPL_IF name="message_loop"-->
+		<div class="panel-body">
+			<div class="panel panel-error">
+				<div class="panel-heading">Something was gone wrong.</div>
+				<div class="panel-body">
+					<!--TMPL_LOOP name="message_loop"-->
+					<div class="alert alert-<!--TMPL_VAR name="level"-->
+						"> <strong class="text-capitalize">
+							<!--TMPL_VAR name="level"-->
+						</strong>
+						<p>
+							<!--TMPL_VAR name="text"-->
+						</p>
+					</div>
+					<!--/TMPL_LOOP-->
+				</div>
 			</div>
-
-          </div>
 		</div>
-	  </div>
+		<!--TMPL_ELSE -->
 
-	  <div class="row">
-		<hr>
-		<h3>Testing playground:<h3>
+		<div class="row">
+			<div class="span5 pull-left">
+				<img src="/?o=dowse-logo.png" alt="dowse logo">
+			</div>
+			<div class="span5" style="padding-top: 4em">
+				<div class="btn-group-vertical btn-group-lg" role="group"
+					aria-label="actions">
+					<!-- <div type="button" class="btn btn-default" aria-label="things"> -->
+					<!--   <a href="/things/all"> -->
+					<!--  Things found -->
+					<!--   </a> -->
+					<!-- </div> -->
+					<div type="button" class="btn btn-default" aria-label="statistics">
+						<a href="http://dowse.it:29999/">Statistics</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<hr>
+			<h3>Testing playground:</h3>
 			<ul>
-			  <li><a href="/example/websocket.html">Websocket example</li>
+				<li><a href="/example/websocket.html">Websocket example</a></li>
 			</ul>
-	  </div>
+		</div>
+		<div class="row">
+			<hr>
+			<h3>Show and manage "Things" detected on your network:</h3>
+			<ul>
+				<li><a href="/things">Things</a></li>
+			</ul>
+		</div>
+		<!--TMPL_IF name="admin_device"-->
+		<div class="row">
+			<hr>
+			<h3>The admin device(s) configured is/are</h3>
+			<table class="table table-striped">
+				<thead>
+					<td>MacAddr</td>
+					<td>Ip4</td>
+					<td>Ip6</td>
+					<td>Vendor</td>
+				</thead>
+				<tbody>
+					<!--TMPL_LOOP name="admin_device"-->
+					<tr>
+						<td>
+							<!--TMPL_VAR name="macaddr"-->
+						</td>
+						<td>
+							<!--TMPL_VAR name="ip4"-->
+						</td>
+						<td>
+							<!--TMPL_VAR name="ip6"-->
+						</td>
+						<td>
+							<!--TMPL_VAR name="vendor"-->
+						</td>
+					</tr>
+					<!--/TMPL_LOOP-->
+				</tbody>
+			</table>
+			<ul>
+				<li><a href="/reset_admin">Reset admin device</a></li>
+			</ul>
+		</div>
+		<!--TMPL_ELSE-->
+		<div class="row">
+			<hr>
+			<h3>Your admin-device is not configured</h3>
+			<ul>
+				<li><a href="/test_admin">...configure It now</a></li>
+			</ul>
+		</div>
+		<!--/TMPL_IF-->
+		<!--/TMPL_IF -->
 
-      </div>
-  </body>
+	</div>
+</body>
 </html>

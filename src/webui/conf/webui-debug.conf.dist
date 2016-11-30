@@ -19,7 +19,6 @@ authentication auth_admin {
 	authentication_type request
 	authentication_validator	v_ip_valid	
 # from kore.io source code: Authentication types of "request" send their own HTTP responses. 
-#	authentication_uri /configure_admin
 
 }
 
@@ -42,14 +41,17 @@ domain * {
 	}
 
 	# dynamic pages
-	static	   /things/all      things_list
-    static     /things          thing_show
+	static     /things          thing_show
 	params get /things {
 		validate macaddr v_macaddr			
 	}
 
 	# Configure admin page
-	static /configure_admin configure_admin
+	# Browse this you
+	static /reset_admin reset_admin
+	static /start_reset_procedure start_reset_procedure
+	static /configure_admin reset_admin
+	
 	
 	# Test Admin authentication
 	static /test_admin test_admin auth_admin

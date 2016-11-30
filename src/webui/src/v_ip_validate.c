@@ -8,11 +8,6 @@
 #include <webui.h>
 
 
-#define _IP_IS_ADMIN_ (1)
-#define _ADMIN_NOT_CONFIGURED_ (0)
-#define _IP_IS_NOT_ADMIN_ (-1)
-
-
 int v_ip_validate(struct http_request * req,char*data) {
     /*
      * data in questo caso non è usato ma deve essere passato perchè i validatori
@@ -31,7 +26,6 @@ int v_ip_validate(struct http_request * req,char*data) {
 
     int rv=_check_if_ip_is_admin(ipaddr_type,ipaddr_value,ptr_attrl);
 
-    WEBUI_DEBUG;
     if (rv==_IP_IS_ADMIN_) return KORE_RESULT_OK;
 
     /*--- ... nel DB non è presente un valore di admin e l'IP può essere registrato come admin. */
@@ -39,11 +33,11 @@ int v_ip_validate(struct http_request * req,char*data) {
 
     /* from kore.io source code: Authentication types of "request" send their own HTTP responses. */
 
-    http_response_header(req, "location", "/configure_admin");
+    http_response_header(req, "location", "/reset_admin");
     http_response(req, 302, NULL, 0);
 
-    free(ipaddr_type);
-    free(ipaddr_value);
+    kore_free(ipaddr_type);
+    kore_free(ipaddr_value);
 
     WEBUI_DEBUG;
     return (KORE_RESULT_ERROR);

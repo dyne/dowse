@@ -1,10 +1,4 @@
-#include <kore.h>
-#include <http.h>
-
-#include <execinfo.h>
-
-#include <libdowse/dowse.h>
-#include "assetmap.h"
+#include <webui.h>
 
 int free_assetmap_f(any_t arg, any_t element) {
 	kore_free(element);
@@ -47,8 +41,22 @@ int serve_asset(struct http_request *req) {
 		return(KORE_RESULT_OK);
 	}
 
-	http_response_header(req, "content-type", "text/html");
-	http_response(req, 200, asset_welcome_html, asset_len_welcome_html);
-	return(KORE_RESULT_OK);
+    return apply_template_and_return(req, global_attributes,asset_welcome_html,asset_len_welcome_html,200);
+	/*
+	struct kore_buf*out;
+	struct template_t tmpl;
+	out=kore_buf_alloc(0);
+	template_load(asset_welcome_html,asset_len_welcome_html,&tmpl);
+	template_apply(&tmpl,global_attributes,out);
 
+	char*html_rendered;int len;
+	html_rendered=kore_buf_release(out,&len);
+
+	http_response_header(req, "content-type", "text/html");
+	http_response(req, 200, html_rendered,len);
+
+	kore_free(html_rendered);
+
+	return(KORE_RESULT_OK);
+	 */
 }
