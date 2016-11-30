@@ -303,8 +303,8 @@ EOF
         # start peerguardian (must be at end, after any other iptables setting)
         start pgld
 
-	# start the sql database
-	# start mysqld
+    # start the sql database
+    start mysqld
 
     # start web interface
     start webui
