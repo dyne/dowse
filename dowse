@@ -327,7 +327,7 @@ dowse-stop() {
 
 	stop seccrond
 
-	stop mosqitto
+	stop mosquitto
 
     stop webui
 
