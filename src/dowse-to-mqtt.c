@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <time.h>
 #include <sys/types.h>
 
 // libmosquitto
@@ -54,7 +55,7 @@ void ctrlc(int sig) {
 int main(int argc, char **argv) {
     // settings for
     char *channel  = "dns-query-channel";
-    char id[25] = "this_should_be_randomized"; //BUGBUG
+    char id[25];
     const char *host;
     int port    = 1883;
     int keepalive = 60;
@@ -90,6 +91,8 @@ int main(int argc, char **argv) {
     redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 
     mosquitto_lib_init();
+    srand(time(NULL));
+    snprintf(id,24,"%u",rand());
     mosq = mosquitto_new(id, true, NULL);
 
 
@@ -105,7 +108,7 @@ int main(int argc, char **argv) {
 	    mosquitto_lib_cleanup();
 	    return(1);
     } else {
-	    err("connected to mosquitto server %s on port %u", host, port);
+	    notice("connected to mosquitto server %s on port %u", host, port);
     }
 
     reply = cmd_redis(redis,"SUBSCRIBE dns-query-channel");
