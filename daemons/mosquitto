@@ -59,6 +59,8 @@ mosquitto-exec() {
 
 	savepid mosquitto $H/run/mosquitto.pid
 
+	sleep 1
+
 	act "opening spring: dowse-to-mqtt"
 	launch  dowse-to-mqtt -p $H/run/dowse-to-mqtt.pid localhost &!
 	savepid dowse-to-mqtt $H/run/dowse-to-mqtt.pid

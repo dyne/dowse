@@ -65,7 +65,7 @@ redisContext *connect_redis(char *host, int port, int db) {
 
 	if (rx == NULL || rx->err) {
 		if (rx) {
-			err("Connection error: %s", rx->errstr);
+			err("Redis connection error: %s", rx->errstr);
 			redisFree(rx);
 			return NULL;
 		} else {
