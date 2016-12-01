@@ -4,3 +4,6 @@
 [submodule "src/kore"]
 	path = src/kore
 	url = https://github.com/jorisvink/kore
+[submodule "src/libwebsockets"]
+	path = src/libwebsockets
+	url = https://github.com/warmcat/libwebsockets.git
