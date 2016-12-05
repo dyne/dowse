@@ -20,7 +20,7 @@ void kore_preload() {
     }
     WEBUI_DEBUG
     char p[256];
-    char *H=getenv(H);
+    char *H=getenv("H");
     if (H) {
         sprintf(p,"%s/run/webui.pid",H);
     } else {
