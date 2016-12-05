@@ -18,15 +18,7 @@ void kore_preload() {
     if (rv==KORE_RESULT_ERROR) {
         /* La welcome page gestira' gli errori del kore_preload() */
     }
-    WEBUI_DEBUG
-    char p[256];
-    char *H=getenv("H");
-    if (H) {
-        sprintf(p,"%s/run/webui.pid",H);
-    } else {
-        sprintf(p,"%s/.dowse/run/webui.pid",getenv("HOME"));
-    }
-    save_running_pid(p);
+
 }
 
 int check_if_reset_admin_device(){
@@ -52,14 +44,3 @@ int reset_admin_device(){
     return rv;
 }
 
-int save_running_pid(char*path){
-
-    FILE *fp;
-    fp=fopen(path,"w");
-    if (!fp) {
-        kore_log(LOG_ERR,"Error on opening [%s] : %s",path,strerror(errno));
-        return -1;
-    }
-    fprintf(fp,"%d",getpid());
-    fclose(fp);
-}
