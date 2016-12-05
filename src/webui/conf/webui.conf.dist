@@ -1,5 +1,4 @@
 bind		0 80
-pidfile     webui.pid
 
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
