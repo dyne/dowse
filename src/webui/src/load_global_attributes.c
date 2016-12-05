@@ -24,10 +24,14 @@
 
 int load_global_attributes() {
     int rv;
+
+    WEBUI_DEBUG
     /**/
     if (check_if_reset_admin_device()) {
+        WEBUI_DEBUG
         rv=reset_admin_device();
     } else {
+        WEBUI_DEBUG
         rv = sql_select_into_attributes( "SELECT macaddr,ip4,ip6 FROM found WHERE admin='yes'",
             "admin_device",
             &global_attributes);

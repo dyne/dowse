@@ -1,5 +1,6 @@
 #include <kore.h>
 #include <http.h>
+#include <time.h>
 #include <attributes_set.h>
 
 #ifndef _WEBUI_DEBUG_H
@@ -16,11 +17,12 @@ static uint8_t __buf_where_i_am__[256];
 #endif
 
 
+
 #define __WEBUI_DEBUG__
 #ifndef __WEBUI_DEBUG__
 #define WEBUI_DEBUG {}
 #else
-#define WEBUI_DEBUG {fprintf(stderr,"WEBUI_DEBUG: %s\n",__where_i_am__);}
+#define WEBUI_DEBUG {fprintf(stderr,"WEBUI_DEBUG: %ld : %s\n",time(NULL),__where_i_am__);}
 #endif
 
 /* Define mapping with bootstap alert level */
