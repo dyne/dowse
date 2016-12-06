@@ -83,6 +83,7 @@ clean:
 	rm -f database.h execrules.h
 	rm -f modprobe dowse-to-osc dowse-to-gource dowse-to-mqtt
 	rm -f hiredis-lock
+	rm -f netdata/web/version.txt
 	make -C dhcp                 clean
 	make -C sup                  clean
 	make -C dnscrypt-proxy       clean
