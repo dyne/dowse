@@ -1,68 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title><!--TMPL_VAR name="title"--></title>
-    <link rel="stylesheet" href="/?o=bootstrap.min.css">
-  </head>
-  <body>
-    <div class="container">
-	<!--TMPL_IF name="message_loop"-->	
-        <div class="panel-body">
-	  <div class="panel panel-error">
-	    <div class="panel-heading">
-	      something was gone wrong.
-	    </div>
-	    <div class="panel-body">
-		<!--TMPL_LOOP name="message_loop"-->
-		<div class="alert alert-<!--TMPL_VAR name="level"-->">
-		  <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong><p><!--TMPL_VAR name="text"--></p>
-		</div>
-		  <!--/TMPL_LOOP-->
-	    </div>
-	  </div>
-	</div>
-	<!--TMPL_ELSE -->
-      <div class="panel panel-default">
-        <div class="panel-heading"> <!--TMPL_VAR name="title"--></div>
-        <div class="panel-body">
-          <p>Show all info gathered </p>
-	  <table class="table table-striped" >
-            <thead>
-              <td>Hostname</td><td>Last seen</td><td>First seen</td><td>Notes</td><td>os</td><td>Ip4</td>
-	      <td>macaddr</td><td>Ip6</td><td>iface</td>
-	      <td>State</td>
-	      <td>Vendor</td>
-            </thead>
-            <tbody>
-            </tbody>
-	    <!--TMPL_LOOP name="things"-->
-	    <tr><td><!--TMPL_VAR name="hostname"--></td>
-	    <td><!--TMPL_VAR name="last"--></td><td><!--TMPL_VAR name="age"--></td><td><!--TMPL_VAR name="notes"--></td><td><!--TMPL_VAR name="os"--></td><td><!--TMPL_VAR name="ip4"--></td><td><!--TMPL_VAR name="macaddr"--></td><td><!--TMPL_VAR name="ip6"--></td><td><!--TMPL_VAR name="iface"--></td>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE-edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-	      <!--TMPL_IF name="state" value="on"--> <!-- If we recognize the state we print it otherwise we print na_state.png -->
-	      <td>		
-		    <a role="button"  class="btn btn-success" href='/cmd?op=off&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-		      <img src='/?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state"/>
-		    </a>
-	      </td>
-	      <!--TMPL_ELSIF name="state" value="off"-->
-	      <td>
-		    <a role="button"  class="btn btn-danger" href='/cmd?op=on&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-		      <img src='/?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
-		    </a>
-	      </td>
-	      <!--TMPL_ELSE -->
-	      <td><img src="/?o=na_state-16x16.png"></img></td>
-	      <!--/TMPL_IF-->
-	      <td><!--TMPL_VAR name="vendor"--></td>
-	    </tr>
-	    <!--/TMPL_LOOP--> 
-	    
-          </table>
-	</div>
+  <title><!--TMPL_VAR name="title"--></title>
+
+  <link rel="stylesheet" href="/?o=bootstrap.min.css">
+  <link rel="stylesheet" href="/?o=bootstrap-theme.min.css">
+</head>
+<body>
+  <nav class="navbar navbar-inverse">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Dowse WebUI</a>
       </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="/?o=welcome.html">index</a></li>
+          <li class="active"><a href="/?o=things_list.html">things</a></li>
+          <li><a href="http://dowse.it:29999">netdata</a></li>
+        </ul>
       </div>
-    <!--/TMPL_IF-->	  
-  </body>
+    </div>
+  </nav>
+
+  <div class="container">
+  <!--TMPL_IF name="message_loop"-->
+    <div class="panel-body">
+     <div class="panel panel-error">
+       <div class="panel-heading">
+          something has gone wrong.
+        </div>
+        <div class="panel-body">
+        <!--TMPL_LOOP name="message_loop"-->
+        <div class="alert alert-<!--TMPL_VAR name="level"-->">
+          <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+          <p><!--TMPL_VAR name="text"--></p>
+        </div>
+        <!--/TMPL_LOOP-->
+        </div>
+      </div>
+    </div>
+  <!--TMPL_ELSE -->
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <!--TMPL_VAR name="title"-->
+      </div>
+      <div class="panel-body">
+        <p>Show all info gathered </p>
+        <table class="table table-striped">
+          <thead>
+            <td>Hostname</td>
+            <td>Last seen</td>
+            <td>First seen</td>
+            <td>Notes</td>
+            <td>OS</td>
+            <td>IPv4</td>
+            <td>IPv6</td>
+            <td>MAC Address</td>
+            <td>Interface</td>
+            <td>State</td>
+            <td>Vendor</td>
+          </thead>
+          <tbody>
+          </tbody>
+          <!--TMPL_LOOP name="things"-->
+          <tr>
+            <td><!--TMPL_VAR name="hostname"--></td>
+            <td><!--TMPL_VAR name="last"--></td>
+            <td><!--TMPL_VAR name="age"--></td>
+            <td><!--TMPL_VAR name="notes"--></td>
+            <td><!--TMPL_VAR name="os"--></td>
+            <td><!--TMPL_VAR name="ip4"--></td>
+            <td><!--TMPL_VAR name="ip6"--></td>
+            <td><!--TMPL_VAR name="macaddr"--></td>
+            <td><!--TMPL_VAR name="iface"--></td>
+            <!--TMPL_IF name="state" value="on"--> <!-- If we recognize the state we print it, otherwise we print na_state.png -->
+            <td>
+              <a role="button"  class="btn btn-success" href='/cmd?op=off&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+                <img src='/?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state">
+              </a>
+            </td>
+            <!--TMPL_ELSIF name="state" value="off"-->
+            <td>
+              <a role="button"  class="btn btn-danger" href='/cmd?op=on&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+                <img src='/?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
+              </a>
+            </td>
+            <!--TMPL_ELSE -->
+            <td><img src="/?o=na_state-16x16.png"></img></td>
+            <!--/TMPL_IF-->
+            <td><!--TMPL_VAR name="vendor"--></td>
+          </tr>
+          <!--/TMPL_LOOP-->
+        </table>
+      </div>
+    </div>
+  </div>
+  <!--/TMPL_IF-->
+</body>
 </html>
- 
