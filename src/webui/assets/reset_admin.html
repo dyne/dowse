@@ -1,48 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Welcome to Dowse: a digital rod for your local area network</title>
+  <title>Welcome to Dowse: a digital rod for your local area network</title>
 
-    
-    <link rel="stylesheet" href="/?o=bootstrap.min.css">
-  </head>
-  <body>
-
-    <div class="container">
-	  <div class="row">
-		<div class="span5 pull-left">
-		  <img src="/?o=dowse-logo.png" alt="dowse logo">
-		</div>		
-	  </div>
-
-	  <div class="row">
-		<hr>
-		<h3>
-		<p>You are been redirected here because your device is not authorized to make admin operations.</p>
-		</h3>
-		<h4><p>Follow the instruction behind to reset admin device.</p>		
-		</h4>
-		</h3>
-		<h3>Reset admin device procedure</h3>
-		<ul>
-		  <li>Click on &#x22;Start reset procedure&#x22; button</a></li>
-		  <li>Reboot the &#x22;Dowse&#x22; station before 30 seconds</li>
-		  <li>At the startup connect to this page using the device that you choose to be the admin </li>
-		</ul>
-	  </div>
-	  <div class="row">
-		<hr>
-		<div type="button" class="btn btn-default" >
-			  <a href="/start_reset_procedure">
-				Start reset procedure
-			  </a>
-			</div>
-	  </div>
-
+  <link rel="stylesheet" href="/?o=bootstrap.min.css">
+  <link rel="stylesheet" href="/?o=bootstrap-theme.min.css">
+</head>
+<body>
+  <nav class="navbar navbar-inverse">
+    <div class=container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded=" false" aria controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Dowse WebUI</a>
       </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <!-- <li class="active"><a href="/">home</a></li> -->
+          <li><a href="/">home</a></li>
+          <li><a href="/things">things</a></li>
+          <li><a href="http://dowse.it:29999">netdata</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!--TMPL_IF name="message_loop"-->
+  <div class="container">
+    <div class="panel-body">
+      <div class="panel panel-error">
+        <div class="panel-heading">Something has gone wrong.</div>
+        <div class="panel-body">
+        <!--TMPL_LOOP name="message_loop"-->
+          <div class="alert alert-<!--TMPL_VAR name="level"-->">
+            <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+            <p><!--TMPL_VAR name="text"--></p>
+          </div>
+        <!--/TMPL_LOOP-->
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--TMPL_ELSE-->
+  <div class="container">
+    <div class="row">
+      <div class="span5 pull-left">
+        <img src="/?o=dowse-logo.png" alt="dowse logo">
+      </div>
+    </div>
+
+    <div class="row">
+      <hr>
+      <h3>You are been redirected here because your device is not authorized to make admin operations.</h3>
+      <h4>Follow the instruction behind to reset admin device.</h4>
+      <h3>Reset admin device procedure</h3>
+
+      <ul>
+        <li>Click on &#x22;Start reset procedure&#x22; button</li>
+        <li>Reboot the &#x22;Dowse&#x22; station before 30 seconds</li>
+        <li>At the startup connect to this page using the device that you choose to be the admin</li>
+      </ul>
+    </div>
+
+    <div class="row">
+      <hr>
+      <div type="button" class="btn btn-default">
+        <a href="/start_reset_procedure">Start reset procedure</a>
+      </div>
+    </div>
+  </div>
+  <!--/TMPL_IF-->
+
+  <script src="/?o=jquery.min.js"></script>
+  <script src="/?o=bootstrap.min.js"></script>
   </body>
 </html>

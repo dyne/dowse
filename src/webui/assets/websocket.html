@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -106,6 +105,24 @@ $(document).ready(function() {
     </div>
   </nav>
 
+  <!--TMPL_IF name="message_loop"-->
+  <div class="container">
+    <div class="panel-body">
+      <div class="panel panel-error">
+        <div class="panel-heading">Something has gone wrong.</div>
+        <div class="panel-body">
+        <!--TMPL_LOOP name="message_loop"-->
+          <div class="alert alert-<!--TMPL_VAR name="level"-->">
+            <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+            <p><!--TMPL_VAR name="text"--></p>
+          </div>
+        <!--/TMPL_LOOP-->
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--TMPL_ELSE-->
   <div class="container">
     <div class="row">
       <h1>Dowse events via websocket</h1>
@@ -121,6 +138,7 @@ $(document).ready(function() {
       <ul id='ws' style="font-family: 'Courier New', Courier, monospace;"></ul>
     </div>
   </div>
+  <!--/TMPL_IF-->
 
   <!-- <script src="/?o=jquery.min.js"></script> --> <!-- XXX: see if the above included is enough/breaks this one -->
   <script src="/?o=bootstrap.min.js"></script>
