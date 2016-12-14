@@ -22,13 +22,17 @@
 
 #include <stdlib.h>
 
+#ifdef __GLIBC__
 #include "error.h"
+#endif
 #include "exitfail.h"
 
 void
 xalloc_die (void)
 {
+#ifdef __GLIBC__
   error (exit_failure, 0, "%s", "memory exhausted");
+#endif
 
   /* _Noreturn cannot be given to error, since it may return if
      its first argument is 0.  To help compilers understand the
