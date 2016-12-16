@@ -69,6 +69,7 @@ int thing_show(struct http_request *req) {
   size_t len;  
   attributes_set_t attributes;
   struct kore_buf *buf;
+  char *macaddr;
 
   WEBUI_DEBUG;
   http_populate_get(req);

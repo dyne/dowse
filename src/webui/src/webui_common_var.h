@@ -19,7 +19,6 @@
 
 __WEBUI_EXTERN__ char line[ml];
 __WEBUI_EXTERN__ char where_condition[ml];
-__WEBUI_EXTERN__ char *macaddr;
 __WEBUI_EXTERN__ struct template_t tmpl;
 __WEBUI_EXTERN__  attributes_set_t global_attributes;
 
