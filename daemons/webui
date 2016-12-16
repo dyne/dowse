@@ -18,11 +18,13 @@ webui-exec() {
 		hostname=$hostname \
 				domain=$lan \
 				address=$address \
+				interface=$interface \
 				launch  webui -n -r -f -d 
     else
 		hostname=$hostname \
 				domain=$lan \
 				address=$address \
+				interface=$interface \
 				launch  webui -n $*
 		[[ $? = 0 ]] &&
 			savepid webui $H/run/webui.pid
