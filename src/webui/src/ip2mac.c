@@ -30,26 +30,28 @@
 #include <netinet/in.h>
 #include <linux/sockios.h>
 
-int ip2mac(char *ipaddr_type, char*ipaddr_value, char**macaddr) {
-
-    return 0;
+int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr,attributes_set_t *ptr_attr) {
+    kore_log(LOG_DEBUG,"converting from %s %s on %s",ipaddr_type,ipaddr_value,getenv("interface"));
+    if (strcmp(ipaddr_type,"ipv4")==0) {
+        return convert_from_ipv4(ipaddr_value,macaddr,ptr_attr);
+    } else {
+        return convert_from_ipv6(ipaddr_value,macaddr,ptr_attr);
+    }
 }
 
 /**/
-char *ethernet_mactoa(struct sockaddr *addr) {
-  char*buff;
-  buff=(char*)kore_malloc(3*6+1);
+void ethernet_mactoa(struct sockaddr *addr,char*buff) {
+
   unsigned char *ptr = (unsigned char *) addr->sa_data;
 
     sprintf(buff, "%02X:%02X:%02X:%02X:%02X:%02X", (ptr[0] & 0377),
             (ptr[1] & 0377), (ptr[2] & 0377), (ptr[3] & 0377), (ptr[4] & 0377),
             (ptr[5] & 0377));
 
-    return (buff);
 
 }
 
-int convert_from_ipv4(char *ipaddr_value, char**mac_addr) {
+int convert_from_ipv4(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_attr) {
     int sockef_fd;
     struct arpreq areq;
     struct sockaddr_in *sin;
@@ -58,8 +60,11 @@ int convert_from_ipv4(char *ipaddr_value, char**mac_addr) {
 
     /* Get an internet domain socket. */
     if ((sockef_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        perror("socket");
-        return (1);
+        char m[1024];
+        snprintf(m,sizeof(m),"Sorry but during IP-ARP conversion I cannot open a socket [%s]",
+                strerror(errno));
+
+        return (KORE_RESULT_ERROR);
     }
 
     /* Make the ARP request. */
@@ -68,34 +73,47 @@ int convert_from_ipv4(char *ipaddr_value, char**mac_addr) {
     sin->sin_family = AF_INET;
 
     if (inet_aton(ipaddr_value, &ipaddr) == 0) {
-        fprintf(stderr, "-- Error: invalid numbers-and-dots IP address %s.\n",
-                ipaddr_value);
-        return (1);
+        char m[256];
+        snprintf(m,sizeof(m),"Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
+                ipaddr_value,strerror(errno));
+        webui_add_error_message(ptr_attr,m);
+        return (KORE_RESULT_ERROR);
     }
 
     sin->sin_addr = ipaddr;
     sin = (struct sockaddr_in *) &areq.arp_ha;
     sin->sin_family = ARPHRD_ETHER;
 
-    /* Se non c'e' la eth0 ? */
-    strncpy(areq.arp_dev, "eth0", 15);
+    /* TODO Se non c'e' la eth0 ? */
+    char *dev=getenv("interface");
+    if (dev==NULL) {
+        dev="wlan0";
+    }
+
+    strncpy(areq.arp_dev, dev, 15);
 
     if (ioctl(sockef_fd, SIOCGARP, (caddr_t) &areq) == -1) {
-        perror("-- Error: unable to make ARP request, error");
-        return (1);
+        char m[256];
+         snprintf(m,sizeof(m), "-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",ipaddr_value,dev,strerror(errno));
+         webui_add_error_message(ptr_attr,m);
+         return (KORE_RESULT_ERROR);
     }
     struct sockaddr_in * p;
     p=(struct sockaddr_in *) &(areq.arp_pa);
 
     inet_ntop(AF_INET,&(p->sin_addr),buf,sizeof(buf));
 
-    printf("%s (%s) -> %s\n", ipaddr_value,
+    ethernet_mactoa(&areq.arp_ha,mac_addr);
+
+    kore_log(LOG_DEBUG,"Conversion from %s (%s) -> %s\n", ipaddr_value,
             inet_ntoa(p->sin_addr),
-            ethernet_mactoa(&areq.arp_ha));
-    return 0;
+            mac_addr
+            );
+
+    return KORE_RESULT_OK;
 }
 
-int convert_from_ipv6(char *ipaddr_value, char**mac_addr) {
+int convert_from_ipv6(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_attr) {
     int s;
     struct arpreq areq;
     struct sockaddr_in6 *sin;
@@ -103,8 +121,11 @@ int convert_from_ipv6(char *ipaddr_value, char**mac_addr) {
 
     /* Get an internet domain socket. */
     if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
-        perror("socket");
-        return (1);
+        char m[1024];
+        snprintf(m,sizeof(m),"Sorry but during IP-ARP conversion I cannot open a socket [%s]",
+                strerror(errno));
+        webui_add_error_message(ptr_attr,m);
+           return (1);
     }
 
     /* Make the ARP request. */
@@ -113,8 +134,11 @@ int convert_from_ipv6(char *ipaddr_value, char**mac_addr) {
     sin->sin6_family = AF_INET6;
 
     if (inet_pton(AF_INET6,ipaddr_value, &ipaddr) == 0) {
-        fprintf(stderr, "-- Error: invalid numbers-and-dots IP address %s.\n",
-                ipaddr_value);
+        char m[256];
+        snprintf(m,sizeof(m),"Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
+                ipaddr_value,strerror(errno));
+
+        webui_add_error_message(ptr_attr,m);
         return (1);
     }
 
@@ -123,19 +147,28 @@ int convert_from_ipv6(char *ipaddr_value, char**mac_addr) {
     sin->sin6_family = ARPHRD_ETHER;
 
     /* TODO definizione di device su cui è attestata webui */
-    strncpy(areq.arp_dev, "eth0", 15);
+    char *dev=getenv("interface");
+    if (dev==NULL) {
+        dev="eth0";
+    }
+
+    strncpy(areq.arp_dev, dev, 15);
 
     if (ioctl(s, SIOCGARP, (caddr_t) &areq) == -1) {
-        perror("-- Error: unable to make ARP request, error");
-        return (1);
+        char m[256];
+         webui_add_error_message(ptr_attr,"socket");
+         snprintf(m,sizeof(m), "-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",ipaddr_value,dev,strerror(errno));
+         return (1);
     }
     char buf[256];
     struct sockaddr_in6 * p;
     p=(struct sockaddr_in6 *) &(areq.arp_pa);
     inet_ntop(AF_INET6,&(p->sin6_addr),buf,sizeof(buf));
 
-    printf("%s (%s) -> %s\n", ipaddr_value,
-               buf,
-               ethernet_mactoa(&areq.arp_ha));
+    ethernet_mactoa(&areq.arp_ha,mac_addr);
+
+    kore_log(LOG_DEBUG,"Conversion form %s  -> %s\n", ipaddr_value,
+                mac_addr
+                );
     return 0;
 }
