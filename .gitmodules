@@ -7,3 +7,6 @@
 [submodule "src/libwebsockets"]
 	path = src/libwebsockets
 	url = https://github.com/warmcat/libwebsockets.git
+[submodule "src/dnscrypt-proxy"]
+	path = src/dnscrypt-proxy
+	url = https://github.com/jedisct1/dnscrypt-proxy
