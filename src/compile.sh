@@ -156,6 +156,7 @@ EOF
 
     dnscrypt-proxy)
         pushd $R/src/dnscrypt-proxy
+		./autogen.sh
         ./configure --without-systemd --enable-plugins --prefix=${PREFIX} \
             && \
             make && \
