@@ -276,11 +276,11 @@ exec_next_cmd() {
 
 	# set acl on/off switch matching the action
 	acl=DROP
-	[[ "$action" =~ "_ON"  ]] && acl=ACCEPT
-	[[ "$action" =~ "_OFF" ]] && acl=DROP
+	[[ "$action" =~ "THING_ON"  ]] && acl=ACCEPT
+	[[ "$action" =~ "THING_OFF" ]] && acl=DROP
 
 	case $action in
-		IP4_OFF|IP4_ON)
+		THING_OFF|THING_ON)
 			# 1st arg is the ip to block
 			ipb=${cmd[(ws:,:)5]}
 			[[ "$ipb" = "" ]] && {
@@ -289,30 +289,28 @@ exec_next_cmd() {
 			# TODO: check if valid ip4 ip
 			launch xtables-multi iptables -A FORWARD -s $ipb -j $acl
 			launch xtables-multi iptables -A FORWARD -d $ipb -j $acl
-		;;
+			;;
 
-		IP6_OFF|IP6_ON)
-			# 1st arg is the ip to block
-			ipb=${cmd[(ws:,:)5]}
-			[[ "$ipb" = "" ]] && {
-				error "invalid ip6block cmd: $cmd"
-				return 1 }
-			# TODO: check if valid ip6 ip
-			launch xtables-multi ip6tables -A FORWARD -s $ipb -j $acl
-			launch xtables-multi ip6tables -A FORWARD -d $ipb -j $acl
-		;;
+		# IP6_OFF|IP6_ON)
+		# 	# 1st arg is the ip to block
+		# 	ipb=${cmd[(ws:,:)5]}
+		# 	[[ "$ipb" = "" ]] && {
+		# 		error "invalid ip6block cmd: $cmd"
+		# 		return 1 }
+		# 	# TODO: check if valid ip6 ip
+		# 	launch xtables-multi ip6tables -A FORWARD -s $ipb -j $acl
+		# 	launch xtables-multi ip6tables -A FORWARD -d $ipb -j $acl
 
-		MAC_OFF|MAC_ON)
-			# 1st arg is the mac to block
-			macb=${cmd[(ws:,:)5]}
-			[[ "$macb" = "" ]] && {
-				error "invalid macblock cmd: $cmd"
-				return 1 }
-			# TODO: check if valid mac
-			launch ebtables -A FORWARD -s $macb -j $acl
-			launch ebtables -A FORWARD -d $macb -j $acl
+		# MAC_OFF|MAC_ON)
+		# 	# 1st arg is the mac to block
+		# 	macb=${cmd[(ws:,:)5]}
+		# 	[[ "$macb" = "" ]] && {
+		# 		error "invalid macblock cmd: $cmd"
+		# 		return 1 }
+		# 	# TODO: check if valid mac
+		# 	launch ebtables -A FORWARD -s $macb -j $acl
+		# 	launch ebtables -A FORWARD -d $macb -j $acl
 
-		;;
 		DOMAIN_OFF|DOMAIN_ON)
 			error "TODO: domainblock command"
 		;;
@@ -366,7 +364,7 @@ case "$1" in
 		;;
 
 	nmap)
-		# nlock=`lock nmap 30`
+		nlock=`lock nmap 30`
 		# [[ $nlock = 0 ]] && {
 		# 	func "nmap already running"
 		# 	return 1 }
