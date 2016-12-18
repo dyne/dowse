@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
 LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a
 
-all: base springs
+all: base parsers springs
 	@./import.sh redis-server
 	@./import.sh redis-cli
 	@./import.sh mariadb
@@ -15,6 +15,7 @@ all: base springs
 	@install -s -p dowse-to-mqtt   ../build/bin
 	@install -s -p hiredis-lock    ../build/bin
 	@install -s -p dowse-cmd-fifo  ../build/bin
+	@install -s -p parse-ip-neigh  ../build/bin
 	@./checksum.sh
 	@./compile.sh sup
 
@@ -38,6 +39,9 @@ base: config libs modprobe sup hiredis-lock
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
 
+parsers: parse-ip-neigh
+	@echo "Dowse parsers compiled"
+
 config:
 	@./config.sh ${DESTDIR}${PREFIX}
 
@@ -55,6 +59,9 @@ hiredis-lock: hiredis-lock.o
 
 modprobe: modprobe.o kmod_log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
+
+parse-ip-neigh: parse-ip-neigh.c
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 dowse-to-gource: dowse-to-gource.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)

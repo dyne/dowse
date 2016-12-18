@@ -171,7 +171,7 @@ UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
 pendulum_ip_neigh() {
     fn pendulum_ip_neigh $*
 
-	ip neigh | dowse-ip-neigh
+	ip neigh | parse-ip-neigh
 
 }
 
