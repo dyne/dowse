@@ -59,6 +59,7 @@
         <p>Show all info gathered </p>
         <table class="table table-striped">
           <thead>
+            <td>Name</td>
             <td>Hostname</td>
             <td>Last seen</td>
             <td>First seen</td>
@@ -75,6 +76,7 @@
           </tbody>
           <!--TMPL_LOOP name="things"-->
           <tr>
+            <td><!--TMPL_VAR name="name"--></td>
             <td><!--TMPL_VAR name="hostname"--></td>
             <td><!--TMPL_VAR name="last"--></td>
             <td><!--TMPL_VAR name="age"--></td>
