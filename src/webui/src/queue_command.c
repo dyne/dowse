@@ -11,11 +11,6 @@
 
 #define CHAN "command-fifo-pipe"
 
-#define PARSE_PARAMETER(PAR)\
-    char *PAR=""; \
-    http_argument_get_string(req, #PAR ,&PAR);\
-    kore_log(LOG_DEBUG, "%s Parameter " #PAR "[%s]",__where_i_am__,PAR);
-
 
 int queue_command(struct http_request * req) {
     struct kore_buf *buf;

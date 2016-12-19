@@ -38,6 +38,11 @@
 #endif
 
 
+#define PARSE_PARAMETER(PAR)\
+    char *PAR=""; \
+    http_argument_get_string(req, #PAR ,&PAR);\
+    kore_log(LOG_DEBUG, "%s Parameter " #PAR "[%s]",__where_i_am__,PAR);
+
 #include <webui_common_var.h>
 #include <webui_prototype.h>
 
