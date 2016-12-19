@@ -47,6 +47,14 @@ domain * {
 		validate macaddr v_macaddr			
 	}
 
+	static /modify_things modify_things
+	params post /modify_things {
+               validate macaddr v_macaddr				
+	       validate column v_column_alterable
+	       validate value v_alphanumeric
+	}
+
+
 	# Configure admin page
 	# Browse this you
 	static /reset_admin reset_admin
