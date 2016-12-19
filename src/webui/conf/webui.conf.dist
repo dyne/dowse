@@ -11,6 +11,8 @@ validator   v_ip6_addr   regex   ^([0-9A-Fa-f]{1,4}[:]){7}([0-9A-Fa-f]{1,4})$
 validator   v_filename  regex   ^.*$
 validator   v_command   regex   ^(THING_ON)|(THING_OFF)|(monitor)|(admin)$
 validator   v_ip_valid  function v_ip_validate
+validator   v_column_alterable regex ^(name)$
+validator   v_alphanumeric regex ^.*$
 
 
 
