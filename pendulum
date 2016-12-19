@@ -282,13 +282,24 @@ exec_next_cmd() {
 	case $action in
 		THING_OFF|THING_ON)
 			# 1st arg is the ip to block
-			ipb=${cmd[(ws:,:)5]}
-			[[ "$ipb" = "" ]] && {
-				error "invalid ip4block cmd: $cmd"
+			local macb
+			macb=${cmd[(ws:,:)5]}
+			# on/off string lowercase for db
+			local al
+			al=${action[(ws:_:)2]:l}
+
+			[[ "$macb" = "" ]] && {
+				error "invalid mac block cmd: $cmd"
 				return 1 }
-			# TODO: check if valid ip4 ip
-			launch xtables-multi iptables -A FORWARD -s $ipb -j $acl
-			launch xtables-multi iptables -A FORWARD -d $ipb -j $acl
+			# TODO: check if valid mac address
+			launch ebtables -A FORWARD -s $macb -j $acl
+			launch ebtables -A FORWARD -d $macb -j $acl
+			# launch xtables-multi iptables -A FORWARD -s $ipb -j $acl
+			# launch xtables-multi iptables -A FORWARD -d $ipb -j $acl
+			cat <<EOF | $sql $db[things]
+UPDATE found SET state='$al'
+WHERE (macaddr='$macb' and '$macb' <> '');
+EOF
 			;;
 
 		# IP6_OFF|IP6_ON)
