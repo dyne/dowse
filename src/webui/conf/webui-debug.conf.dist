@@ -50,7 +50,7 @@ domain * {
 	static /modify_things modify_things
 	params post /modify_things {
                validate macaddr v_macaddr				
-	       validate column v_column
+	       validate column v_column_alterable
 	       validate value v_alphanumeric
 	}
 
