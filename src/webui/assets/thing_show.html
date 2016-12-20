@@ -66,12 +66,12 @@
             <td>First seen</td>
             <td>Notes</td>
             <td>OS</td>
+            <td>Vendor</td>
             <td>IPv4</td>
             <td>IPv6</td>
             <td>MAC Address</td>
-            <td>Interface</td>
+            <!--td>Interface</td-->
             <td>State</td>
-            <td>Vendor</td>
           </thead>
           <tbody>
           </tbody>
@@ -95,10 +95,11 @@
             <td><!--TMPL_VAR name="age"--></td>
             <td><!--TMPL_VAR name="notes"--></td>
             <td><!--TMPL_VAR name="os"--></td>
+            <td><!--TMPL_VAR name="vendor"--></td>
             <td><!--TMPL_VAR name="ip4"--></td>
             <td><!--TMPL_VAR name="ip6"--></td>
             <td><!--TMPL_VAR name="macaddr"--></td>
-            <td><!--TMPL_VAR name="iface"--></td>
+            <!--td><!--TMPL_VAR name="iface"--></td-->
             <!--TMPL_IF name="state" value="on"--> <!-- If we recognize the state we print it, otherwise we print na_state.png -->
             <td>
               <a role="button"  class="btn btn-success" href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
@@ -114,7 +115,6 @@
             <!--TMPL_ELSE -->
             <td><img src="/?o=na_state-16x16.png"></img></td>
             <!--/TMPL_IF-->
-            <td><!--TMPL_VAR name="vendor"--></td>
           </tr>
           <!--/TMPL_LOOP-->
         </table>
