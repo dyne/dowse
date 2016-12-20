@@ -61,7 +61,7 @@ modprobe: modprobe.o kmod_log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
 
 parse-ip-neigh: parse-ip-neigh.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -DDB_HOST=\"localhost\" -DDB_USER=\"root\" -DDB_PASSWORD=\"p4ssw0rd\" -DDB_SID=\"things\" -DDB_SOCK_DIRECTORY=\"$(HOME)/.dowse/run/mysql/mysqld.sock\"  -I/usr/include/mariadb -lmariadb
 
 dowse-to-gource: dowse-to-gource.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <mysql.h>
 
 char line[1024];
 char*field;
@@ -39,6 +40,10 @@ int n_fields,i;
 
 int is_deleted,is_missing,is_router,is_proxy;
 
+MYSQL *db ;
+
+
+
 void parse_constant(char**fields,char*value,int*ptr_idx,int*out_value){
   if (strcmp(fields[*ptr_idx],value)==0) {
     *out_value=1;
@@ -50,13 +55,11 @@ void parse_constant(char**fields,char*value,int*ptr_idx,int*out_value){
 
 void parse_ip4(char**fields,int*ptr_idx,char*value){
   struct in_addr result;
-  int a,b,c,d;
-  
   if (inet_pton(AF_INET,fields[*ptr_idx],&result)==1) {
     sprintf(value,"%s",fields[*ptr_idx]);
     (*ptr_idx)++;
   } else {
-    sprintf(value,"");
+    value[0]=0;
   }
 }
 
@@ -68,16 +71,16 @@ void parse_ip6(char**fields,int*ptr_idx,char*value){
     sprintf(value,"%s",fields[*ptr_idx]);
     (*ptr_idx)++;
   } else {
-    sprintf(value,"");
+    value[0]=0;
   }
 }
 
-void parse_parameter(char**fields,int*ptr_idx,char*parameter,char*out_value){
+void parse_parameter(char**fields,int*ptr_idx,char*parameter,char*value){
   if (strcmp(fields[*ptr_idx],parameter)==0) {
-    sprintf(out_value,"%s",fields[1+*ptr_idx]);
+    sprintf(value,"%s",fields[1+*ptr_idx]);
     (*ptr_idx)+=2;
   } else {
-    sprintf(out_value,"");
+     value[0]=0;
   }
 }
 
@@ -86,8 +89,25 @@ int IS_##S ;\
 IS_##S = (strstr(fields[n_fields-1], #S )!=0);\
 
 
+void show_mysql_error(MYSQL *mysql){
+  char log_message[256];
+  snprintf(log_message, sizeof(log_message),
+	   "Error(%d) [%s] \"%s\"",
+	   mysql_errno(mysql),
+	   mysql_sqlstate(mysql),
+	   mysql_error(mysql));
+  fprintf(stderr,"Error \n%s\n",log_message);
+  exit(-1);
+}
 
 int main() {
+ /* */
+    db=mysql_init(NULL);
+    //     Constant parameted created at compile time
+    if (!mysql_real_connect(db, DB_HOST, DB_USER,DB_PASSWORD,
+			    DB_SID, 0, DB_SOCK_DIRECTORY , 0))  {
+      show_mysql_error(db);
+    }
 
   for (;!feof(stdin);fgets(line,sizeof(line),stdin)) {
     #ifdef _DEBUG
@@ -135,13 +155,28 @@ int main() {
     parse_state(NOARP);
     parse_state(PERMANENT);
 
-    /* TODO Generate the SQL code */
-    fprintf(stderr,"MAC [%s]\tIP4 [%s]\tIP6 [%s]\tState:[%s] [%s]\n",
-            macaddr,ip4,ip6,(IS_REACHABLE?"reachable":""),(IS_FAILED?"failed":""));
-
+    /*  Generate the SQL code */
+    if (!IS_REACHABLE){
+      // free all allocated memory
+      for(i=0;i<n_fields;i++) free(fields[i]);
+      continue;
+    }
+    char command[256];
+    snprintf(command,sizeof(command),
+	    "INSERT INTO found(macaddr,ip4,ip6) "
+	    " VALUES ('%s','%s','%s') ON DUPLICATE KEY UPDATE ip4='%s',ip6='%s'",
+            macaddr,ip4,ip6,ip4,ip6);
+   
+    // Execute the statement
+    if (mysql_query(db, command)) {
+      show_mysql_error(db);
+    }
+    
     // free all allocated memory
     for(i=0;i<n_fields;i++) free( fields[i] );
   }
 
+  mysql_close(db);
+  return 0;
 }
 		    
