@@ -110,6 +110,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     }
     WEBUI_DEBUG;
     mysql_free_result(result);
+    mysql_close(db);
 
     WEBUI_DEBUG;
     if (called==0) return _ADMIN_NOT_CONFIGURED_; /* The db is not configured so we should configure it */

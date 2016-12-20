@@ -179,6 +179,7 @@ int check_if_ip_admin_configured(attributes_set_t *ptr_attrl) {
     }
 
     mysql_free_result(result);
+    mysql_close(db);
 
    return rv;
 }

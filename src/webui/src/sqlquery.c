@@ -66,6 +66,6 @@ int sqlquery(char *query,
     WEBUI_DEBUG
     ;
     mysql_free_result(result);
-
+    mysql_close(db);
     return called;
 }
