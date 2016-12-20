@@ -27,7 +27,7 @@
 #include <math.h>
 #include <string.h>
 
-int relative_time(char *utc, char *out) {
+int relative_time(char *local_time, char *out) {
     time_t nowutc;
     time_t now;
     time_t then;
@@ -37,20 +37,18 @@ int relative_time(char *utc, char *out) {
     struct tm tt;
     // parse utc into a tm struct
     memset(&tt,0,sizeof(struct tm));
-    if( ! strptime(utc, "%Y-%m-%dT%H:%M:%SZ", &tt) ) {
+    if( ! strptime(local_time, "%Y-%m-%dT%H:%M:%SZ", &tt) ) {
         // kore_log(LOG_ERR,"relative_time failed parsing UTC string: %s",utc);
-        if( ! strptime(utc, "%Y-%m-%dT%H:%M:%S", &tt) ) {
+        if( ! strptime(local_time, "%Y-%m-%d %H:%M:%S", &tt) ) {
          	sprintf(out,"n/a");
-
             return 1;
-
         }
-    	}
+    }
     then = mktime(&tt);
     
     // gets what UTC time is now
     time( &nowutc );
-    now = mktime( gmtime ( &nowutc ) );
+    now = mktime( localtime( &nowutc ) );
 
     // localtime_r( &rnow, &now );
     deltaSeconds = now - then;
