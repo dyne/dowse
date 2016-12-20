@@ -83,6 +83,7 @@ int sql_select_into_attributes(const char*query,
     WEBUI_DEBUG
     ;
     mysql_free_result(result);
+    mysql_close(db);
 
     return called;
 }
