@@ -10,6 +10,7 @@ socket		= $H/run/mysql/mysqld.sock
 
 [mysqld]
 user		= $dowse_uid
+plugin_dir      = /usr/local/dowse/mysql/plugin
 pid-file	= $H/run/mysqld.pid
 socket		= $H/run/mysql/mysqld.sock
 #socket		= /tmp/mysqld.sock
@@ -111,6 +112,9 @@ mysqld-exec() {
 	# cut used to parse out what follows semicolon
 	cut -d\; -f1 $thingidx |
         sql_create_table found | $sql $db[things] 2>/dev/null
+
+	# create trigger and redis function
+	sql_integrate_with_redis $H/run/mysqld.integrated_redis
 }
 
 mysqld-kill() {
