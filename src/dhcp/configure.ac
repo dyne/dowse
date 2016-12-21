@@ -783,6 +783,20 @@ if test x$ldap = xyes || test x$ldapcrypto = xyes || test x$ldap_gssapi = xyes; 
     AC_SUBST(LDAP_CFLAGS, [$LDAP_CFLAGS])
 fi
 
+# DBI Support
+AC_ARG_WITH(dbi,
+    AC_HELP_STRING([--with-dbi],
+                   [enable DBI support in dhcpd (default is no)]),
+    [dbi=$withval],
+    [dbi=no])
+
+# DBI support is disabled by default
+if test x$dbi = xyes ; then
+    AC_SEARCH_LIBS(dbi_initialize, [dbi], ,
+		   AC_MSG_FAILURE([*** Cannot find dbi_initialize with -ldbi - do you need to install a dbi-devel package?]))
+    AC_SUBST(DBI_CFLAGS, ["-DDBI_CONFIGURATION"])
+fi
+
 # Append selected warning levels to CFLAGS before substitution (but after
 # AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) & etc).
 CFLAGS="$CFLAGS $STD_CWARNINGS"

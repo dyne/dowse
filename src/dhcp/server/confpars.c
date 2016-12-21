@@ -66,6 +66,9 @@ isc_result_t readconf ()
 	isc_result_t res;
 
 	res = read_conf_file (path_dhcpd_conf, root_group, ROOT_GROUP, 0);
+#if defined(DBI_CONFIGURATION)
+	dbi_read_config ();
+#endif
 #if defined(LDAP_CONFIGURATION)
 	if (res != ISC_R_SUCCESS)
 		return (res);

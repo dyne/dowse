@@ -276,6 +276,16 @@ static struct option server_options[] = {
 	{ "server-id-check", "f",		&server_universe,  SV_SERVER_ID_CHECK, 1 },
 	{ "prefix-length-mode", "Nprefix_length_modes.",	&server_universe,  SV_PREFIX_LEN_MODE, 1 },
 	{ "dhcpv6-set-tee-times", "f",		&server_universe,  SV_DHCPV6_SET_TEE_TIMES, 1 },
+#if defined(DBI_CONFIGURATION)
+	{ "dbi-path", "t",			&server_universe,  89, 1 },
+	{ "dbi-host", "t",			&server_universe,  90, 1 },
+	{ "dbi-driver", "t",			&server_universe,  91, 1 },
+	{ "dbi-username", "t",			&server_universe,  92, 1 },
+	{ "dbi-password", "t",			&server_universe,  93, 1 },
+	{ "dbi-dbname", "t",			&server_universe,  94, 1 },
+	{ "dbi-query", "t",			&server_universe,  95, 1 },
+#endif /* DBI_CONFIGURATION */
+
 	{ NULL, NULL, NULL, 0, 0 }
 };
 

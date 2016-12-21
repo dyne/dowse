@@ -79,7 +79,7 @@ case $1 in
 		autoreconf -i
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
-			  ./configure --enable-paranoia --enable-execute
+			  ./configure --enable-paranoia --with-dbi
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
 			  make && {

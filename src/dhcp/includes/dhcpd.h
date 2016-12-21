@@ -823,6 +823,16 @@ struct lease_state {
 # define DEFAULT_CACHE_THRESHOLD 25
 #endif
 
+#if defined(DBI_CONFIGURATION)
+# define SV_DBI_PATH                    78
+# define SV_DBI_HOST                    79
+# define SV_DBI_DRIVER                  80
+# define SV_DBI_USERNAME                81
+# define SV_DBI_PASSWORD                82
+# define SV_DBI_DBNAME                  83
+# define SV_DBI_QUERY                   84
+#endif
+
 #if !defined (DEFAULT_DEFAULT_LEASE_TIME)
 # define DEFAULT_DEFAULT_LEASE_TIME 43200
 #endif
@@ -3696,6 +3706,13 @@ int find_subclass_in_ldap (struct class *, struct class **,
 			   struct data_string *);
 int find_client_in_ldap (struct host_decl **, struct packet*,
                struct option_state *, const char *, int);
+#endif
+
+/* dbi.c */
+#if defined(DBI_CONFIGURATION)
+int find_haddr_in_dbi (struct host_decl **, int, unsigned,
+                       const unsigned char *, const char *, int);
+void dbi_read_config (void);
 #endif
 
 /* mdb6.c */

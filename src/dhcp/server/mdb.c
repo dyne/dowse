@@ -618,6 +618,13 @@ int find_hosts_by_haddr (struct host_decl **hp, int htype,
 		return ret;
 #endif
 
+#if defined(DBI_CONFIGURATION)
+	int ret1;
+
+	if ((ret1 = find_haddr_in_dbi (hp, htype, hlen, haddr, file, line)))
+		return ret1;
+#endif
+
 	h.hlen = hlen + 1;
 	h.hbuf [0] = htype;
 	memcpy (&h.hbuf [1], haddr, hlen);
