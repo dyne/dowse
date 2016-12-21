@@ -107,9 +107,9 @@ command -v apt-get >/dev/null && {
 				mkdir -p $S/build/mysql/share
 				mkdir -p $S/build/mysql/plugin
 				cp -ra $tmp/usr/share/mysql/*      $S/build/mysql/share/
-				cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
 				cp -ra $S/src/maria2redis/lib_mysqludf_redis_v2.so \
 				   $S/build/mysql/plugin
+				cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
 				cp $tmp/usr/sbin/mysqld    $S/build/mysql/bin
 				cp $tmp/usr/bin/mysql      $S/build/mysql/bin
 				cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
