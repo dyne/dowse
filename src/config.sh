@@ -53,8 +53,8 @@ dhcp     text
 gateway  text
 network  text
 notes    text
-last     date
-age      date
+last     DATETIME ON UPDATE CURRENT_TIMESTAMP
+age      DATETIME DEFAULT CURRENT_TIMESTAMP
 vendor   text                    ; /address[@addrtype=\"mac\"]/@vendor
 admin    text
 name     text
