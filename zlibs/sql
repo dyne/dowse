@@ -9,7 +9,7 @@ sql_create_database() {
 	name="$1"
 	req=(name)
 	ckreq || return $?
-	act "Debug"
+	act " Create database if not exists ..."
         print "CREATE DATABASE IF NOT EXISTS $db[$name];" | $sql 2>/dev/null
 	# TODO: better check of error code if needed	
 }
@@ -30,6 +30,57 @@ sql_set_root_password() {
 	# TODO: better check of error code if needed	
 }
 
+
+# Integrate with Redis creating the function and trigger to ...
+sql_integrate_with_redis() {
+	fn sql_integrate_with_redis $*
+	setted_up="$1"
+	TRIGGER_CHANNEL="sql-trigger-channel"	
+	NF=`cat $S/build/db/thing.idx|grep -v "^$" | wc -l`
+	req=(setted_up sql TRIGGER_CHANNEL NF)
+	ckreq || return $?
+	act " Integrate with Redis ..."
+	
+	[[ -r "$setted_up" ]] || {
+
+	    act "     * creating the function to  ..."
+	    print 'DROP FUNCTION IF EXISTS redis_servers_set_v2; 
+	           DROP FUNCTION IF EXISTS redis_command_v2;
+	           DROP FUNCTION IF EXISTS free_resources;
+
+	           CREATE FUNCTION redis_servers_set_v2 RETURNS int SONAME "lib_mysqludf_redis_v2.so";
+	           CREATE FUNCTION redis_command_v2 RETURNS int SONAME "lib_mysqludf_redis_v2.so";
+	           CREATE FUNCTION free_resources RETURNS int SONAME "lib_mysqludf_redis_v2.so";'| $sql $db[things]
+
+	    act "     * creating the trigger to ..."
+
+	    print "DROP TRIGGER update_things;" | $sql $db[things]
+
+	    HEADER="DELIMITER ##
+		  CREATE TRIGGER update_things 
+		  AFTER UPDATE ON found 
+		  FOR EACH ROW 
+		  BEGIN
+		     SET @ret= redis_command_v2(\"publish\",\"$TRIGGER_CHANNEL\", 
+		  concat_ws(',','update_things',unix_timestamp(now()),'A','U',$NF"
+
+	    MID=`awk '/^$/ {next} 
+{print ",\42"$1"\42,coalesce(OLD."$1",\47_is_null_\47),coalesce(NEW."$1",\47_is_null_\47)"}' $S/build/db/thing.idx`
+
+	    FOOTER="));
+		   END##
+		   "
+
+	    func ${HEADER}${MID}${FOOTER}       |cat -n
+	    print ${HEADER}${MID}${FOOTER}       | $sql $db[things]
+
+	    touch $setted_up ;
+	}
+	# TODO: better check of error code if needed	
+}
+
+
+
 # takes a table description from stdin
 # prints "create table" command on stdout
 sql_create_table() {
@@ -38,6 +89,7 @@ sql_create_table() {
     req=(name)
     ckreq || return $?
 
+    act "Create table if not exists ..."
     local cmd="CREATE TABLE IF NOT EXISTS $name ("
     for t in "${(f)$(cat)}"; do
         [[ "$t" = "" ]] && continue
