@@ -35,6 +35,7 @@ base: config libs modprobe sup hiredis-lock
 	@./compile.sh kore
 	@./compile.sh webui
 	@./compile.sh seccrond
+	@./compile.sh maria2redis
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
