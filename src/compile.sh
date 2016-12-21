@@ -34,7 +34,10 @@ case $1 in
 
 	maria2redis)
 		pushd $R/src/maria2redis
-		CFLAGS="-Os" \
+		case `arch` in
+			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1"
+		esac
+		CFLAGS+=" -Os" \
 			  make
 		popd
 		;;
