@@ -1,6 +1,6 @@
 INCLUDE =`mariadb_config --include` -I/usr/local/include  -I/usr/local/apr/include -I./
-LIBS    =-lhiredis -L$(PLUGINDIR)  -L/usr/local/apr/lib  -lapr-1  -laprutil-1
-CFLAGS ?=-Wall -O2 -g
+LIBS    =-lhiredis -L/usr/local/dowse/mysql/plugin  -L/usr/local/apr/lib  -lapr-1  -laprutil-1
+CFLAGS ?=-Wall -O2 -g -D_LARGEFILE64_SOURCE
 LDFLAGS?=-fPIC
 
 compile:
