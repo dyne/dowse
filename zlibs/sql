@@ -36,7 +36,7 @@ sql_integrate_with_redis() {
 	fn sql_integrate_with_redis $*
 	setted_up="$1"
 	TRIGGER_CHANNEL="sql-trigger-channel"	
-	NF=`cat $S/build/db/thing.idx|grep -v "^$" | wc -l`
+	NF=`cat $R/db/thing.idx|grep -v "^$" | wc -l`
 	req=(setted_up sql TRIGGER_CHANNEL NF)
 	ckreq || return $?
 	act " Integrate with Redis ..."
@@ -65,7 +65,7 @@ sql_integrate_with_redis() {
 		  concat_ws(',','update_things',unix_timestamp(now()),'A','U',$NF"
 
 	    MID=`awk '/^$/ {next} 
-{print ",\42"$1"\42,coalesce(OLD."$1",\47_is_null_\47),coalesce(NEW."$1",\47_is_null_\47)"}' $S/build/db/thing.idx`
+{print ",\42"$1"\42,coalesce(OLD."$1",\47_is_null_\47),coalesce(NEW."$1",\47_is_null_\47)"}' $R/db/thing.idx`
 
 	    FOOTER="));
 		   END##
