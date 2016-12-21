@@ -6,9 +6,9 @@
 
 static struct config cfg = {
     .tcp = {
-	.host = "192.168.0.118",
-	.port = 6379
-    },
+    .host = "127.0.0.1",
+    .port = 6379
+  },
     .unix_sock = {
     	.path = "/tmp/redis.sock"
      },
@@ -122,7 +122,8 @@ void * APR_THREAD_FUNC consumer(apr_thread_t *thd, void *data) {
         }
 
         if(command) {
-            int res = _do_redis_command((const char **)command->argv,(const size_t *)command->argvlen, command->arg_count);
+	  //int res =;
+	  _do_redis_command((const char **)command->argv,(const size_t *)command->argvlen, command->arg_count);
             free_command(command);
             command = NULL;
         }
@@ -142,6 +143,7 @@ int start_consumer_worker(void) {
 
     	info_print("start_consumer_worker: initialize_apr,apr_thread_pool_push|rv= %d\n",rv);
     }
+    return 0;
 }
 
 
@@ -190,8 +192,8 @@ void _myredisDconnect(redisContext *c) {
 redisContext *_myredisConnect(struct config config) {
     redisContext *c = NULL;
     redisReply *reply;
-    char cmd[256];
-    int len;
+    //char cmd[256];
+    //    int len;
 
    if (config.type == CONN_TCP) {
         c = redisConnect(config.tcp.host, config.tcp.port);
