@@ -172,6 +172,7 @@ Inside the dynamic database the following channels are present:
 
 - dns-query-channel (produced by dnscap/plugin/dowse)
 - pgl-info-channel  (produced by pgld.c)
+- sql-trigger-channel (produced by mysql trigger fire up)
 
 As the listener API shapes up, this namespace may change in the close
 future. Here below some examples for commandline use:
@@ -189,6 +190,39 @@ SUBSCRIBE pgl-info-channel
 EOF
 ```
 
+## SQL
+
+Channel: `sql-trigger-channel`
+
+Represents the trigger fire up on some events
+
+Sources:
+- mariadb
+
+Format:
+
+```
+TRIGGER_NAME,EPOCH,[B|A],[I|U|D],NF,{ FIELD_NAME,OLD_VALUE,NEW_VALUE } x {NF}
+```
+
+
+Arguments:
+- `TRIGGER_NAME`: The name of the trigger fired up
+- `[B|A],[I|U|D]`: Kind of trigger (Before or After an Insert , Update or Delete) 
+- `EPOCH`: time when the trigger is fired up, number of seconds since Epoch
+- `NF`: lenght of the following up list made by repetition of (FIELD_NAME,OLD_VALUE,NEW_VALUE)
+- `FIELD_NAME` : Name of field.
+- `OLD_VALUE`: Old value (_is_null_ is used to identify "NULL" value)
+- `NEW_VALUE`: New value (_is_null_ to used to identify "NULL" value)
+
+
+Test from CLI:
+```shell
+db=`awk '/db_dynamic/ { print $3 }' src/database.h`
+cat <<EOF | redis-cli -n $db --raw
+SUBSCRIBE dns-query-channel
+EOF
+```
 
 # Modules
 
