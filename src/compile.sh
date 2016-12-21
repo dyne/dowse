@@ -32,6 +32,16 @@ case $1 in
 		popd
 		;;
 
+	maria2redis)
+		pushd $R/src/maria2redis
+		case `arch` in
+			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1"
+		esac
+		CFLAGS+=" -Os" \
+			  make
+		popd
+		;;
+
 	libwebsockets)
 		[[ -r $R/src/libwebsockets/lib/libwebsockets.a ]] && return 0
 		pushd $R/src/libwebsockets
