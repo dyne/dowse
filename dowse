@@ -295,7 +295,7 @@ EOF
     start dhcpd
 
     # start the dns encrypted tunneling
-    start dnscrypt-proxy cache
+    start dnscrypt-proxy
 
     # netdata dashboard for the technical status
     start netdata
