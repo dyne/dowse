@@ -74,7 +74,7 @@ Installation and activation takes a few steps, only `make install` needs root:
 2. Install all requirements, here below the list of packages. To avoid installing more than needed, consider using the `--no-install-recommends` flag in APT or similar for other package managers.
 
 ```
-zsh iptables ebtables sqlite3 procps gettext-base procps net-tools autoconf automake libssl-dev libbind-dev libpcap-dev unzip wget gcc g++ make cmake libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc uuid-dev libldns-dev python-redis python-hiredis libreadline5 libpcre3 libaio1 libfile-mimeinfo-perl libmariadb-client-lgpl-dev cproto xmlstarlet nmap libaprutil-dev
+zsh iptables ebtables sqlite3 procps gettext-base procps net-tools autoconf automake libssl-dev libbind-dev libpcap-dev unzip wget gcc g++ make cmake libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc uuid-dev libldns-dev python-redis python-hiredis libreadline5 libpcre3 libaio1 libfile-mimeinfo-perl libmariadb-client-lgpl-dev cproto xmlstarlet nmap libaprutil1-dev
 ```
 
 3. Choose which user should be running dowse: your own is fine, or
