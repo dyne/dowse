@@ -1,0 +1,12 @@
+This directory contains patches that need applying to resolve specific issues we
+have in the current Dowse setup.
+
+## List of patches
+
+* dnscrypt-noreuseableport
+
+	This patch removes dnscrypt-proxy's usage of SO_REUSEABLEPORT. It introduced TCP
+	binding issues on specific linux-sunxi kernels that are older than 3.9.
+
+	Applied on git tag 1.7.0 (27084d6ef9bc83b56789ce49365cd9e2a582f046)
+

@@ -1,0 +1,35 @@
+diff --git a/src/proxy/tcp_request.c b/src/proxy/tcp_request.c
+index 9fd9957..9a39562 100644
+--- a/src/proxy/tcp_request.c
++++ b/src/proxy/tcp_request.c
+@@ -564,7 +564,6 @@ tcp_listener_bind(ProxyContext * const proxy_context)
+                                     LEV_OPT_CLOSE_ON_FREE |
+                                     LEV_OPT_CLOSE_ON_EXEC |
+                                     LEV_OPT_REUSEABLE |
+-                                    LEV_OPT_REUSEABLE_PORT |
+                                     LEV_OPT_DEFERRED_ACCEPT,
+                                     TCP_REQUEST_BACKLOG,
+                                     (struct sockaddr *)
+diff --git a/src/proxy/udp_request.c b/src/proxy/udp_request.c
+index 295dcba..1986cdc 100644
+--- a/src/proxy/udp_request.c
++++ b/src/proxy/udp_request.c
+@@ -483,7 +483,6 @@ udp_listener_kill_oldest_request(ProxyContext * const proxy_context)
+ int
+ udp_listener_bind(ProxyContext * const proxy_context)
+ {
+-    int optval = 1;
+     if (proxy_context->udp_listener_handle == -1) {
+         if ((proxy_context->udp_listener_handle = socket
+              (proxy_context->local_sockaddr.ss_family,
+@@ -492,9 +491,6 @@ udp_listener_bind(ProxyContext * const proxy_context)
+                             "Unable to create a socket (UDP)");
+             return -1;
+         }
+-#if defined(__linux__) && defined(SO_REUSEPORT)
+-        setsockopt(proxy_context->udp_listener_handle, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+-#endif
+         if (bind(proxy_context->udp_listener_handle,
+                  (struct sockaddr *) &proxy_context->local_sockaddr,
+                  proxy_context->local_sockaddr_len) != 0) {
+

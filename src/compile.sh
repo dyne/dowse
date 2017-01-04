@@ -166,6 +166,8 @@ EOF
 
     dnscrypt-proxy)
         pushd $R/src/dnscrypt-proxy
+		git checkout -- src/proxy ## least bloated solution
+		patch -p1 < $R/src/patches/dnscrypt-noreuseableport.patch
 		./autogen.sh
         ./configure --without-systemd --enable-plugins --prefix=${PREFIX} \
             && \
