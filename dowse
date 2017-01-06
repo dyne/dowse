@@ -297,9 +297,6 @@ EOF
     # start the dns encrypted tunneling
     start dnscrypt-proxy
 
-    # netdata dashboard for the technical status
-    start netdata
-
     [[ "$firewall" = "yes" ]] &&
         # start peerguardian (must be at end, after any other iptables setting)
         start pgld
@@ -312,6 +309,9 @@ EOF
 
 	# start the mqtt/websocket hub
 	start mosquitto
+
+    # netdata dashboard for the technical status
+    start netdata
 
 	start seccrond
 
