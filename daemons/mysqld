@@ -111,8 +111,14 @@ mysqld-exec() {
 	
 	# cut used to parse out what follows semicolon
 	cut -d\; -f1 $thingidx |
-        sql_create_table found | $sql $db[things] 2>/dev/null
+            sql_create_table found | $sql $db[things] 2>/dev/null
+	
+	cut -d\; -f1 $eventidx |
+	    sql_create_table event | $sql $db[things] 2>/dev/null
 
+	act "Adding DB constraint"
+	cat $constraintidx | $sql $db[things] 2>/dev/null
+       
 	# create trigger and redis function
 	sql_integrate_with_redis $H/run/mysqld.integrated_redis
 }

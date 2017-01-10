@@ -52,7 +52,7 @@ sql_integrate_with_redis() {
 	           CREATE FUNCTION redis_command_v2 RETURNS int SONAME "lib_mysqludf_redis_v2.so";
 	           CREATE FUNCTION free_resources RETURNS int SONAME "lib_mysqludf_redis_v2.so";'| $sql $db[things]
 
-	    act "     * creating the trigger to ..."
+	    act "     * creating the trigger on update things  ..."
 
 	    print "DROP TRIGGER update_things;" | $sql $db[things]
 
@@ -74,6 +74,24 @@ sql_integrate_with_redis() {
 	    func ${HEADER}${MID}${FOOTER}       |cat -n
 	    print ${HEADER}${MID}${FOOTER}       | $sql $db[things]
 
+
+	    act "     * creating trigger on event insert  ..."
+	    print "DROP TRIGGER create_things_on_event_insert;" | $sql $db[things]
+
+	    # This trigger insert a things to which is related an "event" (if it's inserted yet).
+	    TRIGGER_ON_INSERT_EVENT="DELIMITER ##
+                     CREATE TRIGGER create_things_on_event_insert
+                     BEFORE INSERT ON event
+                     FOR EACH ROW
+                     BEGIN
+                        INSERT INTO found(macaddr) 
+                        SELECT macaddr FROM ( select macaddr ) as tmp 
+                        WHERE not exists ( select macaddr from found where macaddr=NEW.macaddr);
+                     END##" 
+
+	    func $TRIGGER_ON_INSERT_EVENT
+	    print $TRIGGER_ON_INSERT_EVENT | $sql $db[things]
+	    
 	    touch $setted_up ;
 	}
 	# TODO: better check of error code if needed	
@@ -89,7 +107,7 @@ sql_create_table() {
     req=(name)
     ckreq || return $?
 
-    act "Create table if not exists ..."
+    act "Create table [$name] if not exists ..."
     local cmd="CREATE TABLE IF NOT EXISTS $name ("
     for t in "${(f)$(cat)}"; do
         [[ "$t" = "" ]] && continue
