@@ -58,8 +58,29 @@ age      DATETIME DEFAULT CURRENT_TIMESTAMP
 vendor   text                    ; /address[@addrtype=\"mac\"]/@vendor
 admin    text
 name     text
+authorized     varchar(32) default "Not enabled to browse"
 '
+
 print - "$thingindex" > $S/build/db/thing.idx
+
+# index of all database fields for an event occured in the network
+eventindex='
+id int auto_increment primary key
+age      DATETIME DEFAULT CURRENT_TIMESTAMP
+description    text
+macaddr  varchar(18)
+level enum("'"danger"'","'"success"'","'"info"'","'"warning"'") not null
+recognized boolean default 0
+'
+
+#--- If the event it's refered to a tuple not insert in the found column
+#--- that column shall be created by a trigger
+print - "$eventindex" > $S/build/db/event.idx
+
+# 
+#print - "ALTER TABLE event ADD CONSTRAINT fk_macaddr FOREIGN KEY (macaddr) REFERENCES found(macaddr) ON DELETE CASCADE" > $S/build/db/constraint.idx
+#print - "ALTER TABLE event ADD CONSTRAINT fk_macaddr FOREIGN KEY (macaddr) REFERENCES found(macaddr) " > $S/build/db/constraint.idx
+
 
 # map of permissions
 execrules=(
