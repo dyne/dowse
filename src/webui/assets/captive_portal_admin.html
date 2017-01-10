@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Welcome to Dowse: a digital rod for your local area network</title>
+
+  <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
+  <link rel="stylesheet" href="/serve_asset?o=bootstrap-theme.min.css">
+  <script src="/serve_asset?o=jquery.min.js"></script>
+  <script src="/serve_asset?o=bootstrap.min.js"></script>
+</head>
+<body>
+  <nav class="navbar navbar-inverse">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Dowse WebUI Captive portal administration page</a>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="/">home</a></li>
+          <li><a href="/things">things</a></li>
+          <li><a href="http://dowse.it:29999">netdata</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!--TMPL_IF name="message_loop"-->
+  <div class="container">
+    <div class="panel-body">
+      <div class="panel panel-error">
+        <div class="panel-heading">Something has gone wrong.</div>
+        <div class="panel-body">
+        <!--TMPL_LOOP name="message_loop"-->
+          <div class="alert alert-<!--TMPL_VAR name="level"-->">
+            <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+            <p><!--TMPL_VAR name="text"--></p>
+          </div>
+        <!--/TMPL_LOOP-->
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--TMPL_ELSE-->
+  <div class="container">
+    <div class="jumbotron">
+      <h1 class="text-center">Welcome to <br>&#x22;<!--TMPL_VAR name="dowse_network_name"-->&#x22;<br>
+	admin network page.<br>Powered by ...</h1>
+      <img src="/serve_asset?o=dowse-logo.png" class="center-block">
+      <p>I am the welcome page of this Dowse "monitored" network.
+	From here you can administer the client that has asked to browse by your network...</p>
+    </div>
+    <div class="row" id="event">
+      <!--TMPL_IF name="captive_portal_event"-->      
+      <div class="panel panel-default">
+        <div class="panel-heading">Event appared in this network</div>
+        <div class="panel-body">
+	  <!--TMPL_LOOP name="captive_portal_event"-->
+          <div class="alert alert-<!--TMPL_VAR name="level"--> alert-dismissable fade in">
+	    <div class="row">
+	      <div class="col-xs-11">
+		<strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+		<strong><!--TMPL_VAR name="age"--></strong>
+		device: <!--TMPL_VAR name="macaddr"--><br>  
+		<p><!--TMPL_VAR name="description"--></p>
+	      </div>
+	      <div class="col-xs-1">
+		<a href="/modify_event?id=<!--TMPL_VAR name="id"-->" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+	      </div>
+	    </div>
+          </div>
+          <!--/TMPL_LOOP-->
+        </div>
+      </div>
+      <!--TMPL_ELSE-->
+      <div class="panel panel-success">
+        <div class="panel-body">
+          <div class="alert alert-success">
+            <strong class="text-capitalize">Great no event happened</strong>
+          </div>
+        </div>
+      </div>
+      <!--/TMPL_IF-->
+    </div>
+  </div>
+  <!--/TMPL_IF-->
+
+</body>
+</html>
