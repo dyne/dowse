@@ -29,6 +29,19 @@
 #define _IP_IS_NOT_ADMIN_ (-1)
 #define _SQL_ERROR_ (-2)
 
+#define _ENABLE_TO_BROWSE (2)
+#define _DISABLE_TO_BROWSE (3)
+#define _NOT_ENABLE_TO_BROWSE (4)
+
+
+/* Level of browse authorization */
+#define __IP_IS_ADMIN_AUTH_BROWSE_STR "ADMIN TO BROWSE"
+#define __ENABLE_TO_BROSE_STR "ENABLED TO BROWSE"
+#define __DISABLE_TO_BROSE_STR "DISABLE TO BROSE "
+#define __NOT_AUTHORIZED_BROWSE_STR "NOT ENABLED TO BROWSE"
+
+
+
 #ifndef DB_HOST /* if it's not redefined at runtime */
 #define DB_HOST "127.0.0.1"
 #define DB_USER "root"
