@@ -19,24 +19,29 @@
  * Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-
 #include <webui.h>
 
-int load_global_attributes() {
-    int rv;
+int captive_portal_client(struct http_request * req) {
+    template_t tmpl;
+    char *html_rendered;
+    struct kore_buf *out;
+    int len;
+    out = kore_buf_alloc(0);
 
-    WEBUI_DEBUG
+	/**/
+    WEBUI_DEBUG;
+
+    template_load(asset_captive_portal_client_html,asset_len_captive_portal_client_html,&tmpl);
+    template_apply(&tmpl,global_attributes,out);
+
+	/**/
+    WEBUI_DEBUG;
+    html_rendered = kore_buf_release(out, &len);
+    http_response(req, 200, html_rendered, len);
+
     /**/
-    if (check_if_reset_admin_device()) {
-        WEBUI_DEBUG
-        rv=reset_admin_device();
-    } else {
-        WEBUI_DEBUG
-        rv = sql_select_into_attributes( "SELECT macaddr,ip4,ip6 FROM found WHERE admin='yes'",
-            "admin_device",
-            &global_attributes);
-    }
-    global_attributes=attrcat(global_attributes,"dowse_network_name","not yet available");
+    WEBUI_DEBUG;
+    kore_free(html_rendered);
 
-    return rv;
+    return (KORE_RESULT_OK);
 }

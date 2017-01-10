@@ -19,24 +19,37 @@
  * Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-
 #include <webui.h>
 
-int load_global_attributes() {
-    int rv;
+int captive_portal_admin(struct http_request * req) {
+    template_t tmpl;
+	attributes_set_t attr;
+    char *html_rendered;
+    struct kore_buf *out;
+    int len;
+    out = kore_buf_alloc(0);
+	attr=attrinit();
 
-    WEBUI_DEBUG
+	/**/
+    WEBUI_DEBUG;
+
+    sql_select_into_attributes(
+            "SELECT * FROM event WHERE recognized=0 ",
+            "captive_portal_event",
+            &attr);
+
+    template_load(asset_captive_portal_admin_html,asset_len_captive_portal_admin_html,&tmpl);
+    template_apply(&tmpl,attr,out);
+
+	/**/
+    WEBUI_DEBUG;
+    html_rendered = kore_buf_release(out, &len);
+    http_response(req, 200, html_rendered, len);
+
     /**/
-    if (check_if_reset_admin_device()) {
-        WEBUI_DEBUG
-        rv=reset_admin_device();
-    } else {
-        WEBUI_DEBUG
-        rv = sql_select_into_attributes( "SELECT macaddr,ip4,ip6 FROM found WHERE admin='yes'",
-            "admin_device",
-            &global_attributes);
-    }
-    global_attributes=attrcat(global_attributes,"dowse_network_name","not yet available");
+    WEBUI_DEBUG;
+    kore_free(html_rendered);
+	attrfree(attr);
 
-    return rv;
+    return (KORE_RESULT_OK);
 }
