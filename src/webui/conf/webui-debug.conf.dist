@@ -13,26 +13,59 @@ validator   v_ip6_addr   regex   ^([0-9A-Fa-f]{1,4}[:]){7}([0-9A-Fa-f]{1,4})$
 validator   v_filename  regex   ^.*$
 validator   v_command   regex   ^(THING_ON)|(THING_OFF)|(monitor)|(admin)$
 validator   v_ip_valid  function v_ip_validate
+validator   v_ip_authorized_browse function v_ip_authorized_browse
 validator   v_column_alterable regex ^(name)$
 validator   v_alphanumeric regex ^.*$
+validator   v_id regex ^[0-9]*$
 
 authentication auth_admin {
 	authentication_type request
 	authentication_validator	v_ip_valid	
 # from kore.io source code: Authentication types of "request" send their own HTTP responses. 
-
 }
+
+
+#--- Is the IP authorized to browse?
+authentication auth_browse {
+	authentication_type request
+	authentication_validator	v_ip_authorized_browse	
+# from kore.io source code: Authentication types of "request" send their own HTTP responses. 
+}
+
 
 domain * {
 	accesslog webui_access.log
 	
-    # generic assets
-    static /		serve_asset
-	params get / {
+	# This is the main page
+	# The auth_browse redirect the URL to :
+	#  -> /captive_client  : if the MacAddress is not authorized to browse
+	#  -> /                : page if the MacAddres is authorized to browse but is not admin.
+	#  -> /TO BE DEFINED   : if the MacAddres is disabled to browse.
+	#  -> /captive_admin   : if the MacAddress is admin authorized
+	#
+        static /		serve_asset auth_browse
+	static /welcome		serve_asset
+
+	# This page serve asset (CSS,Js, image, etc etc) 
+	static /serve_asset		serve_asset
+    	params get /serve_asset {
 	    validate o v_filename
 	}
 
-    # TODO: command pipeline
+	# Captive portal
+	## Client side
+	static /captive_client captive_portal_client
+	params get /captive_client {	       
+	    validate macaddr v_macaddr
+	}
+
+	# Captive portal
+	## Admin side
+	# The captive portal admin page is authenticate by mac-addr .
+	static /captive_admin captive_portal_admin auth_admin
+	
+
+	# command pipeline
 	static     /cmd	   queue_command
 	params get /cmd {
 	 	validate op  v_command
@@ -41,17 +74,24 @@ domain * {
 	 	validate ip6 v_ip6_addr
 	}
 
-	# dynamic pages
+	# dynamic pages that show the 
 	static     /things          thing_show
 	params get /things {
 		validate macaddr v_macaddr			
 	}
 
+	# endpoint used to modify column
 	static /modify_things modify_things
 	params post /modify_things {
                validate macaddr v_macaddr				
 	       validate column v_column_alterable
 	       validate value v_alphanumeric
+	}
+
+	# endpoint used to modify column of table event
+	static /modify_event modify_event
+	params get /modify_event {
+               validate id v_id
 	}
 
 	# Configure admin page
@@ -60,8 +100,9 @@ domain * {
 	static /start_reset_procedure start_reset_procedure
 	static /configure_admin reset_admin
 	
-	
-	# Test Admin authentication
+
+	# Test Admin authentication only for debugging
+	# 
 	static /test_admin test_admin auth_admin
 
 	# special static assets
@@ -73,4 +114,5 @@ static /test/2 ___webui___test_unit__A002
 static /test/3 ___webui___test_unit__A003
 
 }
+
 
