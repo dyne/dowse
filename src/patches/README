@@ -10,3 +10,9 @@ have in the current Dowse setup.
 
 	Applied on git tag 1.7.0 (27084d6ef9bc83b56789ce49365cd9e2a582f046)
 
+* netdata-dowse-integration
+
+	This patch integrates Dowse into netdata to offer some ease of use and WebUI
+	navigation.
+
+	Applied on git master (392042e6cb0b3f9b366436ecef01d6e93613b67a)

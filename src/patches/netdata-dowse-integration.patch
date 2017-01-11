@@ -1,0 +1,54 @@
+diff --git a/web/index.html b/web/index.html
+index b0a6c95..f2af84c 100644
+--- a/web/index.html
++++ b/web/index.html
+@@ -2664,23 +2664,6 @@
+         <div class="container">
+             <nav id="mynetdata_nav" class="collapse navbar-collapse navbar-left hidden-sm hidden-xs" role="navigation" style="padding-right: 20px;">
+                 <ul class="nav navbar-nav">
+-                    <li class="dropdown" id="myNetdataDropdownParent">
+-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">my-netdata <strong class="caret"></strong></a>
+-                        <ul class="dropdown-menu scrollable-menu inpagemenu multi-column columns-2" role="menu" id="myNetdataDropdownUL">
+-                            <div class="row">
+-                                <div class="col-sm-6" style="width: 85%; padding-right: 0;">
+-                                    <ul id="mynetdata_servers" class="multi-column-dropdown">
+-                                        <li><a href="#" onclick="return false;" style="color: #999;">loading...</a></li>
+-                                    </ul>
+-                                </div>
+-                                <div class="col-sm-3 hidden-xs" style="width: 15%; padding-left: 0;">
+-                                    <ul id="mynetdata_actions1" class="multi-column-dropdown">
+-                                    <li style="color: #999;">&nbsp;</li>
+-                                    </ul>
+-                                </div>
+-                            </div>
+-                        </ul>
+-                    </li>
+                 </ul>
+             </nav>
+             <div class="navbar-header">
+@@ -2690,23 +2673,18 @@
+                     <span class="icon-bar"></span>
+                     <span class="icon-bar"></span>
+                 </button>
++                <a href="http://dowse.it" class="navbar-brand" title="dowse webui">Dowse WebUI</a>
+                 <a href="/" class="navbar-brand" id="hostname" title="reload the dashboard">netdata</a>
++                <a href="http://dowse.it/things" class="navbar-brand" title="things">Things on the Network</a>
+             </div>
+             <nav class="collapse navbar-collapse navbar-right" role="navigation">
+                 <ul class="nav navbar-nav">
+                     <li><a href="#" class="btn" data-toggle="modal" data-target="#alarmsModal" title="alarms"><i class="fa fa-bell"></i>&nbsp;<span class="hidden-sm">Alarms&nbsp;</span><span id="alarms_count_badge" class="badge"></span></a></li>
+                     <li><a href="#" class="btn" data-toggle="modal" data-target="#optionsModal" title="dashboard settings"><i class="fa fa-sliders"></i>&nbsp;<span class="hidden-sm">Settings</span></a></li>
+-                    <li class="hidden-sm" id="updateButton"><a href="#" class="btn" data-toggle="modal" data-target="#updateModal" title="check for update"><i class="fa fa-cloud-download"></i> <span class="hidden-sm hidden-md">Update </span><span id="update_badge" class="badge"></span></a></li>
+                     <li><a href="https://github.com/firehol/netdata/wiki" class="btn" target="_blank" title="netdata on github"><i class="fa fa-github"></i></a></li>
+                     <li><a href="https://twitter.com/linuxnetdata" class="btn" target="_blank" title="netdata on twitter"><i class="fa fa-twitter" aria-hidden="true"></i></a></li>
+                     <li><a href="https://www.facebook.com/linuxnetdata/" class="btn" target="_blank" title="netdata on facebook"><i class="fa fa-facebook-official" aria-hidden="true"></i></a></li>
+                     <li class="hidden-sm"><a href="#" class="btn" data-toggle="modal" data-target="#helpModal" title="dashboard help"><i class="fa fa-question-circle"></i>&nbsp;<span class="hidden-sm hidden-md">Help</span></a></li>
+-                    <li class="dropdown hidden-sm hidden-md hidden-lg">
+-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">my-netdata <strong class="caret"></strong></a>
+-                        <ul id="mynetdata_servers2" class="dropdown-menu scrollable-menu inpagemenu" role="menu">
+-                            <li><a href="#" onclick="return false;" style="color: #999;">loading...</a></li>
+-                        </ul>
+-                    </li>
+                 </ul>
+             </nav>
+         </div>
