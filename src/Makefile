@@ -29,6 +29,7 @@ base: config libs modprobe sup hiredis-lock
 	@./compile.sh dnscrypt_dowse.so
 	@./compile.sh pgld
 	@./compile.sh netdata
+	@./compile.sh netdata-plugins
 	@./compile.sh dhcpd
 	@./compile.sh libwebsockets
 	@./compile.sh mosquitto
@@ -82,6 +83,7 @@ install:
 	install -d ${DESTDIR}${PREFIX}/webui
 	cp -rav webui/* ${DESTDIR}${PREFIX}/webui/
 	make -C netdata install
+	make -C netdata-plugins install
 #	@./compile.sh install
 
 clean:
@@ -98,6 +100,7 @@ clean:
 	make -C dnscrypt-plugin      clean
 	make -C pgld                 clean
 	make -C netdata              clean
+	make -C netdata-plugins      clean
 	make -C kore				 clean
 	make -C libwebsockets	     clean
 	make -C mosquitto            clean
