@@ -184,6 +184,10 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	char     question_str[MAX_QUERY];
 	int      question_len;
 
+	/* Captive portal */
+    char mac_address [16];
+	/**/
+
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
 	wire = dcplugin_get_wire_data(dcp_packet);
@@ -345,6 +349,39 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// publish info to redis channel
 	publish_query(data);
 
+	/* retrieve mac_address for captive_portal functionalities */
+	 ip2mac(NULL,data->from,mac_address );
+
+	if (should_be_redirected_to_captive_portal(mac_address,data)) {
+	    /* create the response to captive_portal IP-ADDRESS */
+        size_t answer_size = 0;
+        uint8_t *outbuf = NULL;
+        char tmprr[1024];
+
+        if(data->debug)
+            func("redirect on captive porta due to : %s", (data->reply->len?data->reply->str : "NOT AUTHORIZED TO BROWSE"));
+
+        /* Taking the dowse.it address */
+        redisReply *tmp_reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
+        snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, tmp_reply->str);
+        freeReplyObject(tmp_reply);
+        /**/
+
+        outbuf = answer_to_question(packet_id, question_rr,
+                                    tmprr, &answer_size);
+
+        if(!outbuf)
+            return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+
+        dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+
+        if(outbuf) LDNS_FREE(outbuf);
+        return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+	}
+
+
+
+
 	// DIRECT ENDPOINT
 	// resolve locally leased hostnames with a O(1) operation on redis
 	data->reply = cmd_redis(data->redis, "GET dns-lease-%s", data->query);
@@ -429,7 +466,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
 	// return DCP_SYNC_FILTER_RESULT_OK;
 }
-
 
 DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginDNSPacket *dcp_packet) {
 
@@ -603,4 +639,36 @@ int publish_query(plugin_data_t *data) {
 //  fprintf(stderr,"DNS: %s\n", outnew);
 
 	return 0;
+}
+
+/*
+ *  Check in redis storage if it's present the authorization for that macaddress.
+ *  The values it contain
+ *
+ *  KEY    : authorize-mac-11:22:33:44:55:66
+ *  VALUES : (admin_should_check | admin | authorized_to_browse )
+ *
+ *  The value "admin_should_check" means that it's an administration mac-address
+ *  and it should be check the captive_portal admin page to audit new events.
+ *
+ *  Note: other values means (directly or no) that the mac-address is authorized
+ *  to browse, so we don't check it.
+ *
+ *  The value "admin" means that it's an administration and it's authorized.
+ *
+ *  The value "authorized_to_browse" means that it's an administration and it's authorized.
+ *
+ *
+ * */
+int should_be_redirected_to_captive_portal(char *mac_address, plugin_data_t *data ){
+    /**/
+    data->reply = cmd_redis(data->redis, "GET authorization-mac-%s", mac_address);
+    if(data->reply->len) {
+        return (strcmp(data->reply->str,"admin_should_check")==0); /**/
+    } else {
+        /* it's not authorized to browse */
+        return 1;
+    }
+
+
 }
