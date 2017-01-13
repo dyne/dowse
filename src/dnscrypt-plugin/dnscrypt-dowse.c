@@ -56,14 +56,23 @@ int publish_query(plugin_data_t *data);
 // returned buffer must be freed with LDNS_FREE
 uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, size_t *asize);
 
+
+// contain the logic if a macaddress should be redirect to captive_portal or not.
+int where_should_be_redirected_to_captive_portal(char *mac_address, plugin_data_t *data );
+
+// ip2mac address translation tool
+int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) ;
+
 // return a code valid for DCP and free all buffers in *data
 int return_packet(ldns_pkt *packet, plugin_data_t *data, int code) {
-	if(packet) {
+    if(packet) {
 		ldns_pkt_free(packet);
 		packet=NULL;
 	}
 	if(data->reply) {
+        func("%s %d",__FILE__,__LINE__);
 		freeReplyObject(data->reply);
+        func("%s %d",__FILE__,__LINE__);
 		data->reply=NULL;
 	}
 	return code;
@@ -81,6 +90,9 @@ const char * dcplugin_long_description(DCPlugin * const dcplugin) {
 
 int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	int i;
+
+	func("compile time : %s", __TIME__);
+
 	plugin_data_t *data = malloc(sizeof(plugin_data_t));
 	memset(data, 0x0, sizeof(plugin_data_t));
 
@@ -188,13 +200,19 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
     char mac_address [16];
 	/**/
 
+
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
 
 	wire = dcplugin_get_wire_data(dcp_packet);
-	wirelen = dcplugin_get_wire_data_len(dcp_packet);
-	// enforce max dns query size
+
+
+    wirelen = dcplugin_get_wire_data_len(dcp_packet);
+
+
+    // enforce max dns query size
 	if(wirelen > MAX_DNS) // (RFC 6891)
 		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_KILL);
+
 
 	// TODO: throttling to something like 200 calls per second
 	// FUNCTION LIMIT_API_CALL(ip)
@@ -211,9 +229,11 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// 	PERFORM_API_CALL()
 	// 	END
 
+
 	// import the wire packet to ldns format
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
 		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+
 
 	packet_id = ldns_pkt_id(packet);
 
@@ -224,18 +244,30 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		func("-- \n");
 	}
 
+
 	// retrieve the actual question string
 	question_rr_list  = ldns_pkt_question(packet);
-	question_rr       = ldns_rr_list_rr(question_rr_list, 0U); // first in list)
-	question_rdf      = ldns_rr_owner(question_rr);
-	snprintf(question_str, MAX_QUERY, "%s", ldns_rdf2str(question_rdf));
-	// TODO: this needs a free(question_str)
+
+
+    question_rr       = ldns_rr_list_rr(question_rr_list, 0U); // first in list)
+
+
+    question_rdf      = ldns_rr_owner(question_rr);
+
+
+    snprintf(question_str, MAX_QUERY, "%s", ldns_rdf2str(question_rdf));
+
+
+    // TODO: this needs a free(question_str)
 	question_len      = strlen(question_str);
 	// TODO: check if we need to query for more questions here
+
+
 
 	if (question_len == 0)
 		// this may be to drastic as FATAL? change if problems occur
 		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+
 
 	// debug
 	if(data->debug)
@@ -340,6 +372,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	data->query_len = strlen(data->query);
 	data->query[data->query_len-1] = '\0'; // eliminate terminating dot
 
+
 	// get the source ip
 	from_sa = dcplugin_get_client_address(dcp_packet);
 	from_len = dcplugin_get_client_address_len(dcp_packet);
@@ -349,36 +382,67 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// publish info to redis channel
 	publish_query(data);
 
+
+
+    size_t answer_size = 0;
+    uint8_t *outbuf = NULL;
+
+    char rr_to_redirect[1024];
+    int redirect_somewhere=0;
+
 	/* retrieve mac_address for captive_portal functionalities */
-	 ip2mac(NULL,data->from,mac_address );
+    if (ip2mac(NULL, data->from, mac_address)!=0) { /* Non e' riuscito ad ottenere il macaddress*/
+        snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, "127.0.0.1");
+        redirect_somewhere=1;
+        data->reply= cmd_redis(data->redis,
+                "GET dns-lease-dowse.it");
+        func("redirect on captive portal due to : ip2mac internal error");
+    } else {
+        int rv = where_should_be_redirected_to_captive_portal(mac_address, data);
 
-	if (should_be_redirected_to_captive_portal(mac_address,data)) {
-	    /* create the response to captive_portal IP-ADDRESS */
-        size_t answer_size = 0;
-        uint8_t *outbuf = NULL;
-        char tmprr[1024];
+        if (rv != 0) {
+            /* create the response to captive_portal IP-ADDRESS */
+            if (data->debug)
+                func("redirect on captive portal due to : %s",
+                        (data->reply->len ?
+                                data->reply->str : "NOT AUTHORIZED TO BROWSE"));
 
-        if(data->debug)
-            func("redirect on captive porta due to : %s", (data->reply->len?data->reply->str : "NOT AUTHORIZED TO BROWSE"));
+            if (rv != -1) {
+                /* Taking the dowse.it address */
+                redisReply *tmp_reply = cmd_redis(data->redis,
+                        "GET dns-lease-dowse.it");
 
-        /* Taking the dowse.it address */
-        redisReply *tmp_reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
-        snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, tmp_reply->str);
-        freeReplyObject(tmp_reply);
-        /**/
+                snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query,
+                        tmp_reply->str);
+                redirect_somewhere=1;
 
-        outbuf = answer_to_question(packet_id, question_rr,
-                                    tmprr, &answer_size);
+                freeReplyObject(tmp_reply);
+            } else {
+                snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, "127.0.0.1");
+                redirect_somewhere=1;
+            }
 
-        if(!outbuf)
+        }
+    }
+    /* it should be redirected somewhere ? then render the response */
+    if (redirect_somewhere) {
+        func("%s %d",__FILE__,__LINE__);
+        outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
+        func("%s %d",__FILE__,__LINE__);
+
+        if (!outbuf)
             return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+        func("%s %d",__FILE__,__LINE__);
 
         dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+        func("%s %d",__FILE__,__LINE__);
 
-        if(outbuf) LDNS_FREE(outbuf);
+        if (outbuf)
+            LDNS_FREE(outbuf);
+        func("%s %d",__FILE__,__LINE__);
+
         return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
-	}
-
+    }
 
 
 
@@ -646,29 +710,28 @@ int publish_query(plugin_data_t *data) {
  *  The values it contain
  *
  *  KEY    : authorize-mac-11:22:33:44:55:66
- *  VALUES : (admin_should_check | admin | authorized_to_browse )
+ *  VALUES : (admin_should_check | admin | authorized_to_browse | disable_to_browse )
  *
  *  The value "admin_should_check" means that it's an administration mac-address
  *  and it should be check the captive_portal admin page to audit new events.
+ * *
+ *  The value "admin" means that it's an administration and it's authorized to browse
  *
- *  Note: other values means (directly or no) that the mac-address is authorized
- *  to browse, so we don't check it.
+ *  The value "authorized_to_browse" means that it's authorized to browse.
  *
- *  The value "admin" means that it's an administration and it's authorized.
- *
- *  The value "authorized_to_browse" means that it's an administration and it's authorized.
+ *  The value "disable_to_browse" means that it's not authorized to browse and should be redirected to 127.0.0.1.
  *
  *
  * */
-int should_be_redirected_to_captive_portal(char *mac_address, plugin_data_t *data ){
+int where_should_be_redirected_to_captive_portal(char *mac_address, plugin_data_t *data ){
     /**/
     data->reply = cmd_redis(data->redis, "GET authorization-mac-%s", mac_address);
     if(data->reply->len) {
+        if (strcmp(data->reply->str,"disable_to_browse")==0) return -1;
+
         return (strcmp(data->reply->str,"admin_should_check")==0); /**/
     } else {
         /* it's not authorized to browse */
         return 1;
     }
-
-
 }

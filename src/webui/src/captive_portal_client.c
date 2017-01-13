@@ -25,11 +25,27 @@ int captive_portal_client(struct http_request * req) {
     template_t tmpl;
     char *html_rendered;
     struct kore_buf *out;
+    attributes_set_t attr;
     int len;
     out = kore_buf_alloc(0);
-
+    int bad_parsing=0;
+    attr = attrinit();
 	/**/
     WEBUI_DEBUG;
+    http_populate_get(req);
+
+    PARSE_PARAMETER(macaddr);
+
+    CHECK_PARAMETER();
+
+    char sql[256];
+    snprintf(sql,sizeof(sql),"INSERT INTO event (level,macaddr,description) VALUES ('warning','%s','%s') ",macaddr,__EVENT_NEW_MAC_ADDRESS);
+
+    int rv = sqlexecute(sql, &attr);
+    if (rv != KORE_RESULT_OK) {
+        return show_generic_message_page(req,attr);
+    }
+    /**/
 
     template_load(asset_captive_portal_client_html,asset_len_captive_portal_client_html,&tmpl);
     template_apply(&tmpl,global_attributes,out);

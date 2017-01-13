@@ -66,21 +66,22 @@ print - "$thingindex" > $S/build/db/thing.idx
 # index of all database fields for an event occured in the network
 eventindex='
 id int auto_increment primary key
-age      DATETIME DEFAULT CURRENT_TIMESTAMP
-description    text
-macaddr  varchar(18)
+recognized boolean default 0 COMMENT "'" the administrator has recognized this event? "'"
 level enum("'"danger"'","'"success"'","'"info"'","'"warning"'") not null
-recognized boolean default 0
+age      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT "'" when is it happened ? "'"
+macaddr  varchar(18)  COMMENT "'" who ? "'"
+description    text   COMMENT "'" what ? "'"
 '
 
 #--- If the event it's refered to a tuple not insert in the found column
 #--- that column shall be created by a trigger
 print - "$eventindex" > $S/build/db/event.idx
 
-# 
+#
 #print - "ALTER TABLE event ADD CONSTRAINT fk_macaddr FOREIGN KEY (macaddr) REFERENCES found(macaddr) ON DELETE CASCADE" > $S/build/db/constraint.idx
 #print - "ALTER TABLE event ADD CONSTRAINT fk_macaddr FOREIGN KEY (macaddr) REFERENCES found(macaddr) " > $S/build/db/constraint.idx
 
+print - "" > $S/build/db/constraint.idx
 
 # map of permissions
 execrules=(

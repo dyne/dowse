@@ -1,4 +1,3 @@
-
 /*  Dowse - embedded WebUI based on Kore.io
  *
  *  (c) Copyright 2016 Dyne.org foundation, Amsterdam
@@ -23,47 +22,70 @@
 
 int modify_event(struct http_request * req) {
     template_t tmpl;
-	attributes_set_t attr;
+    attributes_set_t attr;
     char *html_rendered;
     struct kore_buf *out;
     int len;
+    int bad_parsing=0;
     out = kore_buf_alloc(0);
-	attr=attrinit();
-
+    attr = attrinit();
 
     http_populate_get(req);
 
     PARSE_PARAMETER(id);
-    out = kore_buf_alloc(0);
-      attr=attrinit();
+    PARSE_PARAMETER(action);
+    PARSE_PARAMETER(macaddr);
 
-      if (strcmp(id,"")==0) {
-           char m[1024];
-              snprintf(m,sizeof(m),"id is not validated ");
-              attributes_set_t att=attrinit();
-              webui_add_error_message(&att,m);
-              err(m);
-              return show_generic_message_page(req,att);
-      }
+    CHECK_PARAMETER();
 
-      /**/
-      WEBUI_DEBUG;
-      char sql[512];
-      snprintf(sql,sizeof(sql),
-              "UPDATE event set recognized=true where id='%s'",
-              id);
 
-      int rv=sqlexecute(sql,&attr);
-      if (rv!=KORE_RESULT_OK)
-      /**/
-      WEBUI_DEBUG;
-      http_response_header(req, "location", "/captive_admin#event");
-      http_response(req, 302, NULL, 0);
 
-      /**/
-      WEBUI_DEBUG;
-      kore_free(html_rendered);
-      attrfree(attr);
+    /**/
+    WEBUI_DEBUG
+    ;
+    char action_sql[1024];
 
-      return (KORE_RESULT_OK);
+    /* choose the action to execute */
+    if (strcmp(action,"enable_browse")==0) {
+        snprintf(action_sql,sizeof(action_sql),
+                " UPDATE found SET authorized='%s' WHERE macaddr='%s'",
+                macaddr,
+                __ENABLE_TO_BROWSE_STR,
+                macaddr
+                );
+    }
+    if (strcmp(action,"disable_browse")==0) {
+        snprintf(action_sql,sizeof(action_sql),
+        " UPDATE found SET authorized='%s' WHERE macaddr='%s'",
+        macaddr,
+        __DISABLE_TO_BROWSE_STR,
+        macaddr
+        );
+    }
+    int rv1 = sqlexecute(action_sql, &attr);
+    if (rv1 != KORE_RESULT_OK) {
+        return show_generic_message_page(req,attr);
+    }
+
+    /* event is recognized */
+    snprintf(action_sql, sizeof(action_sql)," UPDATE event SET recognized=true where id='%s'",
+            id);
+
+    int rv2 = sqlexecute(action_sql, &attr);
+    if (rv2 != KORE_RESULT_OK) {
+        return show_generic_message_page(req,attr);
+    }
+    /**/
+    WEBUI_DEBUG;
+
+    http_response_header(req, "location", "/captive_admin#event");
+    http_response(req, 302, NULL, 0);
+
+    /**/
+    WEBUI_DEBUG
+    ;
+    kore_free(html_rendered);
+    attrfree(attr);
+
+    return (KORE_RESULT_OK);
 }

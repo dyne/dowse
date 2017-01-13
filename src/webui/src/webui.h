@@ -36,11 +36,11 @@
 
 /* Level of browse authorization */
 #define __IP_IS_ADMIN_AUTH_BROWSE_STR "ADMIN TO BROWSE"
-#define __ENABLE_TO_BROSE_STR "ENABLED TO BROWSE"
-#define __DISABLE_TO_BROSE_STR "DISABLE TO BROSE "
+#define __ENABLE_TO_BROWSE_STR "ENABLED TO BROWSE"
+#define __DISABLE_TO_BROWSE_STR "DISABLE TO BROWSE "
 #define __NOT_AUTHORIZED_BROWSE_STR "NOT ENABLED TO BROWSE"
 
-
+#define __EVENT_NEW_MAC_ADDRESS "new_mac_address"
 
 #ifndef DB_HOST /* if it's not redefined at runtime */
 #define DB_HOST "127.0.0.1"
@@ -54,7 +54,19 @@
 #define PARSE_PARAMETER(PAR)\
     char *PAR=""; \
     http_argument_get_string(req, #PAR ,&PAR);\
-    kore_log(LOG_DEBUG, "%s Parameter " #PAR "[%s]",__where_i_am__,PAR);
+    kore_log(LOG_DEBUG, "%s Parameter " #PAR "[%s]",__where_i_am__,PAR);\
+    if (strcmp(PAR,"")==0 ){\
+      char m[1024];\
+      snprintf(m, sizeof(m), "%s is not validated ",#PAR);\
+      webui_add_error_message(&attr, m );\
+      err(m);\
+      bad_parsing=1;\
+    }
+
+#define CHECK_PARAMETER()\
+    if (bad_parsing) {\
+        return show_generic_message_page(req, attr);\
+    }
 
 #include <webui_common_var.h>
 #include <webui_prototype.h>

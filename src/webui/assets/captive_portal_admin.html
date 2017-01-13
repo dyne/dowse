@@ -65,20 +65,41 @@
         <div class="panel-heading">Event appared in this network</div>
         <div class="panel-body">
 	  <!--TMPL_LOOP name="captive_portal_event"-->
-          <div class="alert alert-<!--TMPL_VAR name="level"--> alert-dismissable fade in">
-	    <div class="row">
-	      <div class="col-xs-11">
-		<strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
-		<strong><!--TMPL_VAR name="age"--></strong>
-		device: <!--TMPL_VAR name="macaddr"--><br>  
-		<p><!--TMPL_VAR name="description"--></p>
-	      </div>
-	      <div class="col-xs-1">
-		<a href="/modify_event?id=<!--TMPL_VAR name="id"-->" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+	  <!--TMPL_IF name="description" value="new_mac_address"-->
+          <div class="row">
+	    <div class="col-xs-10">
+	      <div class="alert alert-<!--TMPL_VAR name="level"--> alert-dismissable fade in">
+		<div class="row">
+		  <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+		  <strong><!--TMPL_VAR name="age"--></strong>
+		  Device <!--TMPL_VAR name="macaddr"--> has tried to browse internet using the network.<br>
+		  Do you want enable it?
+		</div>
 	      </div>
 	    </div>
-          </div>
-          <!--/TMPL_LOOP-->
+	    <div class="col-xs-1">
+	      <a href="/modify_event?id=<!--TMPL_VAR name="id"-->&action=enable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->" class="btn btn-success btn-xs close" data-dismiss="alert" aria-label="close">		  <span class="glyphicon glyphicon-ok-sign"></span> OK</a>
+	    </div>
+	    <div class="col-xs-1">
+	      <a href="/modify_event?id=<!--TMPL_VAR name="id"-->&action=disable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->" class="btn btn-danger btn-xs close" data-dismiss="alert" aria-label="close">		  <span class="glyphicon glyphicon-remove-sign"></span> No</a>
+	    </div>
+	  </div>
+	<!--TMPL_ELSE-->
+	<div class="row">
+	  <div class="col-xs-12">
+	    <div class="alert alert-<!--TMPL_VAR name="level"--> alert-dismissable fade in">
+	      <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+	      <strong><!--TMPL_VAR name="age"--></strong>
+	      device: <!--TMPL_VAR name="macaddr"--><br>  
+	      <p><!--TMPL_VAR name="description"--></p>
+	    </div>
+	  <!--/div>
+	  <div class="col-xs-2"-->
+	    <a href="/modify_event?id=<!--TMPL_VAR name="id"-->" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+	  </div>
+	</div>
+	<!--/TMPL_IF-->
+	<!--/TMPL_LOOP-->
         </div>
       </div>
       <!--TMPL_ELSE-->

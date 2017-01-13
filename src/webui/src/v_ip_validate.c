@@ -98,7 +98,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
 
     int called=0;
     while ((values = mysql_fetch_row(result)) != 0) {
-        called++;
+        WEBUI_DEBUG;      called++;
         for (i = 0; i < num_fields; i++) {
             kore_log(LOG_DEBUG, "[%d][%s][%s]", i, column[i].name, values[i]);
         }

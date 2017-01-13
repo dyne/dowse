@@ -17,17 +17,19 @@ int queue_command(struct http_request * req) {
     char *message;
     char command[256];
     int len;
-
+    int bad_parsing=0;
+    attributes_set_t attr=attrinit();
     redisContext *redis = NULL;
     redisReply   *reply = NULL;
 
     /* Parsing parameter */
-    WEBUI_DEBUG;
     http_populate_get(req);
+
     PARSE_PARAMETER(op);
     PARSE_PARAMETER(macaddr);
     PARSE_PARAMETER(ip4);
     PARSE_PARAMETER(ip6);
+
 
     /* If "op" command not set or no parameter specified*/
     if ((strcmp(op,"")==0) ||
