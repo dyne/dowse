@@ -144,12 +144,12 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,attributes_set_t*p
             kore_log(LOG_DEBUG, "[%d][%s][%s]", i, column[i].name, values[i]);
         }
 
-        if (strcmp(__ENABLE_TO_BROSE_STR,values[0])==0){
+        if (strcmp(__ENABLE_TO_BROWSE_STR,values[0])==0){
             rv=_ENABLE_TO_BROWSE;
             break;
         };
 
-        if (strcmp(__DISABLE_TO_BROSE_STR,values[0])==0){
+        if (strcmp(__DISABLE_TO_BROWSE_STR,values[0])==0){
             rv=_DISABLE_TO_BROWSE;
             break;
         };

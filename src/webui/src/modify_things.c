@@ -28,38 +28,15 @@ int modify_things(struct http_request * req) {
     struct kore_buf *out;
     int len;
     http_populate_post(req);
+    int bad_parsing=0;
+    out = kore_buf_alloc(0);
+    attr=attrinit();
 
     PARSE_PARAMETER(macaddr);
     PARSE_PARAMETER(column);
     PARSE_PARAMETER(value);
 
-    out = kore_buf_alloc(0);
-	attr=attrinit();
-
-	if (strcmp(macaddr,"")==0) {
-	     char m[1024];
-	        snprintf(m,sizeof(m),"macaddr is not validated ");
-	        attributes_set_t att=attrinit();
-	        webui_add_error_message(&att,m);
-	        err(m);
-	        return show_generic_message_page(req,att);
-	}
-    if (strcmp(macaddr,"")==0) {
-         char m[1024];
-            snprintf(m,sizeof(m),"column is not validated ");
-            attributes_set_t att=attrinit();
-            webui_add_error_message(&att,m);
-            err(m);
-            return show_generic_message_page(req,att);
-    }
-    if (strcmp(macaddr,"")==0) {
-         char m[1024];
-            snprintf(m,sizeof(m),"\"value\" is not validated ");
-            attributes_set_t att=attrinit();
-            webui_add_error_message(&att,m);
-            err(m);
-            return show_generic_message_page(req,att);
-    }
+	CHECK_PARAMETER();
 
 	/**/
     WEBUI_DEBUG;

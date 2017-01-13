@@ -25,6 +25,7 @@ int sqlexecute(char*command,attributes_set_t *ptr_attrl){
   }
 
   WEBUI_DEBUG;
+  func("%s %d %s",__FILE__,__LINE__,command);
   // Execute the statement
   if (mysql_query(db, command)) {
     show_mysql_error(db,ptr_attrl);

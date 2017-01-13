@@ -17,6 +17,7 @@ validator   v_ip_authorized_browse function v_ip_authorized_browse
 validator   v_column_alterable regex ^(name)$
 validator   v_alphanumeric regex ^.*$
 validator   v_id regex ^[0-9]*$
+validator   v_event_command regex  ^(enable_browse|disable_browse)$
 
 authentication auth_admin {
 	authentication_type request
@@ -92,6 +93,8 @@ domain * {
 	static /modify_event modify_event
 	params get /modify_event {
                validate id v_id
+	       validate action v_event_command
+	       validate macaddr v_macaddr
 	}
 
 	# Configure admin page

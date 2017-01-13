@@ -69,11 +69,12 @@ dnscrypt-proxy-exec() {
 
 	func "Launching dnscrypt-proxy to listen on port 53"
 	act "dnscrypt proxy server: $dnscrypt_name"
-
+# TODO definire la variabile d'ambiente interface 
     if [[ $DEBUG = 1 ]]; then
 		DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
 						DOWSE_LAN_ADDRESS_IP4=$address \
 						DOWSE_LAN_NETMASK_IP4=$netmask \
+						interface=$interface \
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
@@ -84,7 +85,6 @@ dnscrypt-proxy-exec() {
 						-m 7 -u $dowse_uid
 		# log level informational (7 for debug)
 		return $?
-
     else
 		pid=$H/run/dnscrypt-proxy.pid
 		DOWSE_DOMAINLIST=$R/domain-list/data \
@@ -92,6 +92,7 @@ dnscrypt-proxy-exec() {
 						DOWSE_LAN_NETMASK_IP4=$netmask \
 						hostname=$hostname \
 						domain=$lan \
+						interface=$interface \
 						launch dnscrypt-proxy -a $address:53 \
 						-p $pid -l $H/log/dnscrypt.log \
 						-L $R/share/dnscrypt-resolvers.csv \

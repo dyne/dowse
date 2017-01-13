@@ -32,29 +32,36 @@
 #define IP2MAC_RESULT_OK (0)
 
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) {
-  char loc_ipaddr_type[6];
-  func("converting from %s %s on %s",ipaddr_type,ipaddr_value,getenv("interface"));
-  
-  if (ipaddr_type==NULL) {
-      int rv=sscanf(ipaddr_value,"%d.%d.%d.%d",&a,&b,&c,&d);
-      if (rv==4) {
-	sprintf(loc_ipaddr_type,"ipv4");
-      } else {
-	sprintf(loc_ipaddr_type,"ipv6");
-      }
-  }    
-  if (strcmp(loc_ipaddr_type,"ipv4")==0) {
-    return convert_from_ipv4(ipaddr_value,macaddr);
-  } else {
-    return convert_from_ipv6(ipaddr_value,macaddr);
-  }
-    
+    char loc_ipaddr_type[6];
+
+    if (ipaddr_type == NULL) {
+        int a, b, c, d;
+        func("sscanf from %s on %s", ipaddr_value, getenv("interface"));
+        int rv = sscanf(ipaddr_value, "%d.%d.%d.%d", &a, &b, &c, &d);
+
+        if (rv == 4) {
+            sprintf(loc_ipaddr_type, "ipv4");
+        } else {
+            sprintf(loc_ipaddr_type, "ipv6");
+        }
+    } else {
+        snprintf(loc_ipaddr_type, sizeof(loc_ipaddr_type), "%s", ipaddr_type);
+    }
+    func("converting from %s  %s  on %s", loc_ipaddr_type, ipaddr_value,
+            getenv("interface"));
+
+    if (strcmp(loc_ipaddr_type, "ipv4") == 0) {
+        return convert_from_ipv4(ipaddr_value, macaddr);
+    } else {
+        return convert_from_ipv6(ipaddr_value, macaddr);
+    }
+
 }
 
 /**/
-void ethernet_mactoa(struct sockaddr *addr,char*buff) {
+void ethernet_mactoa(struct sockaddr *addr, char*buff) {
 
-  unsigned char *ptr = (unsigned char *) addr->sa_data;
+    unsigned char *ptr = (unsigned char *) addr->sa_data;
 
     sprintf(buff, "%02X:%02X:%02X:%02X:%02X:%02X", (ptr[0] & 0377),
             (ptr[1] & 0377), (ptr[2] & 0377), (ptr[3] & 0377), (ptr[4] & 0377),
@@ -70,10 +77,12 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr) {
 
     /* Get an internet domain socket. */
     if ((sockef_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-      err("Sorry but during IP-ARP conversion I cannot open a socket [%s]",
+        func("Sorry but during IP-ARP conversion I cannot open a socket [%s]",
                 strerror(errno));
-      
-      return (IP2MAC_ERROR);
+        err("Sorry but during IP-ARP conversion I cannot open a socket [%s]",
+                strerror(errno));
+
+        return (IP2MAC_ERROR);
     }
 
     /* Make the ARP request. */
@@ -82,9 +91,13 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr) {
     sin->sin_family = AF_INET;
 
     if (inet_aton(ipaddr_value, &ipaddr) == 0) {
-        err("Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
-                ipaddr_value,strerror(errno));
-        
+        func(
+                "Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
+                ipaddr_value, strerror(errno));
+        err(
+                "Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
+                ipaddr_value, strerror(errno));
+
         return (IP2MAC_ERROR);
     }
 
@@ -93,28 +106,34 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr) {
     sin->sin_family = ARPHRD_ETHER;
 
     /* TODO Se non c'e' la eth0 ? */
-    char *dev=getenv("interface");
-    if (dev==NULL) {
-        dev="wlan0";
+    char *dev = getenv("interface");
+    if (dev == NULL) {
+        dev = "lo";
     }
 
     strncpy(areq.arp_dev, dev, 15);
 
     if (ioctl(sockef_fd, SIOCGARP, (caddr_t) &areq) == -1) {
-      err("-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",ipaddr_value,dev,strerror(errno));
-      return (IP2MAC_ERROR);
+        func(
+                "-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",
+                ipaddr_value, dev, strerror(errno));
+/*        err(
+                "-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",
+                ipaddr_value, dev, strerror(errno));*/
+        return (IP2MAC_ERROR);
     }
+    func("%s %d", __FILE__, __LINE__);
+
     struct sockaddr_in * p;
-    p=(struct sockaddr_in *) &(areq.arp_pa);
+    p = (struct sockaddr_in *) &(areq.arp_pa);
+    func("%s %d", __FILE__, __LINE__);
 
-    inet_ntop(AF_INET,&(p->sin_addr),buf,sizeof(buf));
+    inet_ntop(AF_INET, &(p->sin_addr), buf, sizeof(buf));
 
-    ethernet_mactoa(&areq.arp_ha,mac_addr);
+    ethernet_mactoa(&areq.arp_ha, mac_addr);
 
     func("Conversion from %s (%s) -> %s\n", ipaddr_value,
-            inet_ntoa(p->sin_addr),
-            mac_addr
-            );
+            inet_ntoa(p->sin_addr), mac_addr);
 
     return IP2MAC_RESULT_OK;
 }
@@ -124,12 +143,12 @@ int convert_from_ipv6(char *ipaddr_value, char *mac_addr) {
     struct arpreq areq;
     struct sockaddr_in6 *sin;
     struct in6_addr ipaddr;
-    
+
     /* Get an internet domain socket. */
     if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
-      err("Sorry but during IP-ARP conversion I cannot open a socket [%s]",
-	  strerror(errno));
-      return (1);
+        err("Sorry but during IP-ARP conversion I cannot open a socket [%s]",
+                strerror(errno));
+        return (1);
     }
 
     /* Make the ARP request. */
@@ -137,36 +156,39 @@ int convert_from_ipv6(char *ipaddr_value, char *mac_addr) {
     sin = (struct sockaddr_in6 *) &areq.arp_pa;
     sin->sin6_family = AF_INET6;
 
-    if (inet_pton(AF_INET6,ipaddr_value, &ipaddr) == 0) {
-      err("Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
-	  ipaddr_value,strerror(errno));
-      
-      return (1);
+    if (inet_pton(AF_INET6, ipaddr_value, &ipaddr) == 0) {
+        err(
+                "Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
+                ipaddr_value, strerror(errno));
+
+        return (1);
     }
 
-    sin->sin6_addr= ipaddr;
+    sin->sin6_addr = ipaddr;
     sin = (struct sockaddr_in6 *) &areq.arp_ha;
     sin->sin6_family = ARPHRD_ETHER;
 
     /* TODO definizione di device su cui e' attestata webui */
-    char *dev=getenv("interface");
-    if (dev==NULL) {
-        dev="eth0";
+    char *dev = getenv("interface");
+    if (dev == NULL) {
+        dev = "lo";
     }
-    
+
     strncpy(areq.arp_dev, dev, 15);
 
     if (ioctl(s, SIOCGARP, (caddr_t) &areq) == -1) {
-      err("-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",ipaddr_value,dev,strerror(errno));
-      return (1);
+        err(
+                "-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",
+                ipaddr_value, dev, strerror(errno));
+        return (1);
     }
     char buf[256];
     struct sockaddr_in6 * p;
-    p=(struct sockaddr_in6 *) &(areq.arp_pa);
-    inet_ntop(AF_INET6,&(p->sin6_addr),buf,sizeof(buf));
+    p = (struct sockaddr_in6 *) &(areq.arp_pa);
+    inet_ntop(AF_INET6, &(p->sin6_addr), buf, sizeof(buf));
 
-    ethernet_mactoa(&areq.arp_ha,mac_addr);
+    ethernet_mactoa(&areq.arp_ha, mac_addr);
 
-    func("Conversion form %s  -> %s\n", ipaddr_value,mac_addr);
+    func("Conversion form %s  -> %s\n", ipaddr_value, mac_addr);
     return 0;
 }

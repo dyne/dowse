@@ -87,7 +87,7 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_a
     /* TODO Se non c'e' la eth0 ? */
     char *dev=getenv("interface");
     if (dev==NULL) {
-        dev="wlan0";
+        dev="lo";
     }
 
     strncpy(areq.arp_dev, dev, 15);
