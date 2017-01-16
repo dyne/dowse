@@ -112,12 +112,14 @@ int reset_admin(struct http_request * req) {
 }
 
 int check_if_ip_admin_configured(attributes_set_t *ptr_attrl) {
-    char query[] =
+    /* Deve essere associato al MAC ADDRESS l'utenza di admin */
+   char query[]="select count(*) from found where admin='yes' ";
+/*       char query[] =
             "select count(*) from ( "
                     "   select ip4 as ipaddr_value from found where admin='yes' "
                     "       union "
                     "   select ip6 as ipaddr_value from found where admin='yes' "
-                    " ) as tmp where tmp.ipaddr_value is not null and tmp.ipaddr_value<>''";
+                    " ) as tmp where tmp.ipaddr_value is not null and tmp.ipaddr_value<>''";*/
 
     MYSQL_RES *result;
     MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),

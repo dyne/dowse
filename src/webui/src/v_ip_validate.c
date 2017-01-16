@@ -24,9 +24,9 @@ int v_ip_validate(struct http_request * req,char*data) {
         return KORE_RESULT_ERROR;
     }
 
-    int rv=_check_if_ip_is_admin(ipaddr_type,ipaddr_value,ptr_attrl);
-
-    if (rv==_IP_IS_ADMIN_) return KORE_RESULT_OK;
+    if (_check_if_ip_is_admin(ipaddr_type,ipaddr_value,ptr_attrl)==_IP_IS_ADMIN_) {
+            return KORE_RESULT_OK;
+        }
 
     /*--- ... nel DB non è presente un valore di admin e l'IP può essere registrato come admin. */
     //_grant_ip_admin_privileges(ipaddr_type,ipaddr_value);
@@ -46,23 +46,35 @@ int v_ip_validate(struct http_request * req,char*data) {
 
 
 int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*ptr_attrl){
-    char query[]="select * from ( "
+/*    char query[]="select * from ( "
             "   select ip4 as ipaddr_value from found where admin='yes' "
             "       union "
             "   select ip6 as ipaddr_value from found where admin='yes' "
             " ) as tmp where tmp.ipaddr_value is not null and tmp.ipaddr_value<>''";
+*/
 
 
+    /* Deve essere associato al MAC ADDRESS l'utenza di admin */
+    char query[]="select macaddr from found where admin='yes' ";
     MYSQL_RES *result;
     MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
-    MYSQL_FIELD*column;
+    MYSQL_FIELD *column;
     unsigned int num_fields;
     unsigned int i;
     MYSQL *db;
+    char macaddr[32];
 
+    kore_log(LOG_DEBUG,"%s %d : [%s]",__FILE__,__LINE__,query);
+    int rv=ip2mac(ipaddr_type,ipaddr_value,macaddr,ptr_attrl);
+
+    kore_log(LOG_DEBUG,"%s %d : [%s]",__FILE__,__LINE__,query);
+    if (rv!=KORE_RESULT_OK) {
+        return _IP_IS_NOT_ADMIN_;
+    }
     // open db connection
     db = mysql_init(NULL);
 
+    kore_log(LOG_DEBUG,"%s %d : [%s]",__FILE__,__LINE__,query);
     //     Constant parameted created at compile time
     if (!mysql_real_connect(db, DB_HOST, DB_USER, DB_PASSWORD, DB_SID, 0,
             DB_SOCK_DIRECTORY, 0)) {
@@ -72,6 +84,8 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     }
 
     WEBUI_DEBUG
+
+    kore_log(LOG_DEBUG,"%s %d : [%s]",__FILE__,__LINE__,query);
     // Execute the statement
     if (mysql_real_query(db, query, strlen(query))) {
         show_mysql_error(db, ptr_attrl);
@@ -103,7 +117,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
             kore_log(LOG_DEBUG, "[%d][%s][%s]", i, column[i].name, values[i]);
         }
 
-        if (strcmp(ipaddr_value,values[0])==0){
+        if (strcmp(macaddr,values[0])==0){
             kore_log(LOG_DEBUG, "[%d][%s][%s] is admin ", i, column[0].name, values[0]);
             return _IP_IS_ADMIN_;
         };
