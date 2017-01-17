@@ -16,7 +16,9 @@
 #include <template.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <fcntl.h>
+#include <unistd.h>
+#include <dirent.h>
 #include <libdowse/dowse.h>
 
 #define mb (1024*500)
