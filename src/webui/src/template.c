@@ -1,12 +1,108 @@
 #include <kore.h>
 #include <assetmap.h>
+#include <dirent.h>
+#include <sys/types.h>
+#define __USE_GNU
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 #include "template.h"
 #include "webui_debug.h"
 #include "attributes_set.h"
 #include "test_unit.h"
+#include "find_nearest_asset.h"
 
-/********/
-int template_load(u_int8_t *str, int len, template_t *tmpl) {
+
+
+int asset_name_distance(char* a,char*b) {
+    int rv=0;
+    int i;
+
+    for ( i=0;(i<(strlen(a))&&(i<(strlen(b))));) {
+       if (filtered(a[i])==filtered(b[i])) {
+           rv++;
+           i++;
+           continue;
+       }
+       break;
+    }
+
+    int ia=strlen(a)-1;
+    int ib=strlen(b)-1;
+    for ( ; ia>=0 && ib >= 0 ; ) {
+       if (filtered(a[ia])==filtered(b[ib])) {
+           rv++;
+           ia--;
+           ib--;
+           continue;
+       }
+       break;
+    }
+
+    return rv;
+}
+
+
+int print_nearest_name(char*prefix,struct dirent *entry,void*data) {
+    char entry_file_name[256];
+    nearest_filename* p;
+
+    if ((entry->d_type==DT_REG) || (entry->d_type==DT_LNK)) {
+        snprintf(entry_file_name,sizeof(entry_file_name),"%s/%s",prefix,entry->d_name);
+        p=(nearest_filename*) data;
+
+        int nv=p->utility_function(entry_file_name,p->name_to_search);
+        if (nv > p->max_point) {
+            snprintf(p->nearest,sizeof(p->nearest),"%s",entry_file_name);
+            p->max_point=nv;
+        }
+    }
+    return 0;
+}
+
+/**/
+int find_nearest_asset_and_load_template(char *template_name, int len, struct template_t *tmpl) {
+    /*--- We find the nearest file with the name similar to template_name */
+    struct nearest_filename data_to_search;
+
+    init_data_to_search(&data_to_search,template_name,asset_name_distance);
+
+    span_directory(".",".",print_nearest_name,&data_to_search);
+
+    func("Nearest of \n[%s]\n[%s]\n %d\n",
+            data_to_search.name_to_search,
+            data_to_search.nearest,
+            data_to_search.max_point);
+
+    /* */
+    struct stat buf;
+    stat(data_to_search.nearest,&buf);
+
+    tmpl->data = (char*)malloc(sizeof(char)*(buf.st_size+1));
+    tmpl->len = buf.st_size;
+    int fd=open(data_to_search.nearest,O_SYNC|O_RDONLY);
+    if (fd<0) {
+        err("Error at line %s %d : %s",__FILE__,__LINE__,strerror(errno));
+        exit(-1);
+    }
+
+    int rv=read(fd,tmpl->data,tmpl->len);
+    if (rv!=tmpl->len) {
+        err("Error at line %s %d : %s trying to open [%s][%d] readed [%d]",
+                __FILE__,__LINE__,strerror(errno),data_to_search.nearest,tmpl->len,rv);
+        exit(-1);
+    }
+    close(fd);
+
+    tmpl->fmtlist = TMPL_add_fmt(0, ENTITY_ESCAPE, TMPL_encode_entity);
+    tmpl->fmtlist = TMPL_add_fmt(tmpl->fmtlist, URL_ESCAPE, TMPL_encode_url);
+
+
+}
+
+
+int _internal_static_template_load(u_int8_t *str, int len, template_t *tmpl) {
     tmpl->data = str;
     tmpl->len = len;
     tmpl->fmtlist = TMPL_add_fmt(0, ENTITY_ESCAPE, TMPL_encode_entity);

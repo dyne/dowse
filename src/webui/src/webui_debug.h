@@ -3,6 +3,21 @@
 #include <time.h>
 #include <attributes_set.h>
 
+
+
+/********/
+//#define FREDD_DEVELOP
+
+#ifdef FREDD_DEVELOP
+#define template_load(a,size,ptr_template) find_nearest_asset_and_load_template(#a,size,ptr_template)
+#else
+/* In static compiling we use the static templating */
+#define template_load _internal_static_template_load
+#endif
+
+
+/***/
+
 #ifndef _WEBUI_DEBUG_H
 #define _WEBUI_DEBUG_H
 #ifndef __where_i_am__
@@ -15,7 +30,6 @@ static uint8_t __buf_where_i_am__[256];
 	/* TODO Stack trace format in tmp directory ? */
 
 #endif
-
 
 
 #define __WEBUI_DEBUG__
