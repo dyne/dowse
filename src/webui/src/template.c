@@ -121,7 +121,7 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
     mkstemp(out_name);
     mkstemp(err_name);
 
-    kore_log(LOG_DEBUG,
+    func(
             "[%s] Template applying out file was [%s] err file was [%s] ",
             __where_i_am__, out_name, err_name);
 
@@ -134,7 +134,7 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
             err_stream);
 
 //  size=ftell(out_stream);
-    kore_log(LOG_DEBUG, " out [%s] [%d] ", __where_i_am__, ftell(out_stream));
+    func( " out [%s] [%d] ", __where_i_am__, ftell(out_stream));
 
     some_error = 0;
     rewind(out_stream);
@@ -144,14 +144,14 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
         buf_str[rv] = 0;
         char m[1024];
         snprintf(m, sizeof(m), "%s %s", __where_i_am__, buf_str);
-        kore_log(LOG_ERR, m);
+        err( m);
         err(m);
         some_error = 1;
     }
     if (!some_error) {
         while ((rv = fread(buf_str, 1, sizeof(buf_str), out_stream)) > 0) {
             buf_str[rv] = 0;
-//	  kore_log(LOG_DEBUG,"%s %s",__where_i_am__,buf_str);
+//	  func("%s %s",__where_i_am__,buf_str);
             kore_buf_append(out, buf_str, rv);
         }
     }

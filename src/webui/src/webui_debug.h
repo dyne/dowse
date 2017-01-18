@@ -23,11 +23,10 @@
 #ifndef __where_i_am__
 static uint8_t __buf_where_i_am__[256];
 
-#define __where_i_am__\
-	(\
-		snprintf(__buf_where_i_am__,sizeof(__buf_where_i_am__),"%s:%d:1 '%s'",__FILE__,__LINE__,__func__)?\
-				__buf_where_i_am__:__buf_where_i_am__)
-	/* TODO Stack trace format in tmp directory ? */
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define __where_i_am__ __FILE__ ":" TOSTRING(__LINE__)
+
 
 #endif
 
@@ -36,7 +35,7 @@ static uint8_t __buf_where_i_am__[256];
 #ifndef __WEBUI_DEBUG__
 #define WEBUI_DEBUG {}
 #else
-#define WEBUI_DEBUG {fprintf(stderr,"WEBUI_DEBUG: %ld : %s\n",time(NULL),__where_i_am__);}
+#define WEBUI_DEBUG {func("WEBUI_DEBUG: %ld : %s:%d\n",time(NULL),__FILE__,__LINE__);}
 #endif
 
 /* Define mapping with bootstap alert level */

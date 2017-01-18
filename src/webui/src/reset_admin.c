@@ -34,7 +34,7 @@ int reset_admin(struct http_request * req) {
     get_ip_from_request(req, &ipaddr_type, &ipaddr_value);
     if ((strcmp(ipaddr_type, "ipv4") != 0)
             && (strcmp(ipaddr_type, "ipv6") != 0)) {
-        kore_log(LOG_ERR,
+        err(
                 "Can retrieve IP address from request and proc file system");
         return KORE_RESULT_ERROR;
     }
@@ -156,13 +156,13 @@ int check_if_ip_admin_configured(attributes_set_t *ptr_attrl) {
     WEBUI_DEBUG
     num_fields = mysql_num_fields(result);
     if (num_fields == 0) {
-        kore_log(LOG_ERR,
+        err(
                 "The query [%s] has returned 0 fields. Is it correct?", query);
         return _SQL_ERROR_;
     }
 
     WEBUI_DEBUG
-    kore_log(LOG_DEBUG,
+    func(
             "The query [%s] has returned [%d] row with [%u] columns.", query,
             (int) mysql_affected_rows(db), num_fields);
 
@@ -170,7 +170,7 @@ int check_if_ip_admin_configured(attributes_set_t *ptr_attrl) {
 
     while ((values = mysql_fetch_row(result)) != 0) {
        for (i = 0; i < num_fields; i++) {
-            kore_log(LOG_DEBUG, "[%d][%s][%s]", i, column[i].name, values[i]);
+            func( "[%d][%s][%s]", i, column[i].name, values[i]);
         }
 
         if (atoi(values[0]) == 0) {

@@ -35,7 +35,7 @@ int queue_command(struct http_request * req) {
     if ((strcmp(op,"")==0) ||
         ( (strcmp(macaddr,"")==0)&&(strcmp(ip4,"")==0)&&(strcmp(ip6,"")==0)))
     {
-        kore_log(LOG_ERR,"%s command not well defined",__where_i_am__);
+        err("%s command not well defined",__where_i_am__);
         buf=kore_buf_alloc(0);
         char m[]="<html><strong>command not well specified</strong></html>";
         kore_buf_append(buf,m,strlen(m));

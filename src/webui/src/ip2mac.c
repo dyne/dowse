@@ -31,7 +31,7 @@
 #include <linux/sockios.h>
 
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr,attributes_set_t *ptr_attr) {
-    kore_log(LOG_DEBUG,"converting from %s %s on %s",ipaddr_type,ipaddr_value,getenv("interface"));
+    func("converting from %s %s on %s",ipaddr_type,ipaddr_value,getenv("interface"));
     if (strcmp(ipaddr_type,"ipv4")==0) {
         return convert_from_ipv4(ipaddr_value,macaddr,ptr_attr);
     } else {
@@ -105,7 +105,7 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_a
 
     ethernet_mactoa(&areq.arp_ha,mac_addr);
 
-    kore_log(LOG_DEBUG,"Conversion from %s (%s) -> %s\n", ipaddr_value,
+    func("Conversion from %s (%s) -> %s\n", ipaddr_value,
             inet_ntoa(p->sin_addr),
             mac_addr
             );
@@ -167,7 +167,7 @@ int convert_from_ipv6(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_a
 
     ethernet_mactoa(&areq.arp_ha,mac_addr);
 
-    kore_log(LOG_DEBUG,"Conversion form %s  -> %s\n", ipaddr_value,
+    func("Conversion form %s  -> %s\n", ipaddr_value,
                 mac_addr
                 );
     return 0;

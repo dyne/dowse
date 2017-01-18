@@ -36,14 +36,14 @@ int sqlquery(char *query,
     ;
     num_fields = mysql_num_fields(result);
     if (num_fields == 0) {
-        kore_log(LOG_ERR,
+        err(
                 "The query [%s] has returned 0 fields. Is it correct?", query);
         return KORE_RESULT_ERROR;
     }
 
     WEBUI_DEBUG
     ;;
-    kore_log(LOG_DEBUG,
+    func(
             "The query [%s] has returned [%d] row with [%u] columns.", query,
             (int) mysql_affected_rows(db), num_fields);
 
@@ -52,7 +52,7 @@ int sqlquery(char *query,
     int called=0;
     while ((values = mysql_fetch_row(result)) != 0) {
         for (i = 0; i < num_fields; i++) {
-            kore_log(LOG_DEBUG, "[%d][%s][%s]", i, column[i].name, values[i]);
+            func( "[%d][%s][%s]", i, column[i].name, values[i]);
         }
 
         //--- executing "callback" function pointer that add result in the attributes_set

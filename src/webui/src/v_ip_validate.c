@@ -20,7 +20,7 @@ int v_ip_validate(struct http_request * req,char*data) {
 
     get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
     if ((strcmp(ipaddr_type,"ipv4")!=0)&&(strcmp(ipaddr_type,"ipv6")!=0)) {
-        kore_log(LOG_ERR,"Can retrieve IP address from request and proc file system");
+        err("Can retrieve IP address from request and proc file system");
         return KORE_RESULT_ERROR;
     }
 
@@ -64,17 +64,17 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     MYSQL *db;
     char macaddr[32];
 
-    kore_log(LOG_DEBUG,"%s %d : [%s]",__FILE__,__LINE__,query);
+    func("%s %d : [%s]",__FILE__,__LINE__,query);
     int rv=ip2mac(ipaddr_type,ipaddr_value,macaddr,ptr_attrl);
 
-    kore_log(LOG_DEBUG,"%s %d : [%s]",__FILE__,__LINE__,query);
+    func("%s %d : [%s]",__FILE__,__LINE__,query);
     if (rv!=KORE_RESULT_OK) {
         return _IP_IS_NOT_ADMIN_;
     }
     // open db connection
     db = mysql_init(NULL);
 
-    kore_log(LOG_DEBUG,"%s %d : [%s]",__FILE__,__LINE__,query);
+    func("%s %d : [%s]",__FILE__,__LINE__,query);
     //     Constant parameted created at compile time
     if (!mysql_real_connect(db, DB_HOST, DB_USER, DB_PASSWORD, DB_SID, 0,
             DB_SOCK_DIRECTORY, 0)) {
@@ -85,7 +85,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
 
     WEBUI_DEBUG
 
-    kore_log(LOG_DEBUG,"%s %d : [%s]",__FILE__,__LINE__,query);
+    func("%s %d : [%s]",__FILE__,__LINE__,query);
     // Execute the statement
     if (mysql_real_query(db, query, strlen(query))) {
         show_mysql_error(db, ptr_attrl);
@@ -98,13 +98,13 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     WEBUI_DEBUG
     num_fields = mysql_num_fields(result);
     if (num_fields == 0) {
-        kore_log(LOG_ERR,
+        err(
                 "The query [%s] has returned 0 fields. Is it correct?", query);
         return _IP_IS_NOT_ADMIN_;
     }
 
     WEBUI_DEBUG
-    kore_log(LOG_DEBUG,
+    func(
             "The query [%s] has returned [%d] row with [%u] columns.", query,
             (int) mysql_affected_rows(db), num_fields);
 
@@ -114,11 +114,11 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     while ((values = mysql_fetch_row(result)) != 0) {
         WEBUI_DEBUG;      called++;
         for (i = 0; i < num_fields; i++) {
-            kore_log(LOG_DEBUG, "[%d][%s][%s]", i, column[i].name, values[i]);
+            func( "[%d][%s][%s]", i, column[i].name, values[i]);
         }
 
         if (strcmp(macaddr,values[0])==0){
-            kore_log(LOG_DEBUG, "[%d][%s][%s] is admin ", i, column[0].name, values[0]);
+            func( "[%d][%s][%s] is admin ", i, column[0].name, values[0]);
             return _IP_IS_ADMIN_;
         };
     }
