@@ -60,7 +60,6 @@ WEBUI_DEF_ERROR_LEVEL_MESSAGE_PROTOTYPE(error);
             { _webui_add_message_level(ptr_attrl, WEBUI_level_ ##LEVEL ,log_message); }
 /**/
 
-#define LOG_SEPARATOR_FIELD '|'
 #define TMPL_VAR_LEVEL_MESSAGE "level"
 #define TMPL_VAR_TEXT_MESSAGE "text"
 

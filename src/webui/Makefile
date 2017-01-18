@@ -30,6 +30,9 @@ run:
 asset src/assetmap.c:
 	@echo "Creating assetmap.c" ; ./map_assets > src/assetmap.c
 
+build:
+	../kore/kore build
+
 debug: cproto src/assetmap.c
 	rm -f assets/*~
 	cp -f conf/webui-debug.conf.dist conf/webui.conf
@@ -40,5 +43,4 @@ debug: cproto src/assetmap.c
 clean:
 	rm -f webui
 	../kore/kore clean
-#!/bin/bash
 

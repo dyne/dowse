@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <b64/cencode.h>
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -18,13 +19,38 @@
 #include <hiredis/hiredis.h>
 
 redisContext *log_redis  = NULL;//connect_redis("127.0.0.1", 6379, 0);
+base64_encodestate b64_state;
 
 void toredis(char *pfx, char *msg) {
-    //fprintf(stderr,"%s %d\n",__FILE__,__LINE__);
     if (log_redis) {
-    //    fprintf(stderr,"%s %d\n",__FILE__,__LINE__);
-        redisCommand(log_redis, "PUBLISH log-channel %s: %s", pfx, msg);
-        redisCommand(log_redis, "LPUSH log-queue %s%c%s", pfx, '|', msg);
+
+        redisReply *reply;
+        reply=redisCommand(log_redis, "PUBLISH log-channel %s:%s", pfx, msg);
+
+        if (reply && reply->len) {
+            fprintf(stderr,"%s %d redis_reply %s\n",
+                    __FILE__,__LINE__,reply->str);
+        }
+
+        char command[256];
+        char b64_encoded[512];
+        base64_init_encodestate(&b64_state);
+        int rv=base64_encode_block(msg, strlen(msg), b64_encoded, &b64_state);
+
+        int rv2=base64_encode_blockend(b64_encoded+rv,&b64_state);
+        b64_encoded[rv+rv2-1]=0;
+
+        sprintf(command,"LPUSH log-queue %s:%s", pfx, b64_encoded);
+        /* Using the plain msg variable the values are splitted by the blank character */
+        //        sprintf(command,"LPUSH log-queue %s:%s", pfx,msg);
+
+        /**/
+        reply=minimal_cmd_redis(log_redis,"%s",command);
+
+        if (reply && reply->len) {
+            fprintf(stderr,"%s %d redis_reply %s\n",
+                    __FILE__, __LINE__,reply->str);
+        }
     }
 }
 

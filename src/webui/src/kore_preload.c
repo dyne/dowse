@@ -23,6 +23,8 @@ void kore_preload() {
 
         rv = KORE_RESULT_ERROR;
     }
+    act("Kore preload");
+//    fprintf(stderr,"%s %d %p\n",__FILE__,__LINE__,log_redis);
 
     WEBUI_DEBUG
     rv = load_global_attributes();

@@ -66,9 +66,10 @@ int relative_time(char *utc, char *out);
 /*     size_t elements; // number of elements, for REDIS_REPLY_ARRAY */
 /*     struct redisReply **element; // elements vector for REDIS_REPLY_ARRAY */
 /* } redisReply; */
-
+int minimal_okredis(redisContext *r, redisReply *res);
 int okredis(redisContext *r, redisReply *res);
 
+redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...);
 redisReply *cmd_redis(redisContext *redis, const char *format, ...);
 
 redisContext *connect_redis(char *host, int port, int db);
