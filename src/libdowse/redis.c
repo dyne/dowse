@@ -25,6 +25,36 @@
 
 #include <dowse.h>
 
+int minimal_okredis(redisContext *r, redisReply *res) {
+    if(!res) {
+        fprintf(stderr,"redis error: %s\n", r->errstr);
+        return(0);
+    } else if( res->type == REDIS_REPLY_ERROR ) {
+        fprintf(stderr,"redis error: %s\n", res->str);
+        return(0);
+    } else {
+        return(1);
+    }
+}
+
+redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...) {
+    va_list args;
+
+    redisReply *res;
+    char command[512];
+
+    va_start(args, format);
+    vsnprintf(command, 511, format, args);
+    fprintf(stderr,"cmd_redis: %s\n", command);
+    res = redisCommand(redis, command);
+    va_end(args);
+
+    if( minimal_okredis(redis, res) )
+        return res;
+    else
+        return NULL;
+}
+
 int okredis(redisContext *r, redisReply *res) {
 	if(!res) {
 		err("redis error: %s", r->errstr);

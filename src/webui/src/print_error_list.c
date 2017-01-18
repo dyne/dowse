@@ -20,6 +20,7 @@
  *
  */
 #include <webui.h>
+#include <b64/cdecode.h>
 
 int print_error_list(struct http_request * req) {
     template_t tmpl;
@@ -44,23 +45,33 @@ int print_error_list(struct http_request * req) {
 	/**/
     WEBUI_DEBUG;
     redisReply*reply=NULL;
+    base64_decodestate b64_state;
+
     while (1) {
-        reply= cmd_redis(redis_shell,"RPOP log-queue");
+        reply= minimal_cmd_redis(redis_shell,"RPOP log-queue");
 
         if (reply->len ) {
-            func("POPPED %s",reply->str);
+            fprintf(stderr,"POPPED %s",reply->str);
+
+
             char *tmp=(char*)malloc(reply->len+1);
             sprintf(tmp,"%s",reply->str);
 
-            char *sep=index(tmp,LOG_SEPARATOR_FIELD);
+            char *sep=index(tmp,':');
             char *body_message=sep+1;
             char *level_message=tmp; (*sep)=0;
 
+            char b64_encode[512];
+            char command[256];
+            base64_init_decodestate(&b64_state);
+            int rv=base64_decode_block(body_message, strlen(body_message), command, &b64_state);
+
+            command[rv]=0;
+
             attributes_set_t t=attrinit();
 
-
             t=attrcat(t,TMPL_VAR_LEVEL_MESSAGE,level_message);
-            t=attrcat(t,TMPL_VAR_TEXT_MESSAGE,body_message);
+            t=attrcat(t,TMPL_VAR_TEXT_MESSAGE,command);
 
             attr=attr_add(attr,TMPL_VAR_MESSAGE_LOOP,t);
 
