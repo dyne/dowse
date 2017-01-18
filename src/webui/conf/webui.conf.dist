@@ -46,6 +46,7 @@ domain * {
 	#
         static /		serve_asset auth_browse
 	static /welcome		serve_asset
+	static /error_list	print_error_list
 
 	# This page serve asset (CSS,Js, image, etc etc) 
 	static /serve_asset		serve_asset
@@ -119,3 +120,4 @@ static /test/3 ___webui___test_unit__A003
 }
 
 
+static /error_listprint_error_list

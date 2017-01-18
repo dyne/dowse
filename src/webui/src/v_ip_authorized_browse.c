@@ -29,7 +29,11 @@ int v_ip_authorized_browse(struct http_request * req,char*data) {
       char macaddr[64];
       char url_to_redirect[256];
 
-      attributes_set_t *ptr_attrl;
+      sprintf(url_to_redirect,"/error_list");
+
+          attributes_set_t attr;
+          attr=attrinit();
+
 
       get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
       if ((strcmp(ipaddr_type,"ipv4")!=0)&&(strcmp(ipaddr_type,"ipv6")!=0)) {
@@ -37,9 +41,9 @@ int v_ip_authorized_browse(struct http_request * req,char*data) {
                 return KORE_RESULT_ERROR;
       }
 
-      ip2mac(ipaddr_type,ipaddr_value,macaddr,ptr_attrl);
+      ip2mac(ipaddr_type,ipaddr_value,macaddr,&attr);
 
-      int rv=_check_if_macaddress_is_authorized_to_browse(macaddr,ptr_attrl);
+      int rv=_check_if_macaddress_is_authorized_to_browse(macaddr,&attr);
 
       /* Nel DB il macaddr è presente come "Enable to browse" allora il validatore deve passare
        *
