@@ -37,14 +37,14 @@ int thing_show_cb(attributes_set_t *data, int argc, MYSQL_ROW argv,
             char *humandate;
             humandate = (char*) calloc(1, SIZE);
 
-            kore_log(LOG_DEBUG, "last: %s", argv[i]);
+            func( "last: %s", argv[i]);
             relative_time(argv[i], humandate);
             t = attrcat(t, "last", humandate);
         } else if (strcmp(azColName[i].name, "age") == 0) {
             char *humandate;
             humandate = (char*) calloc(1, SIZE);
 
-            kore_log(LOG_DEBUG, "age: %s", argv[i]);
+            func( "age: %s", argv[i]);
             relative_time(argv[i], humandate);
             t = attrcat(t, "age", humandate);
         } else {
@@ -54,7 +54,7 @@ int thing_show_cb(attributes_set_t *data, int argc, MYSQL_ROW argv,
 
             snprintf(key, SIZE, "%s", azColName[i].name);
             snprintf(value, SIZE, "%s", argv[i]);
-            kore_log(LOG_DEBUG, "%s: [%s]", key, value);
+            func( "%s: [%s]", key, value);
             t = attrcat(t, key, value);
         }
     }
@@ -78,12 +78,12 @@ int thing_show(struct http_request *req) {
 
     // we shouldn't free the result in macaddr
     if (http_argument_get_string(req, "macaddr", &macaddr)) {
-        kore_log(LOG_DEBUG, "thing_show macaddr %s", macaddr);
+        func( "thing_show macaddr %s", macaddr);
         //--- prepare where condition
         snprintf(where_condition, ml, "WHERE macaddr='%s'", macaddr);
     } else {
-        kore_log(LOG_ERR, "thing_show get argument error");
-        kore_log(LOG_DEBUG, "thing_show called without argument");
+        err( "thing_show get argument error");
+        func( "thing_show called without argument");
         //--- prepare where condition
         snprintf(where_condition, ml, " ");
     }

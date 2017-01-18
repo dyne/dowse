@@ -37,7 +37,7 @@ int v_ip_authorized_browse(struct http_request * req,char*data) {
 
       get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
       if ((strcmp(ipaddr_type,"ipv4")!=0)&&(strcmp(ipaddr_type,"ipv6")!=0)) {
-                kore_log(LOG_ERR,"Can retrieve IP address from request and proc file system");
+                err("Can retrieve IP address from request and proc file system");
                 return KORE_RESULT_ERROR;
       }
 
@@ -67,7 +67,7 @@ int v_ip_authorized_browse(struct http_request * req,char*data) {
           sprintf(url_to_redirect,"/captive_admin",macaddr);
       }
 
-      kore_log(LOG_DEBUG," Redirecting to [%s]",url_to_redirect);
+      func(" Redirecting to [%s]",url_to_redirect);
       /* from kore.io source code: Authentication types of "request" send their own HTTP responses. */
       http_response_header(req, "location", url_to_redirect);
       http_response(req, 302, NULL, 0);
@@ -102,7 +102,7 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,attributes_set_t*p
               macaddr);
 
 
-    kore_log(LOG_DEBUG,"%s: query:[%s]",__where_i_am__,query);
+    func("%s: query:[%s]",__where_i_am__,query);
     MYSQL_RES *result;
     MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
     MYSQL_FIELD*column;
@@ -131,12 +131,12 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,attributes_set_t*p
 
     num_fields = mysql_num_fields(result);
     if (num_fields == 0) {
-        kore_log(LOG_ERR,
+        err(
                 "The query [%s] has returned 0 fields. Is it correct?", query);
         return KORE_RESULT_ERROR;
     }
 
-    kore_log(LOG_DEBUG,
+    func(
             "The query [%s] has returned [%d] row with [%u] columns.", query,
             (int) mysql_affected_rows(db), num_fields);
 
@@ -145,7 +145,7 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,attributes_set_t*p
     int rv=_NOT_ENABLE_TO_BROWSE;
     while ((values = mysql_fetch_row(result)) != 0) {
         for (i = 0; i < num_fields; i++) {
-            kore_log(LOG_DEBUG, "[%d][%s][%s]", i, column[i].name, values[i]);
+            func( "[%d][%s][%s]", i, column[i].name, values[i]);
         }
 
         if (strcmp(__ENABLE_TO_BROWSE_STR,values[0])==0){
@@ -161,7 +161,7 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,attributes_set_t*p
             rv=_IP_IS_ADMIN_;
             break;
         }
-        kore_log(LOG_ERR,"Value not expected [%s]",values[0]);
+        err("Value not expected [%s]",values[0]);
     }
     WEBUI_DEBUG;
     mysql_free_result(result);

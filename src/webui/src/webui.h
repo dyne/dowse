@@ -56,7 +56,7 @@
 #define PARSE_PARAMETER(PAR)\
     char *PAR=""; \
     http_argument_get_string(req, #PAR ,&PAR);\
-    kore_log(LOG_DEBUG, "%s Parameter " #PAR "[%s]",__where_i_am__,PAR);\
+    func( "%s Parameter %s:%d [%s]",#PAR,__FILE__,__LINE__,PAR);\
     if (strcmp(PAR,"")==0 ){\
       char m[1024];\
       snprintf(m, sizeof(m), "%s is not validated ",#PAR);\

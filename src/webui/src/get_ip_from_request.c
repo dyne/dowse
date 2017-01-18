@@ -35,7 +35,7 @@ int get_ip_from_request(struct http_request *req,
     (*ipaddr_value)=kore_malloc(strlen(_ip)+1);
     sprintf( *ipaddr_value,"%s",_ip);
 
-    kore_log(LOG_DEBUG,"%s connection from %s",__where_i_am__,s);
+    func("%s connection from %s",__where_i_am__,s);
 
 #else
     char socket_link_path[256];
@@ -50,7 +50,7 @@ int get_ip_from_request(struct http_request *req,
     int rv;
     rv=scan_proc_net_tcp_file(inode_socket,ipaddr_type,sizeof_ipaddr_type,ipaddr_value,sizeof_ipaddr_value);
 
-    kore_log(LOG_DEBUG,"%s Hello your IP is [%s] and your address is [%s]",
+    func("%s Hello your IP is [%s] and your address is [%s]",
             __where_i_am__,ipaddr_type,ipaddr_value);
 #endif
 

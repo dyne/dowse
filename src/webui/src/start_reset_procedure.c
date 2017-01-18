@@ -51,7 +51,7 @@ int start_reset_procedure(struct http_request * req) {
 	    char m[1024];
 	    for (i=30;i>0;i--) {
 	        snprintf(m,sizeof(m)," Waiting other %d seconds",i);
-	        kore_log(LOG_INFO,m);
+	        notice(m);
 	        func(m);
 	        sleep(1);
 	    }

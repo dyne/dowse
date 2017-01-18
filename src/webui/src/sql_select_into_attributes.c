@@ -53,13 +53,13 @@ int sql_select_into_attributes(const char*query,
     WEBUI_DEBUG
     num_fields = mysql_num_fields(result);
     if (num_fields == 0) {
-        kore_log(LOG_ERR,
+        err(
                 "The query [%s] has returned 0 fields. Is it correct?", query);
         return KORE_RESULT_ERROR;
     }
 
     WEBUI_DEBUG
-    kore_log(LOG_DEBUG,
+    func(
             "The query [%s] has returned [%d] row with [%u] columns.", query,
             (int) mysql_affected_rows(db), num_fields);
 
@@ -68,7 +68,7 @@ int sql_select_into_attributes(const char*query,
     int called = 0;
     while ((values = mysql_fetch_row(result)) != 0) {
         for (i = 0; i < num_fields; i++) {
-            kore_log(LOG_DEBUG, "[%d][%s][%s]", i, column[i].name, values[i]);
+            func( "[%d][%s][%s]", i, column[i].name, values[i]);
         }
 
         //--- executing "callback" function pointer that add result in the attributes_set
@@ -104,14 +104,14 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
             char *humandate;
             humandate = (char*) calloc(1, SIZE);
 
-            kore_log(LOG_DEBUG, "last: %s", argv[i]);
+            func( "last: %s", argv[i]);
             relative_time(argv[i], humandate);
             t = attrcat(t, "last", humandate);
         } else if (strcmp(azColName[i].name, "age") == 0) {
             char *humandate;
             humandate = (char*) calloc(1, SIZE);
 
-            kore_log(LOG_DEBUG, "age: %s", argv[i]);
+            func( "age: %s", argv[i]);
             relative_time(argv[i], humandate);
             t = attrcat(t, "age", humandate);
         } else {
@@ -121,7 +121,7 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
 
             snprintf(key, SIZE, "%s", azColName[i].name);
             snprintf(value, SIZE, "%s", argv[i]);
-            kore_log(LOG_DEBUG, "%s: [%s]", key, value);
+            func( "%s: [%s]", key, value);
             t = attrcat(t, key, value);
         }
     }
