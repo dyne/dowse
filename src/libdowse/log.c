@@ -17,12 +17,15 @@
 
 #include <hiredis/hiredis.h>
 
-redisContext *log_redis = NULL;
+redisContext *log_redis  = NULL;//connect_redis("127.0.0.1", 6379, 0);
 
 void toredis(char *pfx, char *msg) {
-	if(log_redis) {
-		redisCommand(log_redis, "PUBLISH log-channel %s: %s", pfx, msg);
-	}
+    //fprintf(stderr,"%s %d\n",__FILE__,__LINE__);
+    if (log_redis) {
+    //    fprintf(stderr,"%s %d\n",__FILE__,__LINE__);
+        redisCommand(log_redis, "PUBLISH log-channel %s: %s", pfx, msg);
+        redisCommand(log_redis, "LPUSH log-queue %s%c%s", pfx, '|', msg);
+    }
 }
 
 void func(const char *fmt, ...) {
