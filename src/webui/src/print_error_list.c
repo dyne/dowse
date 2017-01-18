@@ -30,10 +30,48 @@ int print_error_list(struct http_request * req) {
     out = kore_buf_alloc(0);
 	attr=attrinit();
 
+	redisContext *redis_shell = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    if (!redis_shell) {
+        const char m[] = "Problem during rendering of error list: Redis server is not running";
+        webui_add_error_message(&attr, m);
+        err(m);
+
+        return apply_template_and_return(req, attr,
+                asset_print_error_list_html, asset_len_print_error_list_html,
+                200);
+    }
+
 	/**/
     WEBUI_DEBUG;
+    redisReply*reply=NULL;
+    while (1) {
+        reply= cmd_redis(redis_shell,"RPOP log-queue");
 
-    sql_select_into_attributes("SELECT 1 from dual","message_loop",&attr);
+        if (reply->len ) {
+            func("POPPED %s",reply->str);
+            char *tmp=(char*)malloc(reply->len+1);
+            sprintf(tmp,"%s",reply->str);
+
+            char *sep=index(tmp,LOG_SEPARATOR_FIELD);
+            char *body_message=sep+1;
+            char *level_message=tmp; (*sep)=0;
+
+            attributes_set_t t=attrinit();
+
+
+            t=attrcat(t,TMPL_VAR_LEVEL_MESSAGE,level_message);
+            t=attrcat(t,TMPL_VAR_TEXT_MESSAGE,body_message);
+
+            attr=attr_add(attr,TMPL_VAR_MESSAGE_LOOP,t);
+
+            freeReplyObject(reply);
+            free(tmp);
+        } else {
+            break;
+        }
+
+    }
+
 
     template_load(asset_print_error_list_html,asset_len_print_error_list_html,&tmpl);
     template_apply(&tmpl,attr,out);
@@ -47,6 +85,9 @@ int print_error_list(struct http_request * req) {
     WEBUI_DEBUG;
     kore_free(html_rendered);
 	attrfree(attr);
+
+
+	redisFree(redis_shell);
 
     return (KORE_RESULT_OK);
 }

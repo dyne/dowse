@@ -27,7 +27,6 @@ static uint8_t __buf_where_i_am__[256];
 #define TOSTRING(x) STRINGIFY(x)
 #define __where_i_am__ __FILE__ ":" TOSTRING(__LINE__)
 
-
 #endif
 
 
@@ -35,7 +34,7 @@ static uint8_t __buf_where_i_am__[256];
 #ifndef __WEBUI_DEBUG__
 #define WEBUI_DEBUG {}
 #else
-#define WEBUI_DEBUG {func("WEBUI_DEBUG: %ld : %s:%d\n",time(NULL),__FILE__,__LINE__);}
+#define WEBUI_DEBUG {func("WEBUI_DEBUG: %ld : %s:%d",time(NULL),__FILE__,__LINE__);}
 #endif
 
 /* Define mapping with bootstap alert level */
@@ -61,6 +60,7 @@ WEBUI_DEF_ERROR_LEVEL_MESSAGE_PROTOTYPE(error);
             { _webui_add_message_level(ptr_attrl, WEBUI_level_ ##LEVEL ,log_message); }
 /**/
 
+#define LOG_SEPARATOR_FIELD '|'
 #define TMPL_VAR_LEVEL_MESSAGE "level"
 #define TMPL_VAR_TEXT_MESSAGE "text"
 

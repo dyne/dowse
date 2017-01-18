@@ -79,6 +79,10 @@ int find_nearest_asset_and_load_template(char *template_name, int len, struct te
     struct stat buf;
     stat(data_to_search.nearest,&buf);
 
+    func("Nearest of \n[%s]  %d\n",
+             data_to_search.name_to_search,buf.st_size);
+
+
     tmpl->data = (char*)malloc(sizeof(char)*(buf.st_size+1));
     tmpl->len = buf.st_size;
     int fd=open(data_to_search.nearest,O_SYNC|O_RDONLY);
@@ -93,6 +97,7 @@ int find_nearest_asset_and_load_template(char *template_name, int len, struct te
                 __FILE__,__LINE__,strerror(errno),data_to_search.nearest,tmpl->len,rv);
         exit(-1);
     }
+    (tmpl->data)[tmpl->len]=0;
     close(fd);
 
     tmpl->fmtlist = TMPL_add_fmt(0, ENTITY_ESCAPE, TMPL_encode_entity);
