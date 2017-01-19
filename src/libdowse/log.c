@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <time.h>
 #include <b64/cencode.h>
 
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -25,7 +26,7 @@ void toredis(char *pfx, char *msg) {
     if (log_redis) {
 
         redisReply *reply;
-        reply=redisCommand(log_redis, "PUBLISH log-channel %s:%s", pfx, msg);
+        reply=redisCommand(log_redis, "PUBLISH log-channel %s:%ld:%s", pfx,time(NULL), msg);
 
         if (reply && reply->len) {
             fprintf(stderr,"%s %d redis_reply %s\n",
@@ -40,7 +41,7 @@ void toredis(char *pfx, char *msg) {
         int rv2=base64_encode_blockend(b64_encoded+rv,&b64_state);
         b64_encoded[rv+rv2-1]=0;
 
-        sprintf(command,"LPUSH log-queue %s:%s", pfx, b64_encoded);
+        sprintf(command,"LPUSH log-queue %s:%ld:%s", (pfx),time(NULL), b64_encoded);
         /* Using the plain msg variable the values are splitted by the blank character */
         //        sprintf(command,"LPUSH log-queue %s:%s", pfx,msg);
 
