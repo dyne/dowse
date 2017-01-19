@@ -37,6 +37,7 @@ int minimal_okredis(redisContext *r, redisReply *res) {
     }
 }
 
+/* TODO Enhance minimal_cmd_redis using the backup/nullify/restore log_redis pointer technique */
 redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...) {
     va_list args;
 
@@ -45,7 +46,6 @@ redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...) {
 
     va_start(args, format);
     vsnprintf(command, 511, format, args);
-    fprintf(stderr,"cmd_redis: %s\n", command);
     res = redisCommand(redis, command);
     va_end(args);
 
