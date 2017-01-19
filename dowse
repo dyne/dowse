@@ -175,7 +175,8 @@ EOF
 }
 
 # global file path to settings
-settings=${1:-$DOWSE_CONF/settings}
+settings=${1:-$E/settings}
+
 conf-load
 # TODO: using first argument here breaks ~/.zshrc auto-load
 
@@ -195,6 +196,7 @@ _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
          $dowse_uid $dowse_gid $TTY
 
 act "daemons running as user and group $dowse_uid:$dowse_gid"
+
 # [[ -z $root ]] || {
 #     # setup dirs
 #     chmod go-rwx $H/log
