@@ -40,8 +40,10 @@ int relative_time(char *local_time, char *out) {
     if( ! strptime(local_time, "%Y-%m-%dT%H:%M:%SZ", &tt) ) {
         // kore_log(LOG_ERR,"relative_time failed parsing UTC string: %s",utc);
         if( ! strptime(local_time, "%Y-%m-%d %H:%M:%S", &tt) ) {
-         	sprintf(out,"n/a");
-            return 1;
+            if( ! strptime(local_time, "%s", &tt) ) {
+                sprintf(out,"n/a");
+                return 1;
+            }
         }
     }
     then = mktime(&tt);
