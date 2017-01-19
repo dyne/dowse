@@ -22,7 +22,8 @@
 #include <webui.h>
 
 int captive_portal_admin(struct http_request * req) {
-    template_t tmpl;
+    log_entering();
+   template_t tmpl;
 	attributes_set_t attr;
     char *html_rendered;
     struct kore_buf *out;
@@ -31,7 +32,6 @@ int captive_portal_admin(struct http_request * req) {
 	attr=attrinit();
 
 	/**/
-    WEBUI_DEBUG;
 
     sql_select_into_attributes(
             "SELECT * FROM event WHERE recognized=0 ",
@@ -44,12 +44,10 @@ int captive_portal_admin(struct http_request * req) {
     template_apply(&tmpl,attr,out);
 
 	/**/
-    WEBUI_DEBUG;
     html_rendered = kore_buf_release(out, &len);
     http_response(req, 200, html_rendered, len);
 
     /**/
-    WEBUI_DEBUG;
     kore_free(html_rendered);
 	attrfree(attr);
 

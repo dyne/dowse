@@ -3,6 +3,8 @@
 int sqlquery(char *query,
         int (*callback)(attributes_set_t*, int, MYSQL_ROW, MYSQL_FIELD *),
         attributes_set_t *ptr_attrl) {
+    log_entering();
+
     MYSQL_RES *result;
     MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
     MYSQL_FIELD*column;
@@ -20,20 +22,14 @@ int sqlquery(char *query,
         return (KORE_RESULT_ERROR);
     }
 
-    WEBUI_DEBUG
-    ;
     // Execute the statement
     if (mysql_real_query(db, query, strlen(query))) {
         show_mysql_error(db, ptr_attrl);
         return KORE_RESULT_ERROR;
     }
 
-    WEBUI_DEBUG
-    ;
     result = mysql_store_result(db);
 
-    WEBUI_DEBUG
-    ;
     num_fields = mysql_num_fields(result);
     if (num_fields == 0) {
         err(
@@ -41,8 +37,6 @@ int sqlquery(char *query,
         return KORE_RESULT_ERROR;
     }
 
-    WEBUI_DEBUG
-    ;;
     func(
             "The query [%s] has returned [%d] row with [%u] columns.", query,
             (int) mysql_affected_rows(db), num_fields);
@@ -63,8 +57,6 @@ int sqlquery(char *query,
 
         called+=rv;
     }
-    WEBUI_DEBUG
-    ;
     mysql_free_result(result);
     mysql_close(db);
     return called;

@@ -22,6 +22,7 @@
 #include <webui.h>
 
 int start_reset_procedure(struct http_request * req) {
+    log_entering();
     template_t tmpl;
 	attributes_set_t attr;
     char *html_rendered;
@@ -60,18 +61,14 @@ int start_reset_procedure(struct http_request * req) {
 	}
 
 	/* */
-    WEBUI_DEBUG;
-
     template_load(asset_start_reset_procedure_html,asset_len_start_reset_procedure_html,&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/
-    WEBUI_DEBUG;
     html_rendered = kore_buf_release(out, &len);
     http_response(req, 200, html_rendered, len);
 
     /**/
-    WEBUI_DEBUG;
     kore_free(html_rendered);
 	attrfree(attr);
 

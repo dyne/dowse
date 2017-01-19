@@ -22,6 +22,7 @@
 #include <webui.h>
 
 int v_ip_authorized_browse(struct http_request * req, char*data) {
+    log_entering();
     char *ipaddr_type;
     char *ipaddr_value;
     char macaddr[64];
@@ -66,7 +67,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
         sprintf(url_to_redirect, "/captive_admin", macaddr);
     }
 
-    func(" Redirecting to [%s]", url_to_redirect);
+    act(" Redirecting to [%s]", url_to_redirect);
     /* from kore.io source code: Authentication types of "request" send their own HTTP responses. */
     http_response_header(req, "location", url_to_redirect);
     http_response(req, 302, NULL, 0);
@@ -74,8 +75,6 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
     kore_free(ipaddr_type);
     kore_free(ipaddr_value);
 
-    WEBUI_DEBUG
-    ;
     return (KORE_RESULT_ERROR);
 }
 
@@ -145,26 +144,25 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,
 
         if (strcmp(__ENABLE_TO_BROWSE_STR, values[0]) == 0) {
             rv = _ENABLE_TO_BROWSE;
+            func("Returning [%s]", __ENABLE_TO_BROWSE_STR);
             break;
         };
 
         if (strcmp(__DISABLE_TO_BROWSE_STR, values[0]) == 0) {
             rv = _DISABLE_TO_BROWSE;
+            func("Returning [%s]", __ENABLE_TO_BROWSE_STR);
             break;
         };
         if (strcmp(__IP_IS_ADMIN_AUTH_BROWSE_STR, values[0]) == 0) {
             rv = _IP_IS_ADMIN_;
+            func("Returning [%s]", __ENABLE_TO_BROWSE_STR);
             break;
         }
         err("Value not expected [%s]", values[0]);
     }
-    WEBUI_DEBUG
-    ;
     mysql_free_result(result);
     mysql_close(db);
 
-    WEBUI_DEBUG
-    ;
     return rv; /* The db is configured but it's the admin */
 }
 

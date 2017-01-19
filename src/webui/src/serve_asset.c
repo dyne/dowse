@@ -11,12 +11,10 @@ void free_assetmap(map_t amap) {
 }
 
 int serve_asset(struct http_request *req) {
+    log_entering();
 	map_t assetmap = NULL;
 	char *asset_name;
 	asset_t *rasset;
-
-	
-	func("CALL: serve_asset");
 
 
 	http_populate_get(req);

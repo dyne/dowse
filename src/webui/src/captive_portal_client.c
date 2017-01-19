@@ -22,6 +22,7 @@
 #include <webui.h>
 
 int captive_portal_client(struct http_request * req) {
+    log_entering();
     template_t tmpl;
     char *html_rendered;
     struct kore_buf *out;
@@ -31,7 +32,7 @@ int captive_portal_client(struct http_request * req) {
     int bad_parsing=0;
     attr = attrinit();
 	/**/
-    WEBUI_DEBUG;
+
     http_populate_get(req);
 
     PARSE_PARAMETER(macaddr);
@@ -46,17 +47,14 @@ int captive_portal_client(struct http_request * req) {
         return show_generic_message_page(req,attr);
     }
     /**/
-
     template_load(asset_captive_portal_client_html,asset_len_captive_portal_client_html,&tmpl);
     template_apply(&tmpl,global_attributes,out);
 
 	/**/
-    WEBUI_DEBUG;
     html_rendered = kore_buf_release(out, &len);
     http_response(req, 200, html_rendered, len);
 
     /**/
-    WEBUI_DEBUG;
     kore_free(html_rendered);
 
     return (KORE_RESULT_OK);

@@ -21,6 +21,7 @@
 #include <webui.h>
 
 int modify_event(struct http_request * req) {
+    log_entering();
     template_t tmpl;
     attributes_set_t attr;
     char *html_rendered;
@@ -37,8 +38,6 @@ int modify_event(struct http_request * req) {
     PARSE_PARAMETER(macaddr);
 
     CHECK_PARAMETER();
-
-
 
     /**/
     WEBUI_DEBUG

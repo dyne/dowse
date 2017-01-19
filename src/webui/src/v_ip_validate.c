@@ -14,9 +14,12 @@ int v_ip_validate(struct http_request * req,char*data) {
      * prendono 1 parametro che è il valore da validare nel caso delle function è la req stessa
      *
      * */
+    log_entering();
+
     char *ipaddr_type;
     char *ipaddr_value;
     attributes_set_t*ptr_attrl;
+
 
     get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
     if ((strcmp(ipaddr_type,"ipv4")!=0)&&(strcmp(ipaddr_type,"ipv6")!=0)) {
@@ -25,8 +28,9 @@ int v_ip_validate(struct http_request * req,char*data) {
     }
 
     if (_check_if_ip_is_admin(ipaddr_type,ipaddr_value,ptr_attrl)==_IP_IS_ADMIN_) {
-            return KORE_RESULT_OK;
-        }
+        notice(" [%s][%s] is admin authenticated ",ipaddr_type,ipaddr_value);
+        return KORE_RESULT_OK;
+    }
 
     /*--- ... nel DB non è presente un valore di admin e l'IP può essere registrato come admin. */
     //_grant_ip_admin_privileges(ipaddr_type,ipaddr_value);
@@ -39,7 +43,6 @@ int v_ip_validate(struct http_request * req,char*data) {
     kore_free(ipaddr_type);
     kore_free(ipaddr_value);
 
-    WEBUI_DEBUG;
     return (KORE_RESULT_ERROR);
 }
 
@@ -53,6 +56,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
             " ) as tmp where tmp.ipaddr_value is not null and tmp.ipaddr_value<>''";
 */
 
+    log_entering();
 
     /* Deve essere associato al MAC ADDRESS l'utenza di admin */
     char query[]="select macaddr from found where admin='yes' ";
@@ -64,17 +68,14 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     MYSQL *db;
     char macaddr[32];
 
-    func("%s %d : [%s]",__FILE__,__LINE__,query);
     int rv=ip2mac(ipaddr_type,ipaddr_value,macaddr,ptr_attrl);
 
-    func("%s %d : [%s]",__FILE__,__LINE__,query);
     if (rv!=KORE_RESULT_OK) {
         return _IP_IS_NOT_ADMIN_;
     }
     // open db connection
     db = mysql_init(NULL);
 
-    func("%s %d : [%s]",__FILE__,__LINE__,query);
     //     Constant parameted created at compile time
     if (!mysql_real_connect(db, DB_HOST, DB_USER, DB_PASSWORD, DB_SID, 0,
             DB_SOCK_DIRECTORY, 0)) {
@@ -83,19 +84,14 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
         return _IP_IS_NOT_ADMIN_;
     }
 
-    WEBUI_DEBUG
-
-    func("%s %d : [%s]",__FILE__,__LINE__,query);
     // Execute the statement
     if (mysql_real_query(db, query, strlen(query))) {
         show_mysql_error(db, ptr_attrl);
         return _IP_IS_NOT_ADMIN_;
     }
 
-    WEBUI_DEBUG
     result = mysql_store_result(db);
 
-    WEBUI_DEBUG
     num_fields = mysql_num_fields(result);
     if (num_fields == 0) {
         err(
@@ -103,7 +99,6 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
         return _IP_IS_NOT_ADMIN_;
     }
 
-    WEBUI_DEBUG
     func(
             "The query [%s] has returned [%d] row with [%u] columns.", query,
             (int) mysql_affected_rows(db), num_fields);
@@ -112,7 +107,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
 
     int called=0;
     while ((values = mysql_fetch_row(result)) != 0) {
-        WEBUI_DEBUG;      called++;
+        called++;
         for (i = 0; i < num_fields; i++) {
             func( "[%d][%s][%s]", i, column[i].name, values[i]);
         }
@@ -122,11 +117,9 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
             return _IP_IS_ADMIN_;
         };
     }
-    WEBUI_DEBUG;
     mysql_free_result(result);
     mysql_close(db);
 
-    WEBUI_DEBUG;
     if (called==0) return _ADMIN_NOT_CONFIGURED_; /* The db is not configured so we should configure it */
     return _IP_IS_NOT_ADMIN_; /* The db is configured but it's the admin */
 }

@@ -23,6 +23,7 @@
 #include <webui.h>
 
 int load_global_attributes() {
+    log_entering();
     int rv;
 
     WEBUI_DEBUG
@@ -31,7 +32,7 @@ int load_global_attributes() {
         WEBUI_DEBUG
         rv=reset_admin_device();
     } else {
-        WEBUI_DEBUG
+        func("load admin device into global attributes")
         rv = sql_select_into_attributes( "SELECT macaddr,ip4,ip6 FROM found WHERE admin='yes'",
             "admin_device",
             &global_attributes);
