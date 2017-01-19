@@ -30,7 +30,7 @@ static uint8_t __buf_where_i_am__[256];
 #endif
 
 
-#define __WEBUI_DEBUG__
+//#define __WEBUI_DEBUG__
 #ifndef __WEBUI_DEBUG__
 #define WEBUI_DEBUG {}
 #else
@@ -62,8 +62,13 @@ WEBUI_DEF_ERROR_LEVEL_MESSAGE_PROTOTYPE(error);
 
 #define TMPL_VAR_LEVEL_MESSAGE "level"
 #define TMPL_VAR_TEXT_MESSAGE "text"
+#define TMPL_VAR_TIME_MESSAGE "when"
 
 #define TMPL_VAR_MESSAGE_LOOP "message_loop"
 
 /* TODO aggiungere stacktrace debug */
+
+#define   log_entering() func("Entering into %s \t\t\t(%s:%d) ",__FUNCTION__,__FILE__,__LINE__)
+
+
 #endif

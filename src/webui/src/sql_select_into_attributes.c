@@ -40,17 +40,14 @@ int sql_select_into_attributes(const char*query,
         return (KORE_RESULT_ERROR);
     }
 
-    WEBUI_DEBUG
-        // Execute the statement
+    // Execute the statement
     if (mysql_real_query(db, query, strlen(query))) {
         show_mysql_error(db, attributes_result);
         return KORE_RESULT_ERROR;
     }
 
-    WEBUI_DEBUG
     result = mysql_store_result(db);
 
-    WEBUI_DEBUG
     num_fields = mysql_num_fields(result);
     if (num_fields == 0) {
         err(
@@ -58,9 +55,7 @@ int sql_select_into_attributes(const char*query,
         return KORE_RESULT_ERROR;
     }
 
-    WEBUI_DEBUG
-    func(
-            "The query [%s] has returned [%d] row with [%u] columns.", query,
+    func("The query [%s] has returned [%d] row with [%u] columns.", query,
             (int) mysql_affected_rows(db), num_fields);
 
     column = mysql_fetch_fields(result);
@@ -80,8 +75,7 @@ int sql_select_into_attributes(const char*query,
 
         called += rv;
     }
-    WEBUI_DEBUG
-    ;
+    WEBUI_DEBUG;
     mysql_free_result(result);
     mysql_close(db);
 
@@ -127,7 +121,6 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
     }
     //--- In the hashmap data we add to the key "things" the hm element we created.
     (*data) = attr_add(*data, item_loop_name, t);
-    WEBUI_DEBUG
     return 1;
 
 }

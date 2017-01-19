@@ -10,7 +10,8 @@
  extern redisContext *log_redis;
 
 void kore_preload() {
-    WEBUI_DEBUG
+    log_entering();
+
     global_attributes = attrinit();
     int rv;
 
@@ -24,9 +25,7 @@ void kore_preload() {
         rv = KORE_RESULT_ERROR;
     }
     act("Kore preload");
-//    fprintf(stderr,"%s %d %p\n",__FILE__,__LINE__,log_redis);
 
-    WEBUI_DEBUG
     rv = load_global_attributes();
 
 
@@ -37,6 +36,8 @@ void kore_preload() {
 }
 
 int check_if_reset_admin_device() {
+    log_entering();
+
     struct stat stat_buf;
     int rv;
 
@@ -51,6 +52,8 @@ int check_if_reset_admin_device() {
 }
 
 int reset_admin_device() {
+    log_entering();
+
     int rv = sqlexecute("UPDATE found set admin=null", &global_attributes);
     if (rv == KORE_RESULT_OK) {
         unlink(RESET_ADMIN_FILE);

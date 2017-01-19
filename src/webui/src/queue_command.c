@@ -13,6 +13,7 @@
 
 
 int queue_command(struct http_request * req) {
+    log_entering();
     struct kore_buf *buf;
     char *message;
     char command[256];

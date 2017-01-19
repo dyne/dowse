@@ -37,11 +37,12 @@
   <div class="container">
     <div class="panel-body">
       <div class="panel panel-error">
-        <div class="panel-heading">Something has gone wrong.</div>
+        <div class="panel-heading">This an error list .</div>
         <div class="panel-body">
         <!--TMPL_LOOP name="message_loop"-->
           <div class="alert alert-<!--TMPL_VAR name="level"-->">
-            <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+            <strong class="text-capitalize"><!--TMPL_VAR name="level"--> :</strong>
+	    <!--TMPL_VAR name="when"-->
             <p><!--TMPL_VAR name="text"--></p>
           </div>
         <!--/TMPL_LOOP-->

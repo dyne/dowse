@@ -21,6 +21,7 @@
 #include <webui.h>
 
 int reset_admin(struct http_request * req) {
+    log_entering();
     template_t tmpl;
     attributes_set_t attr;
     char *html_rendered;
@@ -112,7 +113,8 @@ int reset_admin(struct http_request * req) {
 }
 
 int check_if_ip_admin_configured(attributes_set_t *ptr_attrl) {
-    /* Deve essere associato al MAC ADDRESS l'utenza di admin */
+    log_entering();
+   /* Deve essere associato al MAC ADDRESS l'utenza di admin */
    char query[]="select count(*) from found where admin='yes' ";
 /*       char query[] =
             "select count(*) from ( "
