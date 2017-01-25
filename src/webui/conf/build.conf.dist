@@ -8,7 +8,7 @@
 
 cflags = -I.. -I../libparse-datetime -I../kore/includes -I../libdowse
 cflags = -I/usr/include/mariadb 
-ldflags = ../libparse-datetime/libparse-datetime.a -L../libdowse -l:libdowse.a
+ldflags = ../libparse-datetime/libparse-datetime.a -L../libdowse -l:libdowse.a -l:libb64.a
 ldflags = -lm -lssl -lcrypto -lmariadb -lhiredis
 
 # mariadb flags
