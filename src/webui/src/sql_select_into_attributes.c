@@ -101,13 +101,14 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
             func( "last: %s", argv[i]);
             relative_time(argv[i], humandate);
             t = attrcat(t, "last", humandate);
-        } else if (strcmp(azColName[i].name, "age") == 0) {
+        } else if ((strcmp(azColName[i].name, "age") == 0)
+            || (strstr(azColName[i].name, "_age") !=NULL) ) {
             char *humandate;
             humandate = (char*) calloc(1, SIZE);
 
-            func( "age: %s", argv[i]);
+            func( "%s: %s", azColName[i].name,argv[i]);
             relative_time(argv[i], humandate);
-            t = attrcat(t, "age", humandate);
+            t = attrcat(t, azColName[i].name , humandate);
         } else {
             char *key, *value;
             key = (char*) calloc(1, SIZE);
