@@ -35,8 +35,14 @@ int modify_things(struct http_request * req) {
     PARSE_PARAMETER(macaddr);
     PARSE_PARAMETER(column);
     PARSE_PARAMETER(value);
+    PARSE_PARAMETER(url_from);
 
 	CHECK_PARAMETER();
+
+	/* We don't use the Referer HTTP header field because it's not mandatory
+	 * a browser can eliminate it. */
+
+
 
 	/**/
     WEBUI_DEBUG;
@@ -49,7 +55,7 @@ int modify_things(struct http_request * req) {
     if (rv!=KORE_RESULT_OK)
 	/**/
     WEBUI_DEBUG;
-    http_response_header(req, "location", "/things");
+    http_response_header(req, "location", url_from);
     http_response(req, 302, NULL, 0);
 
     /**/

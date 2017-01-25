@@ -18,6 +18,7 @@ validator   v_column_alterable regex ^(name)$
 validator   v_alphanumeric regex ^.*$
 validator   v_id regex ^[0-9]*$
 validator   v_event_command regex  ^(enable_browse|disable_browse)$
+validator   v_local_url regex ^/[a-z_0-9/]*$
 
 authentication auth_admin {
 	authentication_type request
@@ -88,6 +89,7 @@ domain * {
                validate macaddr v_macaddr				
 	       validate column v_column_alterable
 	       validate value v_alphanumeric
+	       validate url_from v_local_url
 	}
 
 	# endpoint used to modify column of table event

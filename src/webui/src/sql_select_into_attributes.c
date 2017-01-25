@@ -21,7 +21,7 @@
 #include <webui.h>
 
 int sql_select_into_attributes(const char*query,
-         char *item_loop_name,
+         char *item_loop_name, /* if the item_loop_name is NULL the (key,value) are stored singolarly */
         attributes_set_t *attributes_result) {
     MYSQL_RES *result;
     MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
@@ -88,6 +88,8 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
     int i;
 
     attributes_set_t t;
+
+    attributes_set_t *ptr_t;
     t = attrinit();
 
     for (i = 0; i < argc; i++) { // save all fields into the template
@@ -100,14 +102,24 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
 
             func( "last: %s", argv[i]);
             relative_time(argv[i], humandate);
-            t = attrcat(t, "last", humandate);
-        } else if (strcmp(azColName[i].name, "age") == 0) {
+
+            if (item_loop_name == NULL) {
+                *data = attrcat(*data, "last", humandate);
+            } else {
+                t = attrcat(t, "last", humandate);
+            }
+        } else if ((strcmp(azColName[i].name, "age") == 0)
+            || (strstr(azColName[i].name, "_age") !=NULL) ) {
             char *humandate;
             humandate = (char*) calloc(1, SIZE);
 
-            func( "age: %s", argv[i]);
+            func( "%s: %s", azColName[i].name,argv[i]);
             relative_time(argv[i], humandate);
-            t = attrcat(t, "age", humandate);
+            if (item_loop_name == NULL) {
+                *data = attrcat(*data, azColName[i].name, humandate);
+            } else {
+                t = attrcat(t, azColName[i].name, humandate);
+            }
         } else {
             char *key, *value;
             key = (char*) calloc(1, SIZE);
@@ -116,11 +128,19 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
             snprintf(key, SIZE, "%s", azColName[i].name);
             snprintf(value, SIZE, "%s", argv[i]);
             func( "%s: [%s]", key, value);
-            t = attrcat(t, key, value);
+
+            if (item_loop_name == NULL) {
+                *data = attrcat(*data, key,value);
+            } else {
+                t = attrcat(t, key,value);
+            }
+
         }
     }
     //--- In the hashmap data we add to the key "things" the hm element we created.
-    (*data) = attr_add(*data, item_loop_name, t);
+    if (item_loop_name != NULL) {
+        (*data) = attr_add(*data, item_loop_name, t);
+    }
     return 1;
 
 }

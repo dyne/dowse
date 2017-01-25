@@ -53,11 +53,11 @@
   <!--TMPL_ELSE-->
   <div class="container">
     <div class="jumbotron">
-      <h1 class="text-center">Welcome to <br>&#x22;<!--TMPL_VAR name="dowse_network_name"-->&#x22;<br>
-	admin network page.<br>Powered by ...</h1>
-      <img src="/serve_asset?o=dowse-logo.png" class="center-block">
-      <p>I am the welcome page of this Dowse "monitored" network.
-	From here you can administer the client that has asked to browse by your network...</p>
+      <h2 class="text-center">Welcome to <br><em>&#x22;<!--TMPL_VAR name="dowse_network_name"-->&#x22;</em> network.<br>
+	<br>Powered by </h2>
+	<img src="/serve_asset?o=dowse-logo.png" class="center-block">
+      <p>This is the admin page  of this Dowse "monitored" network.<br>
+	From here you can enable to browse the client that has asked to use your network...</p>
     </div>
     <div class="row" id="event">
       <!--TMPL_IF name="captive_portal_event"-->      
@@ -70,10 +70,27 @@
 	    <div class="col-xs-10">
 	      <div class="alert alert-<!--TMPL_VAR name="level"--> alert-dismissable fade in">
 		<div class="row">
-		  <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
-		  <strong><!--TMPL_VAR name="age"--></strong>
-		  Device <!--TMPL_VAR name="macaddr"--> has tried to browse internet using the network.<br>
-		  Do you want enable it?
+		  <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong><br>
+		</div>
+		<div class="row">
+		  <strong>From:</strong><!--TMPL_VAR name="first_age"--> 
+		  <strong>To:</strong><!--TMPL_VAR name="last_age"-->
+		</div>
+		<div class="row">
+		  <strong>Device: </strong><!--TMPL_VAR name="macaddr"-->
+		  <strong>OS: </strong><!--TMPL_IF name="os" value=""-->n/a<!---TMPL_ELSE--><!--TMPL_VAR name="os"--><!--/TMPL_IF-->
+		</div>
+		<div class="row">
+		  <strong>Name: </strong><!--TMPL_IF name="name" value=""-->n/a<!---TMPL_ELSE--><!--TMPL_VAR name="name"--><!--/TMPL_IF-->
+		  <strong>Hostname: </strong><!--TMPL_IF name="hostname" value=""-->n/a<!---TMPL_ELSE--><!--TMPL_VAR name="hostname"--><!--/TMPL_IF-->
+		</div>
+		<div class="row">
+		  <strong>Event:</strong> Has tried <span class="badge"><!--TMPL_VAR name="how_much"--></span> time(s) to browse internet using the network.<br>
+		</div>
+		<div class="row">
+		
+		  <strong>Action:</strong>		  Do you want enable it?
+		</div>
 		</div>
 	      </div>
 	    </div>

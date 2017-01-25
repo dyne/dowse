@@ -76,8 +76,11 @@ int reset_admin(struct http_request * req) {
         if (rv==KORE_RESULT_ERROR) {
             return show_generic_message_page(req,attr);
         } else {
-            load_global_attributes();
-
+            if (global_attributes!=NULL) {
+                attrfree(global_attributes);
+                global_attributes=attrinit();
+            }
+            load_global_attributes(global_attributes);
 
             /* HTML message to say new admin device */
             http_response_header(req, "location", "/");
