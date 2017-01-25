@@ -3,7 +3,7 @@ PREFIX ?= /usr/local/dowse
 
 CC = gcc
 CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
-LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a
+LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -l:libb64.a
 
 all: base parsers springs
 	@./import.sh redis-server
