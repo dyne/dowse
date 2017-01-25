@@ -26,7 +26,7 @@ void kore_preload() {
     }
     act("Kore preload");
 
-    rv = load_global_attributes();
+    rv = load_global_attributes(global_attributes);
 
 
     if (rv == KORE_RESULT_ERROR) {

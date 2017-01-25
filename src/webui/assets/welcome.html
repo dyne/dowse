@@ -69,7 +69,9 @@
       <h3>The administration devices configured are:</h3>
       <table class="table table-striped">
         <thead>
-          <td>MAC Address</td>
+          <td>Name</td>
+          <td>Hostname</td>
+	  <td>MAC Address</td>
           <td>IPv4</td>
           <td>IPv6</td>
           <td>Vendor</td>
@@ -77,6 +79,8 @@
         <tbody>
           <!--TMPL_LOOP name="admin_device"-->
           <tr>
+            <td><!--TMPL_VAR name="name"--></td>
+	    <td><!--TMPL_VAR name="hostanem"--></td>
             <td><!--TMPL_VAR name="macaddr"--></td>
             <td><!--TMPL_VAR name="ip4"--></td>
             <td><!--TMPL_VAR name="ip6"--></td>

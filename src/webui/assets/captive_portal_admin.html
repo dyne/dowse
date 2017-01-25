@@ -53,11 +53,11 @@
   <!--TMPL_ELSE-->
   <div class="container">
     <div class="jumbotron">
-      <h1 class="text-center">Welcome to <br>&#x22;<!--TMPL_VAR name="dowse_network_name"-->&#x22;<br>
-	admin network page.<br>Powered by ...</h1>
-      <img src="/serve_asset?o=dowse-logo.png" class="center-block">
-      <p>I am the welcome page of this Dowse "monitored" network.
-	From here you can administer the client that has asked to browse by your network...</p>
+      <h2 class="text-center">Welcome to <br><em>&#x22;<!--TMPL_VAR name="dowse_network_name"-->&#x22;</em> network.<br>
+	<br>Powered by </h2>
+	<img src="/serve_asset?o=dowse-logo.png" class="center-block">
+      <p>This is the admin page  of this Dowse "monitored" network.<br>
+	From here you can enable to browse the client that has asked to use your network...</p>
     </div>
     <div class="row" id="event">
       <!--TMPL_IF name="captive_portal_event"-->      

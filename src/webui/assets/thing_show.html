@@ -81,6 +81,7 @@
 	      <form class="form-inline" action="/modify_things" method="POST">
 		<div class="form-group">
 		  <div class="input-group">
+		    <input type="hidden" name="url_from" value="/things">
 		    <input type="hidden" name="macaddr" value="<!--TMPL_VAR name="macaddr"-->" >
 		    <input type="hidden" name="column" value="name" >
 		    <input type="text" class="form-control" id="value" name="value" placeholder="<!--TMPL_VAR name="name"-->">
