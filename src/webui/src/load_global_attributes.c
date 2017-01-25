@@ -32,7 +32,7 @@ int load_global_attributes() {
         WEBUI_DEBUG
         rv=reset_admin_device();
     } else {
-        func("load admin device into global attributes")
+        func("load admin device into global attributes");
         rv = sql_select_into_attributes( "SELECT macaddr,ip4,ip6 FROM found WHERE admin='yes'",
             "admin_device",
             &global_attributes);
