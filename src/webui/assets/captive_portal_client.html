@@ -51,16 +51,35 @@
   <!--TMPL_ELSE-->
   <div class="container">
     <div class="jumbotron">
-        <h1 class="text-center">Welcome to &#x22;<!--TMPL_VAR name="dowse_network_name"-->&#x22; access network page.<br>Powered by ...</h1>
-      <img src="/serve_asset?o=dowse-logo.png" class="center-block">
-      <p>I am the welcome page of this Dowse "monitored" network. From here you can register on this network...</p>
+      <h2 class="text-center">Welcome to <br><em>&#x22;<!--TMPL_VAR name="dowse_network_name"-->&#x22;</em> network.<br>
+	This is the access  page.<br>Powered by </h2>
+	<img src="/serve_asset?o=dowse-logo.png" class="center-block">
+	<p>I am the welcome page of this Dowse "monitored" network. From here you can register on this network...</p>
     </div>
     <div class="row">
       <hr>
-      <h3>Enable this macaddress </h3>
-      <ul>
-        <li><a href="/">Websocket example</a></li>
-      </ul>
+      <div class="row">
+	<h3>Enable this macaddress inserting the "name" to be recognized by the admin.</h3>
+      </div>
+      <div class="row">
+	<form class="form-inline" action="/modify_things" method="POST">
+	  <div class="form-group">
+	    <div class="input-group">
+	      <span class="input-group-addon">Name</span>
+	      <input type="text" class="form-control" id="value" name="value" placeholder="<!--TMPL_VAR name="client_name"-->">
+	      <input type="hidden" name="macaddr" value="<!--TMPL_VAR name="client_macaddr"-->" >
+	      <input type="hidden" name="column" value="name" >
+	      <input type="hidden" name="url_from" value="/captive_client?macaddr=<!--TMPL_VAR name="client_macaddr"-->">
+	    </div>
+	    <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-pencil"></span></button>
+	  </div>
+ 	</form>
+      </div>
+      <!--TMPL_IF name="client_name" value=""-->
+      <h3>please insert a descriptive name of your device.</h4>
+      <!--TMPL_ELSE-->
+      <h3>you should wait the admin authorization.</h4>
+    <!--/TMPL_IF -->
     </div>
     <!--TMPL_IF name="admin_device"-->
     <div class="row">
@@ -68,7 +87,9 @@
       <h3>The administration devices configured are:</h3>
       <table class="table table-striped">
         <thead>
-          <td>MAC Address</td>
+          <td>Name</td>
+	  <td>Hostname</td>
+	  <td>MAC Address</td>
           <td>IPv4</td>
           <td>IPv6</td>
           <td>Vendor</td>
@@ -76,6 +97,8 @@
         <tbody>
           <!--TMPL_LOOP name="admin_device"-->
           <tr>
+            <td><!--TMPL_VAR name="name"--></td>
+	    <td><!--TMPL_VAR name="hostname"--></td>
             <td><!--TMPL_VAR name="macaddr"--></td>
             <td><!--TMPL_VAR name="ip4"--></td>
             <td><!--TMPL_VAR name="ip6"--></td>
