@@ -43,6 +43,10 @@ int modify_event(struct http_request * req) {
     WEBUI_DEBUG
     ;
     char action_sql[1024];
+    char recognize_sql[1024];
+    /* default recognize_sql */
+    snprintf(recognize_sql, sizeof(recognize_sql),
+            " UPDATE event SET recognized=true where id='%s'",id);
 
     /* choose the action to execute */
     if (strcmp(action,"enable_browse")==0) {
@@ -52,6 +56,10 @@ int modify_event(struct http_request * req) {
                 __ENABLE_TO_BROWSE_STR,
                 macaddr
                 );
+        snprintf(recognize_sql, sizeof(recognize_sql),
+                " UPDATE event SET recognized=true where macaddr='%s' and description='new_mac_address'",
+                macaddr);
+
     }
     if (strcmp(action,"disable_browse")==0) {
         snprintf(action_sql,sizeof(action_sql),
@@ -60,17 +68,18 @@ int modify_event(struct http_request * req) {
         __DISABLE_TO_BROWSE_STR,
         macaddr
         );
+        snprintf(recognize_sql, sizeof(recognize_sql),
+                " UPDATE event SET recognized=true where macaddr='%s' and description='new_mac_address'",
+                macaddr);
     }
     int rv1 = sqlexecute(action_sql, &attr);
     if (rv1 != KORE_RESULT_OK) {
         return show_generic_message_page(req,attr);
     }
 
-    /* event is recognized */
-    snprintf(action_sql, sizeof(action_sql)," UPDATE event SET recognized=true where id='%s'",
-            id);
+    /* event is recognized update table using the recognize_sql selected */
 
-    int rv2 = sqlexecute(action_sql, &attr);
+    int rv2 = sqlexecute(recognize_sql, &attr);
     if (rv2 != KORE_RESULT_OK) {
         return show_generic_message_page(req,attr);
     }
