@@ -41,12 +41,12 @@ typedef long long longlong;
 
 
 //apache portable runtime
-#include <apr-1.0/apu.h>
-#include <apr-1.0/apr.h>
-#include <apr-1.0/apr_queue.h>
-#include <apr-1.0/apr_thread_pool.h>
-#include <apr-1.0/apr_time.h>
-#include <apr-1.0/apr_general.h>
+#include <apu.h>
+#include <apr.h>
+#include <apr_queue.h>
+#include <apr_thread_pool.h>
+#include <apr_time.h>
+#include <apr_general.h>
 
 //fix me!
 #ifdef	__cplusplus
