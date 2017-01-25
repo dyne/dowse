@@ -150,12 +150,17 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,
 
         if (strcmp(__DISABLE_TO_BROWSE_STR, values[0]) == 0) {
             rv = _DISABLE_TO_BROWSE;
-            func("Returning [%s]", __ENABLE_TO_BROWSE_STR);
+            func("Returning [%s]", __DISABLE_TO_BROWSE_STR);
             break;
         };
         if (strcmp(__IP_IS_ADMIN_AUTH_BROWSE_STR, values[0]) == 0) {
             rv = _IP_IS_ADMIN_;
-            func("Returning [%s]", __ENABLE_TO_BROWSE_STR);
+            func("Returning [%s]", __IP_IS_ADMIN_AUTH_BROWSE_STR);
+            break;
+        }
+        if (strcmp(__NOT_AUTHORIZED_BROWSE_STR, values[0]) == 0) {
+            rv = _NOT_ENABLE_TO_BROWSE;
+            func("Returning [%s]", __NOT_AUTHORIZED_BROWSE_STR);
             break;
         }
         err("Value not expected [%s]", values[0]);

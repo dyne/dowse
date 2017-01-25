@@ -34,7 +34,9 @@ int captive_portal_admin(struct http_request * req) {
 	/**/
 
     sql_select_into_attributes(
-            "SELECT * FROM event WHERE recognized=0 ",
+            "SELECT count(id) as how_much, min(age) as first_age,max(age) as last_age,E.* "
+            "FROM event E WHERE recognized=0 "
+            "GROUP BY macaddr,description ",
             "captive_portal_event",
             &attr);
 

@@ -22,7 +22,7 @@
 
 #include <webui.h>
 
-int load_global_attributes() {
+int load_global_attributes(attributes_set_t attr) {
     log_entering();
     int rv;
 
@@ -35,9 +35,9 @@ int load_global_attributes() {
         func("load admin device into global attributes");
         rv = sql_select_into_attributes( "SELECT macaddr,ip4,ip6 FROM found WHERE admin='yes'",
             "admin_device",
-            &global_attributes);
+            &attr);
     }
-    global_attributes=attrcat(global_attributes,"dowse_network_name","not yet available");
+    attr=attrcat(attr,"dowse_network_name","not yet available");
 
     return rv;
 }

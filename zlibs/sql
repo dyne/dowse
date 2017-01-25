@@ -92,11 +92,11 @@ sql_integrate_with_redis() {
                            end if;
 
                            IF UPPER(NEW.authorized) = 'ENABLE TO BROWSE' THEN
-                              SET @ret= redis_command_v2('SET',concat('authorization-mac-',mac_address),@enable_state);
+                              SET @ret= redis_command_v2('SET',concat('authorization-mac-',NEW.macaddr),@enable_state);
                            ELSEIF UPPER(NEW.authorized) = 'DISABLE TO BROWSE' THEN
-                              SET @ret= redis_command_v2('SET',concat('authorization-mac-',mac_address),@enable_state);
+                              SET @ret= redis_command_v2('SET',concat('authorization-mac-',NEW.macaddr),@enable_state);
                            ELSEIF UPPER(NEW.authorized) = 'NOT ENABLED TO BROWSE' THEN
-                              SET @ret= redis_command_v2('DEL',concat('authorization-mac-',mac_address));
+                              SET @ret= redis_command_v2('DEL',concat('authorization-mac-',NEW.macaddr));
                            END IF;
                         END IF;
                      END;##"

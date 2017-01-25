@@ -46,9 +46,18 @@ int captive_portal_client(struct http_request * req) {
     if (rv != KORE_RESULT_OK) {
         return show_generic_message_page(req,attr);
     }
-    /**/
+    /* */
+    sprintf(sql,"select macaddr as client_macaddr,name as client_name from found where macaddr='%s'",macaddr);
+    rv = sql_select_into_attributes(sql,NULL,&attr);
+    if (rv != KORE_RESULT_OK) {
+            return show_generic_message_page(req,attr);
+    }
+
+    load_global_attributes(attr);
+
     template_load(asset_captive_portal_client_html,asset_len_captive_portal_client_html,&tmpl);
-    template_apply(&tmpl,global_attributes,out);
+   // template_apply(&tmpl,global_attributes,out);
+    template_apply(&tmpl,attr,out);
 
 	/**/
     html_rendered = kore_buf_release(out, &len);
