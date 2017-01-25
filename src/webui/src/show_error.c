@@ -8,7 +8,7 @@
 #include <webui.h>
 
 
-inline void show_mysql_error(MYSQL *mysql,attributes_set_t *ptr_attrl) {
+void show_mysql_error(MYSQL *mysql,attributes_set_t *ptr_attrl) {
 #define __SIZE (2048)
  char *log_message=kore_malloc(__SIZE);
 
