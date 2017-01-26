@@ -12,7 +12,7 @@ source $R/zuper/zuper.init
 
 PREFIX=${PREFIX:-/usr/local/dowse}
 CFLAGS="-Wall -fPIC -fPIE -Os"
-LDFLAGS="-fPIC -fPIE -pie"
+LDFLAGS="-fPIC -fPIE -pie -lb64"
 
 
 [[ -x $R/build/bin/$1 ]] && {
@@ -60,14 +60,13 @@ case $1 in
 
 	mosquitto)
 		pushd $R/src/mosquitto
-		make -C lib
+		make -C lib &&
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
 			  make &&
-			install -s -p src/mosquitto $R/build/bin
+			install -s -p src/mosquitto $R/build/bin &&
 		# make WITH_BRIDGE=no WITH_TLS=no WITH_WEBSOCKETS=yes WITH_DOCS=no \
 		# LWS_LIBRARY_VERSION_NUMBER=2.0 &&
-
 		popd
 		;;
 
@@ -76,23 +75,22 @@ case $1 in
 		act "please wait while preparing the build environment"
 		act "also prepare to wait more for the BIND export libs"
 		act "when you see ISC_LOG_ROLLINFINITE then is almost there"
-		autoreconf -i
+		autoreconf -i &&
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
-			  ./configure --enable-paranoia --enable-execute
+			  ./configure --enable-paranoia --enable-execute &&
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
 			  make && {
-			install -s -p server/dhcpd    $R/build/bin
+			install -s -p server/dhcpd    $R/build/bin &&
 			install -s -p dhcpctl/omshell $R/build/bin
-		}
-
+		} &&
 		popd
 		;;
 
     seccrond)
         pushd $R/src/seccrond
-        CFLAGS="$CFLAGS" make
+        CFLAGS="$CFLAGS" make &&
         install -s -p seccrond $R/build/bin
         popd
         ;;
@@ -100,13 +98,13 @@ case $1 in
     # first kore, then webui (which is built with kore)
     kore)
         [[ -x $R/build/kore ]] || {
-            pushd $R/src/kore
-            make NOTLS=1 DEBUG=1
+            pushd $R/src/kore  &&
+            make NOTLS=1 DEBUG=1 &&
             popd
         }
         ;;
     webui)
-        pushd $R/src/webui
+        pushd $R/src/webui 
         notice "Generating WebUI configuration"
         act "chroot: $HOME/.dowse"
         act "uid:    $USER"
@@ -124,15 +122,14 @@ EOF
         cat conf/build.conf.dist >> conf/build.conf
 
 	act "launch the actual build"
-	make all
-
-        install -s -p webui $R/build/bin
+	make all &&
+        install -s -p webui $R/build/bin &&
         popd
         ;;
 
     netdata)
-        pushd $R/src/netdata
-        ./autogen.sh
+        pushd $R/src/netdata &&
+        ./autogen.sh &&
         CFLAGS="$CFLAGS" \
               ./configure --prefix=${PREFIX}/netdata \
               --datarootdir=${PREFIX}/netdata \
@@ -140,40 +137,37 @@ EOF
               --localstatedir=$HOME/.dowse \
               --sysconfdir=/etc/dowse &&
             make &&
-            install -s -p src/netdata $R/build/bin
+            install -s -p src/netdata $R/build/bin &&
         popd
 
         ;;
     netdiscover)
-        pushd $R/src/netdiscover
+        pushd $R/src/netdiscover &&
         autoreconf && \
             CFLAGS="$CFLAGS" ./configure --prefix=${PREFIX} && \
             make && \
-            install -s -p src/netdiscover $R/build/bin
+            install -s -p src/netdiscover $R/build/bin &&
         popd
         ;;
 
     sup)
         pushd $R/src/sup
-
         # make sure latest config.h is compiled in
         rm -f $R/src/sup/sup.o
-
-        make && install -s -p $R/src/sup/sup $R/build
-
+        make && install -s -p $R/src/sup/sup $R/build &&
         popd
         ;;
 
     dnscrypt-proxy)
         pushd $R/src/dnscrypt-proxy
-		git checkout -- src/proxy ## least bloated solution
-		patch -p1 < $R/src/patches/dnscrypt-noreuseableport.patch
-		./autogen.sh
-        ./configure --without-systemd --enable-plugins --prefix=${PREFIX} \
-            && \
-            make && \
-            install -s -p src/proxy/dnscrypt-proxy $R/build/bin
-        popd
+	## least bloated solution
+		git checkout -- src/proxy &&
+		patch -p1 < $R/src/patches/dnscrypt-noreuseableport.patch &&
+		./autogen.sh &&
+         ./configure --without-systemd --enable-plugins --prefix=${PREFIX} &&
+            make && 
+            install -s -p src/proxy/dnscrypt-proxy $R/build/bin &&
+         popd
         ;;
 
     dnscrypt_dowse.so)
@@ -181,16 +175,16 @@ EOF
 		autoreconf -i &&
 			./configure &&
 			make &&
-            install -s -p .libs/dnscrypt_dowse.so $R/build/bin
+            install -s -p .libs/dnscrypt_dowse.so $R/build/bin &&
         popd
         ;;
 
     pgld)
-        pushd $R/src/pgld
+        pushd $R/src/pgld &&
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
-              make
-        install -s -p $R/src/pgld/pgld $R/build/bin
+              make &&
+        install -s -p $R/src/pgld/pgld $R/build/bin &&
         popd
         ;;
 
