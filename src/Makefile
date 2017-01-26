@@ -90,7 +90,11 @@ modprobe: modprobe.o kmod_log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
 
 parse-ip-neigh: parse-ip-neigh.c
+ifeq ($(WITH_MYSQL),yes)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -DDB_HOST=\"localhost\" -DDB_USER=\"root\" -DDB_PASSWORD=\"p4ssw0rd\" -DDB_SID=\"things\" -DDB_SOCK_DIRECTORY=\"$(HOME)/.dowse/run/mysql/mysqld.sock\"  -I/usr/include/mysql -lmysqld
+else
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -DDB_HOST=\"localhost\" -DDB_USER=\"root\" -DDB_PASSWORD=\"p4ssw0rd\" -DDB_SID=\"things\" -DDB_SOCK_DIRECTORY=\"$(HOME)/.dowse/run/mysql/mysqld.sock\"  -I/usr/include/mariadb -lmariadb
+endif
 
 dowse-to-gource: dowse-to-gource.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
@@ -98,7 +102,7 @@ dowse-to-gource: dowse-to-gource.o
 dowse-to-osc: dowse-to-osc.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
-dowse-to-mqtt: mosquitto dowse-to-mqtt.o 
+dowse-to-mqtt: mosquitto dowse-to-mqtt.o
 	$(CC) $(CFLAGS) -o $@ dowse-to-mqtt.o $(LIBS) -L./mosquitto/lib/ -lmosquitto    -lpthread
 
 
