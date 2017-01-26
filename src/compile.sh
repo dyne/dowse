@@ -34,7 +34,7 @@ case $1 in
 
 	maria2redis)
 		pushd $R/src/maria2redis
-		case `arch` in
+		case `uname -m` in
 			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1"
 		esac
 		CFLAGS+=" -Os" \
@@ -47,7 +47,7 @@ case $1 in
 		pushd $R/src/libwebsockets
 		# fix for broken path detection
 		cmakeflags=""
-		case `arch` in
+		case `uname -m` in
 			arm*) cmakeflags+="-DZLIB_LIBRARY:FILEPATH=/usr/lib/arm-linux-gnueabih" ;;
 		esac
 		CFLAGS="$CFLAGS" \
