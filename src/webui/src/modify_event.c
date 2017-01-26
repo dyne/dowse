@@ -22,13 +22,8 @@
 
 int modify_event(struct http_request * req) {
     log_entering();
-    template_t tmpl;
     attributes_set_t attr;
-    char *html_rendered;
-    struct kore_buf *out;
-    int len;
     int bad_parsing=0;
-    out = kore_buf_alloc(0);
     attr = attrinit();
 
     http_populate_get(req);
@@ -53,8 +48,7 @@ int modify_event(struct http_request * req) {
         snprintf(action_sql,sizeof(action_sql),
                 " UPDATE found SET authorized='%s' WHERE macaddr='%s'",
                 macaddr,
-                __ENABLE_TO_BROWSE_STR,
-                macaddr
+                __ENABLE_TO_BROWSE_STR
                 );
         snprintf(recognize_sql, sizeof(recognize_sql),
                 " UPDATE event SET recognized=true where macaddr='%s' and description='new_mac_address'",
@@ -100,7 +94,6 @@ int modify_event(struct http_request * req) {
     /**/
     WEBUI_DEBUG
     ;
-    kore_free(html_rendered);
     attrfree(attr);
 
     return (KORE_RESULT_OK);

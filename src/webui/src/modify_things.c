@@ -22,14 +22,9 @@
 #include <webui.h>
 
 int modify_things(struct http_request * req) {
-    template_t tmpl;
 	attributes_set_t attr;
-    char *html_rendered;
-    struct kore_buf *out;
-    int len;
     http_populate_post(req);
     int bad_parsing=0;
-    out = kore_buf_alloc(0);
     attr=attrinit();
 
     PARSE_PARAMETER(macaddr);
@@ -60,7 +55,6 @@ int modify_things(struct http_request * req) {
 
     /**/
     WEBUI_DEBUG;
-    kore_free(html_rendered);
 	attrfree(attr);
 
     return (KORE_RESULT_OK);

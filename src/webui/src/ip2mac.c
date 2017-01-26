@@ -146,7 +146,7 @@ int convert_from_ipv6(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_a
                 ipaddr_value,strerror(errno));
 
         webui_add_error_message(ptr_attr,m);
-        socket_fd;
+        close(socket_fd);
         return (1);
     }
 
@@ -166,7 +166,7 @@ int convert_from_ipv6(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_a
         char m[256];
          webui_add_error_message(ptr_attr,"socket");
          snprintf(m,sizeof(m), "-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",ipaddr_value,dev,strerror(errno));
-         socket_fd;
+         close(socket_fd);
          return (1);
     }
     char buf[256];
@@ -175,6 +175,7 @@ int convert_from_ipv6(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_a
     inet_ntop(AF_INET6,&(p->sin6_addr),buf,sizeof(buf));
 
     ethernet_mactoa(&areq.arp_ha,mac_addr);
+    close(socket_fd);
 
     func("Conversion form %s  -> %s\n", ipaddr_value,
                 mac_addr

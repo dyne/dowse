@@ -35,6 +35,6 @@ dev {
 }
 
 prod {
-    cflags = -Os
+    cflags = -Os -Wall    
 }
 

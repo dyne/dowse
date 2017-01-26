@@ -89,7 +89,6 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
 
     attributes_set_t t;
 
-    attributes_set_t *ptr_t;
     t = attrinit();
 
     for (i = 0; i < argc; i++) { // save all fields into the template

@@ -23,11 +23,11 @@
 
 int captive_portal_admin(struct http_request * req) {
     log_entering();
-   template_t tmpl;
-	attributes_set_t attr;
-    char *html_rendered;
+    template_t tmpl;
+    attributes_set_t attr;
+    u_int8_t *html_rendered;
     struct kore_buf *out;
-    int len;
+    size_t len;
     out = kore_buf_alloc(0);
 	attr=attrinit();
 

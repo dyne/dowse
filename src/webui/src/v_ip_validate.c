@@ -18,7 +18,7 @@ int v_ip_validate(struct http_request * req,char*data) {
 
     char *ipaddr_type;
     char *ipaddr_value;
-    attributes_set_t*ptr_attrl;
+    attributes_set_t attrl=attrinit();
 
 
     get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
@@ -27,7 +27,7 @@ int v_ip_validate(struct http_request * req,char*data) {
         return KORE_RESULT_ERROR;
     }
 
-    if (_check_if_ip_is_admin(ipaddr_type,ipaddr_value,ptr_attrl)==_IP_IS_ADMIN_) {
+    if (_check_if_ip_is_admin(ipaddr_type,ipaddr_value,&attrl)==_IP_IS_ADMIN_) {
         notice(" [%s][%s] is admin authenticated ",ipaddr_type,ipaddr_value);
         return KORE_RESULT_OK;
     }

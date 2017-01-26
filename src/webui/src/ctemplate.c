@@ -352,6 +352,13 @@ freetag(tagnode *tag) {
             free(t);
         }
         break;
+    case tag_text:  /* To eliminate a pedantic warning */
+    case tag_else:  /* To eliminate a pedantic warning */
+    case tag_endif: /* To eliminate a pedantic warning */
+    case tag_break: /* To eliminate a pedantic warning */
+    case tag_cont:  /* To eliminate a pedantic warning */
+    case tag_endloop: /* To eliminate a pedantic warning */
+        break;
     }
     freetag(tag->next);
     free(tag);
@@ -382,6 +389,8 @@ tagname(tag_kind kind) {
         return "TMPL_CONTINUE";
     case tag_endloop:
         return "/TMPL_LOOP";
+    case tag_text:  /* To eliminate a pedantic warning */
+        return "unknown";
     }
     return "unknown";
 }
@@ -592,7 +601,6 @@ scantag(template *t, const char *p) {
      */
 
     switch(kind) {
-
     case tag_include:
     case tag_loop:
         if ((name = scanattr(t, "name", p)) != 0) {

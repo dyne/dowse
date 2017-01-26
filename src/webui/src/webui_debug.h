@@ -20,8 +20,8 @@
 
 #ifndef _WEBUI_DEBUG_H
 #define _WEBUI_DEBUG_H
+
 #ifndef __where_i_am__
-static uint8_t __buf_where_i_am__[256];
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
