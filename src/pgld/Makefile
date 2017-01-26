@@ -1,6 +1,6 @@
 CFLAGS ?= -ggdb -Wall -DDEBUG=1 -fPIE -pie
 CC = gcc
-LIBS = -l:libdowse.a -ljemalloc -lhiredis -lnetfilter_queue -lnfnetlink
+LIBS = -l:libdowse.a -ljemalloc -lhiredis -lnetfilter_queue -lnfnetlink -lb64
 
 
 pgld_OBJS = pgld.o stream.o blocklist.o parser.o

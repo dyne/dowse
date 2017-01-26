@@ -7,15 +7,15 @@
 # cflags=-Wall -D_XOPEN_SOURCE
 
 cflags = -I.. -I../libparse-datetime -I../kore/includes -I../libdowse
-cflags = -I/usr/include/mariadb 
-ldflags = ../libparse-datetime/libparse-datetime.a -L../libdowse -l:libdowse.a -l:libb64.a
-ldflags = -lm -lssl -lcrypto -lmariadb -lhiredis
+cflags = -I/usr/include/mariadb
+ldflags = ../libparse-datetime/libparse-datetime.a -L../libdowse -l:libdowse.a
+ldflags = -lm -lssl -lcrypto -lmariadb -lhiredis -lb64
 
 # mariadb flags
 cflags = -DDB_USER="root"
 cflags = -DDB_PASSWORD="p4ssw0rd"
 cflags = -DDB_HOST="localhost"
-cflags = -DDB_SID="things"	
+cflags = -DDB_SID="things"
 
 #
 #cflags = -I.. -I../libparse-datetime -I../kore/includes -I/usr/local/include/kore -Wall -fPIC -fPIE
@@ -25,12 +25,12 @@ single_binary = yes
 kore_source = ../kore
 kore_flavor = NOTLS=1
 
-cflags = -DKORE_NO_TLS 
+cflags = -DKORE_NO_TLS
 
 dev {
 	# These cflags are added to the shared ones when
 	# you build the "dev" flavor.
-	cflags = -ggdb -DDEBUG=1 
+	cflags = -ggdb -DDEBUG=1
     ## -Wall -pedantic
 }
 
