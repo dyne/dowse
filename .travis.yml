@@ -11,7 +11,7 @@ env:
 before_install:
   - sudo add-apt-repository ppa:chris-lea/libsodium -y
   - sudo apt-get -qq -y update
-  - sudo apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install --no-install-recommends -y zsh iptables ebtables sqlite3 procps gettext-base procps net-tools autoconf libssl-dev libbind-dev libpcap-dev unzip wget gcc make libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev libreadline5 libaio1 libpcre3 bind9-host bison gawk libevent-dev libjansson-dev asciidoc uuid-dev libldns-dev python-redis python-hiredis dnsutils valgrind build-essential xmlstarlet libfile-mimeinfo-perl libmysqlclient-dev libb64-dev
+  - sudo apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install --no-install-recommends -y zsh iptables ebtables sqlite3 procps gettext-base procps net-tools autoconf libssl-dev libbind-dev libpcap-dev unzip wget gcc make libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev sqlite3 libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev libreadline5 libaio1 libpcre3 bind9-host bison gawk libevent-dev libjansson-dev asciidoc uuid-dev libldns-dev python-redis python-hiredis dnsutils valgrind build-essential xmlstarlet libfile-mimeinfo-perl libmariadbclient-dev libb64-dev cproto 
   - git submodule update --init
 
 script:
