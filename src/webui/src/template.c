@@ -123,8 +123,8 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
     char buf_str[1024], end;
     int some_error, rv;
 
-    mkstemp(out_name);
-    mkstemp(err_name);
+    rv=mkstemp(out_name);
+    rv=mkstemp(err_name);
 
     func(
             "[%s] Template applying out file was [%s] err file was [%s] ",
