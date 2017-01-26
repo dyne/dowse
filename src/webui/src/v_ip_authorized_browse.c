@@ -59,12 +59,12 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
 
     /*--- ... nel DB il macaddr non è presente o è presente con il valore "Not enabled to browse" */
     if (rv == _NOT_ENABLE_TO_BROWSE) {
-        sprintf(url_to_redirect, "/captive_client?macaddr=%s", macaddr);
+        sprintf(url_to_redirect, "http://www.dowse.it/captive_client?macaddr=%s", macaddr);
     }
 
     /*--- ... nel DB il macaddr è presente come admin e quindi redirezionato su captive portal admin page */
     if (rv == _IP_IS_ADMIN_) {
-        sprintf(url_to_redirect, "/captive_admin", macaddr);
+        sprintf(url_to_redirect, "http://www.dowse.it/captive_admin", macaddr);
     }
 
     act(" Redirecting to [%s]", url_to_redirect);
