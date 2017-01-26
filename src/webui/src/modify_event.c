@@ -84,9 +84,17 @@ int modify_event(struct http_request * req) {
     /**/
     WEBUI_DEBUG;
 
-    /* FIXME se sto su captive_portal perchè sono stato intercettato devo essere rediretto
-     *  su dowse.it/captive_admin ... e non sul www.sito_che_volevo_andare.it */
-    http_response_header(req, "location", "/captive_admin#event");
+    /* TODO :
+     *  1) captive_admin (tramite modify_event) deve rilasciare l'admin sono quando avrà marcato tutti gli event a "recognized"
+     *    perchè se vengo intercettato mentre che scarico una risorsa eg: (repubblica.it/bootstrap.css)
+     *    quella risorsa non la scarico e il captive_admin viene comunque skippato.
+     * FIXME
+     *  2) se sto su captive_portal perchè sono stato intercettato devo essere rediretto
+     *  su dowse.it/captive_admin ... e non sul www.sito_che_volevo_andare.it
+     *
+     *
+     *  */
+    http_response_header(req, "location", "http://www.dowse.it/captive_admin#event");
     http_response(req, 302, NULL, 0);
 
     /**/
