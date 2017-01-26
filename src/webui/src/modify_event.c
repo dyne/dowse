@@ -59,12 +59,11 @@ int modify_event(struct http_request * req) {
         snprintf(recognize_sql, sizeof(recognize_sql),
                 " UPDATE event SET recognized=true where macaddr='%s' and description='new_mac_address'",
                 macaddr);
-
     }
+
     if (strcmp(action,"disable_browse")==0) {
         snprintf(action_sql,sizeof(action_sql),
-        " UPDATE found SET authorized='%s' WHERE macaddr='%s'",
-        macaddr,
+        "UPDATE found SET authorized='%s' WHERE macaddr='%s'",
         __DISABLE_TO_BROWSE_STR,
         macaddr
         );
@@ -78,7 +77,6 @@ int modify_event(struct http_request * req) {
     }
 
     /* event is recognized update table using the recognize_sql selected */
-
     int rv2 = sqlexecute(recognize_sql, &attr);
     if (rv2 != KORE_RESULT_OK) {
         return show_generic_message_page(req,attr);
