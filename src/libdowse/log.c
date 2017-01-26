@@ -9,6 +9,7 @@
 #include <time.h>
 #include <b64/cencode.h>
 
+
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -21,7 +22,8 @@
 
 redisContext *log_redis  = NULL;//connect_redis("127.0.0.1", 6379, 0);
 base64_encodestate b64_state;
-
+redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...) ;
+  
 void toredis(char *pfx, char *msg) {
     if (log_redis) {
 
