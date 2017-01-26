@@ -107,7 +107,7 @@ sql_integrate_with_redis() {
 	    print $TRIGGER_ENABLE_DISABLE_AUTHORIZATION | $sql $db[things]
 
 	    
-	    # Procedure to redirect (or not) the admin to captive_portal_admin
+	    # Procedure to redirect (or not) the admin which not are disable to browse, to captive_portal_admin
 	    # new_state can be admin_should_check | ok 
 	    PROC="DELIMITER ##
                    DROP PROCEDURE IF EXISTS redirect_admin_to_captive_portal; 
@@ -115,7 +115,7 @@ sql_integrate_with_redis() {
                    BEGIN
                       DECLARE done INT DEFAULT 0 ;
                       DECLARE mac_address varchar(18);
-                      DECLARE cursor_admin_mac_address CURSOR FOR SELECT macaddr FROM found WHERE admin='yes';
+                      DECLARE cursor_admin_mac_address CURSOR FOR SELECT macaddr FROM found WHERE admin='yes' AND upper(authorized) <> 'DISABLE TO BROWSE';
                       DECLARE CONTINUE HANDLER FOR NOT FOUND SET done =1 ;
                         OPEN cursor_admin_mac_address ;
           
