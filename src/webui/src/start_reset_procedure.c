@@ -24,10 +24,10 @@
 int start_reset_procedure(struct http_request * req) {
     log_entering();
     template_t tmpl;
-	attributes_set_t attr;
-    char *html_rendered;
+    attributes_set_t attr;
+    u_int8_t *html_rendered;
     struct kore_buf *out;
-    int len;
+    size_t len;
     FILE *fp;
     out = kore_buf_alloc(0);
 	attr=attrinit();

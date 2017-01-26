@@ -31,11 +31,11 @@ int show_generic_message_page(struct http_request *req, attributes_set_t error_m
             asset_len_generic_message_list_html,404);
 }
 
-int apply_template_and_return(struct http_request *req, attributes_set_t attribute_list,char*asset_template_html,int asset_len_html,int ret_value){
+int apply_template_and_return(struct http_request *req, attributes_set_t attribute_list,u_int8_t*asset_template_html,int asset_len_html,int ret_value){
     template_t tmpl;
     struct kore_buf*out;
-    int len;
-    char*data;
+    size_t len;
+    u_int8_t *data;
     out=kore_buf_alloc(0);
 
     template_load(asset_template_html,asset_len_html,&tmpl);

@@ -17,7 +17,6 @@ void kore_preload() {
 
     log_redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
     if (!log_redis) {
-        attributes_set_t att = attrinit();
         const char m[] = "Redis server is not running";
         webui_add_error_message(&global_attributes, m);
         err(m);

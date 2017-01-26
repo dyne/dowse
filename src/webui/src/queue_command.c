@@ -15,9 +15,9 @@
 int queue_command(struct http_request * req) {
     log_entering();
     struct kore_buf *buf;
-    char *message;
+    u_int8_t *message;
     char command[256];
-    int len;
+    size_t len;
     int bad_parsing=0;
     attributes_set_t attr=attrinit();
     redisContext *redis = NULL;
@@ -33,8 +33,7 @@ int queue_command(struct http_request * req) {
 
 
     /* If "op" command not set or no parameter specified*/
-    if ((strcmp(op,"")==0) ||
-        ( (strcmp(macaddr,"")==0)&&(strcmp(ip4,"")==0)&&(strcmp(ip6,"")==0)))
+    if (bad_parsing)
     {
         err("%s command not well defined",__where_i_am__);
         buf=kore_buf_alloc(0);
@@ -67,7 +66,7 @@ int queue_command(struct http_request * req) {
     gettimeofday(&tp,&tz);
 
     char epoch[256];
-    snprintf(epoch,sizeof(epoch),"%d",tp.tv_sec);
+    snprintf(epoch,sizeof(epoch),"%lu",tp.tv_sec);
 
     /* Construct command to publish on Redis channel */
     snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,op,epoch,macaddr,ip4,ip6);

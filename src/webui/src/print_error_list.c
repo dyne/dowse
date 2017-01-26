@@ -29,15 +29,16 @@ char *dowse2bootstrap(char*log_level){
     if (strcmp(log_level,"ACT")==0) return "success";
     if (strcmp(log_level,"WARN")==0) return "warning";
     if (strcmp(log_level,"ERROR")==0) return "danger";
+    return "ERROR";
 }
 
 int print_error_list(struct http_request * req) {
     log_entering();
     template_t tmpl;
 	attributes_set_t attr;
-    char *html_rendered;
+    u_int8_t *html_rendered;
     struct kore_buf *out;
-    int len;
+    size_t len;
     out = kore_buf_alloc(0);
 	attr=attrinit();
 
@@ -77,7 +78,6 @@ int print_error_list(struct http_request * req) {
             char *body_message=sep2+1; (*sep2)=0;
 
             /* Decode message was encoded in b64 to escaping character */
-            char b64_encode[512];
             char command[256];
             base64_init_decodestate(&b64_state);
             int rv=base64_decode_block(body_message, strlen(body_message), command, &b64_state);

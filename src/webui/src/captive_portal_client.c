@@ -24,10 +24,10 @@
 int captive_portal_client(struct http_request * req) {
     log_entering();
     template_t tmpl;
-    char *html_rendered;
+    u_int8_t *html_rendered;
     struct kore_buf *out;
     attributes_set_t attr;
-    int len;
+    size_t len;
     out = kore_buf_alloc(0);
     int bad_parsing=0;
     attr = attrinit();

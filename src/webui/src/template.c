@@ -14,6 +14,7 @@
 #include "find_nearest_asset.h"
 
 
+extern char filtered(char a);
 
 int asset_name_distance(char* a,char*b) {
     int rv=0;
@@ -62,7 +63,7 @@ int print_nearest_name(char*prefix,struct dirent *entry,void*data) {
 }
 
 /**/
-int find_nearest_asset_and_load_template(char *template_name, int len, struct template_t *tmpl) {
+int find_nearest_asset_and_load_template(char *template_name, size_t len, struct template_t *tmpl) {
     /*--- We find the nearest file with the name similar to template_name */
     struct nearest_filename data_to_search;
 
@@ -83,7 +84,7 @@ int find_nearest_asset_and_load_template(char *template_name, int len, struct te
              data_to_search.name_to_search,buf.st_size);
 
 
-    tmpl->data = (char*)malloc(sizeof(char)*(buf.st_size+1));
+    tmpl->data = (u_int8_t*)malloc(sizeof(char)*(buf.st_size+1));
     tmpl->len = buf.st_size;
     int fd=open(data_to_search.nearest,O_SYNC|O_RDONLY);
     if (fd<0) {
@@ -103,7 +104,7 @@ int find_nearest_asset_and_load_template(char *template_name, int len, struct te
     tmpl->fmtlist = TMPL_add_fmt(0, ENTITY_ESCAPE, TMPL_encode_entity);
     tmpl->fmtlist = TMPL_add_fmt(tmpl->fmtlist, URL_ESCAPE, TMPL_encode_url);
 
-
+    return 0;
 }
 
 
@@ -120,7 +121,6 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
     char err_name[] = "/tmp/err_stream_XXXXXX";
     FILE*out_stream, *err_stream;
     char buf_str[1024], end;
-    unsigned long int size;
     int some_error, rv;
 
     mkstemp(out_name);
@@ -135,7 +135,7 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
 
     WEBUI_DEBUG
     ;
-    TMPL_write(NULL, tmpl->data, tmpl->fmtlist, al->varlist, out_stream,
+    TMPL_write(NULL, (const char *)tmpl->data, tmpl->fmtlist, al->varlist, out_stream,
             err_stream);
 
 //  size=ftell(out_stream);
@@ -189,7 +189,7 @@ WEBUI_TEST_UNIT(A001) {
     _attributes = attrinit();
     _attributes = attrcat(_attributes, "title", "Dowse information panel");
 
-    template_load(template, strlen(template), &t);
+    template_load(template, strlen((const char*)template), &t);
 
     template_apply(&t, _attributes, out);
 
@@ -212,7 +212,7 @@ WEBUI_TEST_UNIT(A002) {
             "</html>";
     attributes_set_t studente, studente2, _attributes;
     template_t t;
-    int size;
+    size_t size;
     struct kore_buf *out;
     char *rendered;
 
@@ -231,7 +231,7 @@ WEBUI_TEST_UNIT(A002) {
     studente2 = attrcat(studente2, "indirizzo", "Un altro posto");
     _attributes = attr_add(_attributes, "studente", studente2);
 
-    template_load(template, strlen(template), &t);
+    template_load(template, strlen((const char*)template), &t);
 
     template_apply(&t, _attributes, out);
 
@@ -258,7 +258,7 @@ WEBUI_TEST_UNIT(A003) {
     "</html>";
     attributes_set_t studente, studente2, _attributes;
     template_t t;
-    int size;
+    size_t size;
     struct kore_buf *out;
     char *rendered;
 

@@ -24,9 +24,10 @@ int reset_admin(struct http_request * req) {
     log_entering();
     template_t tmpl;
     attributes_set_t attr;
-    char *html_rendered;
+    u_int8_t *html_rendered;
     struct kore_buf *out;
-    int len, rv;
+    size_t len;
+    int rv;
     char *ipaddr_type;
     char *ipaddr_value;
 
