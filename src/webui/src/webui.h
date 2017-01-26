@@ -21,6 +21,7 @@
 #include <dirent.h>
 #include <libdowse/dowse.h>
 #include <../database.h>
+#include <show_error.h>
 
 #define mb (1024*500)
 #define ml (1024*3)
