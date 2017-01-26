@@ -115,10 +115,19 @@ pidfile   $HOME/.dowse/run/webui.pid
 EOF
         cat conf/webui.conf.dist >> conf/webui.conf
 
-		cat <<EOF > conf/build.conf
+	cat <<EOF > conf/build.conf
 # generated at build time
 cflags = -DDB_SOCK_DIRECTORY="$HOME/.dowse/run/mysql/mysqld.sock"
 EOF
+	if [ -x /usr/bin/mariadb_config ]; then
+	    export DB_CFG=/usr/bin/mariadb_config
+	else
+	    export DB_CFG=/usr/bin/mysql_config
+	fi
+
+	echo "cflags  = "`${DB_CFG} --include` >> conf/build.conf
+	echo "ldflags = "`${DB_CFG} --libs` >> conf/build.conf
+
         cat conf/build.conf.dist >> conf/build.conf
 
 	act "launch the actual build"
