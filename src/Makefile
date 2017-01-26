@@ -3,7 +3,7 @@ PREFIX ?= /usr/local/dowse
 
 CC = gcc
 CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
-LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -l:libb64.a
+LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64
 
 all: base parsers springs
 	@./import.sh redis-server
@@ -23,19 +23,47 @@ libs:
 	make -C libdowse
 	make -C libparse-datetime
 
-base: config libs modprobe sup hiredis-lock
+.PHONY: dnscrypt-proxy kore libwebsockets modprobe netdata seccrond webui hiredis-lock libparse-datetime maria2redis mosquitto pgld sup
+
+base: config libs modprobe sup hiredis-lock libparse-datetime dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto kore webui seccrond maria2redis
+	@echo "Compiled base"
+
+libparse-datetime:
 	@make -C libparse-datetime
+
+dnscrypt-proxy:
 	@./compile.sh dnscrypt-proxy
+
+dnscrypt_dowse.so:
 	@./compile.sh dnscrypt_dowse.so
+
+pgld:
 	@./compile.sh pgld
+
+netdata:
 	@./compile.sh netdata
+
+dhcpd:
 	@./compile.sh dhcpd
+
+libwebsockets:
 	@./compile.sh libwebsockets
+
+mosquitto: libwebsockets
 	@./compile.sh mosquitto
+
+kore:
 	@./compile.sh kore
+
+webui: kore
 	@./compile.sh webui
+
+seccrond:
 	@./compile.sh seccrond
+
+maria2redis:
 	@./compile.sh maria2redis
+
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
@@ -70,8 +98,9 @@ dowse-to-gource: dowse-to-gource.o
 dowse-to-osc: dowse-to-osc.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
-dowse-to-mqtt: dowse-to-mqtt.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) mosquitto/lib/libmosquitto.a -lpthread
+dowse-to-mqtt: mosquitto dowse-to-mqtt.o 
+	$(CC) $(CFLAGS) -o $@ dowse-to-mqtt.o $(LIBS) -L./mosquitto/lib/ -lmosquitto    -lpthread
+
 
 install:
 	install -d ${DESTDIR}${PREFIX}
