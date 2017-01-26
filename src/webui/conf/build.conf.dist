@@ -7,9 +7,8 @@
 # cflags=-Wall -D_XOPEN_SOURCE
 
 cflags = -I.. -I../libparse-datetime -I../kore/includes -I../libdowse
-cflags = -I/usr/include/mariadb
 ldflags = ../libparse-datetime/libparse-datetime.a -L../libdowse -l:libdowse.a
-ldflags = -lm -lssl -lcrypto -lmariadb -lhiredis -lb64
+ldflags = -lm -lssl -lcrypto -lhiredis -lb64
 
 # mariadb flags
 cflags = -DDB_USER="root"
