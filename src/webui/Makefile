@@ -11,7 +11,11 @@ TMP=src/.tmp_file
 all: cproto asset
 	rm -f assets/*~
 #	cp -f conf/webui.conf.dist conf/webui.conf
+ifeq ($(WITH_MYSQL),yes)
+	../kore/kore flavor prod_mysql
+else
 	../kore/kore flavor prod
+endif
 	../kore/kore build
 
 echo:
