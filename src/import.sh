@@ -62,7 +62,7 @@ pkg-download() {
     bckfile=`find $S/debs -name "${pkg}-*.pkg.tar.xz"`
     if [[ "$bckfile" = "" ]]; then
 	# pacman needs root: https://bugs.archlinux.org/task/33369
-	#pacman -Swdd --noconfirm --cachedir $$/debs ${pkg}
+	#pacman -Swdd --noconfirm --cachedir $S/debs ${pkg}
 	cd $S/debs && curl -O -L $(pacman -Spdd ${pkg}) && cd -
         [[ $? = 0 ]] || {
             error "error downloading $pkg"
@@ -181,7 +181,7 @@ command -v pacman >/dev/null && {
     # [[ -r $S/build/dnsmasq ]] || {
     #     act "fetching dnsmasq"
     #     pkg-download dnsmasq
-    #     cp $tmp/usr/sbin/dnsmasq $S/build/bin
+    #     cp $tmp/usr/bin/dnsmasq $S/build/bin
     # }
     case "$1" in
         redis-server)
@@ -202,7 +202,7 @@ command -v pacman >/dev/null && {
             [[ -r $S/build/bin/dhcpd ]] || {
                 act "fetching ISC dhcp server"
                 pkg-download dhcp
-                cp $tmp/usr/sbin/dhcpd $S/build/bin
+                cp $tmp/usr/bin/dhcpd $S/build/bin
             }
             ;;
 
@@ -219,7 +219,7 @@ command -v pacman >/dev/null && {
 				cp -ra $S/src/maria2redis/lib_mysqludf_redis_v2.so \
 				   $S/build/mysql/plugin
 				cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
-				cp $tmp/usr/sbin/mysqld    $S/build/mysql/bin
+				cp $tmp/usr/bin/mysqld     $S/build/mysql/bin
 				cp $tmp/usr/bin/mysql      $S/build/mysql/bin
 				cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
 				cp $tmp/usr/bin/mysql_install_db $S/build/mysql/bin
