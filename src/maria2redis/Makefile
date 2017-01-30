@@ -6,11 +6,15 @@ else
 endif
 INCLUDE =`${DB_CFG} --include` -I/usr/local/include `apr-1-config --includes` -I./
 LIBS    =-lhiredis -L/usr/local/dowse/mysql/plugin  -L/usr/local/apr/lib  -lapr-1  -laprutil-1
-CFLAGS ?=-Wall -O2 -g -D_LARGEFILE64_SOURCE
-LDFLAGS?=-fPIC
 
-compile:
-	gcc $(LDFLAGS) $(CFLAGS) -g $(INCLUDE)  -I. -shared -rdynamic lib_mysqludf_redis.c  $(LIBS) -o lib_mysqludf_redis_v2.so
+#	gcc $(LDFLAGS) $(CFLAGS) -g $(INCLUDE)  -I. -shared -rdynamic lib_mysqludf_redis.c  $(LIBS) -o lib_mysqludf_redis_v2.so
+
+compile: lib_mysqludf_redis.o
+	gcc  -shared -rdynamic lib_mysqludf_redis.o -o lib_mysqludf_redis_v2.so $(LDFLAGS) $(LIBS)
+
+
+lib_mysqludf_redis.o:lib_mysqludf_redis.c
+	gcc -c $(LDFLAGS) $(CFLAGS) -g $(INCLUDE) -I. lib_mysqludf_redis.c -o lib_mysqludf_redis.o
 
 clean:
 	rm -f *~
