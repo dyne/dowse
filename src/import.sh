@@ -246,3 +246,5 @@ command -v pacman >/dev/null && {
     fi
 
 }
+
+return 0
