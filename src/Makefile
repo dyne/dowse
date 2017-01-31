@@ -3,7 +3,7 @@ PREFIX ?= /usr/local/dowse
 
 ifeq ($(wildcard /usr/bin/mariadb_config),)
   DB_CFG=/usr/bin/mysql_config
-  DB_TYPE=mysql
+  DB_TYPE=mysqldb
 else
   DB_CFG=/usr/bin/mariadb_config
   DB_TYPE=mariadb
