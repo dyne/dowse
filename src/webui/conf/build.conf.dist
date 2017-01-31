@@ -6,9 +6,9 @@
 # cflags=-Wpointer-arith -Wsign-compare
 # cflags=-Wall -D_XOPEN_SOURCE
 
-cflags = -I.. -I../libparse-datetime -I../kore/includes -I../libdowse
+cflags = -I.. -I../libparse-datetime -I../kore/includes -I../libdowse -I../libb64/include
 ldflags = ../libparse-datetime/libparse-datetime.a -L../libdowse -l:libdowse.a
-ldflags = -lm -lssl -lcrypto -lhiredis -lb64
+ldflags = -lm -lssl -lcrypto -lhiredis -lb64 -L../libb64
 
 # mariadb flags
 cflags = -DDB_USER="root"
