@@ -20,3 +20,4 @@ clean:
 	rm -f *~
 	rm -f *.so
 	rm -f *.out
+	rm -f *.o
