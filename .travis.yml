@@ -14,7 +14,7 @@ env:
 before_install:
   - sudo add-apt-repository ppa:chris-lea/libsodium -y
   - sudo apt-get -qq -y update
-  - sudo apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install --no-install-recommends -y zsh iptables ebtables sqlite3 procps gettext-base net-tools autoconf automake libssl-dev libbind-dev libpcap-dev unzip wget gcc g++ make cmake libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc libldns-dev  libreadline5 libpcre3 libaio1 libfile-mimeinfo-perl libmariadb-client-lgpl-dev cproto xmlstarlet nmap libaprutil1-dev libltdl-dev patch libb64-dev uuid-dev python-redis python-hiredis dnsutils valgrind build-essential libmysqld-dev libapr1 libapr1-dev libaprutil1-dev
+  - sudo apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install --no-install-recommends -y zsh iptables ebtables sqlite3 procps gettext-base net-tools autoconf automake libssl-dev libbind-dev libpcap-dev unzip wget gcc g++ make cmake libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc libldns-dev  libreadline5 libpcre3 libaio1 libfile-mimeinfo-perl libmysql-client-dev cproto xmlstarlet nmap libaprutil1-dev libltdl-dev patch libb64-dev uuid-dev python-redis python-hiredis dnsutils valgrind build-essential libmysqld-dev libapr1 libapr1-dev libaprutil1-dev
   
   - git submodule update --init
 
