@@ -9,7 +9,7 @@ libdowse.a: ${OBJS}
 	${AR} rcs libdowse.a ${OBJS}
 
 .c.o:
-	$(CC) $(CFLAGS) -I. -I.. -c $< -o $@
+	$(CC) $(CFLAGS) -I. -I.. -I../libb64/include -c $< -o $@
 
 clean:
 	rm -f *.o
