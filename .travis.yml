@@ -7,7 +7,6 @@ git:
 
 compiler:
   - gcc
-  - clang
 
 env:
   - DEBIAN_FRONTEND=noninteractive
