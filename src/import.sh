@@ -131,11 +131,10 @@ command -v apt-get >/dev/null && {
 
         mysqldb)
             [[ -r $S/build/mysql ]] || {
-				act "fetching mariadb sql server"
-				# deb-download mariadb-server-10.0
-				deb-download mysqldb-server-core-10.0
-				deb-download mysqldb-server-10.0
-				deb-download mysqldb-client-core-10.0
+				act "fetching mysqldb sql server"
+				deb-download mysql-server-core-5.5
+				deb-download mysql-server
+				deb-download mysql-client-5.5
 				mkdir -p $S/build/mysql/bin
 				mkdir -p $S/build/mysql/share
 				mkdir -p $S/build/mysql/plugin
