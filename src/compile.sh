@@ -12,7 +12,7 @@ source $R/zuper/zuper.init
 
 PREFIX=${PREFIX:-/usr/local/dowse}
 CFLAGS="-Wall -fPIC -fPIE -Os"
-LDFLAGS="-fPIC -fPIE -pie -L$R/src/libb64 -lb64 "
+LDFLAGS="-fPIC -fPIE -pie"
 
 
 [[ -x $R/build/bin/$1 ]] && {

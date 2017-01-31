@@ -1,4 +1,4 @@
-LIBRARIES = libb64.so libb64.a
+LIBRARIES = libb64.a
 
 # Build flags (uncomment one)
 #############################
