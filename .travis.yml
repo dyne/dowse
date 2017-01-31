@@ -5,6 +5,10 @@ dist: trusty
 git:
   submodules: false
 
+compiler:
+  - gcc
+  - clang
+
 env:
   - DEBIAN_FRONTEND=noninteractive
 
