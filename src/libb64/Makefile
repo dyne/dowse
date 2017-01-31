@@ -1,5 +1,5 @@
 all: all_src
-	cp src/libb64.so src/libb64.a .
+	cp src/libb64.a .
 
 #all_base64
 
