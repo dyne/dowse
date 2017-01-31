@@ -3,8 +3,10 @@ PREFIX ?= /usr/local/dowse
 
 ifeq ($(wildcard /usr/bin/mariadb_config),)
   DB_CFG=/usr/bin/mysql_config
+  DB_TYPE=mysql
 else
   DB_CFG=/usr/bin/mariadb_config
+  DB_TYPE=mariadb
 endif
 
 CC = gcc
@@ -12,18 +14,18 @@ CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
 LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64
 
 all: base parsers springs
-	@./import.sh redis-server
-	@./import.sh redis-cli
-	@./import.sh mariadb
-	@install -s -p modprobe        ../build/bin
-	@install -s -p dowse-to-gource ../build/bin
-	@install -s -p dowse-to-osc    ../build/bin
-	@install -s -p dowse-to-mqtt   ../build/bin
-	@install -s -p hiredis-lock    ../build/bin
-	@install -s -p dowse-cmd-fifo  ../build/bin
-	@install -s -p parse-ip-neigh  ../build/bin
-	@./checksum.sh
-	@./compile.sh sup
+	./import.sh redis-server
+	./import.sh redis-cli 
+	./import.sh ${DB_TYPE} 
+	install -s -p modprobe        ../build/bin 
+	install -s -p dowse-to-gource ../build/bin 
+	install -s -p dowse-to-osc    ../build/bin 
+	install -s -p dowse-to-mqtt   ../build/bin 
+	install -s -p hiredis-lock    ../build/bin 
+	install -s -p dowse-cmd-fifo  ../build/bin 
+	install -s -p parse-ip-neigh  ../build/bin 
+	./checksum.sh 
+	./compile.sh sup
 
 libs:
 	make -C libdowse

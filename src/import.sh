@@ -129,6 +129,27 @@ command -v apt-get >/dev/null && {
             }
             ;;
 
+        mysqldb)
+            [[ -r $S/build/mysql ]] || {
+				act "fetching mariadb sql server"
+				# deb-download mariadb-server-10.0
+				deb-download mysqldb-server-core-10.0
+				deb-download mysqldb-server-10.0
+				deb-download mysqldb-client-core-10.0
+				mkdir -p $S/build/mysql/bin
+				mkdir -p $S/build/mysql/share
+				mkdir -p $S/build/mysql/plugin
+				cp -ra $tmp/usr/share/mysql/*      $S/build/mysql/share/
+				cp -ra $S/src/maria2redis/lib_mysqludf_redis_v2.so \
+				   $S/build/mysql/plugin
+				cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
+				cp $tmp/usr/sbin/mysqld    $S/build/mysql/bin
+				cp $tmp/usr/bin/mysql      $S/build/mysql/bin
+				cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
+				cp $tmp/usr/bin/mysql_install_db $S/build/mysql/bin
+				cp $tmp/usr/bin/my_print_defaults $S/build/mysql/bin
+            }
+            ;;
         mariadb)
             [[ -r $S/build/mysql ]] || {
 				act "fetching mariadb sql server"
