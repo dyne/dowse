@@ -12,7 +12,7 @@ source $R/zuper/zuper.init
 
 PREFIX=${PREFIX:-/usr/local/dowse}
 CFLAGS="-Wall -fPIC -fPIE -Os"
-LDFLAGS="-fPIC -fPIE -pie -lb64"
+LDFLAGS="-fPIC -fPIE -pie -L$R/src/libb64 -lb64 "
 
 
 [[ -x $R/build/bin/$1 ]] && {
@@ -21,6 +21,8 @@ LDFLAGS="-fPIC -fPIE -pie -lb64"
     return 0 }
 
 notice "Compiling $1"
+
+
 
 case $1 in
 	log)
@@ -33,7 +35,9 @@ case $1 in
 		;;
 
 	maria2redis)
-		pushd $R/src/maria2redis
+	    pushd $R/src/maria2redis
+		   
+
 		case `uname -m` in
 			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1"
 		esac
@@ -75,16 +79,15 @@ case $1 in
 		act "please wait while preparing the build environment"
 		act "also prepare to wait more for the BIND export libs"
 		act "when you see ISC_LOG_ROLLINFINITE then is almost there"
-		autoreconf -i &&
-		CFLAGS="$CFLAGS" \
-			  LDFLAGS="$LDFLAGS" \
-			  ./configure --enable-paranoia --enable-execute &&
-		CFLAGS="$CFLAGS" \
-			  LDFLAGS="$LDFLAGS" \
-			  make && {
+		autoreconf -i 
+		CFLAGS="$CFLAGS" 
+		LDFLAGS="$LDFLAGS" 
+		./configure --enable-paranoia --enable-execute &&
+		    
+		    make && {
 			install -s -p server/dhcpd    $R/build/bin &&
-			install -s -p dhcpctl/omshell $R/build/bin
-		} &&
+			    install -s -p dhcpctl/omshell $R/build/bin
+		    } &&
 		popd
 		;;
 
@@ -190,9 +193,9 @@ EOF
 
     pgld)
         pushd $R/src/pgld &&
-		CFLAGS="$CFLAGS" \
-			  LDFLAGS="$LDFLAGS" \
-              make &&
+	    CFLAGS="$CFLAGS" \
+		  LDFLAGS="$LDFLAGS" \
+		  make &&
         install -s -p $R/src/pgld/pgld $R/build/bin &&
         popd
         ;;
