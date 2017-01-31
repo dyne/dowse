@@ -199,17 +199,6 @@ long long _do_redis_command(const char** args, const size_t * argvlen, size_t ar
 
 
 
-void check_error(apr_status_t rv);
-void deinitialize_apr(void);
-void initialize_apr(void);
-void free_command(struct redis_command *cmd);
-void * APR_THREAD_FUNC consumer(apr_thread_t *thd, void *data);
-int start_consumer_worker(void);
-
-
-
-
-
 #define debug_print(...) \
    do { \
 	   if (cfg.debug && pFile) \
