@@ -11,7 +11,7 @@ endif
 
 CC = gcc
 CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
-LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64
+LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64 -Llibb64
 
 all: base parsers springs
 	./import.sh redis-server
@@ -27,7 +27,7 @@ all: base parsers springs
 	./checksum.sh 
 	./compile.sh sup
 
-libs:
+libs: b64
 	make -C libdowse
 	make -C libparse-datetime
 
@@ -35,6 +35,9 @@ libs:
 
 base: config libs modprobe sup hiredis-lock libparse-datetime dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto kore webui seccrond maria2redis
 	@echo "Compiled base"
+
+b64:
+	@make -C libb64
 
 libparse-datetime:
 	@make -C libparse-datetime
