@@ -21,6 +21,5 @@ before_install:
 script:
   - make
   - sudo make install
-  - sudo chown -R $USER $HOME/.dowse
   - cd src/dnscrypt-plugin && ./debug/runtests
 
