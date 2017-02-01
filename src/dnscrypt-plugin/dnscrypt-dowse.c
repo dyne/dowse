@@ -30,6 +30,7 @@
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <inttypes.h>
 #include <netdb.h>
@@ -390,8 +391,12 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
     char rr_to_redirect[1024];
     int redirect_somewhere=0;
 
+    char *ip=inet_ntoa(((struct sockaddr_in *)from_sa)->sin_addr);
+
+    /* TODO Ottimizzare ip2mac perchè fà delle conversione non piu' utili inet_ntoa -> char[] -> inet_aton */
+
 	/* retrieve mac_address for captive_portal functionalities */
-    if (ip2mac(NULL, data->from, mac_address)!=0) { /* Non e' riuscito ad ottenere il macaddress*/
+    if (ip2mac(NULL, ip, mac_address)!=0) { /* Non e' riuscito ad ottenere il macaddress*/
         snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, "127.0.0.1");
         redirect_somewhere=1;
         data->reply= cmd_redis(data->redis,
