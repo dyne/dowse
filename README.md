@@ -128,7 +128,7 @@ ssh dowse@dowse.it -- dowse-to-gource | gource --log-format custom -
 
 Sidenote: dowse-to-gource must be in the user's `$PATH`. To achieve
 this, as mentioned above, you can change the user's shell to zsh and do:
-`ln -sf /usr/local/dowze/zshrc $HOME/.zshrc`.
+`ln -sf /usr/local/dowse/zshrc $HOME/.zshrc`.
 
 This will live render all the DNS activity occurring on your computer
 or local network, with the sort of animation that is also showcased on
