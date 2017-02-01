@@ -13,6 +13,3 @@
 [submodule "src/domain-list"]
 	path = src/domain-list
 	url = https://github.com/dyne/domain-list
-[submodule "src/netdata"]
-	path = src/netdata
-	url = https://github.com/firehol/netdata
