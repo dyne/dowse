@@ -192,3 +192,4 @@ src/dhcp/server/dhcpd
 src/mosquitto/src/mosquitto
 webui.pid
 src/thingsdb.h
+src/parse-ip-neigh
