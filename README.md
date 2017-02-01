@@ -2,7 +2,7 @@
 
 A digital rod for local area network rabdomancy
 
-[![software by Dyne.org](https://www.dyne.org/wp-content/uploads/2015/12/software_by_dyne.png)](http://www.dyne.org)
+[![software by Dyne.org](https://www.dyne.org/wp-content/uploads/2015/12/software_by_dyne.png)](https://www.dyne.org)
 
 Updates: http://dowse.eu
 
@@ -67,15 +67,13 @@ Installation and activation takes a few steps, only `make install` needs root:
 
 1. Download dowse on a GNU/Linux box (we use Devuan Jessie)
 
-	git clone https://github.com/dyne/dowse /usr/src/dowse
-    git submodule init
-	git submodule update
+	git clone https://github.com/dyne/dowse dowse-src
+	git submodule update --init
 
 2. Install all requirements, here below the list of packages. To avoid installing more than needed, consider using the `--no-install-recommends` flag in APT or similar for other package managers.
 
 ```
 zsh iptables ebtables sqlite3 procps gettext-base net-tools autoconf automake libssl-dev libbind-dev libpcap-dev unzip wget gcc g++ make cmake libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc libldns-dev  libreadline5 libpcre3 libaio1 libfile-mimeinfo-perl libmariadb-client-lgpl-dev cproto xmlstarlet nmap libaprutil1-dev libltdl-dev patch libb64-dev uuid-dev python-redis python-hiredis dnsutils valgrind build-essential libmysqld-dev libapr1 libapr1-dev libaprutil1-dev
-
 ```
 
 3. Choose which user should be running dowse: your own is fine, or
@@ -125,8 +123,12 @@ dowse-to-gource | gource --log-format custom -
 or from remote:
 
 ```
-ssh devuan@hub.dowse.it -- dowse-to-gource | gource --log-format custom -
+ssh dowse@dowse.it -- dowse-to-gource | gource --log-format custom -
 ```
+
+Sidenote: dowse-to-gource must be in the user's `$PATH`. To achieve
+this, as mentioned above, you can change the user's shell to zsh and do:
+`ln -sf /usr/local/dowse/zshrc $HOME/.zshrc`.
 
 This will live render all the DNS activity occurring on your computer
 or local network, with the sort of animation that is also showcased on
