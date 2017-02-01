@@ -140,8 +140,10 @@ EOF
         ;;
 
     netdata)
-        pushd $R/src/netdata &&
-        ./autogen.sh &&
+        pushd $R/src/netdata
+		git checkout -- web
+		patch -p1 < $R/src/patches/netdata-dowse-integration.patch
+        ./autogen.sh
         CFLAGS="$CFLAGS" \
               ./configure --prefix=${PREFIX}/netdata \
               --datarootdir=${PREFIX}/netdata \

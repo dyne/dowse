@@ -53,6 +53,7 @@ pgld:
 
 netdata:
 	@./compile.sh netdata
+	@./compile.sh netdata-plugins
 
 dhcpd:
 	@./compile.sh dhcpd
@@ -122,6 +123,7 @@ install:
 	install -d ${DESTDIR}${PREFIX}/webui
 	cp -rav webui/* ${DESTDIR}${PREFIX}/webui/
 	make -C netdata install
+	make -C netdata-plugins install
 #	@./compile.sh install
 
 clean:
@@ -138,6 +140,7 @@ clean:
 	make -C dnscrypt-plugin      clean
 	make -C pgld                 clean
 	make -C netdata              clean
+	make -C netdata-plugins      clean
 	make -C kore				 clean
 	make -C libwebsockets	     clean
 	make -C mosquitto            clean
