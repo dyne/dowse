@@ -153,8 +153,14 @@ EOF
             make &&
             install -s -p src/netdata $R/build/bin &&
         popd
-
         ;;
+
+	netdata-plugins)
+		pushd $R/src/netdata
+		make
+		popd
+		;;
+
     netdiscover)
         pushd $R/src/netdiscover &&
         autoreconf && \
