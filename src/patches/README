@@ -15,4 +15,4 @@ have in the current Dowse setup.
 	This patch integrates Dowse into netdata to offer some ease of use and WebUI
 	navigation.
 
-	Applied on git master (392042e6cb0b3f9b366436ecef01d6e93613b67a)
+	Applied on git master (ab05dd5f3986e7022437a6a48d276ffe90c7bd06)
