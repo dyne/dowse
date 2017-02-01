@@ -173,7 +173,6 @@ int dcplugin_destroy(DCPlugin * const dcplugin) {
 	}
 
 	free_domainlist(data);
-
 	redisFree(data->redis);
 	if(data->cache) redisFree(data->cache);
 	free(data);
@@ -382,7 +381,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// publish info to redis channel
 	publish_query(data);
-
 
 
     size_t answer_size = 0;
@@ -664,6 +662,19 @@ uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, 
 }
 
 
+/* a debug tool */
+void print_data_redis( redisContext *redis,char*prefix) {
+    #define PRINT_POINTER(p) {\
+    FILE *fp=fopen("log.txt","a+");\
+    fprintf(fp,"%s %s %p\n",prefix,#p,p);\
+    fclose(fp);\
+    }
+    PRINT_POINTER(redis);
+    PRINT_POINTER(redis->obuf);
+    PRINT_POINTER(redis->reader);
+    PRINT_POINTER(redis->reader->fn);
+    PRINT_POINTER(redis->reader->rstack);
+}
 
 
 int publish_query(plugin_data_t *data) {

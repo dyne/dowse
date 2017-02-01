@@ -13,6 +13,7 @@ act "`date`"
 
 start redis-server
 
+
 cat <<EOF | redis dynamic
 SET dns-lease-testlease1 10.0.0.101
 SET dns-lease-testlease2 10.0.0.102
@@ -23,52 +24,57 @@ SET dns-reverse-${address}. ${hostname}
 SET dns-reverse-${wan}. gateway
 EOF
 
-DOWSE_DOMAINLIST=`pwd`/../domain-list/data \
-				DOWSE_LAN_ADDRESS_IP4=$address \
-				hostname=$hostname \
-				domain=$lan \
-			    valgrind --leak-check-heuristics=all \
-				--show-leak-kinds=all --track-origins=yes \
-				../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
-				-a 127.0.0.1:54540 \
-				-l debug/runtests.log \
-				-r "178.216.201.222:2053" \
-				-k "25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21" \
-				-N "2.dnscrypt-cert.soltysiak.com" \
-				-X `pwd`/.libs/dnscrypt_dowse.so,cache,debug \
-				-m 7 -d
+
+DOWSE_DOMAINLIST=`pwd`/../domain-list/data 
+DOWSE_LAN_ADDRESS_IP4=$address 
+DOWSE_LAN_NETMASK_IP4=$netmask 
+hostname=$hostname 
+interface=$interface
+domain=$lan	
+valgrind --leak-check=full \--track-origins=yes \
+	 ../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
+	 -a $address:54540 \
+	 -l debug/runtests.log \
+	 -r "178.216.201.222:2053" \
+	 -k "25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21" \
+	 -N "2.dnscrypt-cert.soltysiak.com" \
+	 -L ../dnscrypt-proxy/dnscrypt-resolvers.csv \
+	 -R "dnscrypt.eu-nl" \
+	 -X `pwd`/.libs/dnscrypt_dowse.so,debug \
+	 -m 7 -d
 # log level informational (7 for debug)
+
 
 sleep 3
 
 notice own_hostname
-dig @127.0.0.1 -p 54540 $hostname || return 1
+dig @$address -p 54540 $hostname || return 1
 
 notice own_address_reverse
-dig @127.0.0.1 -p 54540 -x $address || return 1
+dig @$address -p 54540 -x $address || return 1
 
 # run tests offline
 
 # notice dyne.org
-# dig @127.0.0.1 -p 54540 dyne.org || return 1
+# dig @$address -p 54540 dyne.org || return 1
 
 # notice dnssec.vs.uni-due.de
-# dig @127.0.0.1 -p 54540 sigok.verteiltesysteme.net || return 1
+# dig @$address -p 54540 sigok.verteiltesysteme.net || return 1
 
-notice 10.0.0.1
-dig @127.0.0.1 -p 54540 -x 10.0.0.101 || return 1
+notice 10.0.0.101
+dig @$address -p 54540 -x 10.0.0.101 || return 1
 
-notice 10.0.0.2
-dig @127.0.0.1 -p 54540 -x 10.0.0.102 || return 1
+notice 10.0.0.102
+dig @$address -p 54540 -x 10.0.0.102 || return 1
 
 notice testlease1
-dig @127.0.0.1 -p 54540 testlease1 || return 1
+dig @$address -p 54540 testlease1 || return 1
 
 notice testlease2
-dig @127.0.0.1 -p 54540 testlease2.dowse.it || return 1
+dig @$address -p 54540 testlease2.dowse.it || return 1
 
 notice gateway
-dig @127.0.0.1 -p 54540 gateway || return 1
+dig @$address -p 54540 gateway || return 1
 
 
 notice "dnscrypt-plugin - all tests OK"
