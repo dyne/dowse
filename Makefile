@@ -2,7 +2,9 @@ DESTDIR?=
 PREFIX?=/usr/local/dowse
 CONFDIR?=/etc/dowse
 
-all: sources
+include config.mk
+
+all: config sources
 	@echo
 	@echo "Dowse is compiled and ready to run"
 	@echo "setup conf/settings and launch ./start.sh"
@@ -12,17 +14,19 @@ all: sources
 	@echo "dowse-[tab] for completion of other commands"
 	@echo
 
-sources:
+config:
+	@echo "configuring environment for the calling user: ${USER}"
+	@sed -i -e "s:DOWSE_USER .*:DOWSE_USER = ${USER}:" config.mk
+	@sed -i -e "s:DOWSE_HOME .*:DOWSE_HOME = ${HOME}:" config.mk
 	@mkdir -p build/bin
 	@mkdir -p build/db
+
+sources:
 	make -C src
 
 clean:
 	@rm -rf build
 	make -C src clean
-
-config:
-	make -C src
 
 install:
 	install -d ${DESTDIR}${PREFIX}
@@ -49,6 +53,7 @@ install:
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
 	install -d ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
 	install -s -p -m 644 src/dnscrypt-plugin/.libs/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
+	chown -R ${DOWSE_USER}:${DOWSE_USER} ${DOWSE_HOME}/.dowse
 
 
 # here sup is installed with suid bit. sup is a secure application we
@@ -60,3 +65,5 @@ install:
 uninstall:
 	rm -rf ${DESTDIR}${CONFDIR}
 	rm -rf ${DESTDIR}${PREFIX}
+
+.PHONY: all config sources clean install uninstall
