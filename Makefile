@@ -49,7 +49,7 @@ install:
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
 	install -d ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
 	install -s -p -m 644 src/dnscrypt-plugin/.libs/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
-	chown -R ${USER}:${USER} ${HOME}/.dowse
+	chown -R ${SUDO_USER}:${SUDO_USER} $(shell getent passwd ${SUDO_USER} | cut -d: -f6)/.dowse
 
 
 # here sup is installed with suid bit. sup is a secure application we
