@@ -66,7 +66,7 @@ void func(const char *fmt, ...) {
 
 	va_start(args, fmt);
 
-	vsnprintf(msg, 512, fmt, args);
+	Vsnprintf(msg, sizeof(msg), fmt, args);
 	len = strlen(msg);
 	write(2, ANSI_COLOR_BLUE " [D] " ANSI_COLOR_RESET, 5+5+4);
 	write(2, msg, len);
@@ -89,7 +89,7 @@ void err(const char *fmt, ...) {
 
 	va_start(args, fmt);
 
-	vsnprintf(msg, 512, fmt, args);
+	vsnprintf(msg, sizeof(msg), fmt, args);
 	len = strlen(msg);
 	write(2, ANSI_COLOR_RED " [!] " ANSI_COLOR_RESET, 5+5+4);
 	write(2, msg, len);
@@ -111,7 +111,7 @@ void notice(const char *fmt, ...) {
 
 	va_start(args, fmt);
 
-	vsnprintf(msg, 512, fmt, args);
+	vsnprintf(msg, sizeof(msg), fmt, args);
 	len = strlen(msg);
 	write(2, ANSI_COLOR_GREEN " (*) " ANSI_COLOR_RESET, 5+5+4);
 	write(2, msg, len);
@@ -132,7 +132,7 @@ void act(const char *fmt, ...) {
 
 	va_start(args, fmt);
 
-	vsnprintf(msg, 512, fmt, args);
+	vsnprintf(msg, sizeof(msg), fmt, args);
 	len = strlen(msg);
 	write(2, "  .  ", 5);
 	write(2, msg, len);
@@ -154,7 +154,7 @@ void warn(const char *fmt, ...) {
 
 	va_start(args, fmt);
 
-	vsnprintf(msg, 512, fmt, args);
+	vsnprintf(msg, sizeof(msg), fmt, args);
 	len = strlen(msg);
 	write(2, ANSI_COLOR_YELLOW " (*) " ANSI_COLOR_RESET, 5+5+4);
 	write(2, msg, len);
