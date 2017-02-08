@@ -131,10 +131,14 @@ command -v apt-get >/dev/null && {
 
         mysqldb)
             [[ -r $S/build/mysql ]] || {
+				### temporary for older de*an version
+					mysqlver=5.6
+					grep 'jessie' /etc/os-release >/dev/null && mysqlver=5.5
+				###
 				act "fetching mysqldb sql server"
-				deb-download mysql-server-core-5.6
+				deb-download mysql-server-core-$mysqlver
 				deb-download mysql-server
-				deb-download mysql-client-5.6
+				deb-download mysql-client-$mysqlver
 				mkdir -p $S/build/mysql/bin
 				mkdir -p $S/build/mysql/share
 				mkdir -p $S/build/mysql/plugin
