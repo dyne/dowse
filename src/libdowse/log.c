@@ -66,7 +66,7 @@ void func(const char *fmt, ...) {
 
 	va_start(args, fmt);
 
-	Vsnprintf(msg, sizeof(msg), fmt, args);
+	vsnprintf(msg, sizeof(msg), fmt, args);
 	len = strlen(msg);
 	write(2, ANSI_COLOR_BLUE " [D] " ANSI_COLOR_RESET, 5+5+4);
 	write(2, msg, len);
