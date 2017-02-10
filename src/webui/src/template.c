@@ -124,11 +124,11 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
     int some_error, rv;
 
     rv=mkstemp(out_name);
-    if (rv) {
+    if (rv==-1) {
       err("Error on create temp file [%s]",strerror(errno));
     }
     rv=mkstemp(err_name);
-    if (rv) {
+    if (rv==-1) {
       err("Error on create temp file [%s]",strerror(errno));
     }
 
