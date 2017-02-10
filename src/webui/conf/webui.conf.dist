@@ -2,6 +2,9 @@ bind		0 80
 # When kore.io is launched in foreground mode the pid file is not written.
 pidfile     webui.pid
 
+# Facultative
+#http_keepalive_time             0
+
 validator   v_macaddr   regex   ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
 
 # TODO check if its correct ....
@@ -118,6 +121,8 @@ domain * {
 static /test/1 ___webui___test_unit__A001
 static /test/2 ___webui___test_unit__A002
 static /test/3 ___webui___test_unit__A003
+
+       dynamic ^.*$ proxy auth_browse
 
 }
 
