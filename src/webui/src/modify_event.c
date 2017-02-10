@@ -89,7 +89,7 @@ int modify_event(struct http_request * req) {
      *
      *  */
 
-    if ( admin_should_handle_event() ) {
+    if ( there_are_event_not_recognized() ) {
         WEBUI_DEBUG;
         http_response_header(req, "location", "http://www.dowse.it/captive_admin#event");
         set_no_caching_header(req);

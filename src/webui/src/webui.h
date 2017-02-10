@@ -38,6 +38,8 @@
 #define _NOT_ENABLE_TO_BROWSE (4)
 
 /* redis authorization state*/
+#define __R_ADMIN_SHOULD_CHECK "admin_should_check"
+
 #define __R_AUTH_ADMIN_AUTHORIZED "admin"
 #define __R_AUTH_CLIENT_AUTHORIZED "authorized_to_browse"
 #define __R_AUTH_DISABLED "disable_to_browse"
