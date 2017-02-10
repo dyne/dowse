@@ -25,6 +25,10 @@ void kore_preload() {
     }
     act("Kore preload");
 
+    /* Setup in redis the authorization-mac-* entry for all authorized */
+    setup_authorization(&global_attributes);
+
+    /* */
     rv = load_global_attributes(global_attributes);
 
 
