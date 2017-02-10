@@ -63,8 +63,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
         /*  Salviamo il path della richiesta su redis e redirezioniamo su captive_portal :
          *  il captive_portal al termine delle operazioni ricarichera da redis */
 
-    //    save_request_on_redis(req,macaddr); /* E' necessario nel caso del client? */
-
+      //    save_request_on_redis(req,macaddr); /* E' necessario nel caso del client? */
         sprintf(url_to_redirect, "http://www.dowse.it/captive_client?macaddr=%s", macaddr);
     }
 
