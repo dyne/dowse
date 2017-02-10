@@ -30,7 +30,7 @@
 #endif
 
 
-//#define __WEBUI_DEBUG__
+#define __WEBUI_DEBUG__
 #ifndef __WEBUI_DEBUG__
 #define WEBUI_DEBUG {}
 #else

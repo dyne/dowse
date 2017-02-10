@@ -88,12 +88,30 @@ int modify_event(struct http_request * req) {
      *
      *
      *  */
-    http_response_header(req, "location", "http://www.dowse.it/captive_admin#event");
-    http_response(req, 302, NULL, 0);
+
+    if ( admin_should_handle_event() ) {
+        WEBUI_DEBUG;
+        http_response_header(req, "location", "http://www.dowse.it/captive_admin#event");
+        set_no_caching_header(req);
+        http_response(req, 302, NULL, 0);
+    } else {
+        WEBUI_DEBUG;
+
+        /* Redirect to the saved request */
+        char admin_macaddr[32];
+        char *ipaddr_value;
+        char *ipaddr_type;
+
+        get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
+        ip2mac(ipaddr_type,ipaddr_value,admin_macaddr,&attr);
+        load_request_from_redis(admin_macaddr,req);
+        kore_free(ipaddr_type);
+        kore_free(ipaddr_value);
+    }
+
 
     /**/
-    WEBUI_DEBUG
-    ;
+    WEBUI_DEBUG;
     attrfree(attr);
 
     return (KORE_RESULT_OK);

@@ -27,6 +27,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
     char *ipaddr_value;
     char macaddr[64];
     char url_to_redirect[256];
+    WEBUI_DEBUG;
 
     sprintf(url_to_redirect, "/error_list");
 
@@ -59,11 +60,24 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
 
     /*--- ... nel DB il macaddr non è presente o è presente con il valore "Not enabled to browse" */
     if (rv == _NOT_ENABLE_TO_BROWSE) {
+        /*  Salviamo il path della richiesta su redis e redirezioniamo su captive_portal :
+         *  il captive_portal al termine delle operazioni ricarichera da redis */
+
+    //    save_request_on_redis(req,macaddr); /* E' necessario nel caso del client? */
+
         sprintf(url_to_redirect, "http://www.dowse.it/captive_client?macaddr=%s", macaddr);
     }
 
     /*--- ... nel DB il macaddr è presente come admin e quindi redirezionato su captive portal admin page */
     if (rv == _IP_IS_ADMIN_) {
+        WEBUI_DEBUG;
+        func("? save request on redis host+path [%s][%s]",req->host,req->path);
+        int rv=save_request_on_redis(req,macaddr);
+        if (rv) {
+            func("saved request on redis host+path [%s][%s]",req->host,req->path);
+        } else {
+            func("not saved ");
+        }
         sprintf(url_to_redirect, "http://www.dowse.it/captive_admin");
     }
 
@@ -71,6 +85,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
     /* from kore.io source code: Authentication types of "request" send their own HTTP responses. */
     http_response_header(req, "location", url_to_redirect);
     http_response(req, 302, NULL, 0);
+    set_no_caching_header(req);
 
     kore_free(ipaddr_type);
     kore_free(ipaddr_value);

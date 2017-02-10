@@ -21,36 +21,40 @@
  */
 #include <webui.h>
 
-int captive_portal_admin(struct http_request * req) {
-    log_entering();
+/*
+ *  TO BE DISCUSSED :
+ * This page is filtered by the v_ip_authorized validator to be routed on captive portal functionalities
+ * if that filter is passed (without routing) :
+ *  there are 2 motivation:
+ *   - the DNS has redirected to captive portal and the v_ip_authorized_browse counter not.
+ *      (eg: the admin has enabled the macaddr after the DNS redirect)
+ *       Solution: redirect on last request saved?
+ *   - some Things on the network is making URL-scan for CVE
+ *
+ * The this page doesn't do nothing, because it doesn't need nothing.
+ * */
+int proxy(struct http_request * req) {
     template_t tmpl;
-    attributes_set_t attr;
-    u_int8_t *html_rendered;
+	attributes_set_t attr;
+    u_int8_t  *html_rendered;
     struct kore_buf *out;
     size_t len;
     out = kore_buf_alloc(0);
 	attr=attrinit();
 
 	/**/
+    WEBUI_DEBUG;
 
-    sql_select_into_attributes(
-            "SELECT count(id) as how_much, min(age) as first_age,max(age) as last_age,E.* "
-            "FROM event E WHERE recognized=0 "
-            "GROUP BY macaddr,description ",
-            "captive_portal_event",
-            &attr);
-
-    /* Put the captive portal redirect */
-    sqlexecute("CALL redirect_admin_to_captive_portal('admin');",&attr);
-
-    template_load(asset_captive_portal_admin_html,asset_len_captive_portal_admin_html,&tmpl);
+    template_load(asset_proxy_html,asset_len_proxy_html,&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/
+    WEBUI_DEBUG;
     html_rendered = kore_buf_release(out, &len);
     http_response(req, 200, html_rendered, len);
 
     /**/
+    WEBUI_DEBUG;
     kore_free(html_rendered);
 	attrfree(attr);
 
