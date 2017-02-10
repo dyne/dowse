@@ -67,17 +67,26 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
         sprintf(url_to_redirect, "http://www.dowse.it/captive_client?macaddr=%s", macaddr);
     }
 
-    /*--- ... nel DB il macaddr è presente come admin e quindi redirezionato su captive portal admin page */
+    /*--- ... macaddr is present and admin associated */
     if (rv == _IP_IS_ADMIN_) {
         WEBUI_DEBUG;
-        func("? save request on redis host+path [%s][%s]",req->host,req->path);
-        int rv=save_request_on_redis(req,macaddr);
-        if (rv) {
-            func("saved request on redis host+path [%s][%s]",req->host,req->path);
+
+        if (admin_should_handle_event(macaddr)) {
+            func("? save request on redis host+path [%s][%s]", req->host,
+                    req->path);
+            int rv = save_request_on_redis(req, macaddr);
+            if (rv) {
+                func("saved request on redis host+path [%s][%s]", req->host,
+                        req->path);
+            } else {
+                func("not saved ");
+            }
+            sprintf(url_to_redirect, "http://www.dowse.it/captive_admin");
         } else {
-            func("not saved ");
+            /* it is an admin but is going on / page*/
+            return KORE_RESULT_OK;
         }
-        sprintf(url_to_redirect, "http://www.dowse.it/captive_admin");
+
     }
 
     act(" Redirecting to [%s]", url_to_redirect);
