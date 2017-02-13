@@ -5,9 +5,12 @@ control and interaction via web
 ** node-red
 
 *** TODO arduino
-
+*** TODO ESP 8266
+*** TODO raspberry pi 
+    http://nodered.org/docs/hardware/raspberrypi
 *** DONE ifttt module
-
+*** DONE Facebook/Twitter
+*** DONE MySQL
 *** DONE telegram module
 
 
