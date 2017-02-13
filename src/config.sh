@@ -58,7 +58,7 @@ age      DATETIME DEFAULT CURRENT_TIMESTAMP
 vendor   text                    ; /address[@addrtype=\"mac\"]/@vendor
 admin    text
 name     text
-authorized     varchar(32) default "Not enabled to browse"
+authorized     varchar(32) default "NOT ENABLED TO BROWSE"
 '
 
 print - "$thingindex" > $S/build/db/thing.idx
@@ -70,6 +70,8 @@ recognized boolean default 0 COMMENT "'" the administrator has recognized this e
 level enum("'"danger"'","'"success"'","'"info"'","'"warning"'") not null
 age      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT "'" when is it happened ? "'"
 macaddr  varchar(18)  COMMENT "'" who ? "'"
+ip4  text  COMMENT "'" who ? "'"
+ip6  text  COMMENT "'" who ? "'"
 description    text   COMMENT "'" what ? "'"
 '
 

@@ -108,6 +108,7 @@ int load_request_from_redis(char*macaddr,struct http_request * req){
        redisContext *redis = NULL;
        redisReply   *reply = NULL;
 
+       WEBUI_DEBUG;
        /* Connecting with Redis */
       redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
       if(!redis) {

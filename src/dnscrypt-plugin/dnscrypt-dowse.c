@@ -421,7 +421,13 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
                 freeReplyObject(tmp_reply);
             } else {
-                snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, "127.0.0.1");
+                /* If it Taking the dowse.it address */
+                              redisReply *tmp_reply = cmd_redis(data->redis,
+                                      "GET dns-lease-dowse.it");
+
+                              snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query,
+                                      tmp_reply->str);
+                //snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, "127.0.0.1");
                 redirect_somewhere=1;
             }
 
@@ -743,7 +749,7 @@ int where_should_be_redirected_to_captive_portal(char *mac_address, plugin_data_
     /**/
     data->reply = cmd_redis(data->redis, "GET authorization-mac-%s", mac_address);
     if(data->reply->len) {
-        if (strcmp(data->reply->str,"disable_to_browse")==0) return -1;
+        if (strcmp(data->reply->str,"disable_to_browse")==0) return 1; /* we redirect on dowse and after it should be redirected on error_message page */
 
         return (strcmp(data->reply->str,"admin_should_check")==0); /**/
     } else {

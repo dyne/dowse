@@ -51,7 +51,7 @@ domain * {
         static /		serve_asset auth_browse
 	static /welcome		serve_asset
 	static /error_list	print_error_list
-
+	static /disabled_to_browse disabled_to_browse
 	# This page serve asset (CSS,Js, image, etc etc) 
 	static /serve_asset		serve_asset
     	params get /serve_asset {

@@ -61,7 +61,6 @@ int setup_authorization(attributes_set_t *attributes_result) {
               __R_AUTH_DISABLED,
               __DISABLE_TO_BROWSE_STR
       );
-      fprintf(stderr,"%s %d [%s]",__FILE__,__LINE__,query);
 
       // Execute the statement
       if (mysql_real_query(db, query, strlen(query))) {

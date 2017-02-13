@@ -40,7 +40,23 @@ int captive_portal_client(struct http_request * req) {
     CHECK_PARAMETER();
 
     char sql[256];
-    snprintf(sql,sizeof(sql),"INSERT INTO event (level,macaddr,description) VALUES ('warning','%s','%s') ",macaddr,__EVENT_NEW_MAC_ADDRESS);
+    char *ipaddr_type;
+    char *ipaddr_value;
+    char ip4[32],ip6[64];
+    get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
+
+    if (strcmp(ipaddr_type,"ipv4")==0) {
+        sprintf(ip4,"%s",ipaddr_value);
+        ip6[0]=0;
+    } else {
+        ip4[0]=0;
+        sprintf(ip6,"%s",ipaddr_value);
+    }
+    kore_free(ipaddr_type); kore_free(ipaddr_value);
+
+
+    snprintf(sql,sizeof(sql),"INSERT INTO event (level,macaddr,ip4,ip6,description) "
+            "VALUES ('warning','%s','%s','%s','%s') ",macaddr,ip4,ip6, __EVENT_NEW_MAC_ADDRESS);
 
     int rv = sqlexecute(sql, &attr);
     if (rv != KORE_RESULT_OK) {
