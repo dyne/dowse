@@ -1,23 +1,47 @@
+* Domotica / dashboards
+
+control and interaction via web
+
+** node-red
+
+*** TODO arduino
+
+*** DONE ifttt module
+
+*** DONE telegram module
+
+
+** visualisation
+** others
+https://github.com/Freeboard/freeboard
+
+http://connectsdk.com/discover/
+
+http://jpmens.net/2014/01/14/a-story-of-home-automation/
+
 * Wanted
 
 implementations wishes for new daemons and modules
-** Web frontend
-*** TODO Kore.io (HTTP server)
-*** TODO Flate (HTML templating)
 
-** Listeners
-*** TODO mosquitto (MQTT)
-*** TODO webdis (websockets)
-*** DONE liblo (OSC)
-*** DONE gource (realtime)
 
 ** Modules
-*** performance monitoring
+*** TODO proper tor module
+*** DONE performance monitoring (netdata)
     https://github.com/firehol/netdata
-*** proper tor module
+
+** DONE Listeners
+*** DONE mosquitto (MQTT)
+*** DONE websockets (libwebsockets + mosquitto)
+*** DONE liblo (OSC)
+*** DONE gource (realtime)
+** DONE Web frontend
+
+*** DONE Kore.io (HTTP server)
+
+*** DONE HTML templating
 
 
-** Daemons
+** (LATER) daemon modules
 
 *** e2guardian
 *** polipo (no cache)
@@ -54,6 +78,8 @@ implementations wishes for new daemons and modules
 
 * domain filtering and categorization
 
+  on github: dyne/domain-list
+
   make list importers based on redis, reachable from multiple programs
 
   import this list for public tld and domain lists
@@ -84,15 +110,6 @@ implementations wishes for new daemons and modules
 
   To encrypt streamed data and to make it secret, cr3 is interesting
   https://github.com/stef/cr3
-
-
-* domotica
-
-https://github.com/Freeboard/freeboard
-
-http://connectsdk.com/discover/
-
-http://jpmens.net/2014/01/14/a-story-of-home-automation/
 
 
 
