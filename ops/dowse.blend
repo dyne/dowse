@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 #
 # dowse.blend is maintained by Ivan J. <parazyd@dyne.org>
 #
@@ -23,7 +23,7 @@
 blend_name="dowse"
 
 ## array of dependencies from travis-ci file
-blend_packages=($(curl -Ls https://github.com/dyne/dowse/raw/master/.travis.yml | awk '/no-install-recommends/ {for (i=7; i<=NF; i++) print $i}'))
+blend_packages=($(curl -Ls https://github.com/dyne/dowse/raw/master/.travis.yml | awk '/no-install-recommends/ {for (i=11; i<=NF; i++) print $i}'))
 
 blend_preinst() {
 	fn blend_preinst
@@ -36,9 +36,9 @@ blend_preinst() {
 #!/bin/sh
 useradd -m dowse
 echo "dowse:dowse" | chpasswd
-chsh -s /usr/bin/zsh dowse
+chsh -s /bin/zsh dowse
 
-apt-get update
+apt-get -qq -y update
 apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes --no-install-recommends install ${blend_packages}
 apt-get clean
@@ -50,14 +50,9 @@ sudo -u dowse make
 make install
 
 printf "source /usr/local/dowse/zshrc\n" > /home/dowse/.zshrc
-mkdir -p /home/dowse/.dowse
-chown -R dowse:dowse /home/dowse
 EOF
 
-	dpkgdivert on $strapdir
-	sudo chmod +x $strapdir/${blend_name}-preinst
-	sudo -E chroot $strapdir /${blend_name}-preinst
-	dpkgdivert off $strapdir
+	chroot-script -d ${blend_name}-preinst
 }
 
 blend_postinst() {
@@ -67,16 +62,13 @@ blend_postinst() {
 
 	notice "executing $blend_name postinst"
 
-	cat <<EOF | sudo tee ${strapdir}/root/dowse.sh
-#!/bin/sh
-if test "$1" = start; then
-	sudo -u dowse zsh -c "source /usr/local/dowse/zshrc && dowse-start"
-elif test "$1" = stop; then
-	sudo -u dowse zsh -c "source /usr/local/dowse/zshrc && dowse-stop"
-else
-	return 1
-fi
+	cat <<EOF | sudo tee ${strapdir}/etc/rc.local >/dev/null
+#!/bin/sh -e
+[ -f ssh_host_rsa_key.pub ] || dpkg-reconfigure openssh-server
+
+sudo -u dowse "zsh -f 'source /usr/local/dowse/zshrc && dowse-start'" &
+
+exit 0
 EOF
-	sudo chmod +x $strapdir/root/dowse.sh
-	sudo sed -i -e '$s:exit 0:/root/dowse.sh start \&\nexit 0:' $strapdir/etc/rc.local
+	sudo chmod +x $strapdir/etc/rc.local
 }
