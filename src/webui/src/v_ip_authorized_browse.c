@@ -54,8 +54,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
     /* altrimenti deve essere rediretto ad una pagina di abilitazione o di disabilitazione */
     /*--- ... nel DB il macaddr è presente come Disabled to browse */
     if (rv == _DISABLE_TO_BROWSE) {
-        /* TODO che deve fare ? */
-//          sprintf(url_to_redirect,"...",macaddr);
+        sprintf(url_to_redirect,"/disabled_to_browse");
     }
 
     /*--- ... nel DB il macaddr non è presente o è presente con il valore "Not enabled to browse" */

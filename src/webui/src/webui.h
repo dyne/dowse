@@ -27,6 +27,7 @@
 #define ml (1024*3)
 #define RESET_ADMIN_FILE "./reset_admin_file"
 
+#define CHAN "command-fifo-pipe"
 
 #define _IP_IS_ADMIN_ (1)
 #define _ADMIN_NOT_CONFIGURED_ (0)
@@ -46,8 +47,8 @@
 
 /* Level of browse authorization */
 #define __IP_IS_ADMIN_AUTH_BROWSE_STR "ADMIN TO BROWSE"
-#define __ENABLE_TO_BROWSE_STR "ENABLE TO BROWSE"
-#define __DISABLE_TO_BROWSE_STR "DISABLE TO BROWSE"
+#define __ENABLE_TO_BROWSE_STR "ENABLE_TO_BROWSE"
+#define __DISABLE_TO_BROWSE_STR "DISABLE_TO_BROWSE"
 #define __NOT_AUTHORIZED_BROWSE_STR "NOT ENABLED TO BROWSE"
 
 #define __EVENT_NEW_MAC_ADDRESS "new_mac_address"

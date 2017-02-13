@@ -296,8 +296,13 @@ exec_next_cmd() {
 			launch ebtables -A FORWARD -d $macb -j $acl
 			# launch xtables-multi iptables -A FORWARD -s $ipb -j $acl
 			# launch xtables-multi iptables -A FORWARD -d $ipb -j $acl
+			if [[ "$al" = "on" ]]; then
+			    AUTH="ENABLE_TO_BROWSE"
+			else
+			    AUTH="DISABLE_TO_BROWSE"
+			fi
 			cat <<EOF | $sql $db[things]
-UPDATE found SET state='$al'
+UPDATE found SET authorized='$AUTH'
 WHERE (macaddr='$macb' and '$macb' <> '');
 EOF
 			;;

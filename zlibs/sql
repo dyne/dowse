@@ -91,9 +91,9 @@ sql_integrate_with_redis() {
                              set @enable_state='authorized_to_browse';
                            end if;
 
-                           IF UPPER(NEW.authorized) = 'ENABLE TO BROWSE' THEN
+                           IF UPPER(NEW.authorized) = 'ENABLE_TO_BROWSE' THEN
                               SET @ret= redis_command_v2('SET',concat('authorization-mac-',NEW.macaddr),@enable_state);
-                           ELSEIF UPPER(NEW.authorized) = 'DISABLE TO BROWSE' THEN
+                           ELSEIF UPPER(NEW.authorized) = 'DISABLE_TO_BROWSE' THEN
                               SET @ret= redis_command_v2('SET',concat('authorization-mac-',NEW.macaddr),'disable_to_browse');
                            ELSEIF UPPER(NEW.authorized) = 'NOT ENABLED TO BROWSE' THEN
                               SET @ret= redis_command_v2('DEL',concat('authorization-mac-',NEW.macaddr));
@@ -115,7 +115,7 @@ sql_integrate_with_redis() {
                    BEGIN
                       DECLARE done INT DEFAULT 0 ;
                       DECLARE mac_address varchar(18);
-                      DECLARE cursor_admin_mac_address CURSOR FOR SELECT macaddr FROM found WHERE admin='yes' AND upper(authorized) <> 'DISABLE TO BROWSE';
+                      DECLARE cursor_admin_mac_address CURSOR FOR SELECT macaddr FROM found WHERE admin='yes' AND upper(authorized) <> 'DISABLE_TO_BROWSE';
                       DECLARE CONTINUE HANDLER FOR NOT FOUND SET done =1 ;
                         OPEN cursor_admin_mac_address ;
           
@@ -150,8 +150,8 @@ sql_integrate_with_redis() {
                      BEFORE INSERT ON event
                      FOR EACH ROW
                      BEGIN
-                        INSERT INTO found(macaddr) 
-                        select NEW.macaddr from dual
+                        INSERT INTO found(macaddr,ip4,ip6) 
+                        select NEW.macaddr,NEW.ip4,NEW.ip6 from dual
                         WHERE not exists ( select macaddr from found where macaddr=NEW.macaddr);
 
                         CALL redirect_admin_to_captive_portal('admin_should_check');

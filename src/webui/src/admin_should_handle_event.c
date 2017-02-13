@@ -62,8 +62,9 @@ int there_are_event_not_recognized() {
     char sql[] =
             "SELECT * FROM event WHERE not recognized and description='new_mac_address'";
     attributes_set_t dummy_attribute;
-
+    dummy_attribute=attrinit();
     int rv = sql_select_into_attributes(sql, "dummy", &dummy_attribute);
+    attrfree(dummy_attribute);
     func(" admin_should_handle_event = %d", rv);
     if (rv > 0) {
         return 1;

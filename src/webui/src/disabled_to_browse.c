@@ -21,40 +21,29 @@
  */
 #include <webui.h>
 
-int modify_things(struct http_request * req) {
+int disabled_to_browse(struct http_request * req) {
+    template_t tmpl;
 	attributes_set_t attr;
-    http_populate_post(req);
-    int bad_parsing=0;
-    attr=attrinit();
+    u_int8_t  *html_rendered;
+    struct kore_buf *out;
+    size_t len;
+    out = kore_buf_alloc(0);
+	attr=attrinit();
 
-    PARSE_PARAMETER(macaddr);
-    PARSE_PARAMETER(column);
-    PARSE_PARAMETER(value);
-    PARSE_PARAMETER(url_from);
-
-    CHECK_PARAMETER();
-
-    /* We don't use the Referer HTTP header field because it's not mandatory
-     * a browser can eliminate it. */
-    
-
-    
-    /**/
-    WEBUI_DEBUG;
-    char sql[512];
-    snprintf(sql,sizeof(sql),
-            "UPDATE found set %s='%s' where macaddr='%s'",
-            column,value,macaddr);
-
-    int rv=sqlexecute(sql,&attr);
-    if (rv!=KORE_RESULT_OK)
 	/**/
     WEBUI_DEBUG;
-    http_response_header(req, "location", url_from);
-    http_response(req, 302, NULL, 0);
+
+    template_load(asset_disabled_to_browse_html,asset_len_disabled_to_browse_html,&tmpl);
+    template_apply(&tmpl,attr,out);
+
+	/**/
+    WEBUI_DEBUG;
+    html_rendered = kore_buf_release(out, &len);
+    http_response(req, 200, html_rendered, len);
 
     /**/
     WEBUI_DEBUG;
+    kore_free(html_rendered);
 	attrfree(attr);
 
     return (KORE_RESULT_OK);

@@ -8,7 +8,7 @@
 
 cflags = -I.. -I../libparse-datetime -I../kore/includes -I../libdowse -I../libb64/include
 ldflags = ../libparse-datetime/libparse-datetime.a -L../libdowse -l:libdowse.a
-ldflags = -lm -lssl -lcrypto -lhiredis -lb64 -L../libb64
+ldflags = -lm -lssl -lcrypto -lhiredis -L../libb64 -l:libb64.a
 
 # mariadb flags
 cflags = -DDB_USER="root"

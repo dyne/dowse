@@ -9,14 +9,12 @@
 
 #include <libdowse/dowse.h>
 
-#define CHAN "command-fifo-pipe"
 
 
 int queue_command(struct http_request * req) {
     log_entering();
     struct kore_buf *buf;
     u_int8_t *message;
-    char command[256];
     size_t len;
     int bad_parsing=0;
     attributes_set_t attr=attrinit();
@@ -28,8 +26,6 @@ int queue_command(struct http_request * req) {
 
     PARSE_PARAMETER(op);
     PARSE_PARAMETER(macaddr);
-    PARSE_PARAMETER(ip4);
-    PARSE_PARAMETER(ip6);
 
 
     /* If "op" command not set or no parameter specified*/
@@ -43,11 +39,13 @@ int queue_command(struct http_request * req) {
         http_response(req, 404, message, len);
         return (KORE_RESULT_OK);
     }
+    PARSE_PARAMETER(ip4);
+    PARSE_PARAMETER(ip6);
+
 
     /* Connecting with Redis */
     redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
     if(!redis) {
-
         attributes_set_t att=attrinit();
         const char m[]="Redis server is not running";
         webui_add_error_message(&att,m);
@@ -56,23 +54,18 @@ int queue_command(struct http_request * req) {
         return show_generic_message_page(req,att);
     }
 
-    /* Calculating calling IP extracting from request */
-    char *ipaddr_type,*calling_ipaddr;
-    get_ip_from_request(req,&ipaddr_type,&calling_ipaddr);
-
-    /* calculating Epoch time*/
-    struct timeval tp;
-    struct timezone tz;
-    gettimeofday(&tp,&tz);
-
-    char epoch[256];
-    snprintf(epoch,sizeof(epoch),"%lu",tp.tv_sec);
-
-    /* Construct command to publish on Redis channel */
-    snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,op,epoch,macaddr,ip4,ip6);
-
-    /* Print command on redis channel */
-    reply = cmd_redis(redis,"PUBLISH %s %s", CHAN,command,calling_ipaddr);
+    if (strcmp(op,"THING_ON")==0) {
+        int rv=change_authorization_to_browse(req,macaddr,"","",redis,1);
+        if (rv!=KORE_RESULT_OK) {
+            return rv;
+        }
+    }
+    if (strcmp(op,"THING_OFF")==0) {
+        int rv=change_authorization_to_browse(req,macaddr,"","",redis,0);
+        if (rv!=KORE_RESULT_OK) {
+            return rv;
+        }
+    }
 
     /* Setup the URI for redirection , if it's present referer otherwise we redirect to /things */
 

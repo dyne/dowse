@@ -25,7 +25,8 @@ int modify_event(struct http_request * req) {
     attributes_set_t attr;
     int bad_parsing=0;
     attr = attrinit();
-
+    redisContext *redis = NULL;
+    redisReply *reply = NULL;
     http_populate_get(req);
 
     PARSE_PARAMETER(id);
@@ -43,32 +44,40 @@ int modify_event(struct http_request * req) {
     snprintf(recognize_sql, sizeof(recognize_sql),
             " UPDATE event SET recognized=true where id='%s'",id);
 
+    /* Connecting with Redis */
+    redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    if (!redis) {
+        attributes_set_t att = attrinit();
+        const char m[] = "Redis server is not running";
+        webui_add_error_message(&att, m);
+        err(m);
+        return show_generic_message_page(req, att);
+    }
+
     /* choose the action to execute */
     if (strcmp(action,"enable_browse")==0) {
-        snprintf(action_sql,sizeof(action_sql),
-                " UPDATE found SET authorized='%s' WHERE macaddr='%s'",
-                macaddr,
-                __ENABLE_TO_BROWSE_STR
-                );
+        int rv=change_authorization_to_browse(req,macaddr,"","",redis,1);
+        if (rv!=KORE_RESULT_OK) {
+            return rv;
+        }
         snprintf(recognize_sql, sizeof(recognize_sql),
                 " UPDATE event SET recognized=true where macaddr='%s' and description='new_mac_address'",
                 macaddr);
     }
 
     if (strcmp(action,"disable_browse")==0) {
-        snprintf(action_sql,sizeof(action_sql),
-        "UPDATE found SET authorized='%s' WHERE macaddr='%s'",
-        __DISABLE_TO_BROWSE_STR,
-        macaddr
-        );
+        int rv=change_authorization_to_browse(req,macaddr,"","",redis,0);
+        if (rv!=KORE_RESULT_OK) {
+            return rv;
+        }
         snprintf(recognize_sql, sizeof(recognize_sql),
                 " UPDATE event SET recognized=true where macaddr='%s' and description='new_mac_address'",
                 macaddr);
     }
-    int rv1 = sqlexecute(action_sql, &attr);
+/*    int rv1 = sqlexecute(action_sql, &attr);
     if (rv1 != KORE_RESULT_OK) {
         return show_generic_message_page(req,attr);
-    }
+    }*/
 
     /* event is recognized update table using the recognize_sql selected */
     int rv2 = sqlexecute(recognize_sql, &attr);
@@ -113,6 +122,8 @@ int modify_event(struct http_request * req) {
     /**/
     WEBUI_DEBUG;
     attrfree(attr);
-
+    /* Free resources */
+    if(reply) freeReplyObject(reply);
+    if(redis) redisFree(redis);
     return (KORE_RESULT_OK);
 }

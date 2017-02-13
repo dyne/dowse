@@ -59,7 +59,7 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     log_entering();
 
     /* Deve essere associato al MAC ADDRESS l'utenza di admin */
-    char query[]="select macaddr from found where admin='yes' and upper(authorized) <> 'DISABLE TO BROWSE'";
+    char query[]="select macaddr from found where admin='yes' and upper(authorized) <> 'DISABLE_TO_BROWSE'";
     MYSQL_RES *result;
     MYSQL_ROW values; //  it as an array of char pointers (MYSQL_ROW),
     MYSQL_FIELD *column;

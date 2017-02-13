@@ -67,11 +67,11 @@
             <td>Notes</td>
             <td>OS</td>
             <td>Vendor</td>
-            <td>IPv4</td>
-            <td>IPv6</td>
+            <!--td>IPv4</td>
+            <td>IPv6</td-->
             <td>MAC Address</td>
             <!--td>Interface</td-->
-            <td>State</td>
+            <td>Authorization</td>
           </thead>
           <tbody>
           </tbody>
@@ -97,25 +97,50 @@
             <td><!--TMPL_VAR name="notes"--></td>
             <td><!--TMPL_VAR name="os"--></td>
             <td><!--TMPL_VAR name="vendor"--></td>
-            <td><!--TMPL_VAR name="ip4"--></td>
-            <td><!--TMPL_VAR name="ip6"--></td>
             <td><!--TMPL_VAR name="macaddr"--></td>
-            <!--td><!--TMPL_VAR name="iface"--></td-->
-            <!--TMPL_IF name="state" value="on"--> <!-- If we recognize the state we print it, otherwise we print na_state.png -->
-            <td>
-              <a role="button"  class="btn btn-success" href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-                <img src='/serve_asset?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state">
-              </a>
+            <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"--> <!-- The admin didn't choose to enable or not the Things -->
+	    <td>
+	      <div class="row">
+		<div class="col-xs-6">
+		  <a role="button"  class="btn btn-success" href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+		    <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state">
+		  </a>
+		</div>
+		<div class="col-xs-6">
+		  <a role="button"  class="btn btn-danger" href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+                    <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
+		  </a>
+		</div>
+	      </div>
             </td>
-            <!--TMPL_ELSIF name="state" value="off"-->
+            <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
             <td>
-              <a role="button"  class="btn btn-danger" href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-                <img src='/serve_asset?o=BTN-<!--TMPL_VAR name="state"-->-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
-              </a>
+	      <div class="row">
+		<div class="col-xs-12">
+		  <a role="button"  class="btn btn-danger" href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+                    <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
+		  </a>
+		</div>
+	      </div>
+            </td>
+            <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
+            <td>
+	      <div class="row">
+		<div class="col-xs-12">
+		  <a role="button"  class="btn btn-success" href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+		    <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state">
+		  </a>
+	      </div>
+	      </div>
             </td>
             <!--TMPL_ELSE -->
             <td><img src="/serve_asset?o=na_state-16x16.png"></img></td>
             <!--/TMPL_IF-->
+
+	    <!--TMPL_IF name="authorized" value="on"-->
+	    <!--TMPL_ELSE -->
+	    <!--/TMPL_IF -->
+	    
           </tr>
           <!--/TMPL_LOOP-->
         </table>
