@@ -1,7 +1,7 @@
 Vagrant.configure(2) do |config|
-  config.vm.box = "http://vagrant.devuan.org/devuan-jessie-amd64-alpha4.box"
+  config.vm.box = "https://files.devuan.org/devuan_jessie_beta/testing/devuan_jessie_1.0.0-beta2_amd64_vagrant.box"
   config.ssh.username = "root"
-  config.ssh.password = "devuan"
+  config.ssh.password = "toor"
   config.vm.guest = :debian
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.network :public_network
@@ -11,10 +11,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "leader", primary: true do |leader|
    leader.vm.network "private_network", ip: "192.168.0.254", auto_config: false
-    leader.vm.provision "ansible" do |ansible|
-      ansible.playbook = "dowse.yml"
-      ansible.sudo = true
-    end
+   leader.vm.provision "shell", path: "dowse_install.sh"
   end
 
   config.vm.define "client" do |client|
