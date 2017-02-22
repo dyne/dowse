@@ -41,8 +41,7 @@ case $1 in
 		case `uname -m` in
 			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1"
 		esac
-		CFLAGS+=" -Os" \
-			  make
+		make
 		popd
 		;;
 
