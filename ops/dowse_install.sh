@@ -23,8 +23,7 @@
 blend_name="dowse"
 
 ## array of dependencies from travis-ci file
-blend_packages=($(curl -Ls https://github.com/dyne/dowse/raw/master/.travis.yml | awk '/no-install-recommends/ {for (i=11; i<=NF; i++) print $i}'))
-
+blend_packages=($(curl -Ls https://github.com/dyne/dowse/raw/master/.travis.yml | sed --in-place 's/libmysqlclient-dev/libmariadb-client-lgpl-dev/g'| awk '/no-install-recommends/ {for (i=11; i<=NF; i++) print $i}'))
 
 print "executing $blend_name preinst"
 
@@ -42,9 +41,13 @@ sudo -u dowse git clone https://github.com/dyne/dowse.git dowse-src
 cd dowse-src
 sudo -u dowse git submodule update --init
 sudo -u dowse make
+
 make install
 
 printf "source /usr/local/dowse/zshrc\n" > /home/dowse/.zshrc
+
+# Created to compensate mysql-server packages not installed
+[[ -d /var/lib/mysql-files ]] || { mkdir -p /var/lib/mysql-files ; chown dowse:dowse /var/lib/mysql-files }
 
 #cat <<EOF > /etc/rc.local
 ##!/bin/sh -e
