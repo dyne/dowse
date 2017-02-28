@@ -23,7 +23,9 @@
 blend_name="dowse"
 
 ## array of dependencies from travis-ci file
-blend_packages=($(curl -Ls https://github.com/dyne/dowse/raw/master/.travis.yml | sed --in-place 's/libmysqlclient-dev/libmariadb-client-lgpl-dev/g'| awk '/no-install-recommends/ {for (i=11; i<=NF; i++) print $i}'))
+blend_packages=(zsh iptables ebtables sqlite3 procps gettext-base net-tools autoconf automake libssl-dev libbind-dev libpcap-dev unzip wget gcc g++ make cmake libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc libldns-dev  libreadline5 libpcre3 libaio1 libfile-mimeinfo-perl libmariadb-client-lgpl-dev cproto xmlstarlet nmap libaprutil1-dev libltdl-dev patch libb64-dev uuid-dev python-redis python-hiredis dnsutils valgrind build-essential libmysqld-dev libapr1 libapr1-dev libaprutil1-dev)
+
+#($(curl -Ls https://github.com/dyne/dowse/raw/master/.travis.yml | sed --in-place 's/libmysqlclient-dev/libmariadb-client-lgpl-dev/g'| awk '/no-install-recommends/ {for (i=11; i<=NF; i++) print $i}'))
 
 print "executing $blend_name preinst"
 
@@ -49,12 +51,28 @@ printf "source /usr/local/dowse/zshrc\n" > /home/dowse/.zshrc
 # Created to compensate mysql-server packages not installed
 [[ -d /var/lib/mysql-files ]] || { mkdir -p /var/lib/mysql-files ; chown dowse:dowse /var/lib/mysql-files }
 
-#cat <<EOF > /etc/rc.local
-##!/bin/sh -e
-#
-#sudo -u dowse "zsh -f 'source /usr/local/dowse/zshrc && dowse-start'" &
-#
-#exit 0
-#EOF
-#
-#chmod +x /etc/rc.local
+# Put in the rc.local to automatically startup dowse
+# TODO FIX? is it needly?
+sed --in-place 's|exit 0||' /etc/rc.local
+
+cat <<EOF >> /etc/rc.local
+sudo -u dowse "zsh -f 'source /usr/local/dowse/zshrc && dowse-start'" &
+exit 0
+EOF
+
+chmod +x /etc/rc.local
+
+# configure dowse for Vagrant environment
+FILE=/etc/dowse/settings.dist
+OUT=/etc/dowse/settings
+cp $FILE $OUT
+sed --in-place 's/interface=lo/interface=eth1/g' $OUT
+sed --in-place 's|address=127.0.0.1|address=192.168.0.254|g' $OUT
+sed --in-place 's|dowse_net=10.0.0.0/24|dowse_net=192.168.0.0/24|g' $OUT
+sed --in-place 's|dowse_guests=10.0.0.101,10.0.0.199,48h|dowse_guests=192.168.0.101,192.168.0.199,48h|g' $OUT
+
+# 
+echo '# Starting up dowse...'
+sudo -u dowse zsh -f -c 'source /usr/local/dowse/zshrc && dowse-start ' 
+
+echo "...done"
