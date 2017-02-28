@@ -337,7 +337,7 @@ dowse-stop() {
 
     stop webui
 
-	# stop mysqld
+    stop mysqld
 
     # for m in `dowse-module-list`; do
     #     dowse-module-load $m || continue
@@ -355,7 +355,7 @@ dowse-stop() {
 
     # stop the firewall peerguardian
     stop pgld
-
+    
     # remove the layer 2 firewall rules
     ebtables-stop
 
