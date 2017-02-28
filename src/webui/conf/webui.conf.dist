@@ -1,6 +1,7 @@
 bind		0 80
 # When kore.io is launched in foreground mode the pid file is not written.
-pidfile     webui.pid
+# pidfile path is created at runtime
+#pidfile     webui.pid
 
 # Facultative
 #http_keepalive_time             0
