@@ -17,9 +17,17 @@ Vagrant.configure(2) do |config|
    leader.vm.provision "shell", path: "dowse_install.sh"
   end
 
-  config.vm.define "client" do |client|
-   client.vm.network "private_network", ip: "192.168.0.250", auto_config: false
-   client.vm.provision "shell", path: "client_test_procedure.sh"
+  config.vm.define "client01" do |client01|
+    client01.ssh.forward_x11 = true
+    client01.vm.network "private_network", ip: "192.168.0.250", auto_config: false
+   client01.vm.provision "shell", path: "client_test_procedure.sh"
   end
+
+  config.vm.define "client02" do |client02|
+    client02.ssh.forward_x11 = true
+    client02.vm.network "private_network", ip: "192.168.0.251", auto_config: false
+   client02.vm.provision "shell", path: "client_test_procedure.sh"
+  end
+
 end
 

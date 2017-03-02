@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 apt-get update
-apt-get install -y dnsutils
+apt-get install -y dnsutils firefox-esr
 
 DEV=eth1
 # DH Client
