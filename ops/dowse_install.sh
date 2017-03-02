@@ -55,8 +55,11 @@ printf "source /usr/local/dowse/zshrc\n" > /home/dowse/.zshrc
 # TODO FIX? is it needly?
 sed --in-place 's|exit 0||' /etc/rc.local
 
+#
 cat <<EOF >> /etc/rc.local
-sudo -u dowse "zsh -f 'source /usr/local/dowse/zshrc && dowse-start'" &
+sudo -u dowse zsh -f -c '/bin/rm -f $HOME/.dowse/run/*.pid'
+
+sudo -u dowse zsh -f -c 'source /usr/local/dowse/zshrc && dowse-start' &
 exit 0
 EOF
 
