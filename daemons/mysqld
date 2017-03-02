@@ -16,7 +16,7 @@ socket		= $H/run/mysql/mysqld.sock
 #socket		= /tmp/mysqld.sock
 port		= 63306
 basedir		= $R/mysql
-datadir		= $H/run/mysql
+datadir		= $H/data/mysql
 tmpdir		= /tmp
 lc-messages-dir	= $R/mysql/share
 skip-external-locking
@@ -104,7 +104,7 @@ mysqld-exec() {
 	savepid mysqld $H/run/mysqld.pid
 
 	# set root password
-	sql_set_root_password 'p4ssw0rd' $H/run/mysqld.setted_password
+	sql_set_root_password 'p4ssw0rd' $H/lib/mysqld.setted_password
 	
 	# make sure the current database exists
 	sql_create_database things
@@ -120,7 +120,7 @@ mysqld-exec() {
 	cat $constraintidx | $sql $db[things] 2>/dev/null
        
 	# create trigger and redis function
-	sql_integrate_with_redis $H/run/mysqld.integrated_redis
+	sql_integrate_with_redis $H/lib/mysqld.integrated_redis
 }
 
 mysqld-kill() {
