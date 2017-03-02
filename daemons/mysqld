@@ -88,14 +88,14 @@ mysqld-exec() {
     freq=($exe $conf)
 	ckreq || return $?
 
-	mkdir -p $H/run/mysql
+	mkdir -p $H/data/mysql
 
-	[[ -r $H/run/mysql/ibdata1 ]] || {
+	[[ -r $H/data/mysql/ibdata1 ]] || {
 		notice "Initialisation of MySQL databases"
 		$R/mysql/bin/mysql_install_db --user=$dowse_uid \
 									  --force \
 									  --basedir=$R/mysql \
-									  --datadir=$H/run/mysql
+									  --datadir=$H/data/mysql
 		
 	}
 

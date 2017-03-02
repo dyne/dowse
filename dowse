@@ -190,7 +190,7 @@ act "checking requirements to run dowse..."
 
 mkdir -p $H/log
 mkdir -p $H/run
-mkdir -p $H/data
+mkdir -p $H/data/mysql
 
 _verbose "Dowse command: ::1 commands::" "$*"
 _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
