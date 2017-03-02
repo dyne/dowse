@@ -89,6 +89,7 @@ mysqld-exec() {
 	ckreq || return $?
 
 	mkdir -p $H/data/mysql
+	mkdir -p $H/run/mysql
 
 	[[ -r $H/data/mysql/ibdata1 ]] || {
 		notice "Initialisation of MySQL databases"
