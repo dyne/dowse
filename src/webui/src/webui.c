@@ -80,7 +80,7 @@ int thing_show(struct http_request *req) {
     if (http_argument_get_string(req, "macaddr", &macaddr)) {
         func( "thing_show macaddr %s", macaddr);
         //--- prepare where condition
-        snprintf(where_condition, ml, "WHERE macaddr='%s'", macaddr);
+        snprintf(where_condition, ml, "WHERE upper(macaddr)=upper('%s')", macaddr);
     } else {
         err( "thing_show get argument error");
         func( "thing_show called without argument");

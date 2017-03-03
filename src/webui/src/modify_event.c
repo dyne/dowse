@@ -38,7 +38,6 @@ int modify_event(struct http_request * req) {
     /**/
     WEBUI_DEBUG
     ;
-    char action_sql[1024];
     char recognize_sql[1024];
     /* default recognize_sql */
     snprintf(recognize_sql, sizeof(recognize_sql),
@@ -61,7 +60,7 @@ int modify_event(struct http_request * req) {
             return rv;
         }
         snprintf(recognize_sql, sizeof(recognize_sql),
-                " UPDATE event SET recognized=true where macaddr='%s' and description='new_mac_address'",
+                " UPDATE event SET recognized=true where upper(macaddr)=upper('%s') and description='new_mac_address'",
                 macaddr);
     }
 
@@ -71,7 +70,7 @@ int modify_event(struct http_request * req) {
             return rv;
         }
         snprintf(recognize_sql, sizeof(recognize_sql),
-                " UPDATE event SET recognized=true where macaddr='%s' and description='new_mac_address'",
+                " UPDATE event SET recognized=true where upper(macaddr)=upper('%s') and description='new_mac_address'",
                 macaddr);
     }
 /*    int rv1 = sqlexecute(action_sql, &attr);

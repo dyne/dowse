@@ -56,14 +56,14 @@ int captive_portal_client(struct http_request * req) {
 
 
     snprintf(sql,sizeof(sql),"INSERT INTO event (level,macaddr,ip4,ip6,description) "
-            "VALUES ('warning','%s','%s','%s','%s') ",macaddr,ip4,ip6, __EVENT_NEW_MAC_ADDRESS);
+            "VALUES ('warning',upper('%s'),'%s','%s','%s') ",macaddr,ip4,ip6, __EVENT_NEW_MAC_ADDRESS);
 
     int rv = sqlexecute(sql, &attr);
     if (rv != KORE_RESULT_OK) {
         return show_generic_message_page(req,attr);
     }
     /* */
-    sprintf(sql,"select macaddr as client_macaddr,name as client_name from found where macaddr='%s'",macaddr);
+    sprintf(sql,"select upper(macaddr) as client_macaddr,name as client_name from found where upper(macaddr)=upper('%s')",macaddr);
     rv = sql_select_into_attributes(sql,NULL,&attr);
     if (rv != KORE_RESULT_OK) {
             return show_generic_message_page(req,attr);

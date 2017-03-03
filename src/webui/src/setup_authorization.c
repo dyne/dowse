@@ -47,13 +47,13 @@ int setup_authorization(attributes_set_t *attributes_result) {
 
       char query[1024];
 
-      snprintf(query,sizeof(query),"SELECT macaddr as macaddr, (CASE "
+      snprintf(query,sizeof(query),"SELECT upper(macaddr) as macaddr, (CASE "
               " WHEN upper(admin)='YES' THEN '%s' "
               " ELSE '%s' "
               " END ) as authorization_level "
               " FROM found WHERE authorized='%s' "
               "  UNION "
-              " SELECT macaddr as macaddr, '%s' as authorization_level "
+              " SELECT upper(macaddr) as macaddr, '%s' as authorization_level "
               " FROM found WHERE authorized='%s'",
               __R_AUTH_ADMIN_AUTHORIZED,
               __R_AUTH_CLIENT_AUTHORIZED,

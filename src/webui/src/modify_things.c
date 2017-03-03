@@ -43,7 +43,7 @@ int modify_things(struct http_request * req) {
     WEBUI_DEBUG;
     char sql[512];
     snprintf(sql,sizeof(sql),
-            "UPDATE found set %s='%s' where macaddr='%s'",
+            "UPDATE found set %s='%s' where upper(macaddr)=upper('%s')",
             column,value,macaddr);
 
     int rv=sqlexecute(sql,&attr);

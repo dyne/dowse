@@ -30,9 +30,19 @@
 #include <linux/sockios.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 
 #define IP2MAC_ERROR (1)
 #define IP2MAC_RESULT_OK (0)
+
+char *to_upper(char*str){
+  int i;
+  for (i=0;i<strlen(str);i++) {
+    toupper(str[i]);
+  }
+  return str;
+}
+    
 
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) {
     char loc_ipaddr_type[6];
@@ -53,11 +63,14 @@ int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) {
     func("converting from %s  %s  on %s", loc_ipaddr_type, ipaddr_value,
             getenv("interface"));
 
+    int rv;
     if (strcmp(loc_ipaddr_type, "ipv4") == 0) {
-        return convert_from_ipv4(ipaddr_value, macaddr);
+         rv=convert_from_ipv4(ipaddr_value, macaddr);
     } else {
-        return convert_from_ipv6(ipaddr_value, macaddr);
+         rv=convert_from_ipv6(ipaddr_value, macaddr);
     }
+    to_upper(macaddr);
+    return rv;
 
 }
 

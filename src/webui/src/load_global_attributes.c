@@ -33,7 +33,7 @@ int load_global_attributes(attributes_set_t attr) {
         rv=reset_admin_device();
     } else {
         func("load admin device into global attributes");
-        rv = sql_select_into_attributes( "SELECT macaddr,ip4,ip6 FROM found WHERE admin='yes'",
+        rv = sql_select_into_attributes( "SELECT upper(macaddr),ip4,ip6 FROM found WHERE admin='yes'",
             "admin_device",
             &attr);
     }
