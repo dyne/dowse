@@ -47,6 +47,9 @@ int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr,attributes_set_t *
 
     int rv;
     if (strcmp(ipaddr_type,"ipv4")==0) {
+      if (strcmp(ipaddr_value,"127.0.0.1")==0) {
+	return KORE_RESULT_ERROR;
+      }
        rv=convert_from_ipv4(ipaddr_value,macaddr,ptr_attr);
     } else {
        rv=convert_from_ipv6(ipaddr_value,macaddr,ptr_attr);
