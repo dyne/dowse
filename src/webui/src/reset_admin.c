@@ -68,7 +68,7 @@ int reset_admin(struct http_request * req) {
          *
          * */
         snprintf(m,sizeof(m),
-                       "INSERT INTO found (%s,%s,admin,authorized) VALUES ('%s','%s','yes','%s') "
+                       "INSERT INTO found (%s,%s,admin,authorized) VALUES (upper('%s'),'%s','yes','%s') "
                        " ON DUPLICATE KEY UPDATE admin='yes' , authorized='%s'",
                        "macaddr",iptype,
                        macaddr,ipaddr_value,__ENABLE_TO_BROWSE_STR,__ENABLE_TO_BROWSE_STR

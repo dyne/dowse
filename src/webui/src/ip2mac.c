@@ -32,14 +32,27 @@
 #include <linux/sockios.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <ctype.h>
+
+char *to_upper(char*str){
+  int i;
+  for (i=0;i<strlen(str);i++) {
+    toupper(str[i]);
+  }
+  return str;
+}
 
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr,attributes_set_t *ptr_attr) {
     func("converting from %s %s on %s",ipaddr_type,ipaddr_value,getenv("interface"));
+
+    int rv;
     if (strcmp(ipaddr_type,"ipv4")==0) {
-        return convert_from_ipv4(ipaddr_value,macaddr,ptr_attr);
+       rv=convert_from_ipv4(ipaddr_value,macaddr,ptr_attr);
     } else {
-        return convert_from_ipv6(ipaddr_value,macaddr,ptr_attr);
+       rv=convert_from_ipv6(ipaddr_value,macaddr,ptr_attr);
     }
+    to_upper(macaddr);
+    return rv;
 }
 
 /**/

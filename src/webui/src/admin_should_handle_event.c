@@ -24,7 +24,7 @@
 int admin_should_handle_event(char*macaddr) {
     char key[256];
     char value[256];
-    sprintf(key,"authorization-mac-%s",macaddr);
+    sprintf(key,"authorization-mac-%s",to_upper(macaddr));
     redis_get_key(key,value,sizeof(value));
 
     return (strcmp(value,__R_ADMIN_SHOULD_CHECK)==0);

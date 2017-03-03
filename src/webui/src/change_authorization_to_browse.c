@@ -29,7 +29,7 @@
  *  - ip4 (facultative)
  *  - ip6 (facultative)
  * */
-int change_authorization_to_browse(struct http_request * req,const char*macaddr,const char*ip4,const char*ip6,redisContext *redis ,int enable_or_disable){
+int change_authorization_to_browse(struct http_request * req,char*macaddr,const char*ip4,const char*ip6,redisContext *redis ,int enable_or_disable){
     char command[256];
     redisReply   *reply = NULL;
 
@@ -49,7 +49,7 @@ int change_authorization_to_browse(struct http_request * req,const char*macaddr,
     sprintf(op,"%s",(enable_or_disable?"THING_ON":"THING_OFF"));
 
     /* Construct command to publish on Redis channel */
-    snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,op,epoch,macaddr,ip4,ip6);
+    snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,op,epoch,to_upper(macaddr),ip4,ip6);
 
     /* Print command on redis channel */
     reply = cmd_redis(redis,"PUBLISH %s %s", CHAN,command,calling_ipaddr);

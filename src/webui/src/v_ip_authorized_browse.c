@@ -116,7 +116,7 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,
             "     UPPER(coalesce(authorized,'%s')) "
             "   END "
             " FROM found "
-            " WHERE macaddr='%s'",
+            " WHERE upper(macaddr)=upper('%s')",
     __IP_IS_ADMIN_AUTH_BROWSE_STR,
     __NOT_AUTHORIZED_BROWSE_STR, macaddr);
 
