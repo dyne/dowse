@@ -42,7 +42,7 @@ int save_request_on_redis(struct http_request * req,char*macaddr) {
        return show_generic_message_page(req,att);
    }
 
-   /**/
+   /* TODO Settare una "scadenza" della request? */
    char *serialized_request=serialize_request(req);
    reply = cmd_redis(redis,"SET captured-request-of-%s %s", macaddr,serialized_request);
    WEBUI_DEBUG;
@@ -133,7 +133,7 @@ int load_request_from_redis(char*macaddr,struct http_request * req){
 
       } else {
           func("GET not returned");
-          sprintf(url_to_redirect,"www.dowse.it/");
+          sprintf(url_to_redirect,"http://www.dowse.it/");
       }
       /* Free resources */
       if(reply) freeReplyObject(reply);
