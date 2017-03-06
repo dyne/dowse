@@ -22,26 +22,24 @@ The parameter more frequently configured are :
 # First navigation
 
 1) You should connect to :
-```
-http://www.dowse.it/
-```
+
+[http://www.dowse.it/](http://www.dowse.it/)
 
 and you look an web page like this:
 
 ![](img/01.png)
 
-Click on "Configure it now" from the device that you want to grant admin privileges.
+Click on "Configure it now ..." from the device that you want to grant admin privileges.
 
-go to
+go to:
 
-```
-www.dowse.it/captive_admin
-```
+[http://www.dowse.it/captive_admin](http://www.dowse.it/captive_admin)
 
-At the page bottom you are going to find a panel like:
+At the page bottom you are going to find a panel titled **Event appared in this network**:
 ![](img/02.png)
 
 describing the event occured.
+
 In this case your device has tried to browse the internet 4 times.
 
-Click on `Ok` to enable the device to navigate onn the network.
+Click on `Ok` to enable the device to navigate on the network.
