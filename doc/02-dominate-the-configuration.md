@@ -8,7 +8,7 @@ They are:
 
 ## /etc/dowse/settings
 
-In this file you can configure all parameter that characterize the Dowse box, to instance the value you should use the typical syntax "`_key_=_value_` and the hash `#` to comment .
+In this file you can configure all parameter that characterize the Dowse box, to instance the value you should use the typical syntax *key=value* and the hash `#` to comment .
 
 The parameter more frequently configured are :
 - _interface_ : it's the network interface to expose the internal dowse network.
