@@ -4,21 +4,20 @@ To properly configure Dowse, we suggest to keep in mind the role of any configur
 
 They are:
 * `/etc/dowse/settings`
-* `/etc/dowse/network?`
-
+* `/etc/dowse/network`
 
 ## /etc/dowse/settings
 
-In this file you can configure all parameter that characterize the Dowse box, to instance the value you should use the typical syntax "`<em>key</em>=<em>value</em>` and the hash `#` to comment .
+In this file you can configure all parameter that characterize the Dowse box, to instance the value you should use the typical syntax "`_key_=_value_` and the hash `#` to comment .
 
 The parameter more frequently configured are :
-- interface : it's the network interface to expose the internal dowse network.
-- address : it's the dowse host address.
-- dowse_net : it's the dowse network mask.
-- dowse_guests : it's DHCP server parameter to distribute the address (it's expressed in the form <em>start address</em>,<em>end address</em>,<em>lease time</em>.
-- wan : it's the network address behing to masquerade the network.
-- internet_interface : it's the network interface should be routed to provide internet access.
-- dns : it's the external DNS providing dns query resolution services.
+- _interface_ : it's the network interface to expose the internal dowse network.
+- _address_ : it's the dowse host address.
+- *dowse_net* : it's the dowse network mask.
+- *dowse_guests* : it's DHCP server parameter to distribute the address (it's expressed in the form _start address_,_end address_,_lease time_.
+- _wan_ : it's the network address behing to masquerade the network.
+- *internet_interface* : it's the network interface should be routed to provide internet access.
+- _dns_ : it's the external DNS providing dns query resolution services.
 
 # First navigation
 
