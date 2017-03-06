@@ -70,7 +70,7 @@ FILE=/etc/dowse/settings.dist
 OUT=/etc/dowse/settings
 cp $FILE $OUT
 sed --in-place 's/interface=lo/interface=eth1/g' $OUT
-sed --in-place 's/#internet_interface=eth0/interface=eth0/g' $OUT
+sed --in-place 's/#internet_interface=eth0/internet_interface=eth0/g' $OUT
 sed --in-place 's/wan=127.0.0.1/wan=10.0.2.2/g' $OUT
 sed --in-place 's|address=127.0.0.1|address=192.168.0.254|g' $OUT
 sed --in-place 's|dowse_net=10.0.0.0/24|dowse_net=192.168.0.0/24|g' $OUT
