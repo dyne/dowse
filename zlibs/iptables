@@ -179,13 +179,9 @@ loopback-isolate() {
     # rules that do not apply if we are running on the loopback device
 
     iptables -A INPUT -i ${interface} -s ${dowse_net} -j ACCEPT
-    notice "... -A INPUT -i ${interface} -s ${dowse_net} -j ACCEPT"
     iptables -A INPUT -i ${interface} -d 127.0.0.1 -j DROP
-    notice "...  -A INPUT -i ${interface} -s 127.0.0.1 -j DROP"
     iptables -A INPUT -i ${interface} -s 127.0.0.1 -j DROP
-    notice "...  -A INPUT -i ${interface} -s 127.0.0.1 -j DROP"
     iptables -A FORWARD -i ${interface} -s 127.0.0.1 -j DROP
-    notice "...  -A FORWARD -i ${interface} -s 127.0.0.1 -j DROP"
     iptables -A FORWARD -i ${interface} -d 127.0.0.1 -j DROP
 }
 
