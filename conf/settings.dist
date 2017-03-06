@@ -10,15 +10,19 @@
 # which addresses we take for dowse
 address=127.0.0.1
 
-# which interface is connected to the network
+# which interface is connected to the Dowse network
 interface=lo
 
 # hostname by which dowse will be known to the network
 hostname=$(hostname)
 
+# TODO: Check this test case (if we are after a DHCP do we need this IP address?
 # what connects us to the internet (i.e. adsl router)
 # make sure dhcp is deactivated there, we will give it!
 wan=127.0.0.1
+
+# which interface is connected to the internet network
+#internet_interface=eth0
 
 # upstream DNS to query for unknown hostnames
 # by default this is the same as the wan gateway

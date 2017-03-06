@@ -254,7 +254,7 @@ iptables-snat-on() {
 
     func "setup route towards wired network"
     iptables --table nat --append POSTROUTING \
-             --out-interface ${interface} -j SNAT --to ${address}
+             --out-interface ${internet_interface} -j SNAT --to ${address}
     # Testing with dreamer lead to use of -j MASQUERADE without
     # destination and out-interface as external to ADSL router WAN
     # SNAT has better detection of open connections, beware.
