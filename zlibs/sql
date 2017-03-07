@@ -57,12 +57,12 @@ sql_integrate_with_redis() {
                    DROP PROCEDURE IF EXISTS create_dns_entry; 
                    CREATE PROCEDURE create_dns_entry( IN new_name TEXT , IN new_ip4 TEXT , IN new_ip6 TEXT )
                    BEGIN
-	       if (new_ip6 is not null) then
-		  SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new_name),new_ip6);
-       	       end if;
-	       if (new_ip4 is not null) then
-		  SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new_name),new_ip4);
-	       end if;
+	             if (new_ip6 is not null) then
+		       SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new_name),new_ip6);
+       	             end if;
+	             if (new_ip4 is not null) then
+		       SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new_name),new_ip4);
+	             end if;
                    END;##"
 	    
 	    act "   * creating procedure to DNS entry "
@@ -89,12 +89,14 @@ sql_integrate_with_redis() {
 	    FOOTER="));"
 
 	    UPDATE_NAME="
-	    if (old.name<>new.name) then
+	    if (old.name<>new.name)  then
 	       SET @ret= redis_command_v2(\"DEL\",concat(\"dns-query-\",old.name));
                CALL create_dns_entry( new.name,new.ip4,new.ip6);
 	    end if ;
+	    if (old.name is null and new.name is not null)  then
+               CALL create_dns_entry( new.name,new.ip4,new.ip6);
+	    end if ;
 	    "
-	    
 	    END="END##"
 
 	    func ${HEADER}${MID}${FOOTER}${UPDATE_NAME}${END}       |cat -n
@@ -176,8 +178,6 @@ sql_integrate_with_redis() {
                      BEFORE INSERT ON event
                      FOR EACH ROW
                      BEGIN
-
-                        call create_dns_entry( new.name,new.ip4,new.ip6);
 
                         INSERT INTO found(macaddr,ip4,ip6) 
                         select NEW.macaddr,NEW.ip4,NEW.ip6 from dual
