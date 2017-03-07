@@ -190,8 +190,8 @@ sql_integrate_with_redis() {
 
                      END##"
 
-	    func $TRIGGER_ON_INSERT_EVENT
-	    print $TRIGGER_ON_INSERT_EVENT | $sql $db[things]
+	    func $TRIGGER_ON_INSERT_FOUND
+	    print $TRIGGER_ON_INSERT_FOUND | $sql $db[things]
 
 	    # This trigger :
 	    #   * disable l'authorization-mac- ....
