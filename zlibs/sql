@@ -42,8 +42,8 @@ sql_integrate_with_redis() {
 	act " Integrate with Redis ..."
 	
 	[[ -r "$setted_up" ]] || {
-
 	    act "     * creating the function to  ..."
+	    
 	    print 'DROP FUNCTION IF EXISTS redis_servers_set_v2; 
 	           DROP FUNCTION IF EXISTS redis_command_v2;
 	           DROP FUNCTION IF EXISTS free_resources;
@@ -52,6 +52,25 @@ sql_integrate_with_redis() {
 	           CREATE FUNCTION redis_command_v2 RETURNS int SONAME "lib_mysqludf_redis_v2.so";
 	           CREATE FUNCTION free_resources RETURNS int SONAME "lib_mysqludf_redis_v2.so";'| $sql $db[things]
 
+
+	    PROC="DELIMITER ##
+                   DROP PROCEDURE IF EXISTS create_dns_entry; 
+                   CREATE PROCEDURE create_dns_entry( IN new_name TEXT , IN new_ip4 TEXT , IN new_ip6 TEXT )
+                   BEGIN
+	       if (new_ip6 is not null) then
+		  SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new_name),new_ip6);
+       	       end if;
+	       if (new_ip4 is not null) then
+		  SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new_name),new_ip4);
+	       end if;
+                   END;##"
+	    
+	    act "   * creating procedure to DNS entry "
+
+	    func $PROC
+	    print $PROC | $sql $db[things]
+
+	    
 	    act "     * creating the trigger on update things  ..."
 
 	    print "DROP TRIGGER IF EXISTS update_things;" | $sql $db[things]
@@ -72,12 +91,7 @@ sql_integrate_with_redis() {
 	    UPDATE_NAME="
 	    if (old.name<>new.name) then
 	       SET @ret= redis_command_v2(\"DEL\",concat(\"dns-query-\",old.name));
-	       if (new.ip6 is not null) then
-		  SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new.name),new.ip6);
-       	       end if;
-	       if (new.ip4 is not null) then
-		  SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new.name),new.ip4);
-	       end if;
+               CALL create_dns_entry( new.name,new.ip4,new.ip6);
 	    end if ;
 	    "
 	    
@@ -162,6 +176,9 @@ sql_integrate_with_redis() {
                      BEFORE INSERT ON event
                      FOR EACH ROW
                      BEGIN
+
+                        call create_dns_entry( new.name,new.ip4,new.ip6);
+
                         INSERT INTO found(macaddr,ip4,ip6) 
                         select NEW.macaddr,NEW.ip4,NEW.ip6 from dual
                         WHERE not exists ( select macaddr from found where macaddr=NEW.macaddr);
@@ -181,13 +198,7 @@ sql_integrate_with_redis() {
                      BEFORE INSERT ON found
                      FOR EACH ROW
                      BEGIN
-	                if (new.ip6 is not null) then
-		          SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new.name),new.ip6);
-       	                end if;
-	                if (new.ip4 is not null) then
-		          SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new.name),new.ip4);
-	                end if;
-
+                        CALL create_dns_entry( new.name,new.ip4,new.ip6);	 
                      END##"
 
 	    func $TRIGGER_ON_INSERT_FOUND
