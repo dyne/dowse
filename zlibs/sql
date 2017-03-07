@@ -66,13 +66,25 @@ sql_integrate_with_redis() {
 
 	    MID=`awk '/^$/ {next} 
 {print ",\42"$1"\42,coalesce(OLD."$1",\47_is_null_\47),coalesce(NEW."$1",\47_is_null_\47)"}' $R/db/thing.idx`
+	    
+	    FOOTER="));"
 
-	    FOOTER="));
-		   END##
-		   "
+	    UPDATE_NAME="
+	    if (old.name<>new.name) then
+	       SET @ret= redis_command_v2(\"DEL\",concat(\"dns-query-\",old.name));
+	       if (new.ip6 is not null) then
+		  SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new.name),new.ip6);
+       	       end if;
+	       if (new.ip4 is not null) then
+		  SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new.name),new.ip4);
+	       end if;
+	    end if ;
+	    "
+	    
+	    END="END##"
 
-	    func ${HEADER}${MID}${FOOTER}       |cat -n
-	    print ${HEADER}${MID}${FOOTER}       | $sql $db[things]
+	    func ${HEADER}${MID}${FOOTER}${UPDATE_NAME}${END}       |cat -n
+	    print ${HEADER}${MID}${FOOTER}${UPDATE_NAME}${END}       | $sql $db[things]
 
 	    #-- Trigger fired when it's changed the level of authorization
 	    #-- if it's authorized an admin it will be redirected to captive_portal_admin if and only if
@@ -155,6 +167,27 @@ sql_integrate_with_redis() {
                         WHERE not exists ( select macaddr from found where macaddr=NEW.macaddr);
 
                         CALL redirect_admin_to_captive_portal('admin_should_check');
+                     END##"
+
+	    func $TRIGGER_ON_INSERT_EVENT
+	    print $TRIGGER_ON_INSERT_EVENT | $sql $db[things]
+
+	    # This trigger :
+	    #   * insert a things to which is related an "event" (if it is not inserted yet).
+	    #   * communicate on the admin to redirect to captive portal admin page.
+	    #   
+	    TRIGGER_ON_INSERT_FOUND="DELIMITER ##
+                     CREATE TRIGGER insert_entry_redis
+                     BEFORE INSERT ON found
+                     FOR EACH ROW
+                     BEGIN
+	                if (new.ip6 is not null) then
+		          SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new.name),new.ip6);
+       	                end if;
+	                if (new.ip4 is not null) then
+		          SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new.name),new.ip4);
+	                end if;
+
                      END##"
 
 	    func $TRIGGER_ON_INSERT_EVENT

@@ -105,7 +105,7 @@ mysqld-exec() {
 	savepid mysqld $H/run/mysqld.pid
 
 	# set root password
-	sql_set_root_password 'p4ssw0rd' $H/lib/mysqld.setted_password
+	sql_set_root_password 'p4ssw0rd' $H/data/mysqld.setted_password
 	
 	# make sure the current database exists
 	sql_create_database things
@@ -121,7 +121,7 @@ mysqld-exec() {
 	cat $constraintidx | $sql $db[things] 2>/dev/null
        
 	# create trigger and redis function
-	sql_integrate_with_redis $H/lib/mysqld.integrated_redis
+	sql_integrate_with_redis $H/data/mysqld.integrated_redis
 }
 
 mysqld-kill() {
