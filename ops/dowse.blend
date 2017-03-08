@@ -32,24 +32,30 @@ blend_preinst() {
 
 	notice "executing $blend_name preinst"
 
+	sudo mkdir -p "$strapdir/home/dowse"
+	sudo git clone https://github.com/dyne/dowse.git "$strapdir/home/dowse/dowse-src"
+	pushd "$strapdir/home/dowse/dowse-src"
+	sudo git submodule update --init
+	popd
+	sudo chown -R 1000:1000 "$strapdir/home/dowse"
+
 	cat <<EOF | sudo tee ${strapdir}/${blend_name}-preinst
 #!/bin/sh
 useradd -m dowse
 echo "dowse:dowse" | chpasswd
 chsh -s /bin/zsh dowse
 
-apt-get -qq -y update
 apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes --no-install-recommends install ${blend_packages}
-apt-get clean
 
-sudo -u dowse git clone https://github.com/dyne/dowse.git /home/dowse/dowse-src
+#sudo -u dowse git clone https://github.com/dyne/dowse.git /home/dowse/dowse-src
 cd /home/dowse/dowse-src
-sudo -u dowse git submodule update --init
+#sudo -u dowse git submodule update --init
 sudo -u dowse make
 make install
 
 printf "source /usr/local/dowse/zshrc\n" > /home/dowse/.zshrc
+apt-get clean
 
 mkdir -p /var/lib/mysql-files
 chown -v dowse:dowse /var/lib/mysql-files
