@@ -54,7 +54,9 @@ printf "source /usr/local/dowse/zshrc\n" > /home/dowse/.zshrc
 mkdir -p /var/lib/mysql-files
 chown -v dowse:dowse /var/lib/mysql-files
 EOF
-	chroot-script -d ${blend_name}-preinst
+	devprocsys mount ${strapdir} || zerr
+	chroot-script -d ${blend_name}-preinst || zerr
+	devprocsys umount ${strapdir} || zerr
 }
 
 blend_postinst() {
