@@ -28,6 +28,9 @@ void kore_preload() {
     /* Setup in redis the authorization-mac-* entry for all authorized */
     setup_authorization(&global_attributes);
 
+    /* Setup in redis the dns-lease-* entry for all things recognized and gived that a "name" */
+    setup_dns_lease_name(&global_attributes);
+
     /* */
     rv = load_global_attributes(global_attributes);
 
