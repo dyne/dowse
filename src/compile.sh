@@ -36,12 +36,12 @@ case $1 in
 
 	maria2redis)
 	    pushd $R/src/maria2redis
-		   
 
 		case `uname -m` in
-			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1"
+			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1" make ;;
+			arm*)  CFLAGS="-Wall -fPIC -D_LARGEFILE64_SOURCE=1" \
+					LDFLAGS="-s" make ;;
 		esac
-		make
 		popd
 		;;
 
