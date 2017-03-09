@@ -58,10 +58,10 @@ sql_integrate_with_redis() {
                    CREATE PROCEDURE create_dns_entry( IN new_name TEXT , IN new_ip4 TEXT , IN new_ip6 TEXT )
                    BEGIN
 	             if (new_ip6 is not null) then
-		       SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new_name),new_ip6);
+		       SET @ret= redis_command_v2(\"SET\",concat(\"dns-lease-\",new_name),new_ip6);
        	             end if;
 	             if (new_ip4 is not null) then
-		       SET @ret= redis_command_v2(\"SET\",concat(\"dns-query-\",new_name),new_ip4);
+		       SET @ret= redis_command_v2(\"SET\",concat(\"dns-lease-\",new_name),new_ip4);
 	             end if;
                    END;##"
 	    
@@ -90,7 +90,7 @@ sql_integrate_with_redis() {
 
 	    UPDATE_NAME="
 	    if (old.name<>new.name)  then
-	       SET @ret= redis_command_v2(\"DEL\",concat(\"dns-query-\",old.name));
+	       SET @ret= redis_command_v2(\"DEL\",concat(\"dns-lease-\",old.name));
                CALL create_dns_entry( new.name,new.ip4,new.ip6);
 	    end if ;
 	    if (old.name is null and new.name is not null)  then
