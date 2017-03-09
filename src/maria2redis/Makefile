@@ -9,11 +9,11 @@ LIBS    =-lhiredis -L/usr/local/dowse/mysql/plugin  -L/usr/local/apr/lib  -lapr-
 
 
 compile: lib_mysqludf_redis.o
-	gcc -fPIC -shared -rdynamic lib_mysqludf_redis.o -o lib_mysqludf_redis_v2.so $(LDFLAGS) $(LIBS)
+	gcc -shared -rdynamic lib_mysqludf_redis.o -o lib_mysqludf_redis_v2.so $(LDFLAGS) $(LIBS)
 
 
 lib_mysqludf_redis.o:lib_mysqludf_redis.c
-	gcc -fPIC -c $(CFLAGS) -g $(INCLUDE) -I. lib_mysqludf_redis.c -o lib_mysqludf_redis.o
+	gcc -c $(CFLAGS) -g $(INCLUDE) -I. lib_mysqludf_redis.c -o lib_mysqludf_redis.o
 
 clean:
 	rm -f *~
