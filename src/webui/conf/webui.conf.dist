@@ -73,7 +73,7 @@ domain * {
 	
 
 	# command pipeline
-	static     /cmd	   queue_command
+	static     /cmd	   queue_command auth_admin
 	params get /cmd {
 	 	validate op  v_command
 	 	validate macaddr v_macaddr
