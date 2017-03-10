@@ -76,6 +76,7 @@
 
 #define CHECK_PARAMETER()\
     if (bad_parsing) {\
+        err("Bad parsing at [%s]:[%d]",__FUNCTION__,__LINE__);\
         return show_generic_message_page(req, attr);\
     }
 
