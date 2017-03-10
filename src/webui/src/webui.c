@@ -71,6 +71,10 @@ int thing_show(struct http_request *req) {
     attributes_set_t attributes;
     struct kore_buf *buf;
     char *macaddr;
+    char req_macaddr[32];
+
+    char *ipaddr_type;
+    char *ipaddr_value;
 
     WEBUI_DEBUG
     ;
@@ -88,12 +92,31 @@ int thing_show(struct http_request *req) {
         snprintf(where_condition, ml, " ");
     }
 
-    WEBUI_DEBUG
-    ;
+    WEBUI_DEBUG;
+
+    attributes=attrinit();
+
+    get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
+
+    ip2mac(ipaddr_type,ipaddr_value,req_macaddr,&attributes);
+
+    /*
+     * 0 -> my_macaddr not in (select macaddr from found where admin='yes')
+     * 1 -> F.macaddr <> my_macaddr
+     */
     // prepare query
-    snprintf(line, ml, "SELECT * FROM found %s ORDER BY age DESC",
+    snprintf(line, ml, "SELECT *, "
+            " ( CASE WHEN '%s' not in (select macaddr from found where admin='yes') THEN 0" /* se il macaddr della req non e' in admin => 0*/
+            "        WHEN F.macaddr <> '%s' THEN 1 " /* se il found.macaddr e' diverso da quello della request => 1 */
+            "        ELSE 0 " /* altri casi non dovrebbero esserci ma vale la : "se non esplicitamente detto => 0" */
+            "  END  ) as can_i_disable_it "
+            "FROM found F %s "
+            "ORDER BY F.age DESC",
+            req_macaddr,
+            req_macaddr,
             where_condition);
 
+    func("query [%s]",line);
     WEBUI_DEBUG
     ;
     buf = kore_buf_alloc(mb);
@@ -104,7 +127,7 @@ int thing_show(struct http_request *req) {
     template_load(asset_thing_show_html, asset_len_thing_show_html, &tmpl);
     WEBUI_DEBUG
     ;
-    attributes = attrinit();
+   // attributes = attrinit();
 
     WEBUI_DEBUG
     ;

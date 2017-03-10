@@ -98,6 +98,7 @@
             <td><!--TMPL_VAR name="os"--></td>
             <td><!--TMPL_VAR name="vendor"--></td>
             <td><!--TMPL_VAR name="macaddr"--></td>
+	    <!--TMPL_IF name="can_i_disable_it" value="1"-->	   
             <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"--> <!-- The admin didn't choose to enable or not the Things -->
 	    <td>
 	      <div class="row">
@@ -136,11 +137,39 @@
             <!--TMPL_ELSE -->
             <td><img src="/serve_asset?o=na_state-16x16.png"></img></td>
             <!--/TMPL_IF-->
-
-	    <!--TMPL_IF name="authorized" value="on"-->
-	    <!--TMPL_ELSE -->
-	    <!--/TMPL_IF -->
+	    <!--TMPL_ELSE --> <!-- can i disable it? -->
+         <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"--> <!-- The admin didn't choose to enable or not the Things -->
+	    <td>
+	      <div class="row">
+		<div class="col-xs-6">
+		  <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="It was not specified if is in &#x22;On&#x22; or &#x22;Off&#x22; state">
+		</div>
+		<div class="col-xs-6">
+	          <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="It was not specified if is in &#x22;On&#x22; or &#x22;Off&#x22; state"/>
+		</div>
+	      </div>
+            </td>
+            <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
+            <td>
+	      <div class="row">
+		<div class="col-xs-12">
+                    <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="it is disabled to browse is into &#x22;Off&#x22; state"/>
+		</div>
+	      </div>
+            </td>
+            <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
+            <td>
+	      <div class="row">
+		<div class="col-xs-12">
+		    <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="It is enabled to browse is into &#x22;On&#x22; state">
+	      </div>
+	      </div>
+            </td>
+            <!--TMPL_ELSE -->
+            <td><img src="/serve_asset?o=na_state-16x16.png"></img></td>
+            <!--/TMPL_IF-->
 	    
+	    <!--/TMPL_IF-->
           </tr>
           <!--/TMPL_LOOP-->
         </table>
