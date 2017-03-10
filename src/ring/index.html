@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>Mosquitto Websockets</title>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.7.1/d3.js"></script>
+        <script type="text/javascript">
+            // configuration
+            host = '192.168.0.254';    // hostname or IP address of the dowse box
+            port = 1888;
+            topic = 'dns-query-channel'; // topic to subscribe to
+            useTLS = false;
+            username = null;
+            password = null;
+            cleansession = true;
+            // end of conf
+
+            var mqtt;
+            var reconnectTimeout = 20000;
+
+            var svg_width = 500;
+            var svg_height = svg_width;
+
+            var svg_radius = svg_width / 2;
+            var svg_internal_radius = 0.9 * svg_radius;
+            var svg_ip_radius = svg_radius * 0.5;
+
+            var svg_host_radius = 20;
+
+            var calling = {};
+            /* della forma $IP : { $URL : count } */
+
+            var called = {}; // nella forma{ $url : counted };
+            var call_grouped=[];
+            var total_calling = 0;
+            var teta_unit;
+            var teta_orig = {};
+            var color_domain={};
+            var size_font=40;
+            var high_opacity=0.9;
+            var low_opacity=0.1;
+            function there_is_collision_in_circle(calling, c) {
+                //console.log("...there_is_collision_in_circle  with "+c.cx+":"+c.cy+" ? ");
+                for (var p in calling) {
+                    //  console.log("...checking "+p.cx+":"+p.cy+" with "+c.cx+":"+c.cy);
+                    var a = (c.cx - p.cx);
+                    var b = (c.cy - p.cy);
+                    if (a * a + b * b < 2. * svg_host_radius) {
+                        return true;
+                    }
+                    if (Math.abs(c.red - p.red) + Math.abs(c.green - p.green) + Math.abs(c.blue - p.blue) < 30) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+
+            /*!!!!*/
+            function replaceAll(str, a, b) {
+                return '_' + str.replace(a, b).replace(a, b).replace(a, b).replace(a, b).replace(a, b);
+            }
+
+
+            function add_calling(ip_dotted, query_dotted, calling, called) {
+                total_calling++;
+
+                var ip = replaceAll(ip_dotted, ".", "_");
+                var query = replaceAll(query_dotted, ".", "_");
+
+                if (ip in calling) {
+                    var c = calling[ip];
+
+                    var history = c.history;
+                    if (query in history) {
+                        history[query]++;
+                    } else {
+                        history[query] = 1;
+                    }
+                    c.history = history;
+                    c.total++;
+                    calling[ip] = c;
+                } else {
+                    /* */
+                    var h = {};
+                    h[query] = 1;
+                    var c = {history: h, total: 1};
+                    /* Bisogna trovargli una x,y */
+
+                    console.log("...looking for an home to new IP ");
+                    do {
+                        var r = Math.random() * (svg_ip_radius - svg_host_radius);
+                        var t = Math.random() * 2. * Math.PI;
+                        console.log("try with rho:" + r + " teta :" + t);
+                        c.cx = Math.ceil(r * Math.cos(t) + (svg_width / 2));
+                        c.cy = Math.ceil(r * Math.sin(t) + (svg_height / 2));
+                        c.red = Math.floor(Math.random() * 255);
+                        c.green = Math.floor(Math.random() * 255);
+                        c.blue = Math.floor(Math.random() * 255);
+
+                    } while (there_is_collision_in_circle(calling, c));
+                    console.log("...done");
+
+                    calling[ip] = c;
+                }
+
+                if (query in called) {
+                    called[query]++;
+                } else {
+                    called[query] = 1;
+                     console.log("...aggiungiamo colore");
+
+                    var c={};
+                    c.red = Math.floor(Math.random() * 255)
+                    c.green = Math.floor(Math.random() * 255);
+                    c.blue = Math.floor(Math.random() * 255);
+
+                    color_domain[query]=c;
+                    console.log("...fatto");
+
+                }
+                /* Ricalcola le posizioni delle query */
+                var sum = 0;
+                for (var q in called) {
+                    sum += (called[q] + 1);
+                }
+
+                /**/
+                teta_unit = 2. * Math.PI / (sum);
+
+            }
+
+            function MQTTconnect() {
+
+                /*--- Questo sara' una strutta key - value dove i value è una mappa di tipo : {query , counter} */
+                var calling = {};
+                var called = {};
+
+                mqtt = new Paho.MQTT.Client(
+                        host,
+                        port,
+                        "web_" + parseInt(Math.random() * 100,
+                                10));
+
+                var options = {
+                    timeout: 3,
+                    useSSL: useTLS,
+                    cleanSession: cleansession,
+                    onSuccess: onConnect,
+                    onFailure: function (message) {
+                        $('#status').val("Connection failed: " + message.errorMessage + "Retrying");
+                        setTimeout(MQTTconnect, reconnectTimeout);
+                    }
+                };
+
+                mqtt.onConnectionLost = onConnectionLost;
+                mqtt.onMessageArrived = onMessageArrived;
+
+                if (username != null) {
+                    options.userName = username;
+                    options.password = password;
+                }
+                console.log("Host=" + host + ", port=" + port + " TLS = " + useTLS +
+                        " username=" + username + " password=" + password);
+                mqtt.connect(options);
+            }
+
+            function onConnect() {
+                $('#status').val('Connected to ' + host + ':' + port);
+                // Connection succeeded; subscribe to our topic
+                mqtt.subscribe(topic, {qos: 0});
+                $('#topic').val(topic);
+            }
+
+            function onConnectionLost(response) {
+                console.log("Persa connessione riproviamo tra " + reconnectTimeout);
+                setTimeout(MQTTconnect, reconnectTimeout);
+                $('#status').val("connection lost: " + responseObject.errorMessage + ". Reconnecting");
+
+            }
+            ;
+
+
+            //------------------
+           
+
+            function draw_arc(x0, y0, teta1, teta2, rho_in, rho_out) {
+                /* Ritorna la stringa per disegnare :
+                 * 
+                 *  - un arco centrato in x,y e che parte da teta1 e arriva a teta2
+                 *  - il cui interno e' rho_in e l'esterno e rho_out
+                 *  
+                 * */
+
+                var str = "";
+
+                var x1 = x0 + rho_in * Math.cos(teta1);
+                var y1 = y0 + rho_in * Math.sin(teta1);
+
+                var x2 = x0 + rho_in * Math.cos(teta2);
+                var y2 = y0 + rho_in * Math.sin(teta2);
+
+                var x3 = x0 + rho_out * Math.cos(teta2);
+                var y3 = y0 + rho_out * Math.sin(teta2);
+
+                var x4 = x0 + rho_out * Math.cos(teta1);
+                var y4 = y0 + rho_out * Math.sin(teta1);
+
+                str += "M" + x1 + " " + y1 + " ";
+
+                var internal;
+                if (Math.abs(teta2 - teta1) < Math.PI) {
+                    internal = 0;
+                } else {
+                    internal = 1;
+                }
+                // console.log(" dteta: "+(teta2-teta1)+" internal "+internal);
+
+                var clock_wise = 1; // internal
+                str += "A " + rho_in + " " + rho_in + " 0 " + internal + " " + clock_wise + " " + " " + x2 + " " + y2 + " ";
+
+                str += "L " + x3 + " " + y3 + " ";
+
+                clock_wise = (clock_wise + 1) % 2;
+                //    internal=(internal+1)%2;
+
+                str += "A " + rho_out + " " + rho_out + " 0 " + internal + " " + clock_wise + " " + " " + x4 + " " + y4 + " ";
+
+                str += "L " + x1 + " " + y1 + " ";
+                return str;
+            }
+
+
+            function draw_bezier(link, left_right) {
+                var teta = Math.abs(link.teta_final - link.teta_start);
+                var teta_ref = "";
+
+                if (left_right > 0) {
+                    xcA = Math.floor((link.x0 + link.x1) / 2);
+                    ycA = Math.floor((link.x0 + link.x1) / 2);
+                    teta_ref = link.teta_start;
+                } else {
+                    teta_ref = link.teta_final;
+                }
+
+                var xc1 = Math.floor(link.x0) + (svg_internal_radius / 3) * Math.cos(teta_ref + left_right * teta / 3);
+                var yc1 = Math.floor(link.y0) + (svg_internal_radius / 3) * Math.sin(teta_ref + left_right * teta / 3);
+
+                var xcA = Math.floor(link.x0) + (svg_internal_radius / 2) * Math.cos(teta_ref + left_right * teta / 4);
+                var ycA = Math.floor(link.x0) + (svg_internal_radius / 2) * Math.sin(teta_ref + left_right * teta / 4);
+
+                var xc2 = Math.floor(link.x0) + (2 * svg_internal_radius / 3) * Math.cos(teta_ref + left_right * teta / 6);
+                var yc2 = Math.floor(link.x0) + (2 * svg_internal_radius / 3) * Math.cos(teta_ref + left_right * teta / 6);
+
+                var str = "";
+                str += "M" + Math.floor(link.x0) + " " + Math.floor(link.y0) + " "
+                        + "C"
+                        + Math.floor(xc1) + "," + Math.floor(yc1) + " "
+                        + Math.floor(xc1) + "," + Math.floor(yc1) + " "
+                        + Math.floor(xcA) + "," + Math.floor(ycA) + " "
+
+                        // provare a togliere M
+                        + "M" + Math.floor(xcA) + "," + Math.floor(ycA) + " "
+
+                        + "C"
+                        + Math.floor(xc2) + "," + Math.floor(yc2) + " "
+                        + Math.floor(xc2) + "," + Math.floor(yc2) + " "
+                        + Math.floor(link.x1) + " " + Math.floor(link.y1) + " "
+                        ;
+
+             
+                return str;
+            }
+
+            /**/
+            function draw_link_for(link) {
+                /*
+                 link.push({ x0 : calling[ip].cx,
+                 y0 : calling[ip].cy,
+                 x1 : svg_width/2+svg_internal_radius*cos(teta0),
+                 y1 : svg_height/2+svg_internal_radius*sin(teta0),
+                 x2 : svg_width/2+svg_internal_radius*cos(tetaf),
+                 y2 : svg_height/2+svg_internal_radius*sin(tetaf),
+                 teta_start : teta0,
+                 teta_final : tefaf} );              
+                 * 
+                 */
+                var internal;
+                if (Math.abs(link.teta_final - link.teta_start) < Math.PI) {
+                    internal = 0;
+                } else {
+                    internal = 1;
+                }
+                // console.log(" dteta: "+(teta2-teta1)+" internal "+internal);
+
+                var clock_wise = 1; // internal
+
+
+                //draw_bezier(link, 1)
+
+                str =
+                        "M" + Math.floor(link.x0) + " " + Math.floor(link.y0) + " "
+                        + "L" + Math.floor(link.x1) + " " + Math.floor(link.y1) + " "
+                        + "A " + svg_internal_radius + " " + svg_internal_radius + " 0 " + internal + " " + clock_wise + " " + " " + link.x2 + " " + link.y2 + " "
+                        + "L" + Math.floor(link.x0) + " " + Math.floor(link.y0) + " "
+                        + "Z"
+                        ;
+
+                //      console.log("Torniamo str="+str);
+                return str;
+            }
+            ;
+            function select_is_calling(str,on_off){
+                if (on_off) {
+                    d3.selectAll('.'+str+'_is_calling').style('fill-opacity',high_opacity);                            
+
+
+                } else {
+                    d3.selectAll('.'+str+'_is_calling').style('fill-opacity',low_opacity);                            
+                //    d3.selectAll('.textcontainer > svg').remove();
+                }
+            }
+            function select_is_called(str,on_off){
+                if (on_off) {
+                    d3.selectAll('.'+str+'_is_called').style('fill-opacity',high_opacity);                            
+
+
+                } else {
+                    d3.selectAll('.'+str+'_is_called').style('fill-opacity',low_opacity);   
+                }
+            }
+
+
+                      
+            /**/
+            function print_calling_and_called(calling, called) {
+                /* Prima leggiamo tutte le query e creiamo un vettore 
+                 *  che è l'equivalente di:
+                 *     select domain,sum(calling) group by domain;
+                 *  */
+
+            
+                /* In map_q ho tutte i domini con i relativi conteggi */
+                /*  calling_total contiene la somma */
+                call_grouped = [];
+                for (var f in called) {
+                    call_grouped.push({domain: f, called: called[f],
+                        red: color_domain[f].red,
+                        green: color_domain[f].green,
+                        blue: color_domain[f].blue});
+                }
+
+                var calling_vect = [];
+                var link = [];
+
+                for (var ip in calling) {
+                    var a_new = {cx: calling[ip].cx, cy: calling[ip].cy,
+                        red: calling[ip].red, green: calling[ip].green, blue: calling[ip].blue , calling: ip};
+                    calling_vect.push(a_new);
+                }
+
+                var origin = 0;
+
+                d3.selectAll("svg").remove();
+
+                var svg = d3.select(".ringcontainer").append("svg")
+                        .attr("width", 3*svg_width)
+                        .attr("height", svg_height);
+
+
+                /* Questi sono i domini */
+                svg.append("g")
+                        .selectAll("path")
+                        .data(call_grouped)
+                        .enter()
+                        .append("path")
+                        .attr('transform','translate('+svg_width+')')
+                        .attr('d', function (d, i) {
+                            var str = "";
+                            teta_orig[d.domain] = (origin) * teta_unit;
+
+                            str = draw_arc(svg_width / 2, svg_height / 2, (origin) * teta_unit, (origin + d.called) * teta_unit, svg_internal_radius, svg_radius-4);
+
+                            origin += (1 + d.called);
+                            return str;
+                        })
+                        .style('stroke', "black")
+                        .style("fill", function (d, i) { /* TODO settare il valore dei colori dei call_grouped */
+                            return ("rgb(" + d.red + ","
+                                    + d.green + ","
+                                    + d.blue + ""
+                                    + ")");
+                        })
+                        .attr('onmouseover',function (d,i) {
+                            return "select_is_called('"+d.domain+"',true)";
+                        })
+                        .attr('onmouseout',function (d,i){
+                            return "select_is_called('"+d.domain+"',false)";
+                        })
+                        .style("stroke-width", "4")
+                        .style("fill-opacity", "0.5")
+                        ;
+
+                /* Non possono essere fusi perche' la teta_orig viene calcolata solo quando viene disegnato il cerchio*/
+                for (var ip in calling) {
+
+                    var h = calling[ip].history;
+
+                    for (var query in h) {
+                        var n_called = h[query];
+
+
+                        /* l'ip $IP ha chiamato il dominio $query $n_called volte */
+
+                        /* la teta orig di quel dominio è :*/
+                        var teta0 = teta_orig[query];
+
+                        var tetaf = teta0 + (n_called) * teta_unit;
+                        teta_orig[query] = tetaf;
+
+                        var l = {x0: calling[ip].cx,
+                            y0: calling[ip].cy,
+                            x1: svg_width / 2 + svg_internal_radius * Math.cos(teta0),
+                            y1: svg_height / 2 + svg_internal_radius * Math.sin(teta0),
+                            x2: svg_width / 2 + svg_internal_radius * Math.cos(tetaf),
+                            y2: svg_height / 2 + svg_internal_radius * Math.sin(tetaf),
+                            teta_start: teta0,
+                            teta_final: tetaf,
+                            calling: ''+ip ,
+                            called: ''+query
+                        };
+
+                        link.push(l);
+                    }
+                }
+
+
+                svg.append("g")
+                        .selectAll("path")
+                        .data(link)
+                        .enter()
+                        .append("path")
+                        .style("fill", "steelblue")                
+                        .style('stroke', "black")
+                        .style('stroke-width','1')
+                        .style("fill-opacity", low_opacity)
+                        .attr('transform','translate('+svg_width+')')
+
+                        .attr('class',function(d,i){
+                                    return d.calling+'_is_calling'+' '+d.called+'_is_called';
+                                })                                
+                        .attr('d', function (d, i) {
+                            return draw_link_for(d);
+                        })
+                        ;
+                        
+               
+                /* questi sono gli ip chiamanti */
+                svg.append("g")
+                        .selectAll("circle")
+                        .data(calling_vect)
+                        .enter()
+                        .append("circle")
+                        .style("fill", "steelblue")
+                        .style("stroke-width", "4")
+                        .style("stroke", function (d, i) {
+                            var s = "rgb(" + d.red + ","
+                                    + d.green + ","
+                                    + d.blue + ""
+                                    + ")";
+                            return s;
+                        }) /* dobbiamo settare la onmouseover() */
+                        .attr('transform','translate('+svg_width+')')
+                        .attr('onmouseover',function (d,i) {
+                            console.log("Debug 517 "+JSON.stringify(d));
+                                return     "select_is_calling('"+d.calling+"',true)";
+                            })
+                        .attr('onmouseout', function (d,i) {
+                                return     "select_is_calling('"+d.calling+"',false)";
+                        })
+                        .attr('cx', function (d, i) {
+                            return d.cx;
+                        })
+                        .attr('cy', function (d, i) {
+                            return d.cy;
+                        })
+                        .attr("r", function (d, i) {
+                            return svg_host_radius;
+                        })
+                        ;
+   
+                   /**/
+                   
+                  svg.append("g")
+                        .selectAll("text")
+                        .data(call_grouped)
+                        .enter()
+                        .append("text")
+                        .style("fill", "steelblue")                
+                        .style('stroke', "black")
+                        .style('stroke-width','1')
+                        .style('font-size',''+size_font+'px')
+                        .style('font-family','sans-serif')
+                        .style("fill-opacity", low_opacity)
+                        .attr('transform','translate('+svg_width+')')
+                        .attr('class',function(d,i){
+                                    return d.domain+'_is_called';
+                                })
+                        .attr('x', function (d,i) {
+ //                               return d.x0+svg_internal_radius*Math.cos((d.teta_final+d.teta_start)/2);
+                            return svg_width*1.1;
+                        })
+                        .attr('y', function (d,i) {
+                            //        return d.y0+svg_internal_radius*Math.sin((d.teta_final+d.teta_start)/2);
+                            return svg_height*0.1+size_font*2*i+size_font/2;
+                        })
+                        .text( function (d, i) {
+                            return replaceAll(d.domain,'_','.');
+                        })
+                        ;
+                        
+                        
+                          svg.append("g")
+                        .selectAll("text")
+                        .data(calling_vect)
+                        .enter()
+                        .append("text")
+                        .style("fill", "steelblue")                
+                        .style('stroke', "black")
+                        .style('stroke-width','1')
+                        .style('font-size',''+size_font+'px')
+                        .style('font-family','sans-serif')
+                        .style("fill-opacity", low_opacity)
+                        .attr('text-anchor','end')                
+                        .attr('class',function(d,i){
+                                    return d.calling+'_is_calling';
+                                })
+                        .attr('x', function (d,i) {
+ //                               return d.x0+svg_internal_radius*Math.cos((d.teta_final+d.teta_start)/2);
+                            return svg_width ;
+                        })
+                        .attr('y', function (d,i) {
+                            //        return d.y0+svg_internal_radius*Math.sin((d.teta_final+d.teta_start)/2);
+                            return svg_height*0.1+size_font*2*i+size_font/2;
+                        })
+                        .text( function (d, i) {
+                            return replaceAll(d.calling,'_','.');
+                        })
+                        ;
+            }
+
+
+            function onMessageArrived(message) {
+
+                var topic = message.destinationName;
+                var payload = message.payloadString;
+
+                // $('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
+
+                var field = payload.split(",");
+
+                var ip = field[1];
+                var dest = field[4];
+                console.log("ip:" + ip + " dest:[" + dest + "]");
+
+                // Aggiorniamo la struttura che contiene le chiamate    
+                add_calling(ip, dest, calling, called);
+
+
+                // La stampiamo
+                print_calling_and_called(calling, called);
+            }
+            ;
+
+
+            $(document).ready(function () {
+                /* TODO decommentare per agganciare */
+                MQTTconnect();
+                //  print_called(calling_vect);
+
+                //print_calling(calling_vect);
+            });
+
+
+        </script>
+
+        <!-- -->
+
+    </head>
+    <body>
+        <div>Dowse example </div>
+        <div class="row">
+            Subscribed to <input type='text' id='topic' disabled />
+            Status: <input type='text' id='status' size="80" disabled />
+        </div>
+
+        <div class="row">
+            <!-- 
+            -->
+            <div class="row">                
+                <ul id='ws' style="font-family: 'Courier New', Courier, monospace;"></ul>
+            </div>
+            <div class="row">                
+                    <div class="ringcontainer"></div>
+            </div>
+        </div>
+    </body>
+</html>
