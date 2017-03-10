@@ -82,11 +82,16 @@ int setup_dns_lease_name(attributes_set_t *attributes_result) {
             }
         }
 
-        /* Print command on redis channel */
-        reply = cmd_redis(redis, "SET dns-lease-%s %s", name, address);
+        if (strcmp(address,"")==0) {
+            err("ERROR address e' nullo! come mai? ");
+        } else {
+            /* Print command on redis channel */
+            reply = cmd_redis(redis, "SET dns-lease-%s %s", name, address);
+            if (reply) {
+                freeReplyObject(reply);
+            }
+        }
 
-        if (reply)
-            freeReplyObject(reply);
 
     }
     WEBUI_DEBUG
