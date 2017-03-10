@@ -40,7 +40,9 @@ case $1 in
 		case `uname -m` in
 			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1" make ;;
 			arm*)  CFLAGS="-Wall -fPIC -D_LARGEFILE64_SOURCE=1" \
-					LDFLAGS="-s" make ;;
+				     LDFLAGS="-s" make ;;
+			x86_64)  CFLAGS="-Wall -fPIC -D_LARGEFILE64_SOURCE=1" \
+				       LDFLAGS="-s" make ;;
 		esac
 		popd
 		;;
