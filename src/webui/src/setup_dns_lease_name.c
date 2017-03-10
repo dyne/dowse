@@ -83,7 +83,7 @@ int setup_dns_lease_name(attributes_set_t *attributes_result) {
         }
 
         if (strcmp(address,"")==0) {
-            err("ERROR address e' nullo! come mai? ");
+            err("at %s %d > Invalid state : address is null => I can't set redis entry .");
         } else {
             /* Print command on redis channel */
             reply = cmd_redis(redis, "SET dns-lease-%s %s", name, address);
