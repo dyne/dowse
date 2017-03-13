@@ -107,7 +107,7 @@ int thing_show(struct http_request *req) {
      */
     // prepare query
     snprintf(line, ml, "SELECT *, "
-            " ( CASE WHEN '%s' not in (select UPPER(macaddr) from found where admin='yes') THEN 0" /* se il macaddr della req non e' in admin => 0*/
+            " ( CASE WHEN upper('%s') not in (select UPPER(macaddr) from found where admin='yes') THEN 0" /* se il macaddr della req non e' in admin => 0*/
             "        WHEN UPPER(F.macaddr) <> upper('%s') THEN 1 " /* se il found.macaddr e' diverso da quello della request => 1 */
             "        ELSE 0 " /* altri casi non dovrebbero esserci ma vale la : "se non esplicitamente detto => 0" */
             "  END  ) as can_i_disable_it "
