@@ -46,9 +46,9 @@ int setup_dns_lease_name(attributes_set_t *attributes_result) {
     char query[1024];
 
     snprintf(query, sizeof(query),
-                "select name,ip4 as address from found where name is not null and ip4 is not null "
+                "select name,ip4 as address from found where name is not null and coalesce(ip4,'')<>''"
                 " union  "
-                "select name,ip6 as address from found where name is not null and ip6 is not null");
+                "select name,ip6 as address from found where name is not null and coalesce(ip6,'')<>''");
 
     // Execute the statement
     if (mysql_real_query(db, query, strlen(query))) {
