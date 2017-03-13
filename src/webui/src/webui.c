@@ -99,6 +99,7 @@ int thing_show(struct http_request *req) {
     get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
 
     ip2mac(ipaddr_type,ipaddr_value,req_macaddr,&attributes);
+    func("Request from [%s] [%s]",ipaddr_value,req_macaddr);
 
     /*
      * 0 -> my_macaddr not in (select macaddr from found where admin='yes')
@@ -106,8 +107,8 @@ int thing_show(struct http_request *req) {
      */
     // prepare query
     snprintf(line, ml, "SELECT *, "
-            " ( CASE WHEN '%s' not in (select macaddr from found where admin='yes') THEN 0" /* se il macaddr della req non e' in admin => 0*/
-            "        WHEN F.macaddr <> '%s' THEN 1 " /* se il found.macaddr e' diverso da quello della request => 1 */
+            " ( CASE WHEN '%s' not in (select UPPER(macaddr) from found where admin='yes') THEN 0" /* se il macaddr della req non e' in admin => 0*/
+            "        WHEN UPPER(F.macaddr) <> upper('%s') THEN 1 " /* se il found.macaddr e' diverso da quello della request => 1 */
             "        ELSE 0 " /* altri casi non dovrebbero esserci ma vale la : "se non esplicitamente detto => 0" */
             "  END  ) as can_i_disable_it "
             "FROM found F %s "
