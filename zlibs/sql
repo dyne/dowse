@@ -183,6 +183,9 @@ sql_integrate_with_redis() {
                         select NEW.macaddr,NEW.ip4,NEW.ip6 from dual
                         WHERE not exists ( select macaddr from found where macaddr=NEW.macaddr);
 
+                        SET @ret= redis_command_v2(\"PUBLISH\",\"network-event\",
+                                     concat_ws(',',NEW.description,unix_timestamp(now()),NEW.macaddr,NEW.ip4,NEW.ip6));
+
                         CALL redirect_admin_to_captive_portal('admin_should_check');
                      END##"
 
