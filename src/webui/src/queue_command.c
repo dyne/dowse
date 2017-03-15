@@ -78,7 +78,7 @@ int queue_command(struct http_request * req) {
 
         ip2mac(ipaddr_type,calling_ipaddr,calling_macaddr,&attr);
 
-        int rv=change_authorization_to_browse(req,macaddr,ip4,ip6,redis,op);
+        int rv=change_authorization_to_browse(req,calling_macaddr,ip4,ip6,redis,"ALL_THINGS_OFF");
         if (rv!=KORE_RESULT_OK) {
             return rv;
         }
