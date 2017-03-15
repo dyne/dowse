@@ -39,7 +39,7 @@ seccrond-exec() {
 	func "Clean the lock"
 	lock_list=(watchdog nextcmd nmap netscan)
 	for i in $lock_list ; do
-	    print "DEL lock_$i " | redis dynamic
+	    print "DEL lock_$i " | redis runtime
 	done
 
 	#---
