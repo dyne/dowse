@@ -45,17 +45,23 @@ char *to_upper(char*str){
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr,attributes_set_t *ptr_attr) {
     func("converting from %s %s on %s",ipaddr_type,ipaddr_value,getenv("interface"));
 
-    int rv;
-    if (strcmp(ipaddr_type,"ipv4")==0) {
-      if (strcmp(ipaddr_value,"127.0.0.1")==0) {
-	return KORE_RESULT_ERROR;
-      }
-       rv=convert_from_ipv4(ipaddr_value,macaddr,ptr_attr);
+    char *address=getenv("address");
+      if (((address!=NULL)&&(strcmp(ipaddr_value,address)==0))||(strcmp(ipaddr_value,"127.0.0.1")==0))  {
+      sprintf(macaddr,"00:00:00:00:00:00");
+      return KORE_RESULT_OK;
     } else {
-       rv=convert_from_ipv6(ipaddr_value,macaddr,ptr_attr);
+      int rv;
+      if (strcmp(ipaddr_type,"ipv4")==0) {
+	if (strcmp(ipaddr_value,"127.0.0.1")==0) {
+	  return KORE_RESULT_ERROR;
+	}
+	rv=convert_from_ipv4(ipaddr_value,macaddr,ptr_attr);
+      } else {
+	rv=convert_from_ipv6(ipaddr_value,macaddr,ptr_attr);
+      }
+      to_upper(macaddr);
+      return rv;
     }
-    to_upper(macaddr);
-    return rv;
 }
 
 /**/
@@ -107,7 +113,7 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_a
     /* TODO Se non c'e' la eth0 ? */
     char *dev=getenv("interface");
     if (dev==NULL) {
-        dev="lo";
+        dev="eth0";
     }
 
     strncpy(areq.arp_dev, dev, 15);
