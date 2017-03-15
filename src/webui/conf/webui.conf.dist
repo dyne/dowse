@@ -110,7 +110,10 @@ domain * {
 	static /reset_admin reset_admin
 	static /start_reset_procedure start_reset_procedure
 	static /configure_admin reset_admin
-	
+
+	# administratio page (put under auth_admin) 
+	#static /administration administration 
+
 
 	# Test Admin authentication only for debugging
 	# 
@@ -119,10 +122,10 @@ domain * {
 	# special static assets
 	static     /example/websocket.html  websocket_example
 
- # Automatically generated mer 9 nov 2016, 13.05.29, CET
-static /test/1 ___webui___test_unit__A001
-static /test/2 ___webui___test_unit__A002
-static /test/3 ___webui___test_unit__A003
+ 	# Automatically generated mer 9 nov 2016, 13.05.29, CET
+ 	static /test/1 ___webui___test_unit__A001
+	static /test/2 ___webui___test_unit__A002
+	static /test/3 ___webui___test_unit__A003
 
        dynamic ^.*$ proxy auth_browse
 
