@@ -273,6 +273,8 @@ exec_next_cmd() {
 		error "no action found: $cmd"
 		return 1 }
 	func "action: $action"
+	epoch=${cmd[(ws:,:)4]}
+	func "ackid we use epoch: $epoch" 
 
 	# set acl on/off switch matching the action
 	acl=DROP
@@ -305,6 +307,10 @@ exec_next_cmd() {
 UPDATE found SET authorized='$AUTH'
 WHERE (macaddr='$macb' and '$macb' <> '');
 EOF
+
+			# Delete the ACK request
+			print "DEL ACK_${action}_$epoch" | redis dynamic
+
 			;;
 
 		# IP6_OFF|IP6_ON)
@@ -367,7 +373,7 @@ case "$1" in
 			return 1 }
 
 		exec_next_cmd
-
+		
 		unlock nextcmd $ncmd
 
 		;;
