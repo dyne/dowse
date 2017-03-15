@@ -31,30 +31,31 @@
  * */
 
 int received_ack_or_timeout =0;
-char epoch[256],action[256];
 
 /*----*/
 
 extern redisContext *redis_context;
 
+char key_name[256];
 
 void  timeout_handler(int sig)
 {
  redisReply   *reply = NULL;
   signal(SIGALRM, SIG_IGN);
-  reply = cmd_redis(redis_context,"DEL ACK_%s_%s",action,epoch);
+  reply = cmd_redis(redis_context,"DEL ACK_%s",key_name);
 
-  notice("timeout expired about request %s of %d",action,epoch);
+  notice("timeout expired about request %s ",key_name);
   if(reply) freeReplyObject(reply);
 
 }
 
 /**/
 
-int change_authorization_to_browse(struct http_request * req,char*macaddr,const char*ip4,const char*ip6,redisContext *redis ,int enable_or_disable){
+int change_authorization_to_browse(struct http_request * req,char*macaddr,const char*ip4,const char*ip6,redisContext *redis ,char *action){
     char command[256];
     redisReply   *reply = NULL;
 
+    char epoch[256];
     /* Calculating calling IP extracting from request */
     char *ipaddr_type,*calling_ipaddr;
     get_ip_from_request(req,&ipaddr_type,&calling_ipaddr);
@@ -66,13 +67,13 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
 
     /* timeout */
     int timeout_sec = 5;
-    char key_name[256];
 
     snprintf(epoch,sizeof(epoch),"%lu",tp.tv_sec);
 
-    sprintf(action,"%s",(enable_or_disable?"THING_ON":"THING_OFF"));
+ //  sprintf(action,"%s",(enable_or_disable?"THING_ON":"THING_OFF"));
 
     /* Construct command to publish on Redis channel */
+
     snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,action,epoch,to_upper(macaddr),ip4,ip6);
 
     /* We prepare the ack request */
