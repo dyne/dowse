@@ -29,7 +29,20 @@ int modify_things(struct http_request * req) {
 
     PARSE_PARAMETER(macaddr);
     PARSE_PARAMETER(column);
-    PARSE_PARAMETER(value);
+//    PARSE_PARAMETER(value);
+    char *value="";
+      http_argument_get_string(req, "value" ,&value);
+      func( "%s Parameter %s:%d [%s]",value,__FILE__,__LINE__,value);
+      if (strcmp(value,"")==0 ){
+        char m[1024];
+        snprintf(m, sizeof(m), "<strong>The name of the things is not validated</strong>. Might contain only letter number an dash or underscore (- , _)<br>"
+                " Please come back and change it.<br>"
+                "<a href=\"/things\",>/things</a>)");
+        webui_add_error_message(&attr, m );
+        err(m);
+        bad_parsing=1;
+      }
+
     PARSE_PARAMETER(url_from);
 
     CHECK_PARAMETER();
