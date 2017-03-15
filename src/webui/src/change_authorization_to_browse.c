@@ -29,6 +29,28 @@
  *  - ip4 (facultative)
  *  - ip6 (facultative)
  * */
+
+int received_ack_or_timeout =0;
+char epoch[256],action[256];
+
+/*----*/
+
+extern redisContext *redis_context;
+
+
+void  timeout_handler(int sig)
+{
+ redisReply   *reply = NULL;
+  signal(SIGALRM, SIG_IGN);
+  reply = cmd_redis(redis_context,"DEL ACK_%s_%s",action,epoch);
+
+  notice("timeout expired about request %s of %d",action,epoch);
+  if(reply) freeReplyObject(reply);
+
+}
+
+/**/
+
 int change_authorization_to_browse(struct http_request * req,char*macaddr,const char*ip4,const char*ip6,redisContext *redis ,int enable_or_disable){
     char command[256];
     redisReply   *reply = NULL;
@@ -42,19 +64,53 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
     struct timezone tz;
     gettimeofday(&tp,&tz);
 
-    char epoch[256];
+    /* timeout */
+    int timeout_sec = 5;
+    char key_name[256];
+
     snprintf(epoch,sizeof(epoch),"%lu",tp.tv_sec);
 
-    char op[256];
-    sprintf(op,"%s",(enable_or_disable?"THING_ON":"THING_OFF"));
+    sprintf(action,"%s",(enable_or_disable?"THING_ON":"THING_OFF"));
 
     /* Construct command to publish on Redis channel */
-    snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,op,epoch,to_upper(macaddr),ip4,ip6);
+    snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,action,epoch,to_upper(macaddr),ip4,ip6);
+
+    /* We prepare the ack request */
+    snprintf(key_name,sizeof(key_name),"ACK_%s_%s",action,epoch);
+    reply = cmd_redis(redis,"SET %s ACK_REQUESTED",key_name);
+    if(reply) freeReplyObject(reply);
+
+    reply = cmd_redis(redis,"EXPIRE  %s %d",key_name,2*timeout_sec);
+    if(reply) freeReplyObject(reply);
 
     /* Print command on redis channel */
     reply = cmd_redis(redis,"PUBLISH %s %s", CHAN,command,calling_ipaddr);
-
     if(reply) freeReplyObject(reply);
+
+
+    signal(SIGALRM, timeout_handler);
+
+    /*   Se il pub finisce prima del sub fa una semplice GET ? */
+
+    /* Now we wait the ACK of the command */
+    alarm(timeout_sec);
+
+    int to_exit=0;
+    while (!to_exit) {
+        reply = cmd_redis(redis,"GET %s ", key_name);
+        if (reply) {
+            if (reply->type == REDIS_REPLY_STRING ) {
+                notice("...waiting accomplish of task %s of %s",action,epoch);
+            } else {
+                to_exit=1;
+            }
+            freeReplyObject(reply);
+        }
+        sleep(1);
+    };
+
+
+    signal(SIGALRM, SIG_IGN);
 
     return KORE_RESULT_OK;
 }

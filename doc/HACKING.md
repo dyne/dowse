@@ -161,6 +161,27 @@ Source
 Sink
 - pendulum nextcmd -> dowse-cmd-fifo
 
+## ACK request
+
+
+Every command executed is confirmed via the delete of a relative ACK_REQUEST variable
+```
+#... on client requesting the accomplish of a task
+#-- We set the ack-request relative to command {ACTION} requested at EPOCH time.
+SET ACK_{ACTION}_EPOCH ACK_REQUESTED
+
+#-- We set a timeout 
+EXPIRE ACK_{ACTION}_EPOCH 10
+
+#... when the server has solved the requested
+DEL ACK_{ACTION}_EPOCH 
+
+```
+
+
+
+
+
 # Channels
 
 In Dowse the 'dynamic' redis database (indexed by `src/database.h`

@@ -28,6 +28,7 @@
 #define RESET_ADMIN_FILE "./reset_admin_file"
 
 #define CHAN "command-fifo-pipe"
+#define ACK_CHAN "ack-command-fifo-pipe"
 
 #define _IP_IS_ADMIN_ (1)
 #define _ADMIN_NOT_CONFIGURED_ (0)
