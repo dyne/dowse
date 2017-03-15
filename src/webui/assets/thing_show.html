@@ -102,15 +102,12 @@
             <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"--> <!-- The admin didn't choose to enable or not the Things -->
 	    <td>
 	      <div class="row">
-		<div class="col-xs-6">
-		  <a role="button"  class="btn btn-success" href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-		    <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state">
-		  </a>
-		</div>
-		<div class="col-xs-6">
-		  <a role="button"  class="btn btn-danger" href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-                    <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
-		  </a>
+		<div class="row">
+		  <div class="col-xs-12">
+		    <a role="button"  class="btn btn-danger" href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+                      <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Not yet enabled. Switch to &#x22;On&#x22; state"/>
+		    </a>
+		  </div>
 		</div>
 	      </div>
             </td>
@@ -138,14 +135,11 @@
             <td><img src="/serve_asset?o=na_state-16x16.png"></img></td>
             <!--/TMPL_IF-->
 	    <!--TMPL_ELSE --> <!-- can i disable it? -->
-         <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"--> <!-- The admin didn't choose to enable or not the Things -->
+            <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"--> <!-- The admin didn't choose to enable or not the Things -->
 	    <td>
 	      <div class="row">
-		<div class="col-xs-6">
-		  <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="It was not specified if is in &#x22;On&#x22; or &#x22;Off&#x22; state">
-		</div>
-		<div class="col-xs-6">
-	          <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="It was not specified if is in &#x22;On&#x22; or &#x22;Off&#x22; state"/>
+		<div class="col-xs-12">
+                    <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="it is not enabled to browse, yet"/>
 		</div>
 	      </div>
             </td>
