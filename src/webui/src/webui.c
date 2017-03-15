@@ -84,12 +84,12 @@ int thing_show(struct http_request *req) {
     if (http_argument_get_string(req, "macaddr", &macaddr)) {
         func( "thing_show macaddr %s", macaddr);
         //--- prepare where condition
-        snprintf(where_condition, ml, "WHERE upper(macaddr)=upper('%s')", macaddr);
+        snprintf(where_condition, ml, "WHERE upper(macaddr)=upper('%s') and macaddr <>'00:00:00:00:00:00'", macaddr);
     } else {
         err( "thing_show get argument error");
         func( "thing_show called without argument");
         //--- prepare where condition
-        snprintf(where_condition, ml, " ");
+        snprintf(where_condition, ml, " WHERE macaddr<>'00:00:00:00:00:00'");
     }
 
     WEBUI_DEBUG;
