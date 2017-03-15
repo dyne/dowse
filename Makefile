@@ -49,6 +49,7 @@ install:
 	install    -p -m 644 build/db/*.zkv   ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/db/*.idx   ${DESTDIR}${PREFIX}/db
 	install -s -p -m 755 build/bin/*      ${DESTDIR}${PREFIX}/bin
+	install    -p -m 644 build/nmap-mac   ${DESTDIR}/usr/share/nmap/nmap-mac-prefixes
 	./set_privileges.sh                     ${DESTDIR}${PREFIX}
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
 	install -d ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
