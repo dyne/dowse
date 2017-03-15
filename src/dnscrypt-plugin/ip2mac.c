@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <ctype.h>
+#include "../libdowse/dowse.h"
 
 #define IP2MAC_ERROR (1)
 #define IP2MAC_RESULT_OK (0)
@@ -60,17 +61,26 @@ int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) {
     } else {
         snprintf(loc_ipaddr_type, sizeof(loc_ipaddr_type), "%s", ipaddr_type);
     }
-    func("converting from %s  %s  on %s", loc_ipaddr_type, ipaddr_value,
+    func("converting from %s  %s on %s", loc_ipaddr_type, ipaddr_value,
             getenv("interface"));
 
     int rv;
-    if (strcmp(loc_ipaddr_type, "ipv4") == 0) {
-         rv=convert_from_ipv4(ipaddr_value, macaddr);
+    char *address=getenv("address");
+    if (
+	((address!=NULL)&&(strcmp(ipaddr_value,getenv("address"))==0))
+	 || (strcmp(ipaddr_value,"127.0.0.1")==0))  {
+      sprintf(macaddr,"00:00:00:00:00:00");
+      return IP2MAC_RESULT_OK;
     } else {
-         rv=convert_from_ipv6(ipaddr_value, macaddr);
+      if (strcmp(loc_ipaddr_type, "ipv4") == 0) {
+	rv=convert_from_ipv4(ipaddr_value, macaddr);
+      } else {
+	rv=convert_from_ipv6(ipaddr_value, macaddr);
+      }
+      to_upper(macaddr);
+      return rv;
     }
-    to_upper(macaddr);
-    return rv;
+
 
 }
 
@@ -90,11 +100,9 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr) {
     struct sockaddr_in *sin;
     struct in_addr ipaddr;
     char buf[256];
-
+    
     /* Get an internet domain socket. */
     if ((socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        func("Sorry but during IP-ARP conversion I cannot open a socket [%s]",
-                strerror(errno));
         err("Sorry but during IP-ARP conversion I cannot open a socket [%s]",
                 strerror(errno));
 
@@ -107,9 +115,6 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr) {
     sin->sin_family = AF_INET;
 
     if (inet_aton(ipaddr_value, &ipaddr) == 0) {
-        func(
-                "Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
-                ipaddr_value, strerror(errno));
         err(
                 "Sorry but during IP-ARP conversion I cannot execute inet_aton(%s) due to (%s)",
                 ipaddr_value, strerror(errno));
@@ -125,18 +130,14 @@ int convert_from_ipv4(char *ipaddr_value, char *mac_addr) {
     /* TODO Se non c'e' la eth0 ? */
     char *dev = getenv("interface");
     if (dev == NULL) {
-        dev = "lo";
+        dev = "eth0";
     }
 
     strncpy(areq.arp_dev, dev, 15);
 
     if (ioctl(socket_fd, SIOCGARP, (caddr_t) &areq) == -1) {
-        func(
-                "-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",
+        func("-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",
                 ipaddr_value, dev, strerror(errno));
-/*        err(
-                "-- Error: unable to make ARP request for IP [%s], error on device [%s] due to [%s]",
-                ipaddr_value, dev, strerror(errno));*/
         close(socket_fd);
         return (IP2MAC_ERROR);
     }
