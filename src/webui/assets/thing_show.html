@@ -111,19 +111,19 @@
               <!--TMPL_IF name="can_i_disable_it" value="1"-->
                 <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"-->
                 <td>
-                  <a href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"--&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->>'>
+                  <a href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
                     <img src="/serve_asset?o=button_OFF.png" width="28">
                   </a>
                 </td>
                 <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
                 <td>
-                  <a href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"--&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->>'>
+                  <a href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
                     <img src="/serve_asset?o=button_OFF.png" width="28">
                   </a>
                 </td>
                 <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
                 <td>
-                  <a href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"--&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->>'>
+                  <a href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
                     <img src="/serve_asset?o=button_ON.png" width="28">
                   </a>
                 </td>
