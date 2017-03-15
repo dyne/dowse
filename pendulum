@@ -363,7 +363,7 @@ case "$1" in
 	nextcmd)
 		ncmd=`lock nextcmd 0`
 		[[ "$ncmd" = "0" ]] && {
-			func "nextcmd is locked"
+			func "nextcmd already locked"
 			return 1 }
 
 		exec_next_cmd
