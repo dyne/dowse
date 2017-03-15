@@ -202,9 +202,9 @@ sql_integrate_with_redis() {
                      FOR EACH ROW
                      BEGIN
                         if (new.ip4='$address') then
-                          insert into found(macaddr) values('00:00:00:00:00:00');
-                        elseif new.ip4='127.0.0.1' then
-                          insert into found(macaddr) values('00:00:00:00:00:00');
+                          set new.macaddr='00:00:00:00:00:00';
+                        elseif (new.ip4='127.0.0.1') then
+                          set new.macaddr='00:00:00:00:00:00';
                         end if;
                         CALL create_dns_entry( new.name,new.ip4,new.ip6);	 
                      END;##"
