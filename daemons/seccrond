@@ -36,6 +36,13 @@ seccrond-exec() {
 	freq=($conf)
 	ckreq || return $?
 
+	func "Clean the lock"
+	lock_list=(watchdog nextcmd nmap netscan)
+	for i in $lock_list ; do
+	    print "DEL lock_$i " | redis dynamic
+	done
+
+	#---
 	launch seccrond -f $conf -p $H/run/seccrond.pid
 	savepid seccrond $H/run/seccrond.pid
 }
