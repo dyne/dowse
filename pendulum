@@ -282,6 +282,42 @@ exec_next_cmd() {
 	[[ "$action" =~ "THING_OFF" ]] && acl=DROP
 
 	case $action in
+	    ALL_THINGS_OFF)
+		# 5th arg is the admin macaddress to NOT disable
+		local mac_admin
+		mac_admin=${cmd[(ws:,:)5]}
+		[[ "$mac_admin" = "" ]] && {
+		    error "invalid mac admin address: $mac_admin"
+		    return 1 }
+
+		ip_admin=${cmd[(ws:,:)2]}
+		[[ "$ip_admin" = "" ]] && {
+		    error "invalid ip admin address: $ip_admin"
+		    return 1 }
+
+		mac_wan=`/usr/sbin/arp -en| egrep "\b$wan\b"| awk '{print $3}'`
+		[[ "$mac_wan" = "" ]] && {
+		    error " mac address of IP router : $wan is invalid : $mac_wan"
+		    return 1 }
+
+		# TODO: check if valid mac address
+		launch ebtables -A FORWARD -s $mac_admin  -j ACCEPT
+		launch ebtables -A FORWARD -s $mac_wan  -j ACCEPT
+		launch ebtables -A FORWARD -d $mac_admin  -j ACCEPT
+		launch ebtables -A FORWARD -d $mac_wan  -j ACCEPT
+		launch ebtables -A FORWARD -j DROP
+		
+
+		cat <<EOF | $sql $db[things]
+UPDATE found SET authorized='DISABLE_TO_BROWSE'
+WHERE ( $ip_admin not in (ip4 , ip6))
+EOF
+		
+		
+		# Delete the ACK request
+		print "DEL ACK_${action}_$epoch" | redis dynamic
+		
+		;; 
 		THING_OFF|THING_ON)
 			# 1st arg is the ip to block
 			local macb
