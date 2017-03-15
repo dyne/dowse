@@ -84,12 +84,12 @@ int thing_show(struct http_request *req) {
     if (http_argument_get_string(req, "macaddr", &macaddr)) {
         func( "thing_show macaddr %s", macaddr);
         //--- prepare where condition
-        snprintf(where_condition, ml, "WHERE upper(macaddr)=upper('%s') and macaddr <>'00:00:00:00:00:00'", macaddr);
+        snprintf(where_condition, ml, "WHERE upper(F.macaddr)=upper('%s') and F.macaddr <>'00:00:00:00:00:00'", macaddr);
     } else {
         err( "thing_show get argument error");
         func( "thing_show called without argument");
         //--- prepare where condition
-        snprintf(where_condition, ml, " WHERE macaddr<>'00:00:00:00:00:00'");
+        snprintf(where_condition, ml, " WHERE F.macaddr<>'00:00:00:00:00:00'");
     }
 
     WEBUI_DEBUG;
@@ -106,18 +106,20 @@ int thing_show(struct http_request *req) {
      * 1 -> F.macaddr <> my_macaddr
      */
     // prepare query
-    snprintf(line, ml, "SELECT *, "
+    snprintf(line, ml, "SELECT (@seq := @seq +1) AS seq_number, F.*, "
             " ( CASE WHEN upper('%s') not in (select UPPER(macaddr) from found where admin='yes') THEN 0" /* se il macaddr della req non e' in admin => 0*/
             "        WHEN UPPER(F.macaddr) <> upper('%s') THEN 1 " /* se il found.macaddr e' diverso da quello della request => 1 */
             "        ELSE 0 " /* altri casi non dovrebbero esserci ma vale la : "se non esplicitamente detto => 0" */
             "  END  ) as can_i_disable_it "
-            "FROM found F %s "
+            "FROM found F "
+            " JOIN ( SELECT @seq := 0 ) r "
+            "%s "
             "ORDER BY F.age DESC",
             req_macaddr,
             req_macaddr,
             where_condition);
 
-    func("query [%s]",line);
+    fprintf(stderr,"query [%s]",line);
     WEBUI_DEBUG
     ;
     buf = kore_buf_alloc(mb);
