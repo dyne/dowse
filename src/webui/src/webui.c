@@ -96,6 +96,8 @@ int thing_show(struct http_request *req) {
 
     attributes=attrinit();
 
+    load_current_identity(req,&attributes);
+
     get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
 
     ip2mac(ipaddr_type,ipaddr_value,req_macaddr,&attributes);
