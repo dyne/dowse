@@ -27,11 +27,11 @@ int queue_command(struct http_request * req) {
     PARSE_PARAMETER(op);
     PARSE_PARAMETER(macaddr);
 
-    if (strcmp(op,"ALL_THINGS_OFF")==0) { /* op is parsed so macaddr we don't need and we'll take it from the request*/
+    if ((strcmp(op,"ALL_THINGS_OFF")==0)||(strcmp(op,"ALL_THINGS_ON")==0)) { /* op is parsed so macaddr we don't need and we'll take it from the request*/
       bad_parsing=0;
     } else {
 
-      /* If "op" is not ALL_THINGS_OFF the macaddr is a required parameter */
+      /* If "op" is not ALL_THINGS_OFF/ON the macaddr is a required parameter */
       if (bad_parsing)
 	{
 	  err("%s command not well defined",__where_i_am__);
@@ -67,7 +67,7 @@ int queue_command(struct http_request * req) {
             return rv;
         }
     }
-    if (strcmp(op,"ALL_THINGS_OFF")==0) {
+    if ((strcmp(op,"ALL_THINGS_OFF")==0)||(strcmp(op,"ALL_THINGS_ON")==0)) {
         char *ipaddr_type,*calling_ipaddr;
         char ip4[64],ip6[256];
         char calling_macaddr[32];
@@ -83,7 +83,7 @@ int queue_command(struct http_request * req) {
 
         ip2mac(ipaddr_type,calling_ipaddr,calling_macaddr,&attr);
 
-        int rv=change_authorization_to_browse(req,calling_macaddr,ip4,ip6,redis,"ALL_THINGS_OFF");
+        int rv=change_authorization_to_browse(req,calling_macaddr,ip4,ip6,redis,op);
         if (rv!=KORE_RESULT_OK) {
             return rv;
         }
