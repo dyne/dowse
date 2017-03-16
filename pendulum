@@ -314,12 +314,28 @@ UPDATE found SET authorized='DISABLE_TO_BROWSE'
 WHERE ( '$ip_admin' not in (ip4 , ip6))
 EOF
 		
+		# Delete the ACK request
+		print "DEL ACK_${action}_$epoch" | redis dynamic
+		
+		;; 
+	    ALL_THINGS_ON)
+
+		# TODO: check if valid mac address
+		launch ebtables -F
+		launch ebtables -A FORWARD -j ACCEPT
+		
+
+		cat <<EOF | $sql $db[things]
+UPDATE found SET authorized='ENABLE_TO_BROWSE'
+EOF
+		
 		
 		# Delete the ACK request
 		print "DEL ACK_${action}_$epoch" | redis dynamic
 		
 		;; 
-		THING_OFF|THING_ON)
+
+	    THING_OFF|THING_ON)
 			# 1st arg is the ip to block
 			local macb
 			macb=${cmd[(ws:,:)5]}

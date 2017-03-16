@@ -70,10 +70,7 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
 
     snprintf(epoch,sizeof(epoch),"%lu",tp.tv_sec);
 
- //  sprintf(action,"%s",(enable_or_disable?"THING_ON":"THING_OFF"));
-
     /* Construct command to publish on Redis channel */
-
     snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,action,epoch,to_upper(macaddr),ip4,ip6);
 
     /* We prepare the ack request */
@@ -88,10 +85,7 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
     reply = cmd_redis(redis,"PUBLISH %s %s", CHAN,command,calling_ipaddr);
     if(reply) freeReplyObject(reply);
 
-
     signal(SIGALRM, timeout_handler);
-
-    /*   Se il pub finisce prima del sub fa una semplice GET ? */
 
     /* Now we wait the ACK of the command */
     alarm(timeout_sec);
@@ -109,8 +103,6 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
         }
         sleep(1);
     };
-
-
     signal(SIGALRM, SIG_IGN);
 
     return KORE_RESULT_OK;

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- thing_show.html -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE-edge">
   <meta http-equiv="refresh" content="15">
@@ -60,17 +61,24 @@
     <img src="/serve_asset?o=dowseLogo.png" width="200">
     <div class="row">
       <div class="col-md-4">
-        <h3>Status</h3>
-        <a href="/cmd?op=ALL_THINGS_OFF"><img src="/serve_asset?o=Big_BTN.png" width="64"></a>
+        <h3>Network Status</h3>
+        <a href="/cmd?op=ALL_THINGS_OFF">
+          <img src="/serve_asset?o=Big_BTN.png" width="64" class="center-block" alt="network access enabled" title="disable network access for all things">
+        </a>
       </div>
       <div class="col-md-4">
-        <h3>Device Info:</h3>
+        <h3>Things on the network</h3>
         <p>
-          <strong>Name:</strong> <!--TMPL_VAR "cur_name"--><br>
-          <strong>MAC:</strong> <!--TMPL_VAR "cur_macaddr"--><br>
-          <strong>IP:</strong> <!--TMPL_VAR "cur_ip"--><br>
+          Here you can see the list of things on your network.
+        </p>
+      </div>
       <div class="col-md-4">
-        <p> </p>
+        <h3>Your Device Info:</h3>
+        <p>
+          <strong>Name:</strong> <!--TMPL_VAR name="cur_name"--><br>
+          <strong>MAC:</strong> <!--TMPL_VAR name="cur_macaddr"--><br>
+          <strong>IP:</strong> <!--TMPL_VAR name="cur_ip"--><br>
+        </p>
       </div>
     </div>
 
@@ -101,7 +109,7 @@
                     <input type="hidden" name="column" value="name">
                     <input type="text" class="form-control" id="value" name="value" placeholder="<!--TMPL_VAR name="name"-->">
                   </div>
-                  <button class="btn-dowse" style="display:inline">✓</button
+                  <button class="btn-dowse" style="display:inline">✓</button>
                 </div>
                 </form>
               </td>
@@ -113,33 +121,33 @@
                 <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"-->
                 <td>
                   <a href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-                    <img src="/serve_asset?o=button_OFF.png" width="28">
+                    <img src="/serve_asset?o=button_OFF.png" width="28" alt="network access disabled" title="enable network access">
                   </a>
                 </td>
                 <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
                 <td>
                   <a href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-                    <img src="/serve_asset?o=button_OFF.png" width="28">
+                    <img src="/serve_asset?o=button_OFF.png" width="28" alt="network access disabled" title="enable network access">
                   </a>
                 </td>
                 <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
                 <td>
                   <a href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
-                    <img src="/serve_asset?o=button_ON.png" width="28">
+                    <img src="/serve_asset?o=button_ON.png" width="28" alt="network access enabled" title="disable network access">
                   </a>
                 </td>
                 <!--TMPL_ELSE-->
-                <td><img src="/serve_asset?o=na_state-16x16.png"></td>
+                <td><img src="/serve_asset?o=na_state-16x16.png" alt="n/a state" title="n/a state"></td>
                 <!--/TMPL_IF-->
               <!--TMPL_ELSE-->
                 <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"-->
-                <td><img src="/serve_asset?o=button_OFF.png" width="28"></td>
+                <td><img src="/serve_asset?o=button_OFF.png" width="28" alt="network access disabled"></td>
                 <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
-                <td><img src="/serve_asset?o=button_OFF.png" width="28"></td>
+                <td><img src="/serve_asset?o=button_OFF.png" width="28" alt="network access disabled"></td>
                 <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
-                <td><img src="/serve_asset?o=button_ON.png" width="28"></td>
+                <td><img src="/serve_asset?o=button_ON.png" width="28" alt="network access enabled"></td>
                 <!--TMPL_ELSE-->
-                <td><img src="/serve_asset?o=na_state-16x16.png"></td>
+                <td><img src="/serve_asset?o=na_state-16x16.png" alt="network state unavailable"></td>
                 <!--/TMPL_IF-->
               <!--/TMPL_IF-->
             </tr>
@@ -150,5 +158,10 @@
     </div>
   </div>
   <!--/TMPL_IF-->
+
+  <script src="/serve_asset?o=jquery.min.js"></script>
+  <script src="/serve_asset?o=bootstrap.min.js"></script>
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <script src="/serve_asset?o=ie10-viewport-bug-workaround.js"></script>
 </body>
 </html>
