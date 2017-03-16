@@ -310,7 +310,7 @@ exec_next_cmd() {
 
 		cat <<EOF | $sql $db[things]
 UPDATE found SET authorized='DISABLE_TO_BROWSE'
-WHERE ( $ip_admin not in (ip4 , ip6))
+WHERE ( '$ip_admin' not in (ip4 , ip6))
 EOF
 		
 		
