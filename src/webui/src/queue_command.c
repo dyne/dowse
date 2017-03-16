@@ -27,18 +27,23 @@ int queue_command(struct http_request * req) {
     PARSE_PARAMETER(op);
     PARSE_PARAMETER(macaddr);
 
+    if (strcmp(op,"ALL_THINGS_OFF")==0) { /* op is parsed so macaddr we don't need and we'll take it from the request*/
+      bad_parsing=0;
+    } else {
 
-    /* If "op" command not set or no parameter specified*/
-    if (bad_parsing)
-    {
-        err("%s command not well defined",__where_i_am__);
-        buf=kore_buf_alloc(0);
-        char m[]="<html><strong>command not well specified</strong></html>";
-        kore_buf_append(buf,m,strlen(m));
-        message = kore_buf_release(buf, &len);
-        http_response(req, 404, message, len);
-        return (KORE_RESULT_OK);
+      /* If "op" is not ALL_THINGS_OFF the macaddr is a required parameter */
+      if (bad_parsing)
+	{
+	  err("%s command not well defined",__where_i_am__);
+	  buf=kore_buf_alloc(0);
+	  char m[]="<html><strong>command not well specified</strong></html>";
+	  kore_buf_append(buf,m,strlen(m));
+	  message = kore_buf_release(buf, &len);
+	  http_response(req, 404, message, len);
+	  return (KORE_RESULT_OK);
+	}
     }
+
     PARSE_PARAMETER(ip4);
     PARSE_PARAMETER(ip6);
 
