@@ -7,7 +7,7 @@
   <meta http-equiv="refresh" content="15">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Captive Portal | Dowse</title>
+  <title>Captive Portal (Admin) | Dowse</title>
 
   <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
   <link rel="stylesheet" href="/serve_asset?o=starter-template.css">
@@ -126,12 +126,12 @@
                     <p>
                       <strong>Action:</strong> Do you want to enable it?</strong>
                     </p>
-                    <div type="button" class="btn-dowse">
-                      <a href="/modify_event?id=<!--TMPL_VAR name="id"-->&action=enable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">YES</a>
-                    </div>
-                    <div type="button" class="btn-dowse">
-                      <a href="/modify_event?id=<!--TMPL_VAR name="id"-->&action=disable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">NO</a>
-                    </div>
+                    <form action="/modify_event?id=<!--TMPL_VAR name="id"-->&action=enable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">
+                      <button class="btn-dowse">YES</button>
+                    </form>
+                    <form action="/modify_event?id=<!--TMPL_VAR name="id"-->&action=disable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">
+                      <button class="btn-dowse">NO</button>
+                    </form>
                   </div>
 
                 </div>

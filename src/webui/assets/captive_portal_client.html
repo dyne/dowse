@@ -7,7 +7,7 @@
   <meta http-equiv="refresh" content="15">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Captive Portal | Dowse</title>
+  <title>Captive Portal (Client) | Dowse</title>
 
   <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
   <link rel="stylesheet" href="/serve_asset?o=starter-template.css">
@@ -32,7 +32,7 @@
       </div>
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav">
-          <li class="active"><a href="/">home</a></li>
+          <li><a href="/">home</a></li>
           <li><a href="/things">things</a></li>
           <li><a href="http://dowse.it:29999">netdata</a></li>
           <li><a href="http://github.com/dyne/dowse/wiki">documentation</a></li>
@@ -83,7 +83,7 @@
               <input type="hidden" name="url_from" value="/captive_client?macaddr=<!--TMPL_VAR name="client_macaddr"-->">
             </div>
 
-            <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-pencil"></span></button>
+            <button type="submit" class="btn-dowse" style="display:inline">✓</button>
           </div>
         </form>
         <!--TMPL_IF name="client_name" value=""-->
@@ -128,17 +128,18 @@
             <!--/TMPL_LOOP-->
           </tbody>
         </table>
-        <div type="button" class="btn-dowse">
-          <a href="/reset_admin">Reset admin devices</a>
-        </div>
+      <hr>
+      <form action="/reset_admin" method="GET">
+        <button class="btn-dowse"><a href="/reset_admin">Reset admin devices</a></button>
+      </form>
       </div>
       <!--TMPL_ELSE-->
       <div class="row">
         <hr>
         <h3>Your administrator device is not configured.</h3>
-        <div type="button" class="btn-dowse">
-          <a href="/test_admin">Use this device as the administrator</a>
-        </div>
+        <form action="/test_admin" method="GET">
+          <button class="btn-dowse">Use this device as the administrator</button>
+        </form>
       </div>
       <!--/TMPL_IF-->
     </div>
