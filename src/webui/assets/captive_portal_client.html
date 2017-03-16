@@ -92,6 +92,15 @@
         <p>You should wait for the admin authorization.</p>
         <!--/TMPL_IF-->
       </div>
+
+      <div class="col-md-4">
+        <h3>Your Device Info:</h3>
+        <p>
+          <strong>Name:</strong> <!--TMPL_VAR name="cur_name"--><br>
+          <strong>MAC:</strong> <!--TMPL_VAR name="cur_macaddr"--><br>
+          <strong>IP:</strong> <!--TMPL_VAR name="cur_ip"--><br>
+        </p>
+      </div>
     </div>
     <!--TMPL_IF name="admin_device"-->
     <div class="row">
@@ -134,5 +143,10 @@
       <!--/TMPL_IF-->
     </div>
   <!--/TMPL_IF-->
+
+  <script src="/serve_asset?o=jquery.min.js"></script>
+  <script src="/serve_asset?o=bootstrap.min.js"></script>
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <script src="/serve_asset?o=ie10-viewport-bug-workaround.js"></script>
 </body>
 </html>

@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- disabled_to_browse.html -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE-edge">
   <meta http-equiv="refresh" content="15">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title><!--TMPL_VAR name="title"--></title>
+  <title>Disabled | Dowse</title>
 
   <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
   <link rel="stylesheet" href="/serve_asset?o=starter-template.css">
@@ -60,9 +61,15 @@
     <img src="/serve_asset?o=dowseLogo.png" width="200">
     <div class="row">
       <h1 class="text-center">Access denied</h1>
-      <p>Your access is denied. Ask the network administrator for permission.</p>
+      <p class="text-center">Your access is denied.<p>
+      <p class="text-center">Ask the network administrator for permission.</p>
     </div>
   </div>
   <!--/TMPL_IF-->
+
+  <script src="/serve_asset?o=jquery.min.js"></script>
+  <script src="/serve_asset?o=bootstrap.min.js"></script>
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <script src="/serve_asset?o=ie10-viewport-bug-workaround.js"></script>
 </body>
 </html>
