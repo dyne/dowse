@@ -301,6 +301,7 @@ exec_next_cmd() {
 		    return 1 }
 
 		# TODO: check if valid mac address
+		launch ebtables -F
 		launch ebtables -A FORWARD -s $mac_admin  -j ACCEPT
 		launch ebtables -A FORWARD -s $mac_wan  -j ACCEPT
 		launch ebtables -A FORWARD -d $mac_admin  -j ACCEPT
@@ -310,7 +311,22 @@ exec_next_cmd() {
 
 		cat <<EOF | $sql $db[things]
 UPDATE found SET authorized='DISABLE_TO_BROWSE'
-WHERE ( $ip_admin not in (ip4 , ip6))
+WHERE ( '$ip_admin' not in (ip4 , ip6))
+EOF
+		
+		# Delete the ACK request
+		print "DEL ACK_${action}_$epoch" | redis dynamic
+		
+		;; 
+	    ALL_THINGS_ON)
+
+		# TODO: check if valid mac address
+		launch ebtables -F
+		launch ebtables -A FORWARD -j ACCEPT
+		
+
+		cat <<EOF | $sql $db[things]
+UPDATE found SET authorized='ENABLE_TO_BROWSE'
 EOF
 		
 		
@@ -318,7 +334,8 @@ EOF
 		print "DEL ACK_${action}_$epoch" | redis dynamic
 		
 		;; 
-		THING_OFF|THING_ON)
+
+	    THING_OFF|THING_ON)
 			# 1st arg is the ip to block
 			local macb
 			macb=${cmd[(ws:,:)5]}

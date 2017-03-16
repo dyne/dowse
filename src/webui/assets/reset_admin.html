@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- reset_admin.html -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE-edge">
   <meta http-equiv="refresh" content="15">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title><!--TMPL_VAR name="title"--></title>
+  <title>Reset Admin | Dowse</title>
 
   <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
   <link rel="stylesheet" href="/serve_asset?o=starter-template.css">
@@ -59,7 +60,25 @@
   <div class="container">
     <img src="/serve_asset?o=dowseLogo.png" width="200">
     <div class="row">
-      <h3>You have been redirected here because your device is not authorized to make admin operations</h3>
+      <div class="col-md-4">
+        <h3>Reset Admin</h3>
+      </div>
+
+      <div class="col-md-4">
+        <h4>You have been redirected here because your device is not authorized to make admin operations</h4>
+      </div>
+
+      <div class="col-md-4">
+        <h3>Your Device Info:</h3>
+        <p>
+          <strong>Name:</strong> <!--TMPL_VAR name="cur_name"--><br>
+          <strong>MAC:</strong> <!--TMPL_VAR name="cur_macaddr"--><br>
+          <strong>IP:</strong> <!--TMPL_VAR name="cur_ip"--><br>
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
       <ul>
         <li>Click on the <strong>Start reset procedure</strong> button.</li>
         <li>Reboot the Dowse station within 30 seconds.</li>
@@ -69,11 +88,16 @@
 
     <div class="row">
       <hr>
-      <div type="button" class="btn-dowse">
-        <a href="/start_reset_procedure">Start reset procedure</a>
-      </div>
+      <form action="/start_reset_procedure" method="GET">
+        <button class="btn-dowse">Start reset procedure</button>
+      </form>
     </div>
   </div>
   <!--/TMPL_IF-->
+
+  <script src="/serve_asset?o=jquery.min.js"></script>
+  <script src="/serve_asset?o=bootstrap.min.js"></script>
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <script src="/serve_asset?o=ie10-viewport-bug-workaround.js"></script>
 </body>
 </html>

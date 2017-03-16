@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- captive_portal_admin.html -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE-edge">
   <meta http-equiv="refresh" content="15">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title><!--TMPL_VAR name="title"--></title>
+  <title>Captive Portal (Admin) | Dowse</title>
 
   <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
   <link rel="stylesheet" href="/serve_asset?o=starter-template.css">
@@ -59,10 +60,26 @@
   <div class="container">
     <img src="/serve_asset?o=dowseLogo.png" width="200">
     <div class="row">
-      <h2>Dowse Captive Portal</h2>
-      <p>This is the admin page of the Dowse "monitored" network. From here you
-      can enable network access to the client that has asked to use your
-      network.</p>
+      <div class="col-md-4">
+        <h2>Captive Portal</h2>
+      </div>
+
+      <div class="col-md-4">
+        <p>
+          This is the admin page of the Dowse "monitored" network. From here you
+          can enable network access to the client that has asked to use your
+          network.
+        </p>
+      </div>
+
+      <div class="col-md-4">
+        <h3>Your Device Info:</h3>
+        <p>
+          <strong>Name:</strong> <!--TMPL_VAR name="cur_name"--><br>
+          <strong>MAC:</strong> <!--TMPL_VAR name="cur_macaddr"--><br>
+          <strong>IP:</strong> <!--TMPL_VAR name="cur_ip"--><br>
+        </p>
+      </div>
     </div>
 
     <div class="row" id="event">
@@ -109,12 +126,12 @@
                     <p>
                       <strong>Action:</strong> Do you want to enable it?</strong>
                     </p>
-                    <div type="button" class="btn-dowse">
-                      <a href="/modify_event?id=<!--TMPL_VAR name="id"-->&action=enable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">YES</a>
-                    </div>
-                    <div type="button" class="btn-dowse">
-                      <a href="/modify_event?id=<!--TMPL_VAR name="id"-->&action=disable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">NO</a>
-                    </div>
+                    <form action="/modify_event?id=<!--TMPL_VAR name="id"-->&action=enable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">
+                      <button class="btn-dowse">YES</button>
+                    </form>
+                    <form action="/modify_event?id=<!--TMPL_VAR name="id"-->&action=disable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">
+                      <button class="btn-dowse">NO</button>
+                    </form>
                   </div>
 
                 </div>
@@ -160,5 +177,10 @@
     </div>
   </div>
   <!--/TMPL_IF-->
+
+  <script src="/serve_asset?o=jquery.min.js"></script>
+  <script src="/serve_asset?o=bootstrap.min.js"></script>
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <script src="/serve_asset?o=ie10-viewport-bug-workaround.js"></script>
 </body>
 </html>
