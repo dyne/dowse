@@ -313,7 +313,11 @@ exec_next_cmd() {
 UPDATE found SET authorized='DISABLE_TO_BROWSE'
 WHERE ( '$ip_admin' not in (ip4 , ip6))
 EOF
-		
+
+				cat <<EOF | $sql $db[things]
+UPDATE parameter SET value='OFF' WHERE variable='state all things'
+EOF
+
 		# Delete the ACK request
 		print "DEL ACK_${action}_$epoch" | redis dynamic
 		
@@ -328,7 +332,11 @@ EOF
 		cat <<EOF | $sql $db[things]
 UPDATE found SET authorized='ENABLE_TO_BROWSE'
 EOF
-		
+
+		cat <<EOF | $sql $db[things]
+UPDATE parameter SET value='ON' WHERE variable='state all things'
+EOF
+
 		
 		# Delete the ACK request
 		print "DEL ACK_${action}_$epoch" | redis dynamic

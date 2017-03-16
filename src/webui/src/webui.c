@@ -96,6 +96,10 @@ int thing_show(struct http_request *req) {
 
     attributes=attrinit();
 
+
+    sprintf(line,"select value as cur_state from parameter where variable='state all things'");
+    sql_select_into_attributes(line,NULL,&attributes);
+
     load_current_identity(req,&attributes);
 
     get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
