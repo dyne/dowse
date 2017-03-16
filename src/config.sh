@@ -79,6 +79,18 @@ description    text   COMMENT "'" what ? "'"
 #--- that column shall be created by a trigger
 print - "$eventindex" > $S/build/db/event.idx
 
+
+# A table to contain configuration parameter
+parameterindex='
+variable varchar(32) PRIMARY KEY
+value  varchar(32) 
+'
+
+#--- 
+print - "$parameterindex" > $S/build/db/parameter.idx
+
+
+
 #
 #print - "ALTER TABLE event ADD CONSTRAINT fk_macaddr FOREIGN KEY (macaddr) REFERENCES found(macaddr) ON DELETE CASCADE" > $S/build/db/constraint.idx
 #print - "ALTER TABLE event ADD CONSTRAINT fk_macaddr FOREIGN KEY (macaddr) REFERENCES found(macaddr) " > $S/build/db/constraint.idx
