@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- welcome.html -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE-edge">
   <meta http-equiv="refresh" content="15">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title><!--TMPL_VAR name="title"--></title>
+  <title>Welcome | Dowse</title>
 
   <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
   <link rel="stylesheet" href="/serve_asset?o=starter-template.css">
@@ -59,9 +60,24 @@
   <div class="container">
     <img src="/serve_asset?o=dowseLogo.png" width="200">
     <div class="row">
-      <h2>Welcome to Dowse</h2>
-      <p>I am the homepage of Dowse. From here you can see your Dowse device
-      statistics, things on your network, and more...</p>
+      <div class="col-md-4">
+        <p> </p>
+      </div>
+
+      <div class="col-md-4">
+        <h3>Welcome</h3>
+        <p>I am the homepage of Dowse. From here you can see your Dowse device
+        statistics, things on the network, etc...
+      </div>
+
+      <div class="col-md-4">
+        <h3>Your Device Info:</h3>
+        <p>
+          <strong>Name:</strong> <!--TMPL_VAR name="cur_name"--><br>
+          <strong>MAC:</strong> <!--TMPL_VAR name="cur_macaddr"--><br>
+          <strong>IP:</strong> <!--TMPL_VAR name="cur_ip"--><br>
+        </p>
+      </div>
     </div>
 
     <div class="row">
@@ -99,20 +115,25 @@
           </tbody>
         </table>
       </div>
-      <div type="button" class="btn-dowse">
-        <a href="/reset_admin">Reset admin devices</a>
-      </div>
+      <form action="/reset_admin" method="GET">
+        <button class="btn-dowse">Reset admin devices</button>
+      </form>
     </div>
     <!--TMPL_ELSE-->
     <div class="row">
       <hr>
       <h3>Your administrator device is not configured.</h3>
-      <div type="button" class="btn-dowse">
-        <a href="/test_admin">Use this device as the administrator</a>
-      </div>
+      <form action="/test_admin" method="GET">
+        <button class="btn-dowse">Use this device as the administrator</button>
+      </form>
     </div>
     <!--/TMPL_IF-->
   </div>
   <!--/TMPL_IF-->
+
+  <script src="/serve_asset?o=jquery.min.js"></script>
+  <script src="/serve_asset?o=bootstrap.min.js"></script>
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <script src="/serve_asset?o=ie10-viewport-bug-workaround.js"></script>
 </body>
 </html>

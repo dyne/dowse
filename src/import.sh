@@ -93,9 +93,12 @@ pkg-download() {
     return 0
 }
 
-local nmap_macs="https://svn.nmap.org/nmap/nmap-mac-prefixes"
-notice "importing latest nmap MAC database"
-curl -L -o "$S/build/nmap-mac" "$nmap_macs"
+[[ "$1" = "nmap-macs" ]] && {
+	local nmap_macs="https://svn.nmap.org/nmap/nmap-mac-prefixes"
+	notice "importing latest nmap MAC database"
+	curl -L -o "$S/build/nmap-mac" "$nmap_macs"
+	exit 0
+}
 
 # Check if Apt based
 command -v apt-get >/dev/null && {
