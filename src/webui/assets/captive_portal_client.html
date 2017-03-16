@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- captive_portal_client.html -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE-edge">
   <meta http-equiv="refresh" content="15">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title><!--TMPL_VAR name="title"--></title>
+  <title>Captive Portal | Dowse</title>
 
   <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
   <link rel="stylesheet" href="/serve_asset?o=starter-template.css">
@@ -59,21 +60,19 @@
   <div class="container">
     <img src="/serve_asset?o=dowseLogo.png" width="200">
     <div class="row">
-      <h2>Dowse Captive Portal</h2>
-      <p>
-        I am the welcome page of the Dowse "monitored" network. From here you
-        can register on this network.
-      </p>
-    </div>
-
-    <div class="row">
-      <hr>
-
-      <div class="row">
-        <h3>Enable this MAC address by inserting the "name" to be recognized by the administrator.</h3>
+      <div class="col-md-4">
+        <h2>Captive Portal</h2>
+        <p>
+          I am the welcome page of the Dowse "monitored" network.<br>
+          From here you can register on this network.
+        </p>
       </div>
 
-      <div class="row">
+      <div class="col-md-4">
+        <p>
+          Enable this MAC address by inserting the "name" to be recognized by the administrator.
+        </p>
+
         <form class="form-inline" action="/modify_things" method="POST">
           <div class="form-group">
             <div class="input-group">
@@ -87,12 +86,12 @@
             <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-pencil"></span></button>
           </div>
         </form>
+        <!--TMPL_IF name="client_name" value=""-->
+        <p>Please insert a descriptive name for your device.</p>
+        <!--TMPL_ELSE-->
+        <p>You should wait for the admin authorization.</p>
+        <!--/TMPL_IF-->
       </div>
-      <!--TMPL_IF name="client_name" value=""-->
-      <h3>Please insert a descriptive name for your device.</h3>
-      <!--TMPL_ELSE-->
-      <h3>You should wait for the admin authorization.</h3>
-      <!--/TMPL_IF-->
     </div>
     <!--TMPL_IF name="admin_device"-->
     <div class="row">
