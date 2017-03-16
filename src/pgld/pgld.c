@@ -293,7 +293,7 @@ static int nfqueue_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nf
 	unsigned char *payload;
 	char proto[5], src[23], dst[23];  //src and dst are 23 for IP(16)+port(5) + : + NULL
 	uint32_t saddr, daddr;
-
+	do_log(LOG_INFO," called nfqueue_cb");
 	ph = nfq_get_msg_packet_hdr(nfa);
 	if (ph) {
 		id = ntohl(ph->packet_id);
@@ -356,6 +356,7 @@ static int nfqueue_cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nf
 			}
 			break;
 		case NF_IP_FORWARD:
+		  do_log(LOG_INFO,"Looking for %x",daddr);
 			found_range = blocklist_find(daddr);
 			if (!found_range) {
 				found_range = blocklist_find(saddr);
@@ -448,15 +449,20 @@ static void nfqueue_loop () {
     char buf[RECVBUFFSIZE];
 //  struct pollfd fds[1];
 
+    do_log(LOG_INFO, " into %s %d ",__FUNCTION__,__LINE__);
     if (nfqueue_bind() < 0) {
         do_log(LOG_ERR, "ERROR: Error binding to queue: %hu", queue_num);
         exit(1);
     }
 
     nh = nfq_nfnlh(nfqueue_h);
+    do_log(LOG_INFO, "  %s %d ",__FUNCTION__,__LINE__);
+    
     fd = nfnl_fd(nh);
-
+    do_log(LOG_INFO, "  %s %d ",__FUNCTION__,__LINE__);
+    
     while ((rv = recv(fd, buf, sizeof(buf), 0)) >= 0) {
+      do_log(LOG_INFO, " into while loop %s %d ",__FUNCTION__,__LINE__);
         nfq_handle_packet(nfqueue_h, buf, rv);
     }
     int err=errno;
@@ -510,7 +516,6 @@ void add_blocklist(const char *name, const char *charset) {
 
 int main(int argc, char *argv[]) {
     int opt, i;
-
     while ((opt = getopt(argc, argv, "sl:c:p:q:Q:r:a:mh" )) != -1) {
         switch (opt) {
         case 's':

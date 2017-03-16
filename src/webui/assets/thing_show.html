@@ -60,18 +60,13 @@
     <img src="/serve_asset?o=dowseLogo.png" width="200">
     <div class="row">
       <div class="col-md-4">
-        <h3>DOWSE STATUS</h3>
-        <a href="/cmd?op=ALL_THINGS_OFF">
-          <img src="/serve_asset?o=Big_BTN.png">
-        </a>
-        <div class=".btn-dowse" class="dowseStatus">GREEN</div>
-        <p>Do you want to block the whole network?</p>
+        <h3>Status</h3>
+        <a href="/cmd?op=ALL_THINGS_OFF"><img src="/serve_asset?o=Big_BTN.png" width="64"></a>
       </div>
       <div class="col-md-4">
-        <p></p>
-      </div>
+        <p> </p>
       <div class="col-md-4">
-        <p></p>
+        <p> </p>
       </div>
     </div>
 
@@ -102,8 +97,8 @@
                     <input type="hidden" name="column" value="name">
                     <input type="text" class="form-control" id="value" name="value" placeholder="<!--TMPL_VAR name="name"-->">
                   </div>
+                  <button class="btn-dowse" style="display:inline">✓</button
                 </div>
-                <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-pencil"></span></button>
                 </form>
               </td>
               <td><!--TMPL_VAR name="age"--></td>
