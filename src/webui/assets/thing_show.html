@@ -6,7 +6,7 @@
   <meta http-equiv="refresh" content="15">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title><!--TMPL_VAR name="title"--></title>
+  <title>Information Panel | Dowse</title>
 
   <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
   <link rel="stylesheet" href="/serve_asset?o=starter-template.css">
@@ -64,7 +64,11 @@
         <a href="/cmd?op=ALL_THINGS_OFF"><img src="/serve_asset?o=Big_BTN.png" width="64"></a>
       </div>
       <div class="col-md-4">
-        <p> </p>
+        <h3>Device Info:</h3>
+        <p>
+          <strong>Name:</strong> <!--TMPL_VAR "cur_name"--><br>
+          <strong>MAC:</strong> <!--TMPL_VAR "cur_macaddr"--><br>
+          <strong>IP:</strong> <!--TMPL_VAR "cur_ip"--><br>
       <div class="col-md-4">
         <p> </p>
       </div>
