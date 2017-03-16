@@ -73,6 +73,8 @@ maps+=(obj pidmap)
 vars+=(thingidx)
 # index of fields in the things database about event related table
 vars+=(eventidx)
+# configuration parameter table
+vars+=(parameteridx)
 
 # dnscrypt-proxy server settings
 vars+=(dnscrypt_ipaddr dnscrypt_key dnscrypt_name)
@@ -223,6 +225,7 @@ func "$db[things]"
 # see: dowse/build/db/thing.idx
 thingidx=$R/db/thing.idx
 eventidx=$R/db/event.idx
+parameteridx=$R/db/parameter.idx
 constraintidx=$R/db/constraint.idx
 
 act "all requirements in place"
