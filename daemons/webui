@@ -11,9 +11,10 @@ webui-exec() {
     # freq=($conf)
     # ckreq || return $?
 
-	func "launching webui on $hostname.$lan"
+    func "launching webui on $hostname.$lan"
     # TODO: chroot and drop privs
     # https://github.com/jorisvink/kore/issues/123
+    pushd $H/run
     if [[ $DEBUG = 2 ]]; then
 		hostname=$hostname \
 				domain=$lan \
@@ -29,6 +30,7 @@ webui-exec() {
 		[[ $? = 0 ]] &&
 			savepid webui $H/run/webui.pid
     fi
+    popd
 }
 
 
