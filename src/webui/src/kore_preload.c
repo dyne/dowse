@@ -12,31 +12,34 @@
 void kore_preload() {
     log_entering();
 
-    global_attributes = attrinit();
-    int rv;
+    startup_attributes = attrinit();
+    error_during_startup=0;
 
     log_redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
     if (!log_redis) {
         const char m[] = "Redis server is not running";
-        webui_add_error_message(&global_attributes, m);
+        webui_add_error_message(&startup_attributes, m);
         err(m);
 
-        rv = KORE_RESULT_ERROR;
+        error_during_startup =1;
     }
     act("Kore preload");
 
     /* Setup in redis the authorization-mac-* entry for all authorized */
-    setup_authorization(&global_attributes);
+    setup_authorization(&startup_attributes);
 
     /* Setup in redis the dns-lease-* entry for all things recognized and gived that a "name" */
-    setup_dns_lease_name(&global_attributes);
+    setup_dns_lease_name(&startup_attributes);
 
     /* */
-    rv = load_global_attributes(global_attributes);
+    if (load_global_attributes(startup_attributes)!=KORE_RESULT_OK){
+        error_during_startup=1;
+    }
 
-
-    if (rv == KORE_RESULT_ERROR) {
+    if (error_during_startup ) {
         /* La welcome page gestira' gli errori del kore_preload() */
+        err("Failed to startup Error during startup webui");
+      //  exit(-1);
     }
 
 }

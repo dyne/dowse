@@ -15,7 +15,7 @@ int serve_asset(struct http_request *req) {
 	map_t assetmap = NULL;
 	char *asset_name;
 	asset_t *rasset;
-
+	attributes_set_t attr;
 
 	http_populate_get(req);
 
@@ -39,22 +39,11 @@ int serve_asset(struct http_request *req) {
 		return(KORE_RESULT_OK);
 	}
 
-    return apply_template_and_return(req, global_attributes,asset_welcome_html,asset_len_welcome_html,200);
-	/*
-	struct kore_buf*out;
-	struct template_t tmpl;
-	out=kore_buf_alloc(0);
-	template_load(asset_welcome_html,asset_len_welcome_html,&tmpl);
-	template_apply(&tmpl,global_attributes,out);
-
-	char*html_rendered;int len;
-	html_rendered=kore_buf_release(out,&len);
-
-	http_response_header(req, "content-type", "text/html");
-	http_response(req, 200, html_rendered,len);
-
-	kore_free(html_rendered);
-
-	return(KORE_RESULT_OK);
-	 */
+	if ( ! error_during_startup ) {
+	    attr=attrinit();
+	    load_global_attributes(attr);
+	    return apply_template_and_return(req, attr,asset_welcome_html,asset_len_welcome_html,200);
+	} else {
+        return apply_template_and_return(req, startup_attributes,asset_welcome_html,asset_len_welcome_html,200);
+	}
 }
