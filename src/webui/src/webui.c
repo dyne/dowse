@@ -112,7 +112,8 @@ int thing_show(struct http_request *req) {
      * 1 -> F.macaddr <> my_macaddr
      */
     // prepare query
-    snprintf(line, ml, "SELECT (@seq := @seq +1) AS seq_number, F.*, "
+    snprintf(line, ml, "SELECT (CASE WHEN upper('%s') = upper(macaddr) THEN 'yes'"
+            "                   ELSE 'no' END ) as self, (@seq := @seq +1) AS seq_number, F.*, "
             " ( CASE WHEN upper('%s') not in (select UPPER(macaddr) from found where admin='yes') THEN 0" /* se il macaddr della req non e' in admin => 0*/
             "        WHEN UPPER(F.macaddr) <> upper('%s') THEN 1 " /* se il found.macaddr e' diverso da quello della request => 1 */
             "        ELSE 0 " /* altri casi non dovrebbero esserci ma vale la : "se non esplicitamente detto => 0" */
@@ -121,6 +122,7 @@ int thing_show(struct http_request *req) {
             " JOIN ( SELECT @seq := 0 ) r "
             "%s "
             "ORDER BY F.age DESC",
+            req_macaddr,
             req_macaddr,
             req_macaddr,
             where_condition);

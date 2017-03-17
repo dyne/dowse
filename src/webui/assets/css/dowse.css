@@ -27,10 +27,23 @@ footer
     padding: 30px 0;
 }
 
+tr
+{
+    tr: nth-child(even) {background-color: #f2f2f2};
+}
+
 /*
  * Off Canvas
  * --------------------------------------------------
  */
+
+@font-face{
+  font-family: 'Aalta DIN';
+  font-style:  normal;
+  font-weight: 400;
+  /*  src: url(assets/fonts/alte-din-1451-mittelschrift/din1451alt.ttf) format('ttf');*/
+  src: url(/serve_asset?o=din1451alt.ttf) format('ttf');
+}
 
 @media screen and (max-width: 767px)
 {
@@ -82,6 +95,15 @@ footer
 
 .btn-dowse
 {
+    background: #767B7C
+    border-radius: 5px;
+    font-family: DINCondensed-Bold;
+    font-size: 16px;
+    color: #000000;
+}
+
+.btn-dowse_sml
+{
     background: #F2CA68;
     border-radius: 5px;
     font-family: DINCondensed-Bold;
@@ -94,6 +116,19 @@ footer
     font-family: DINCondensed;
     font-size: 14;
     font-weight: bold;
+}
+
+.dowseIsAdmin
+{
+    background-color: #059BA8;
+    border: 1px solid #979797;
+}
+
+
+.dowseIsNotAdmin
+{
+    background: #767B7C;
+    border: 1px solid #979797;
 }
 
 .serviceGREEN
@@ -116,3 +151,30 @@ footer
     padding-right: 30;
 }
 
+.messages
+{
+    font-family: Aalta DIN;
+    color: #a0db4d;
+}
+
+
+tr.self
+{
+    background-color: #cdb3b3;
+}
+
+tr
+{
+    background-color: #D8D8D8;
+}
+
+.admin
+{
+    width: 20;
+    height: 20;
+    background-color: #ff9fb5;
+    font-weight: bold;
+    text-decoration: blink;
+    color: #f31b1b;
+    border-radius: 50;
+}

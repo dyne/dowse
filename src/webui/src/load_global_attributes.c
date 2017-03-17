@@ -24,7 +24,7 @@
 
 int load_global_attributes(attributes_set_t attr) {
     log_entering();
-    int rv;
+    int rv ;
 
     WEBUI_DEBUG
     /**/
@@ -39,5 +39,5 @@ int load_global_attributes(attributes_set_t attr) {
     }
     attr=attrcat(attr,"dowse_network_name","not yet available");
 
-    return rv;
+    return (rv>0);
 }
