@@ -19,6 +19,9 @@ validator   v_command   regex   ^(THING_ON)|(THING_OFF)|(ALL_THINGS_OFF)|(ALL_TH
 validator   v_ip_valid  function v_ip_validate
 validator   v_ip_authorized_browse function v_ip_authorized_browse
 validator   v_column_alterable regex ^(name)$
+validator   v_priv_column_alterable regex ^(admin)$
+validator   v_yes_no regex ^(yes|no)$
+
 validator   v_alphanumeric regex ^.*$
 validator   v_thing_name regex ^[a-zA-Z0-9_-]*$
 validator   v_id regex ^[0-9]*$
@@ -86,6 +89,15 @@ domain * {
 	static     /things          thing_show
 	params get /things {
 		validate macaddr v_macaddr			
+	}
+
+	# endpoint used to modify privileged column
+	static /modify_priv_things modify_things auth_admin
+	params post /modify_priv_things {
+               validate macaddr v_macaddr				
+	       validate column v_priv_column_alterable
+	       validate value v_yes_no
+	       validate url_from v_local_url
 	}
 
 	# endpoint used to modify column

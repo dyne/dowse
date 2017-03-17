@@ -94,6 +94,7 @@
               <th>Vendor</th>
               <th>MAC Address</th>
               <th>On/Off</th>
+	      <th>is Admin?</th>
             </tr>
           </thead>
           <tbody>
@@ -139,17 +140,60 @@
                 <!--TMPL_ELSE-->
                 <td><img src="/serve_asset?o=na_state-16x16.png" alt="n/a state" title="n/a state"></td>
                 <!--/TMPL_IF-->
-              <!--TMPL_ELSE-->
-                <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"-->
-                <td><img src="/serve_asset?o=button_OFF.png" width="28" alt="network access disabled"></td>
-                <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
-                <td><img src="/serve_asset?o=button_OFF.png" width="28" alt="network access disabled"></td>
-                <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
-                <td><img src="/serve_asset?o=button_ON.png" width="28" alt="network access enabled"></td>
-                <!--TMPL_ELSE-->
-                <td><img src="/serve_asset?o=na_state-16x16.png" alt="network state unavailable"></td>
-                <!--/TMPL_IF-->
-              <!--/TMPL_IF-->
+		
+	        <td>
+		<!--TMPL_IF name="admin" value="yes"-->
+	 	 <form class="form-inline" action="/modify_priv_things" method="post">
+		   <div class="form-group">
+		     <div class="input-group">
+		       <input type="hidden" name="url_from" value="/things">
+		       <input type="hidden" name="macaddr" value="<!--TMPL_VAR name="macaddr"-->">
+		       <input type="hidden" name="column" value="admin">
+		       <input type="hidden" name="value"  value="no">
+		     </div>
+		     <button>
+		       <img src="/serve_asset?o=button_ON.png" width="28" alt="admin privileges enabled" title="disable admin privileges">
+		     </button>
+		   </div>
+		 </form>
+		 <!--TMPL_ELSE-->
+		 <form class="form-inline" action="/modify_priv_things" method="post">
+		   <div class="form-group">
+		     <div class="input-group">
+		       <input type="hidden" name="url_from" value="/things">
+		       <input type="hidden" name="macaddr" value="<!--TMPL_VAR name="macaddr"-->">
+		       <input type="hidden" name="column" value="admin">
+		       <input type="hidden" name="value"  value="yes">		       
+		     </div>
+		     <button>
+		       <img src="/serve_asset?o=button_OFF.png" width="28" alt="admin privileges disabled" title="enable admin privileges">
+		     </button>
+		   </div>
+		 </form>
+		<!--/TMPL_IF-->
+		</td>
+
+		<!--TMPL_ELSE--> <!--- of IF name=can_i_disable_it" -->
+		
+                  <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"-->
+                  <td><img src="/serve_asset?o=button_OFF.png" width="28" alt="network access disabled"></td>
+                  <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
+                  <td><img src="/serve_asset?o=button_OFF.png" width="28" alt="network access disabled"></td>
+                  <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
+                  <td><img src="/serve_asset?o=button_ON.png" width="28" alt="network access enabled"></td>
+                  <!--TMPL_ELSE-->
+                  <td><img src="/serve_asset?o=na_state-16x16.png" alt="network state unavailable"></td>
+                  <!--/TMPL_IF-->
+
+ 	         <td>
+		  <!--TMPL_IF name="admin" value="yes"-->
+		  <img src="/serve_asset?o=button_ON.png" width="28" alt="admin privileges enabled" title="admin privileges enabled">
+		  <!--TMPL_ELSE-->
+		  <img src="/serve_asset?o=button_OFF.png" width="28" alt="admin privileges disabled" title="admin privileges disabled">
+		  <!--/TMPL_IF-->
+		 </td>
+		<!--/TMPL_IF-->
+
             </tr>
           <!--/TMPL_LOOP-->
           </tbody>
