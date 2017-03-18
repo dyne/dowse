@@ -23,7 +23,7 @@
 blend_name="dowse"
 
 ## array of dependencies
-eval "$(curl https://raw.githubusercontent.com/dyne/dowse/master/ops/dowse_install.sh | grep '^blend_packages')"
+eval "$(curl -s https://raw.githubusercontent.com/dyne/dowse/master/ops/dowse_install.sh | grep '^blend_packages')"
 
 blend_preinst() {
 	fn blend_preinst
