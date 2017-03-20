@@ -28,12 +28,8 @@ int load_global_attributes(attributes_set_t attr) {
 
     WEBUI_DEBUG
     /**/
-    if (check_if_reset_admin_device()) {
-        WEBUI_DEBUG
-        rv=reset_admin_device();
-    } else {
-        func("load admin device into global attributes");
-        rv = sql_select_into_attributes( "SELECT (CASE WHEN upper('%s') = upper(macaddr) THEN 'yes'"
+    func("load admin device into global attributes");
+    rv = sql_select_into_attributes( "SELECT (CASE WHEN upper('%s') = upper(macaddr) THEN 'yes'"
             "                   ELSE 'no' END ) as self, (@seq := @seq +1) AS seq_number,"
             "upper(macaddr) as macaddr,F.* "
             " FROM found F "
@@ -41,7 +37,7 @@ int load_global_attributes(attributes_set_t attr) {
             " WHERE admin='yes'",
             "admin_device",
             &attr);
-    }
+
     attr=attrcat(attr,"dowse_network_name","not yet available");
 
     return (rv>=0);

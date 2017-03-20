@@ -24,7 +24,10 @@ void kore_preload() {
         error_during_startup =1;
     }
     act("Kore preload");
-
+    if (check_if_reset_admin_device()) {
+        WEBUI_DEBUG
+        reset_admin_device();
+    }
     /* Setup in redis the authorization-mac-* entry for all authorized */
     setup_authorization(&startup_attributes);
 
