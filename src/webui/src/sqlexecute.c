@@ -29,7 +29,7 @@ int sqlexecute(char*command,attributes_set_t *ptr_attrl){
   // Execute the statement
   if (mysql_query(db, command)) {
     show_mysql_error(db,ptr_attrl);
-    return KORE_RESULT_ERROR;
+    return (KORE_RESULT_ERROR);
   }
 
   WEBUI_DEBUG;
