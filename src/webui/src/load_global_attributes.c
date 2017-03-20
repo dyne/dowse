@@ -33,7 +33,12 @@ int load_global_attributes(attributes_set_t attr) {
         rv=reset_admin_device();
     } else {
         func("load admin device into global attributes");
-        rv = sql_select_into_attributes( "SELECT upper(macaddr),ip4,ip6 FROM found WHERE admin='yes'",
+        rv = sql_select_into_attributes( "SELECT (CASE WHEN upper('%s') = upper(macaddr) THEN 'yes'"
+            "                   ELSE 'no' END ) as self, (@seq := @seq +1) AS seq_number,"
+            "upper(macaddr) as macaddr,F.* "
+            " FROM found F "
+            " JOIN ( SELECT @seq := 0 ) r "
+            " WHERE admin='yes'",
             "admin_device",
             &attr);
     }
