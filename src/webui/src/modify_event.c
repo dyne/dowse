@@ -34,7 +34,6 @@ int modify_event(struct http_request * req) {
     PARSE_PARAMETER(macaddr);
 
     CHECK_PARAMETER();
-
     /**/
     WEBUI_DEBUG
     ;
@@ -59,7 +58,7 @@ int modify_event(struct http_request * req) {
 
     /* choose the action to execute */
     if (strcmp(action,"enable_browse")==0) {
-        int rv=change_authorization_to_browse(req,macaddr,"","",redis,1);
+        int rv=change_authorization_to_browse(req,macaddr,"","",redis,"THING_ON");
         if (rv!=KORE_RESULT_OK) {
             return rv;
         }
@@ -69,7 +68,7 @@ int modify_event(struct http_request * req) {
     }
 
     if (strcmp(action,"disable_browse")==0) {
-        int rv=change_authorization_to_browse(req,macaddr,"","",redis,0);
+        int rv=change_authorization_to_browse(req,macaddr,"","",redis,"THING_OFF");
         if (rv!=KORE_RESULT_OK) {
             return rv;
         }
