@@ -41,6 +41,12 @@ int serve_asset(struct http_request *req) {
 
 	if ( ! error_during_startup ) {
 	    attr=attrinit();
+
+	    sprintf(line,"select value as cur_state from parameter where variable='state all things'");
+	    sql_select_into_attributes(line,NULL,&attr);
+
+	    load_current_identity(req,&attr);
+
 	    load_global_attributes(attr);
 	    return apply_template_and_return(req, attr,asset_welcome_html,asset_len_welcome_html,200);
 	} else {
