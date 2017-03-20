@@ -36,8 +36,7 @@ int reset_admin(struct http_request * req) {
     get_ip_from_request(req, &ipaddr_type, &ipaddr_value);
     if ((strcmp(ipaddr_type, "ipv4") != 0)
             && (strcmp(ipaddr_type, "ipv6") != 0)) {
-        err(
-                "Can retrieve IP address from request and proc file system");
+        err("Can't retrieve IP address from request and proc file system");
         return KORE_RESULT_ERROR;
     }
 
@@ -45,6 +44,7 @@ int reset_admin(struct http_request * req) {
 
     out = kore_buf_alloc(0);
 
+    func(" %s %d rv== %d",__FILE__,__LINE__,rv);
     if (rv == _ADMIN_NOT_CONFIGURED_) {
         /* admin is not configured so take the ip from connection and grant it the admin privileges */
         char m[1024];
@@ -56,11 +56,6 @@ int reset_admin(struct http_request * req) {
                    return show_generic_message_page(req,attr);
         }
         /* Se la tupla da aggiornare non c'e' la aggiunge */
-/*        snprintf(m,sizeof(m),
-                "UPDATE found SET admin='yes' WHERE %s = '%s'",
-                (strcmp(ipaddr_type,"ipv4")==0?"ip4":"ip6"),
-                ipaddr_value
-        );*/
         char *iptype=(strcmp(ipaddr_type,"ipv4")==0?"ip4":"ip6");
 
         /* In this if branch the admin is not configured so
@@ -75,8 +70,10 @@ int reset_admin(struct http_request * req) {
                );
         rv=sqlexecute(m,&attr);
         if (rv==KORE_RESULT_ERROR) {
+            error("Error during admin found insert or update");
             return show_generic_message_page(req,attr);
         } else {
+            act("Admin found insert or updated");
             /*
             if (global_attributes!=NULL) {
                 attrfree(global_attributes);
@@ -86,13 +83,11 @@ int reset_admin(struct http_request * req) {
             */
 
             /* HTML message to say new admin device */
-            http_response_header(req, "location", "/");
+            http_response_header(req, "location", "/things");
             http_response(req, 302, NULL, 0);
 
             return KORE_RESULT_OK;
        }
-
-
     } else {
         /**/
         WEBUI_DEBUG
