@@ -64,9 +64,15 @@
     <div class="row">
       <div class="col-md-4">
         <h3>Network Status</h3>
+	<!--TMPL_IF name="cur_state" value="ON"-->
         <a href="/cmd?op=ALL_THINGS_OFF">
           <img src="/serve_asset?o=Big_BTN.png" width="64" class="center-block" alt="network access enabled" title="disable network access for all things">
         </a>
+	<!--TMPL_ELSIF name="cur_state" value="OFF"-->
+	<a href="/cmd?op=ALL_THINGS_ON">
+          <img src="/serve_asset?o=Big_BTN_off.png" width="64" class="center-block" alt="network access enabled" title="enable network access for all things">
+	</a>
+	<!--/TMPL_IF-->
       </div>
       <div class="col-md-4">
         <h3>Things on the network</h3>
