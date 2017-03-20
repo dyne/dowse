@@ -31,7 +31,12 @@ int reset_admin(struct http_request * req) {
     char *ipaddr_type;
     char *ipaddr_value;
 
-    attr = attrinit();
+    attr=attrinit();
+
+    sprintf(line,"select value as cur_state from parameter where variable='state all things'");
+    sql_select_into_attributes(line,NULL,&attr);
+
+    load_current_identity(req,&attr);
 
     get_ip_from_request(req, &ipaddr_type, &ipaddr_value);
     if ((strcmp(ipaddr_type, "ipv4") != 0)

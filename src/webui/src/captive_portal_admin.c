@@ -31,6 +31,10 @@ int captive_portal_admin(struct http_request * req) {
     out = kore_buf_alloc(0);
 	attr=attrinit();
 
+    sprintf(line,"select value as cur_state from parameter where variable='state all things'");
+    sql_select_into_attributes(line,NULL,&attr);
+
+    load_current_identity(req,&attr);
 	/**/
 
     sql_select_into_attributes(

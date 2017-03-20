@@ -30,7 +30,12 @@ int captive_portal_client(struct http_request * req) {
     size_t len;
     out = kore_buf_alloc(0);
     int bad_parsing=0;
-    attr = attrinit();
+    attr=attrinit();
+
+    sprintf(line,"select value as cur_state from parameter where variable='state all things'");
+    sql_select_into_attributes(line,NULL,&attr);
+
+    load_current_identity(req,&attr);
 	/**/
 
     http_populate_get(req);
