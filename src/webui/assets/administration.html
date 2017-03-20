@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE-edge">
+  <meta http-equiv="refresh" content="15">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title><!--TMPL_VAR name="title"--></title>
+
+  <link rel="stylesheet" href="/serve_asset?o=bootstrap.min.css">
+  <link rel="stylesheet" href="/serve_asset?o=bootstrap-theme.min.css">
+</head>
+<body>
+  <nav class="navbar navbar-inverse">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Dowse WebUI</a>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="/">index</a></li>
+          <li class="active"><a href="/serve_asset?o=things_list.html">things</a></li>
+          <li><a href="http://dowse.it:29999">netdata</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!--TMPL_IF name="message_loop"-->
+  <div class="container">
+    <div class="panel-body">
+     <div class="panel panel-error">
+       <div class="panel-heading">
+          something has gone wrong.
+        </div>
+        <div class="panel-body">
+        <!--TMPL_LOOP name="message_loop"-->
+        <div class="alert alert-<!--TMPL_VAR name="level"-->">
+          <strong class="text-capitalize"><!--TMPL_VAR name="level"--></strong>
+          <p><!--TMPL_VAR name="text"--></p>
+        </div>
+        <!--/TMPL_LOOP-->
+        </div>
+      </div>
+    </div>
+  <!--TMPL_ELSE -->
+  <div class="container">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <!--TMPL_VAR name="title"-->
+      </div>
+      <div class="panel-body">
+        <p>Show all info gathered </p>
+        <table class="table table-striped">
+          <thead>
+            <td>Name</td>
+            <td>Hostname</td>
+            <td>Last seen</td>
+            <td>First seen</td>
+            <td>Notes</td>
+            <td>OS</td>
+            <td>Vendor</td>
+            <!--td>IPv4</td>
+            <td>IPv6</td-->
+            <td>MAC Address</td>
+            <!--td>Interface</td-->
+            <td>Authorization</td>
+          </thead>
+          <tbody>
+          </tbody>
+          <!--TMPL_LOOP name="things"-->
+          <tr>
+            <td>
+	      <form class="form-inline" action="/modify_things" method="POST">
+		<div class="form-group">
+		  <div class="input-group">
+		    <input type="hidden" name="url_from" value="/things">
+		    <input type="hidden" name="macaddr" value="<!--TMPL_VAR name="macaddr"-->" >
+		    <input type="hidden" name="column" value="name" >
+		    <input type="text" class="form-control" id="value" name="value" placeholder="<!--TMPL_VAR name="name"-->">
+		  </div>
+		</div>
+		<button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-pencil"></span></button>
+	      </form>
+	    </td>
+	    
+            <td><!--TMPL_VAR name="hostname"--></td>
+            <td><!--TMPL_VAR name="last"--></td>
+            <td><!--TMPL_VAR name="age"--></td>
+            <td><!--TMPL_VAR name="notes"--></td>
+            <td><!--TMPL_VAR name="os"--></td>
+            <td><!--TMPL_VAR name="vendor"--></td>
+            <td><!--TMPL_VAR name="macaddr"--></td>
+	    <!--TMPL_IF name="can_i_disable_it" value="1"-->	   
+            <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"--> <!-- The admin didn't choose to enable or not the Things -->
+	    <td>
+	      <div class="row">
+		<div class="col-xs-6">
+		  <a role="button"  class="btn btn-success" href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+		    <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state">
+		  </a>
+		</div>
+		<div class="col-xs-6">
+		  <a role="button"  class="btn btn-danger" href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+                    <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
+		  </a>
+		</div>
+	      </div>
+            </td>
+            <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
+            <td>
+	      <div class="row">
+		<div class="col-xs-12">
+		  <a role="button"  class="btn btn-danger" href='/cmd?op=THING_ON&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+                    <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;On&#x22; state"/>
+		  </a>
+		</div>
+	      </div>
+            </td>
+            <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
+            <td>
+	      <div class="row">
+		<div class="col-xs-12">
+		  <a role="button"  class="btn btn-success" href='/cmd?op=THING_OFF&macaddr=<!--TMPL_VAR name="macaddr"-->&ip4=<!--TMPL_VAR name="ip4"-->&ip6=<!--TMPL_VAR name="ip6"-->'>
+		    <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="Switch to &#x22;Off&#x22; state">
+		  </a>
+	      </div>
+	      </div>
+            </td>
+            <!--TMPL_ELSE -->
+            <td><img src="/serve_asset?o=na_state-16x16.png"></img></td>
+            <!--/TMPL_IF-->
+	    <!--TMPL_ELSE --> <!-- can i disable it? -->
+         <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"--> <!-- The admin didn't choose to enable or not the Things -->
+	    <td>
+	      <div class="row">
+		<div class="col-xs-6">
+		  <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="It was not specified if is in &#x22;On&#x22; or &#x22;Off&#x22; state">
+		</div>
+		<div class="col-xs-6">
+	          <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="It was not specified if is in &#x22;On&#x22; or &#x22;Off&#x22; state"/>
+		</div>
+	      </div>
+            </td>
+            <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
+            <td>
+	      <div class="row">
+		<div class="col-xs-12">
+                    <img src='/serve_asset?o=BTN-off-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="it is disabled to browse is into &#x22;Off&#x22; state"/>
+		</div>
+	      </div>
+            </td>
+            <!--TMPL_ELSIF name="authorized" value="ENABLE_TO_BROWSE"-->
+            <td>
+	      <div class="row">
+		<div class="col-xs-12">
+		    <img src='/serve_asset?o=BTN-on-16x16.png' class='img-thumbnail ' alt='state_<!--TMPL_VAR name="state"-->' title="It is enabled to browse is into &#x22;On&#x22; state">
+	      </div>
+	      </div>
+            </td>
+            <!--TMPL_ELSE -->
+            <td><img src="/serve_asset?o=na_state-16x16.png"></img></td>
+            <!--/TMPL_IF-->
+	    
+	    <!--/TMPL_IF-->
+          </tr>
+          <!--/TMPL_LOOP-->
+        </table>
+      </div>
+    </div>
+  </div>
+  <!--/TMPL_IF-->
+</body>
+</html>
