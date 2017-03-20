@@ -63,7 +63,8 @@ int check_if_reset_admin_device() {
 int reset_admin_device() {
     log_entering();
 
-    int rv = sqlexecute("UPDATE found SET admin=null", &global_attributes);
+//    int rv = sqlexecute("UPDATE found SET admin=null", &global_attributes);
+    int rv = sqlexecute("UPDATE found SET admin=null", &startup_attributes);
     if (rv == KORE_RESULT_OK) {
         unlink(RESET_ADMIN_FILE);
     }
