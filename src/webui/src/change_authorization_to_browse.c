@@ -33,16 +33,19 @@
 int received_ack_or_timeout =0;
 
 /*----*/
-
-extern redisContext *redis_context;
+//extern redisContext *redis_context;
 
 char key_name[256];
 
 void  timeout_handler(int sig)
 {
  redisReply   *reply = NULL;
+
+ redisContext *redis = NULL;
   signal(SIGALRM, SIG_IGN);
-  reply = cmd_redis(redis_context,"DEL ACK_%s",key_name);
+  /* Connecting with Redis */
+  redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+  reply = cmd_redis(redis,"DEL ACK_%s",key_name);
 
   notice("timeout expired about request %s ",key_name);
   if(reply) freeReplyObject(reply);
@@ -60,7 +63,8 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
     char *ipaddr_type,*calling_ipaddr;
     get_ip_from_request(req,&ipaddr_type,&calling_ipaddr);
 
-    /* calculating Epoch time*/
+    WEBUI_DEBUG;
+            /* calculating Epoch time*/
     struct timeval tp;
     struct timezone tz;
     gettimeofday(&tp,&tz);
@@ -69,14 +73,19 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
     int timeout_sec = 5;
 
     snprintf(epoch,sizeof(epoch),"%lu",tp.tv_sec);
-
+    WEBUI_DEBUG;
     /* Construct command to publish on Redis channel */
-    snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,action,epoch,to_upper(macaddr),ip4,ip6);
+    snprintf(command,sizeof(command),"CMD,%s,%s,%s,%s,%s,%s",calling_ipaddr,action,epoch,to_upper(macaddr),(ip4?ip4:""),(ip6?ip6:""));
+    WEBUI_DEBUG;
 
     /* We prepare the ack request */
     snprintf(key_name,sizeof(key_name),"ACK_%s_%s",action,epoch);
+    WEBUI_DEBUG;
+
     reply = cmd_redis(redis,"SET %s ACK_REQUESTED",key_name);
     if(reply) freeReplyObject(reply);
+
+    WEBUI_DEBUG;
 
     reply = cmd_redis(redis,"EXPIRE  %s %d",key_name,2*timeout_sec);
     if(reply) freeReplyObject(reply);
@@ -104,6 +113,7 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
         sleep(1);
     };
     signal(SIGALRM, SIG_IGN);
+    WEBUI_DEBUG;
 
     return KORE_RESULT_OK;
 }

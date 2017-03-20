@@ -9,7 +9,6 @@
 
 #include <libdowse/dowse.h>
 
-redisContext *redis_context;
 
 int queue_command(struct http_request * req) {
     log_entering();
@@ -58,7 +57,6 @@ int queue_command(struct http_request * req) {
 
         return show_generic_message_page(req,att);
     }
-    redis_context=redis;
 
 
     if ((strcmp(op,"THING_ON")==0)||(strcmp(op,"THING_OFF")==0)) {

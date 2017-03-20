@@ -75,7 +75,7 @@ int reset_admin(struct http_request * req) {
                );
         rv=sqlexecute(m,&attr);
         if (rv==KORE_RESULT_ERROR) {
-            error("Error during admin found insert or update");
+            err("Error during admin found insert or update");
             return show_generic_message_page(req,attr);
         } else {
             act("Admin found insert or updated");
