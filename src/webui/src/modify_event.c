@@ -45,13 +45,17 @@ int modify_event(struct http_request * req) {
 
     /* Connecting with Redis */
     redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    /**/
+    WEBUI_DEBUG;
     if (!redis) {
+        WEBUI_DEBUG;
         attributes_set_t att = attrinit();
         const char m[] = "Redis server is not running";
         webui_add_error_message(&att, m);
         err(m);
         return show_generic_message_page(req, att);
     }
+    WEBUI_DEBUG;
 
     /* choose the action to execute */
     if (strcmp(action,"enable_browse")==0) {
