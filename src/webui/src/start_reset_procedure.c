@@ -53,7 +53,6 @@ int start_reset_procedure(struct http_request * req) {
 	    for (i=30;i>0;i--) {
 	        snprintf(m,sizeof(m)," Waiting other %d seconds",i);
 	        notice(m);
-	        func(m);
 	        sleep(1);
 	    }
 	    unlink(RESET_ADMIN_FILE);
