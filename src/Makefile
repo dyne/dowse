@@ -53,6 +53,7 @@ pgld:
 	@./compile.sh pgld
 
 netdata:
+	@rm -f netdata/web/version.txt
 	@./compile.sh netdata
 	@./compile.sh netdata-plugins
 
