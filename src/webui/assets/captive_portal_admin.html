@@ -126,12 +126,11 @@
                     <p>
                       <strong>Action:</strong> Do you want to enable it?</strong>
                     </p>
-                    <form action="/modify_event?id=<!--TMPL_VAR name="id"-->&action=enable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">
-                      <button class="btn-dowse">YES</button>
-                    </form>
-                    <form action="/modify_event?id=<!--TMPL_VAR name="id"-->&action=disable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->">
-                      <button class="btn-dowse">NO</button>
-                    </form>
+                    <a href="/modify_event?id=<!--TMPL_VAR name="id"-->&action=enable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->" class="btn btn-dowse">
+                      YES
+                    </a>
+                    <a action="/modify_event?id=<!--TMPL_VAR name="id"-->&action=disable_browse&macaddr=<!--TMPL_VAR name="macaddr"-->" class="btn btn-dowse">NO</a>
+                 
                   </div>
 
                 </div>
