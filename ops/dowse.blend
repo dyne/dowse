@@ -60,9 +60,7 @@ apt-get clean
 mkdir -p /var/lib/mysql-files
 chown -v dowse:dowse /var/lib/mysql-files
 EOF
-	devprocsys mount ${strapdir} || zerr
 	chroot-script -d ${blend_name}-preinst || zerr
-	devprocsys umount ${strapdir} || zerr
 }
 
 blend_postinst() {
