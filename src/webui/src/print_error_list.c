@@ -54,7 +54,7 @@ int print_error_list(struct http_request * req) {
         err(m);
         log_redis=backup_log_redis; /* Restore redis logging*/
         return apply_template_and_return(req, attr,
-                asset_print_error_list_html, asset_len_print_error_list_html,
+                "assets/print_error_list.html",
                 200);
     }
 
@@ -106,7 +106,7 @@ int print_error_list(struct http_request * req) {
     }
 
 
-    template_load(asset_print_error_list_html,asset_len_print_error_list_html,&tmpl);
+    template_load("assets/print_error_list.html",&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/

@@ -135,7 +135,7 @@ int thing_show(struct http_request *req) {
     WEBUI_DEBUG
     ;
     // load template
-    template_load(asset_thing_show_html, asset_len_thing_show_html, &tmpl);
+    template_load("assets/thing_show.html", &tmpl);
     WEBUI_DEBUG
     ;
    // attributes = attrinit();

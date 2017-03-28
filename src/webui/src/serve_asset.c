@@ -48,8 +48,8 @@ int serve_asset(struct http_request *req) {
 	    load_current_identity(req,&attr);
 
 	    load_global_attributes(attr);
-	    return apply_template_and_return(req, attr,asset_welcome_html,asset_len_welcome_html,200);
+	    return apply_template_and_return(req, attr,"assets/welcome.html",200);
 	} else {
-        return apply_template_and_return(req, startup_attributes,asset_welcome_html,asset_len_welcome_html,200);
+        return apply_template_and_return(req, startup_attributes,"assets/welcome.html",200);
 	}
 }
