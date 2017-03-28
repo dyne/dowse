@@ -20,7 +20,8 @@
  *
  */
 #include <webui.h>
-
+#include <sys/stat.h>
+#include <sys/types.h>
 /*
  *  TO BE DISCUSSED :
  * This page is filtered by the v_ip_authorized validator to be routed on captive portal functionalities
@@ -34,7 +35,6 @@
  * The this page doesn't do nothing, because it doesn't need nothing.
  * */
 int proxy(struct http_request * req) {
-    u_int8_t  *html_rendered;
     char*out;
     size_t len;
 
@@ -55,7 +55,7 @@ int proxy(struct http_request * req) {
 
     func("load_dynamic_asset of \n[%s]  %d\n", path_file, buf.st_size);
 
-    out = (u_int8_t*) malloc(sizeof(char) * (buf.st_size + 1));
+    out = (char*) malloc(sizeof(char) * (buf.st_size + 1));
 
     len = buf.st_size;
     fd = open(path_file, O_SYNC | O_RDONLY);
@@ -73,6 +73,7 @@ int proxy(struct http_request * req) {
    out[len] = 0;
    close(fd);
 
+   http_response_header(req,"content-type",identify_content_type(path_file,out,len));
    http_response(req, 200, out, len);
    return KORE_RESULT_OK;
 }
