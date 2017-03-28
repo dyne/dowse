@@ -41,8 +41,7 @@ tr
   font-family: 'Aalta DIN';
   font-style:  normal;
   font-weight: 400;
-  /*  src: url(assets/fonts/alte-din-1451-mittelschrift/din1451alt.ttf) format('ttf');*/
-  src: url(/serve_asset?o=din1451alt.ttf) format('ttf');
+  src: url(/din1451alt.ttf) format('ttf');
 }
 
 @media screen and (max-width: 767px)
