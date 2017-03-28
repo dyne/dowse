@@ -97,8 +97,7 @@ int reset_admin(struct http_request * req) {
         /**/
         WEBUI_DEBUG
         ;
-        template_load(asset_reset_admin_html, asset_len_reset_admin_html,
-                &tmpl);
+        template_load("assets/reset_admin.html",&tmpl);
         template_apply(&tmpl, attr, out);
 
         /**/

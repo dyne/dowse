@@ -11,7 +11,7 @@ int websocket_example(struct http_request *req) {
 
 	// load template
 	template_load
-		(asset_websocket_html, asset_len_websocket_html, &tmpl);
+		("assets/websocket.html", &tmpl);
 	attributes = attrinit();
 
 	address = getenv("address");

@@ -60,7 +60,7 @@ int start_reset_procedure(struct http_request * req) {
 	}
 
 	/* */
-    template_load(asset_start_reset_procedure_html,asset_len_start_reset_procedure_html,&tmpl);
+    template_load("assets/start_reset_procedure.html",&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/

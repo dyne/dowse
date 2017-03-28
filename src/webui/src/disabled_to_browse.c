@@ -33,7 +33,7 @@ int disabled_to_browse(struct http_request * req) {
 	/**/
     WEBUI_DEBUG;
 
-    template_load(asset_disabled_to_browse_html,asset_len_disabled_to_browse_html,&tmpl);
+    template_load("assets/disabled_to_browse_html",&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/

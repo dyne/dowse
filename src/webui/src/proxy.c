@@ -45,7 +45,8 @@ int proxy(struct http_request * req) {
 	/**/
     WEBUI_DEBUG;
 
-    template_load(asset_proxy_html,asset_len_proxy_html,&tmpl);
+    /* TODO leggere gli asset ? */
+    template_load("assets/proxy.html",&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/

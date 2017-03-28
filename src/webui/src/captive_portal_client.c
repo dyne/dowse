@@ -82,7 +82,7 @@ int captive_portal_client(struct http_request * req) {
 
     load_global_attributes(attr);
 
-    template_load(asset_captive_portal_client_html,asset_len_captive_portal_client_html,&tmpl);
+    template_load("assets/captive_portal_client.html",&tmpl);
    // template_apply(&tmpl,global_attributes,out);
     template_apply(&tmpl,attr,out);
 

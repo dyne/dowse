@@ -27,18 +27,17 @@ int show_generic_message_page(struct http_request *req, attributes_set_t error_m
     return apply_template_and_return(
             req,
             error_messages_attribute_list,
-            asset_generic_message_list_html,
-            asset_len_generic_message_list_html,404);
+            "assets/generic_message_list.html",404);
 }
 
-int apply_template_and_return(struct http_request *req, attributes_set_t attribute_list,u_int8_t*asset_template_html,int asset_len_html,int ret_value){
+int apply_template_and_return(struct http_request *req, attributes_set_t attribute_list,const char*path_asset_template_html,int ret_value){
     template_t tmpl;
     struct kore_buf*out;
     size_t len;
     u_int8_t *data;
     out=kore_buf_alloc(0);
 
-    template_load(asset_template_html,asset_len_html,&tmpl);
+    template_load(path_asset_template_html,&tmpl);
     template_apply(&tmpl,attribute_list,out);
 
     data=kore_buf_release(out,&len);
