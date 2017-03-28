@@ -34,15 +34,59 @@
  * The this page doesn't do nothing, because it doesn't need nothing.
  * */
 int proxy(struct http_request * req) {
+    u_int8_t  *html_rendered;
+    char*out;
+    size_t len;
+
+
+    char path_file[256];
+
+    if (strstr(req->path,"..")) {
+        return _404(req);
+    }
+
+    sprintf(path_file,"./assets/%s",req->path);
+    
+    int fd;
+
+    /* */
+    struct stat buf;
+    stat(path_file, &buf);
+
+    func("load_dynamic_asset of \n[%s]  %d\n", path_file, buf.st_size);
+
+    out = (u_int8_t*) malloc(sizeof(char) * (buf.st_size + 1));
+
+    len = buf.st_size;
+    fd = open(path_file, O_SYNC | O_RDONLY);
+    if (fd < 0) {
+        err("Error at line %s %d : %s", __FILE__, __LINE__, strerror(errno));
+        return _404(req);
+   }
+
+    int rv = read(fd, out, len);
+    if (rv != len) {
+        err("Error at line %s %d : %s trying to open [%s][%d] readed [%d]",
+                __FILE__, __LINE__, strerror(errno), path_file, len, rv);
+               return _404(req);
+   }
+   out[len] = 0;
+   close(fd);
+
+   http_response(req, 200, out, len);
+   return KORE_RESULT_OK;
+}
+
+int _404(struct http_request*req){
+
     template_t tmpl;
-	attributes_set_t attr;
+    attributes_set_t attr;
     u_int8_t  *html_rendered;
     struct kore_buf *out;
     size_t len;
     out = kore_buf_alloc(0);
-	attr=attrinit();
-
-	/**/
+    attr=attrinit();
+    /**/
     WEBUI_DEBUG;
 
     /* TODO leggere gli asset ? */
