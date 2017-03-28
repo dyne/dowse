@@ -34,7 +34,8 @@ map_t asset_init() {
 
   assetmap = hashmap_new();
 EOF
-for filename in ${(f)"$(find assets -type f)"}; do
+#for filename in ${(f)"$(find assets -type f)"}; do
+for filename in ${(f)""}; do
     print "/* $filename */"
     filename=`basename $filename`
     func $filename

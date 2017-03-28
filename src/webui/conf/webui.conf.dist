@@ -138,7 +138,7 @@ domain * {
 	static /test/2 ___webui___test_unit__A002
 	static /test/3 ___webui___test_unit__A003
 
-       dynamic ^.*$ proxy auth_browse
+       dynamic ^.*$ proxy 
 
 }
 
