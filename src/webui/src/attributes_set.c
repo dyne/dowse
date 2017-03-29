@@ -7,7 +7,10 @@
 
 /**/
 attributes_set_t attrinit(){  
-  return (attributes_set_t) calloc(sizeof(pointed_attributes_set_t),1);
+  attributes_set_t rv=(attributes_set_t) malloc(sizeof(pointed_attributes_set_t));
+  rv->loop=NULL;
+  rv->varlist=NULL;
+  return rv;
 }
 
 
@@ -27,7 +30,10 @@ attributes_set_t attr_add(attributes_set_t hm, const char*key,attributes_set_t v
 }
  
 void attrfree(attributes_set_t hm) {
-  TMPL_free_varlist(hm->varlist);
+    if (!hm) return;
+    if (hm->varlist) TMPL_free_varlist(hm->varlist);
+    if (hm->loop) TMPL_free_looplist(hm->loop);
+    free(hm);
 }
 
 

@@ -27,6 +27,7 @@ TMPL_varlist *TMPL_add_loop(TMPL_varlist *varlist,
 TMPL_loop *TMPL_add_varlist(TMPL_loop *loop, TMPL_varlist *varlist);
 
 void TMPL_free_varlist(TMPL_varlist *varlist);
+void TMPL_free_looplist(TMPL_loop*looplist);
 
 TMPL_fmtlist *TMPL_add_fmt(TMPL_fmtlist *fmtlist,
     const char *name, TMPL_fmtfunc fmtfunc);

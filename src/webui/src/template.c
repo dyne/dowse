@@ -116,10 +116,20 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
 
     unlink(out_name);
     unlink(err_name);
+
+    template_free(tmpl);
+    if (tmpl) free(tmpl);
 }
 
 void template_free(template_t *t) {
-
+    if (t->data) {
+        free(t->data);
+        t->data=NULL;
+    }
+    if (t->fmtlist) {
+        TMPL_free_fmtlist(t->fmtlist);
+        t->fmtlist=NULL;
+    }
 }
 
 WEBUI_TEST_UNIT(A001) {

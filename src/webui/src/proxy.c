@@ -75,6 +75,7 @@ int proxy(struct http_request * req) {
 
    http_response_header(req,"content-type",identify_content_type(path_file,out,len));
    http_response(req, 200, out, len);
+   free(out);
    return KORE_RESULT_OK;
 }
 
