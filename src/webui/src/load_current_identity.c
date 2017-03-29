@@ -34,6 +34,11 @@ int load_current_identity(struct http_request * req,attributes_set_t *ptr_attr) 
     (*ptr_attr)=attrcat(*ptr_attr, "cur_macaddr", req_macaddr );
     (*ptr_attr)=attrcat(*ptr_attr, "cur_ip", ipaddr_value );
 
+    sprintf(identity.ipaddr_type,"%s",ipaddr_type);
+    sprintf(identity.ipaddr_value,"%s",ipaddr_value);
+    sprintf(identity.macaddr,"%s",req_macaddr);
+
+
     /* */
     int rv;
     char sql[256];

@@ -23,6 +23,12 @@ __WEBUI_EXTERN__ struct template_t tmpl;
 //__WEBUI_EXTERN__  attributes_set_t global_attributes;
 __WEBUI_EXTERN__  attributes_set_t startup_attributes;
 __WEBUI_EXTERN__  int error_during_startup;
+__WEBUI_EXTERN__ struct identity_t{
+        char ipaddr_type[32];
+        char ipaddr_value[64];
+        char macaddr[32];
+} identity;
+
 
 /* To wrote global_messages we wrote on global_attributes set
  * __WEBUI_EXTERN__ attributes_set_t global_messages;
