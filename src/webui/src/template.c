@@ -118,7 +118,6 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
     unlink(err_name);
 
     template_free(tmpl);
-    if (tmpl) free(tmpl);
 }
 
 void template_free(template_t *t) {
