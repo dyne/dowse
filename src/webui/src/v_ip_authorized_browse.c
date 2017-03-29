@@ -38,6 +38,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
     if ((strcmp(ipaddr_type, "ipv4") != 0)
             && (strcmp(ipaddr_type, "ipv6") != 0)) {
         err("Can retrieve IP address from request and proc file system");
+        attrfree(attr);
         return KORE_RESULT_ERROR;
     }
 
@@ -49,6 +50,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
      *
      * */
     if (rv == _ENABLE_TO_BROWSE)
+        attrfree(attr);
         return KORE_RESULT_OK;
 
     /* altrimenti deve essere rediretto ad una pagina di abilitazione o di disabilitazione */
@@ -83,6 +85,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
             sprintf(url_to_redirect, "http://dowse.it/captive_admin");
         } else {
             /* it is an admin but is going on / page*/
+            attrfree(attr);
             return KORE_RESULT_OK;
         }
 
@@ -96,7 +99,7 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
 
     kore_free(ipaddr_type);
     kore_free(ipaddr_value);
-
+    attrfree(attr);
     return (KORE_RESULT_ERROR);
 }
 

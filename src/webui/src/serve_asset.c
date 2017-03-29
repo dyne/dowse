@@ -15,7 +15,7 @@ int serve_asset(struct http_request *req) {
 	map_t assetmap = NULL;
 	char *asset_name;
 	asset_t *rasset;
-	attributes_set_t attr;
+	attributes_set_t attr=NULL;
 
 	http_populate_get(req);
 

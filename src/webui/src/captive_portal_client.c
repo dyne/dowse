@@ -50,19 +50,26 @@ int captive_portal_client(struct http_request * req) {
         ip4[0] = 0;
         sprintf(ip6, "%s", identity.ipaddr_value);
     }
+    /* We add macaddress */
+     snprintf(sql,sizeof(sql),"INSERT IGNORE INTO found(macaddr,ip4,ip6) "
+     "VALUES (upper('%s'),'%s','%s') ",identity.macaddr,ip4,ip6);
+     WEBUI_DEBUG;
 
+     if ( sqlexecute(sql, &attr) != KORE_RESULT_OK) {
+         return show_generic_message_page(req,attr);
+     }
     snprintf(sql,sizeof(sql),"INSERT INTO event (level,macaddr,ip4,ip6,description) "
             "VALUES ('warning',upper('%s'),'%s','%s','%s') ",identity.macaddr,ip4,ip6, __EVENT_NEW_MAC_ADDRESS);
     WEBUI_DEBUG;
 
-    int rv = sqlexecute(sql, &attr);
-    if (rv != KORE_RESULT_OK) {
+    if ( sqlexecute(sql, &attr) != KORE_RESULT_OK) {
         return show_generic_message_page(req,attr);
     }
+
     /* */
     sprintf(sql,"select upper(macaddr) as client_macaddr,name as client_name from found where upper(macaddr)=upper('%s')",identity.macaddr);
-    rv = sql_select_into_attributes(sql,NULL,&attr);
-    if (rv != KORE_RESULT_OK) {
+
+    if (sql_select_into_attributes(sql,NULL,&attr) != KORE_RESULT_OK) {
             char m[1024];
             sprintf(m,"macaddr not in found table ");
             webui_add_error_message(&attr,m);
