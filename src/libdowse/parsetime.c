@@ -46,15 +46,21 @@ int relative_time(char *local_time, char *out) {
             }
         }
     }
-    then = mktime(&tt);
-    
     // gets what UTC time is now
-    time( &nowutc );
-    now = mktime( localtime( &nowutc ) );
+    time(&nowutc);
+    struct tm *now_tt = localtime(&nowutc);
+
+    now = mktime(now_tt);
+
+    tt.tm_gmtoff = now_tt->tm_gmtoff;
+    tt.tm_zone = now_tt->tm_zone;
+    tt.tm_isdst = now_tt->tm_isdst;
+    then = mktime(&tt);
 
     // localtime_r( &rnow, &now );
-    deltaSeconds = now - then;
-    deltaMinutes = (now / 60) - (then / 60);
+    deltaSeconds = nowutc - then;
+    deltaMinutes = (deltaSeconds / 60);
+
 
     if(deltaSeconds < 60)
         snprintf(out,256,"%ld seconds ago", deltaSeconds);
