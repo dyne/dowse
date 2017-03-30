@@ -32,7 +32,7 @@ attributes_set_t attr_add(attributes_set_t hm, const char*key,attributes_set_t v
 void attrfree(attributes_set_t hm) {
     if (!hm) return;
     if (hm->varlist) TMPL_free_varlist(hm->varlist);
-    if (hm->loop) TMPL_free_looplist(hm->loop);
+//    if (hm->loop) TMPL_free_looplist(hm->loop);
     free(hm);
 }
 

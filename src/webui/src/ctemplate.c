@@ -1493,9 +1493,10 @@ TMPL_free_fmtlist(TMPL_fmtlist *fmtlist) {
     }
 }
 
-/* TMPL_free_looplist */
+/* TMPL_free_looplist
 void
 TMPL_free_looplist(TMPL_loop*looplist){
+    return ;
     if (looplist!=NULL){
         TMPL_free_varlist(looplist->parent);
         TMPL_free_varlist(looplist->tail);
@@ -1508,6 +1509,7 @@ TMPL_free_looplist(TMPL_loop*looplist){
         free(looplist);
     }
 }
+*/
 
 /*
  * TMPL_write() outputs a template to open file pointer "out" using
