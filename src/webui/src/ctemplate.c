@@ -1135,7 +1135,7 @@ newfilename(const char *inclfile, const char *parentfile) {
  * process the tree nodes according to the data in "varlist".
  */
 
-void print_tag(const char*prefix,struct tagnode *tag){
+static void print_tag(const char*prefix,tagnode *tag){
     char text[42];
     char ending[42];
     if (tag==NULL) return;
