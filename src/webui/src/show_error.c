@@ -43,6 +43,8 @@ int apply_template_and_return(struct http_request *req, attributes_set_t attribu
     data=kore_buf_release(out,&len);
     http_response(req,ret_value,data,len);
     attrfree(attribute_list);
-    free(data);
+    if (data) {
+        free(data);
+    }
     return KORE_RESULT_OK;
 }
