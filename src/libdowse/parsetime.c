@@ -52,8 +52,6 @@ int relative_time(char *local_time, char *out) {
 
     now = mktime(now_tt);
 
-    tt.tm_gmtoff = now_tt->tm_gmtoff;
-    tt.tm_zone = now_tt->tm_zone;
     tt.tm_isdst = now_tt->tm_isdst;
     then = mktime(&tt);
 
