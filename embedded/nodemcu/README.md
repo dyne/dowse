@@ -62,3 +62,18 @@ rgb table
 		+---------+---------+--------+
 		|    1    |    1    |    1   | = off
 		+---------+---------+--------+
+
+
+panic button layout
+-------------------
+
+		(1) (2) (3)
+
+		   (4)
+		       (6)
+		   (5)
+
+situation:
+	* 3v3 on 1
+		* 2 lets through on press
+		* 3 lets through when not pressed
