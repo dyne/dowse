@@ -11,7 +11,12 @@ webui-exec() {
     # freq=($conf)
     # ckreq || return $?
 
+    
     func "launching webui on $hostname.$lan"
+
+    func "coping assets file"
+
+    [[ -r $H/run/assets ]] || { cp -R $R/webui/assets $H/run/ }
     # TODO: chroot and drop privs
     # https://github.com/jorisvink/kore/issues/123
     pushd $H/run
