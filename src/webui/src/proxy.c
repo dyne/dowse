@@ -60,13 +60,13 @@ int proxy(struct http_request * req) {
     len = buf.st_size;
     fd = open(path_file, O_SYNC | O_RDONLY);
     if (fd < 0) {
-        err("Error at line %s %d : %s", __FILE__, __LINE__, strerror(errno));
+        warn("Will return 404 due to error at line %s %d : %s ", __FILE__, __LINE__, strerror(errno));
         return _404(req);
    }
 
     int rv = read(fd, out, len);
     if (rv != len) {
-        err("Error at line %s %d : %s trying to open [%s][%d] readed [%d]",
+        warn("Will return 404 due to error at line %s %d : %s trying to open [%s][%d] readed [%d]",
                 __FILE__, __LINE__, strerror(errno), path_file, len, rv);
                return _404(req);
    }
