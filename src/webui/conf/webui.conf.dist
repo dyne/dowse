@@ -26,6 +26,7 @@ validator   v_thing_name regex ^[a-zA-Z0-9_-]*$
 validator   v_id regex ^[0-9]*$
 validator   v_event_command regex  ^(enable_browse|disable_browse)$
 validator   v_local_url regex ^/.*$
+validator   v_variable regex ^(state all things)$
 
 authentication auth_admin {
 	authentication_type request
@@ -132,6 +133,12 @@ domain * {
 
 	# special static assets
 	static     /example/websocket.html  websocket_example
+
+	# API to export SQL variable
+	static /variable variable
+	params get /variable {
+	       validate v v_variable
+	}
 
  	# Automatically generated mer 9 nov 2016, 13.05.29, CET
  	static /test/1 ___webui___test_unit__A001
