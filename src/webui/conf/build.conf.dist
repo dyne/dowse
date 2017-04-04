@@ -1,3 +1,4 @@
+cflags = -g
 # webui build config
 # You can switch flavors using: kore flavor [newflavor]
 
