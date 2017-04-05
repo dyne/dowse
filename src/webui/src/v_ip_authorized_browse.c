@@ -49,9 +49,10 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
     /* Nel DB il macaddr è presente come "Enable to browse" allora il validatore deve passare
      *
      * */
-    if (rv == _ENABLE_TO_BROWSE)
+    if (rv == _ENABLE_TO_BROWSE) {
         attrfree(attr);
         return KORE_RESULT_OK;
+    }
 
     /* altrimenti deve essere rediretto ad una pagina di abilitazione o di disabilitazione */
     /*--- ... nel DB il macaddr è presente come Disabled to browse */
@@ -85,12 +86,14 @@ int v_ip_authorized_browse(struct http_request * req, char*data) {
             sprintf(url_to_redirect, "http://dowse.it/captive_admin");
         } else {
             /* it is an admin but is going on / page*/
+            WEBUI_DEBUG;
             attrfree(attr);
             return KORE_RESULT_OK;
         }
 
     }
 
+    func(" Redirecting to [%s]", url_to_redirect);
     act(" Redirecting to [%s]", url_to_redirect);
     /* from kore.io source code: Authentication types of "request" send their own HTTP responses. */
     http_response_header(req, "location", url_to_redirect);
@@ -189,6 +192,9 @@ int _check_if_macaddress_is_authorized_to_browse(char*macaddr,
             break;
         }
         err("Value not expected [%s]", values[0]);
+    }
+    if (rv==_NOT_ENABLE_TO_BROWSE) {
+        func("Returning [%s]", __NOT_AUTHORIZED_BROWSE_STR);
     }
     mysql_free_result(result);
     mysql_close(db);
