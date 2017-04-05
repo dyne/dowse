@@ -145,7 +145,15 @@ domain * {
 	static /test/2 ___webui___test_unit__A002
 	static /test/3 ___webui___test_unit__A003
 
-       dynamic ^.*$ proxy 
+       dynamic ^/css/.*$ proxy
+       dynamic ^/img/.*$ proxy
+       dynamic ^/js/.*$ proxy
+       dynamic ^/fonts/.*$ proxy
+       dynamic ^/.[^.]*.png$ proxy
+       dynamic ^/HACKING.md$ proxy
+
+       #--- all remaining URL should be authorized to browse
+       dynamic ^.*$ proxy auth_browse
 
 }
 
