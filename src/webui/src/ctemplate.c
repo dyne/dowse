@@ -1135,6 +1135,44 @@ newfilename(const char *inclfile, const char *parentfile) {
  * process the tree nodes according to the data in "varlist".
  */
 
+static void print_tag(const char*prefix,tagnode *tag){
+    char text[42];
+    char ending[42];
+    if (tag==NULL) return;
+    switch (tag->kind) {
+        case tag_text:
+            snprintf(text,sizeof(text),"%s",tag->tag.text.start);
+            snprintf(ending,sizeof(ending),"%s", &((tag->tag.text.start)[(tag->tag.text.len-sizeof(ending)-1)]));
+            func("%s TEXT %s ......... %s",prefix,text,ending);
+            break;
+
+        case tag_var:
+            func("%s VAR %s",prefix,tag->tag.var.varname);
+            break;
+        case tag_if:
+            func("%s IF %s == %s",prefix,tag->tag.ifelse.varname,tag->tag.ifelse.testval);
+            break;
+        case tag_elsif:
+            func("%s ELSIF %s == %s",prefix,tag->tag.ifelse.varname,tag->tag.ifelse.testval);
+            break;
+        case tag_else:
+            func("%s ELSE %s == %s",prefix,tag->tag.ifelse.varname,tag->tag.ifelse.testval);
+            break;
+        case tag_endif:
+            func("%s ENDIF ",prefix);
+            break;
+        case tag_loop :
+            func("%s LOOP %s ",prefix,tag->tag.loop.loopname);
+            break;
+        case tag_endloop :
+            func("%s ENDLOOP %s ",prefix);
+            break;
+        default:
+            func("not considered [%d]",tag->kind);
+            break;
+    }
+}
+
 static void
 walk(template *t, tagnode *tag, const TMPL_varlist *varlist) {
     const char *value;
@@ -1143,6 +1181,7 @@ walk(template *t, tagnode *tag, const TMPL_varlist *varlist) {
     template *t2;
     const char *newfile;
 
+  //  print_tag("walking ",tag);
     /*
      * if t->break_level is non zero then we are unwinding the
      * recursion after encountering a TMPL_BREAK tag.  The same
@@ -1453,6 +1492,24 @@ TMPL_free_fmtlist(TMPL_fmtlist *fmtlist) {
         free(fmtlist);
     }
 }
+
+/* TMPL_free_looplist
+void
+TMPL_free_looplist(TMPL_loop*looplist){
+    return ;
+    if (looplist!=NULL){
+        TMPL_free_varlist(looplist->parent);
+        TMPL_free_varlist(looplist->tail);
+        TMPL_free_varlist(looplist->varlist);
+        if (looplist->next) {
+            TMPL_free_looplist(looplist->next);
+        }
+ //       if (looplist->name) free(looplist->name);
+
+        free(looplist);
+    }
+}
+*/
 
 /*
  * TMPL_write() outputs a template to open file pointer "out" using

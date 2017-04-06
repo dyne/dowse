@@ -87,49 +87,52 @@ int __internal_callback(attributes_set_t *data, char *item_loop_name, int argc,
 #define SIZE (256)
     int i;
 
-    attributes_set_t t;
+    attributes_set_t t=NULL;
 
-    t = attrinit();
+
+
+    if (item_loop_name!=NULL) {
+        t = attrinit();
+    }
 
     for (i = 0; i < argc; i++) { // save all fields into the template
         if (!(argv[i]))
             continue;
 
         if (strcmp(azColName[i].name, "last") == 0) {
-            char *humandate;
-            humandate = (char*) calloc(1, SIZE);
+            char humandate[SIZE];
+            memset(humandate,0,SIZE);
 
             func( "last: %s", argv[i]);
             relative_time(argv[i], humandate);
 
             if (item_loop_name == NULL) {
-                *data = attrcat(*data, "last", humandate);
+                (*data) = attrcat(*data, "last", humandate);
             } else {
                 t = attrcat(t, "last", humandate);
             }
         } else if ((strcmp(azColName[i].name, "age") == 0)
             || (strstr(azColName[i].name, "_age") !=NULL) ) {
-            char *humandate;
-            humandate = (char*) calloc(1, SIZE);
+            char humandate[SIZE];
+            memset(humandate,0,SIZE);
 
             func( "%s: %s", azColName[i].name,argv[i]);
             relative_time(argv[i], humandate);
             if (item_loop_name == NULL) {
-                *data = attrcat(*data, azColName[i].name, humandate);
+                (*data) = attrcat(*data, azColName[i].name, humandate);
             } else {
                 t = attrcat(t, azColName[i].name, humandate);
             }
         } else {
-            char *key, *value;
-            key = (char*) calloc(1, SIZE);
-            value = (char*) calloc(1, SIZE);
+            char key[SIZE], value[SIZE];
+
 
             snprintf(key, SIZE, "%s", azColName[i].name);
             snprintf(value, SIZE, "%s", argv[i]);
             func( "%s: [%s]", key, value);
 
             if (item_loop_name == NULL) {
-                *data = attrcat(*data, key,value);
+                (*data) = attrcat(*data, key,value);
             } else {
                 t = attrcat(t, key,value);
             }

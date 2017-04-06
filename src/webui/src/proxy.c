@@ -20,7 +20,8 @@
  *
  */
 #include <webui.h>
-
+#include <sys/stat.h>
+#include <sys/types.h>
 /*
  *  TO BE DISCUSSED :
  * This page is filtered by the v_ip_authorized validator to be routed on captive portal functionalities
@@ -34,18 +35,64 @@
  * The this page doesn't do nothing, because it doesn't need nothing.
  * */
 int proxy(struct http_request * req) {
+    char*out;
+    size_t len;
+
+
+    char path_file[256];
+
+    if (strstr(req->path,"..")) {
+        return _404(req);
+    }
+
+    sprintf(path_file,"./assets/%s",req->path);
+    
+    int fd;
+
+    /* */
+    struct stat buf;
+    stat(path_file, &buf);
+
+    func("load_dynamic_asset of \n[%s]  %d\n", path_file, buf.st_size);
+
+    out = (char*) malloc(sizeof(char) * (buf.st_size + 1));
+
+    len = buf.st_size;
+    fd = open(path_file, O_SYNC | O_RDONLY);
+    if (fd < 0) {
+        warn("Will return 404 due to error at line %s %d : %s ", __FILE__, __LINE__, strerror(errno));
+        return _404(req);
+   }
+
+    int rv = read(fd, out, len);
+    if (rv != len) {
+        warn("Will return 404 due to error at line %s %d : %s trying to open [%s][%d] readed [%d]",
+                __FILE__, __LINE__, strerror(errno), path_file, len, rv);
+               return _404(req);
+   }
+   out[len] = 0;
+   close(fd);
+
+   http_response_header(req,"content-type",identify_content_type(path_file,out,len));
+   http_response(req, 200, out, len);
+   free(out);
+   return KORE_RESULT_OK;
+}
+
+int _404(struct http_request*req){
+
     template_t tmpl;
-	attributes_set_t attr;
+    attributes_set_t attr;
     u_int8_t  *html_rendered;
     struct kore_buf *out;
     size_t len;
     out = kore_buf_alloc(0);
-	attr=attrinit();
-
-	/**/
+    attr=attrinit();
+    /**/
     WEBUI_DEBUG;
 
-    template_load(asset_proxy_html,asset_len_proxy_html,&tmpl);
+    /* TODO leggere gli asset ? */
+    template_load("assets/proxy.html",&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/

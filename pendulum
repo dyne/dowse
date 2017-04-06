@@ -278,8 +278,8 @@ exec_next_cmd() {
 
 	# set acl on/off switch matching the action
 	acl=DROP
-	[[ "$action" =~ "THING_ON"  ]] && acl=ACCEPT
-	[[ "$action" =~ "THING_OFF" ]] && acl=DROP
+	[[ "$action" =~ "THING_ON"  ]] && { acl=ACCEPT ; old_acl=DROP ;}
+	[[ "$action" =~ "THING_OFF" ]] && { acl=DROP ; old_acl=ACCEPT;}
 
 	case $action in
 	    ALL_THINGS_OFF)
@@ -307,7 +307,7 @@ exec_next_cmd() {
 		launch ebtables -A FORWARD -d $mac_admin  -j ACCEPT
 		launch ebtables -A FORWARD -d $mac_wan  -j ACCEPT
 		launch ebtables -A FORWARD -j DROP
-		
+		save_ebtables
 
 		cat <<EOF | $sql $db[things]
 UPDATE found SET authorized='DISABLE_TO_BROWSE'
@@ -327,7 +327,8 @@ EOF
 		# TODO: check if valid mac address
 		launch ebtables -F
 		launch ebtables -A FORWARD -j ACCEPT
-		
+		save_ebtables
+
 
 		cat <<EOF | $sql $db[things]
 UPDATE found SET authorized='ENABLE_TO_BROWSE'
@@ -355,8 +356,17 @@ EOF
 				error "invalid mac block cmd: $cmd"
 				return 1 }
 			# TODO: check if valid mac address
-			launch ebtables -A FORWARD -s $macb -j $acl
-			launch ebtables -A FORWARD -d $macb -j $acl
+			func "# delete old rule"
+			launch ebtables -D FORWARD -s $macb -j $old_acl 
+			launch ebtables -D FORWARD -d $macb -j $old_acl 
+
+			func "ebtables -I FORWARD 1 -s $macb -j $acl"
+			func "ebtables -I FORWARD 1 -d $macb -j $acl"
+			func "# add new rule"
+			launch ebtables -I FORWARD 1 -s $macb -j $acl
+			launch ebtables -I FORWARD 1 -d $macb -j $acl
+
+			save_ebtables
 			# launch xtables-multi iptables -A FORWARD -s $ipb -j $acl
 			# launch xtables-multi iptables -A FORWARD -d $ipb -j $acl
 			if [[ "$al" = "on" ]]; then

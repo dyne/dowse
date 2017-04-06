@@ -33,7 +33,7 @@ int administration(struct http_request * req) {
 	/**/
     WEBUI_DEBUG;
 
-    template_load(asset_administration_html,asset_len_administration_html,&tmpl);
+    template_load("assets/administration.html",&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/

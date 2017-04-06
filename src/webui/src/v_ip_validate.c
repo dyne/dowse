@@ -96,6 +96,9 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
     if (num_fields == 0) {
         err(
                 "The query [%s] has returned 0 fields. Is it correct?", query);
+
+        mysql_free_result(result);
+        mysql_close(db);
         return _IP_IS_NOT_ADMIN_;
     }
 
@@ -114,6 +117,8 @@ int _check_if_ip_is_admin(char*ipaddr_type,char*ipaddr_value,attributes_set_t*pt
 
         if (strcasecmp(macaddr,values[0])==0){
             func( "[%d][%s][%s] is admin ", i, column[0].name, values[0]);
+            mysql_free_result(result);
+            mysql_close(db);
             return _IP_IS_ADMIN_;
         };
     }

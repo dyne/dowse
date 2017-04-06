@@ -34,6 +34,9 @@ void toredis(char *pfx, char *msg) {
             fprintf(stderr,"%s %d redis_reply %s\n",
                     __FILE__,__LINE__,reply->str);
         }
+        if (reply) {
+            freeReplyObject(reply);
+        }
 
         char command[256];
         char b64_encoded[512];
@@ -48,12 +51,17 @@ void toredis(char *pfx, char *msg) {
         //        sprintf(command,"LPUSH log-queue %s:%s", pfx,msg);
 
         /**/
-        reply=minimal_cmd_redis(log_redis,"%s",command);
+//        reply=minimal_cmd_redis(log_redis,"%s",command);
+        reply=minimal_cmd_redis(log_redis,command,NULL);
 
         if (reply && reply->len) {
             fprintf(stderr,"%s %d redis_reply %s\n",
                     __FILE__, __LINE__,reply->str);
         }
+        if (reply) {
+            freeReplyObject(reply);
+        }
+
     }
 }
 

@@ -41,14 +41,25 @@ ebtables-start() {
 
     done
 
+    #--- If present restore the user modified rules.
+    ebtables_file=$H/data/ebtables.bin
+    [[ -r "$ebtables_file" ]]  &&  ebtables --atomic-file $ebtables_file  --atomic-commit
+  
 }
 
 ebtables-stop() {
-
-
+    save_ebtables
+    
     act "flushing ebtables (layer 2 firewall)"
     ebtables -P FORWARD ACCEPT
     ebtables -P OUTPUT ACCEPT
     ebtables -P INPUT ACCEPT
     ebtables -F
+}
+
+
+save_ebtables() {
+    fn save_ebtables $*
+    ebtables --atomic-file $H/data/ebtables.bin --atomic-save
+    return 0
 }
