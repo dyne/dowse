@@ -38,7 +38,6 @@ int load_global_attributes(attributes_set_t attr) {
             "admin_device",
             &attr);
 
-    attr=attrcat(attr,"dowse_network_name","not yet available");
 
     return (rv>=0);
 }

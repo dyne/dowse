@@ -21,6 +21,24 @@
  */
 #include <webui.h>
 
+
+int sleep_before_reset;
+
+void  timeout_reset_handler(int sig)
+{
+    char m[1024];
+
+    if (sleep_before_reset>0) {
+        snprintf(m,sizeof(m)," Waiting other %d seconds",sleep_before_reset);
+        notice(m);
+        sleep_before_reset--;
+        alarm(1);
+    } else {
+        unlink(RESET_ADMIN_FILE);
+    }
+}
+
+
 int start_reset_procedure(struct http_request * req) {
     log_entering();
     template_t tmpl;
@@ -46,21 +64,16 @@ int start_reset_procedure(struct http_request * req) {
 
     /* Start a process to delete the file after 30seconds
      *      Note: the thread should listen SIGPOWER signal ? */
-	pid_t child=fork();
-	if (child==0) {
-	    int i;
-	    char m[1024];
-	    for (i=30;i>0;i--) {
-	        snprintf(m,sizeof(m)," Waiting other %d seconds",i);
-	        notice(m);
-	        sleep(1);
-	    }
-	    unlink(RESET_ADMIN_FILE);
-	    exit(0);
-	}
+
+	 signal(SIGALRM, timeout_reset_handler);
+
+	 sleep_before_reset = 30;
+
+	 /* Now we wait the ACK of the command */
+	 alarm(1);
 
 	/* */
-    template_load(asset_start_reset_procedure_html,asset_len_start_reset_procedure_html,&tmpl);
+    template_load("assets/start_reset_procedure.html",&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/

@@ -36,43 +36,40 @@ int captive_portal_client(struct http_request * req) {
     sql_select_into_attributes(line,NULL,&attr);
 
     load_current_identity(req,&attr);
-	/**/
 
-    http_populate_get(req);
-
-    PARSE_PARAMETER(macaddr);
-
-    WEBUI_DEBUG;
-    CHECK_PARAMETER();
+    // The captive portal read the IP/macaddr from the client request
+    //
 
     char sql[256];
-    char *ipaddr_type;
-    char *ipaddr_value;
     char ip4[32],ip6[64];
-    get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
 
-    if (strcmp(ipaddr_type,"ipv4")==0) {
-        sprintf(ip4,"%s",ipaddr_value);
-        ip6[0]=0;
+    if (strcmp(identity.ipaddr_type, "ipv4") == 0) {
+        sprintf(ip4, "%s", identity.ipaddr_value);
+        ip6[0] = 0;
     } else {
-        ip4[0]=0;
-        sprintf(ip6,"%s",ipaddr_value);
+        ip4[0] = 0;
+        sprintf(ip6, "%s", identity.ipaddr_value);
     }
-    kore_free(ipaddr_type); kore_free(ipaddr_value);
+    /* We add macaddress */
+     snprintf(sql,sizeof(sql),"INSERT IGNORE INTO found(macaddr,ip4,ip6) "
+     "VALUES (upper('%s'),'%s','%s') ",identity.macaddr,ip4,ip6);
+     WEBUI_DEBUG;
 
-
+     if ( sqlexecute(sql, &attr) != KORE_RESULT_OK) {
+         return show_generic_message_page(req,attr);
+     }
     snprintf(sql,sizeof(sql),"INSERT INTO event (level,macaddr,ip4,ip6,description) "
-            "VALUES ('warning',upper('%s'),'%s','%s','%s') ",macaddr,ip4,ip6, __EVENT_NEW_MAC_ADDRESS);
+            "VALUES ('warning',upper('%s'),'%s','%s','%s') ",identity.macaddr,ip4,ip6, __EVENT_NEW_MAC_ADDRESS);
     WEBUI_DEBUG;
 
-    int rv = sqlexecute(sql, &attr);
-    if (rv != KORE_RESULT_OK) {
+    if ( sqlexecute(sql, &attr) != KORE_RESULT_OK) {
         return show_generic_message_page(req,attr);
     }
+
     /* */
-    sprintf(sql,"select upper(macaddr) as client_macaddr,name as client_name from found where upper(macaddr)=upper('%s')",macaddr);
-    rv = sql_select_into_attributes(sql,NULL,&attr);
-    if (rv != KORE_RESULT_OK) {
+    sprintf(sql,"select upper(macaddr) as client_macaddr,name as client_name from found where upper(macaddr)=upper('%s')",identity.macaddr);
+
+    if (sql_select_into_attributes(sql,NULL,&attr) != KORE_RESULT_OK) {
             char m[1024];
             sprintf(m,"macaddr not in found table ");
             webui_add_error_message(&attr,m);
@@ -82,8 +79,7 @@ int captive_portal_client(struct http_request * req) {
 
     load_global_attributes(attr);
 
-    template_load(asset_captive_portal_client_html,asset_len_captive_portal_client_html,&tmpl);
-   // template_apply(&tmpl,global_attributes,out);
+    template_load("assets/captive_portal_client.html",&tmpl);
     template_apply(&tmpl,attr,out);
 
 	/**/

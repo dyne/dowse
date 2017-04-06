@@ -71,10 +71,9 @@ int thing_show(struct http_request *req) {
     attributes_set_t attributes;
     struct kore_buf *buf;
     char *macaddr;
-    char req_macaddr[32];
+   // char req_macaddr[32];
 
-    char *ipaddr_type;
-    char *ipaddr_value;
+
 
     WEBUI_DEBUG
     ;
@@ -101,11 +100,7 @@ int thing_show(struct http_request *req) {
     sql_select_into_attributes(line,NULL,&attributes);
 
     load_current_identity(req,&attributes);
-
-    get_ip_from_request(req,&ipaddr_type,&ipaddr_value);
-
-    ip2mac(ipaddr_type,ipaddr_value,req_macaddr,&attributes);
-    func("Request from [%s] [%s]",ipaddr_value,req_macaddr);
+    func("Request from [%s] [%s]",identity.ipaddr_value,identity.macaddr);
 
     /*
      * 0 -> my_macaddr not in (select macaddr from found where admin='yes')
@@ -122,9 +117,9 @@ int thing_show(struct http_request *req) {
             " JOIN ( SELECT @seq := 0 ) r "
             "%s "
             "ORDER BY F.age DESC",
-            req_macaddr,
-            req_macaddr,
-            req_macaddr,
+            identity.macaddr,
+            identity.macaddr,
+            identity.macaddr,
             where_condition);
 
     fprintf(stderr,"query [%s]",line);
@@ -135,7 +130,7 @@ int thing_show(struct http_request *req) {
     WEBUI_DEBUG
     ;
     // load template
-    template_load(asset_thing_show_html, asset_len_thing_show_html, &tmpl);
+    template_load("assets/thing_show.html", &tmpl);
     WEBUI_DEBUG
     ;
    // attributes = attrinit();

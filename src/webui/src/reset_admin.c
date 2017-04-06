@@ -28,8 +28,7 @@ int reset_admin(struct http_request * req) {
     struct kore_buf *out;
     size_t len;
     int rv;
-    char *ipaddr_type;
-    char *ipaddr_value;
+
 
     attr=attrinit();
 
@@ -38,9 +37,9 @@ int reset_admin(struct http_request * req) {
 
     load_current_identity(req,&attr);
 
-    get_ip_from_request(req, &ipaddr_type, &ipaddr_value);
-    if ((strcmp(ipaddr_type, "ipv4") != 0)
-            && (strcmp(ipaddr_type, "ipv6") != 0)) {
+
+    if ((strcmp(identity.ipaddr_type, "ipv4") != 0)
+            && (strcmp(identity.ipaddr_type, "ipv6") != 0)) {
         err("Can't retrieve IP address from request and proc file system");
         return KORE_RESULT_ERROR;
     }
@@ -53,15 +52,10 @@ int reset_admin(struct http_request * req) {
     if (rv == _ADMIN_NOT_CONFIGURED_) {
         /* admin is not configured so take the ip from connection and grant it the admin privileges */
         char m[1024];
-        char macaddr[256];
 
-        /* using mac address  */
-        rv=ip2mac(ipaddr_type,ipaddr_value,macaddr,&attr);
-        if (rv==KORE_RESULT_ERROR) {
-                   return show_generic_message_page(req,attr);
-        }
+
         /* Se la tupla da aggiornare non c'e' la aggiunge */
-        char *iptype=(strcmp(ipaddr_type,"ipv4")==0?"ip4":"ip6");
+        char *iptype=(strcmp(identity.ipaddr_type,"ipv4")==0?"ip4":"ip6");
 
         /* In this if branch the admin is not configured so
          * we should insert an entry in the found table to describe the admin
@@ -71,7 +65,7 @@ int reset_admin(struct http_request * req) {
                        "INSERT INTO found (%s,%s,admin,authorized) VALUES (upper('%s'),'%s','yes','%s') "
                        " ON DUPLICATE KEY UPDATE admin='yes' , authorized='%s'",
                        "macaddr",iptype,
-                       macaddr,ipaddr_value,__ENABLE_TO_BROWSE_STR,__ENABLE_TO_BROWSE_STR
+                       identity.macaddr,identity.ipaddr_value,__ENABLE_TO_BROWSE_STR,__ENABLE_TO_BROWSE_STR
                );
         rv=sqlexecute(m,&attr);
         if (rv==KORE_RESULT_ERROR) {
@@ -97,8 +91,7 @@ int reset_admin(struct http_request * req) {
         /**/
         WEBUI_DEBUG
         ;
-        template_load(asset_reset_admin_html, asset_len_reset_admin_html,
-                &tmpl);
+        template_load("assets/reset_admin.html",&tmpl);
         template_apply(&tmpl, attr, out);
 
         /**/

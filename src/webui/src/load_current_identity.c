@@ -34,15 +34,27 @@ int load_current_identity(struct http_request * req,attributes_set_t *ptr_attr) 
     (*ptr_attr)=attrcat(*ptr_attr, "cur_macaddr", req_macaddr );
     (*ptr_attr)=attrcat(*ptr_attr, "cur_ip", ipaddr_value );
 
+    sprintf(identity.ipaddr_type,"%s",ipaddr_type);
+    sprintf(identity.ipaddr_value,"%s",ipaddr_value);
+    sprintf(identity.macaddr,"%s",req_macaddr);
+
+
     /* */
     int rv;
     char sql[256];
 
-    sprintf(sql,"select  coalesce(name,'n/a') as cur_name from found where upper(macaddr)=upper('%s')",req_macaddr);
+    sprintf(sql,"select "
+            "  case when exists "
+            "    (select  coalesce(name,'n/a') as cur_name from found where upper(macaddr) in (upper('%s')))"
+            "  then (select  coalesce(name,'n/a') as cur_name from found where upper(macaddr) in (upper('%s')))"
+            "  else 'n/a'"
+            " end"
+            " from dual",req_macaddr,req_macaddr);
+
     rv = sql_select_into_attributes(sql,NULL,ptr_attr);
     if (rv != KORE_RESULT_OK) {
         char m[1024];
-        sprintf(m,"macaddr not in found table ");
+        sprintf(m,"during load identity : macaddr not in found table ");
         webui_add_error_message(ptr_attr,m);
         err("%s %d %s -> (may be a installation error: clean database and restart",__FILE__,__LINE__,m);
         return KORE_RESULT_ERROR;

@@ -21,6 +21,7 @@
  */
 
 #include <webui.h>
+#include <signal.h>
 
 /* Send command to change the authorization level to redis cmd fifo ,
  *
@@ -36,6 +37,7 @@ int received_ack_or_timeout =0;
 //extern redisContext *redis_context;
 
 char key_name[256];
+typedef void (*sighandler_t)(int);
 
 void  timeout_handler(int sig)
 {
@@ -94,7 +96,8 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
     reply = cmd_redis(redis,"PUBLISH %s %s", CHAN,command,calling_ipaddr);
     if(reply) freeReplyObject(reply);
 
-    signal(SIGALRM, timeout_handler);
+    sighandler_t old_signal_handler;
+    old_signal_handler=signal(SIGALRM, timeout_handler);
 
     /* Now we wait the ACK of the command */
     alarm(timeout_sec);
@@ -112,7 +115,13 @@ int change_authorization_to_browse(struct http_request * req,char*macaddr,const 
         }
         sleep(1);
     };
-    signal(SIGALRM, SIG_IGN);
+    signal(SIGALRM, old_signal_handler);
+    if ((old_signal_handler!=SIG_IGN)
+        && (old_signal_handler!=SIG_DFL)
+        && (old_signal_handler!=SIG_ERR)
+    ){
+        alarm(1);
+    }
     WEBUI_DEBUG;
 
     return KORE_RESULT_OK;
