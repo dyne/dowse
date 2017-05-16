@@ -34,8 +34,9 @@ map_t asset_init() {
 
   assetmap = hashmap_new();
 EOF
-#for filename in ${(f)"$(find assets -type f)"}; do
-for filename in ${(f)""}; do
+for filename in ${(f)"$(find assets -type f)"}; do
+    #for filename in ${(f)""}; do
+    pathname=$filename
     print "/* $filename */"
     filename=`basename $filename`
     func $filename
@@ -48,7 +49,7 @@ for filename in ${(f)""}; do
   atmp.data = asset_$fnorm;
   tmp = kore_malloc(sizeof(asset_t));
   tmp = memcpy(tmp, &atmp, sizeof(asset_t));
-  hashmap_put(assetmap, "$filename", tmp);
+  hashmap_put(assetmap, "$pathname", tmp);
 
 EOF2
 

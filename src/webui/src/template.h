@@ -18,6 +18,7 @@ typedef struct template_t {
 	int len;
 	TMPL_fmtlist *fmtlist; /* It's present here, the format function pointer list, because the
 	HTML template might be reused with different value of "attributes" */
+	int static_asset;
 } template_t;
 
 //int template_load( u_int8_t *str, int len, template_t *tmpl);

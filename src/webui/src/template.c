@@ -18,8 +18,8 @@ int template_load(const char *asset_path, template_t *tmpl) {
     struct stat buf;
     stat(asset_path, &buf);
 
-    func("load_dynamic_asset of \n[%s]  %d\n", asset_path, buf.st_size);
-
+#ifdef DYNAMIC_ASSET_LOADING
+    func("template_load in DYNAMIC WAY of [%s]  %d\n", __FUNCTION__, asset_path, buf.st_size);
     tmpl->data = (u_int8_t*) malloc(sizeof(char) * (buf.st_size + 1));
 
     tmpl->len = buf.st_size;
@@ -40,7 +40,21 @@ int template_load(const char *asset_path, template_t *tmpl) {
 
     tmpl->fmtlist = TMPL_add_fmt(0, ENTITY_ESCAPE, TMPL_encode_entity);
     tmpl->fmtlist = TMPL_add_fmt(tmpl->fmtlist, URL_ESCAPE, TMPL_encode_url);
+    tmpl->static_asset = 0;
     return 0;
+#else
+    func("template_load in STATIC WAY of [%s]  %d\n", __FUNCTION__,asset_path, buf.st_size);
+    map_t assetmap;
+    asset_t *rasset;
+    assetmap = asset_init();
+    if (hashmap_get(assetmap, asset_path, (void**)&rasset) == MAP_MISSING) {
+        err("Error at line %s %d : Requested a non compiled asset [%s]", __FILE__, __LINE__,asset_path);
+        exit(-1);
+    }
+    free_assetmap(assetmap);
+    _internal_static_template_load( rasset->data,rasset->len,tmpl);
+
+#endif
 }
 
 int _internal_static_template_load(u_int8_t *str, int len, template_t *tmpl) {
@@ -48,6 +62,7 @@ int _internal_static_template_load(u_int8_t *str, int len, template_t *tmpl) {
     tmpl->len = len;
     tmpl->fmtlist = TMPL_add_fmt(0, ENTITY_ESCAPE, TMPL_encode_entity);
     tmpl->fmtlist = TMPL_add_fmt(tmpl->fmtlist, URL_ESCAPE, TMPL_encode_url);
+    tmpl->static_asset = 1;
     return 0;
 }
 
@@ -121,8 +136,10 @@ void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out)
 }
 
 void template_free(template_t *t) {
-    if (t->data) {
+    if ((t->data)&&(!t->static_asset)) {
         free(t->data);
+        t->data=NULL;
+    } else {
         t->data=NULL;
     }
     if (t->fmtlist) {

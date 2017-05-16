@@ -17,6 +17,8 @@ cflags = -DDB_PASSWORD="p4ssw0rd"
 cflags = -DDB_HOST="localhost"
 cflags = -DDB_SID="things"
 
+cflags = -DDYNAMIC_ASSET_LOADING
+
 #
 #cflags = -I.. -I../libparse-datetime -I../kore/includes -I/usr/local/include/kore -Wall -fPIC -fPIE
 #ldflags = ../libparse-datetime/libparse-datetime.a ../mustache/libmustache.a ../hiredis/libhiredis.a -lm -lssl -lcrypto -lsqlite3
