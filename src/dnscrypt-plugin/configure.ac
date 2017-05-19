@@ -66,17 +66,18 @@ AC_CHECK_TOOL([AR], [ar], [ar])
 
 
 AS_IF([test -d /usr/local/include], [
-  CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+  CFLAGS="$CFLAGS -I/usr/local/include "
 ])
 
 AS_IF([test -d /usr/local/lib], [
-  LDFLAGS="$LDFLAGS -L/usr/local/lib"
+  LDFLAG=S"$LDFLAGS -L/usr/local/lib"
 ])
+
 
 dnl Checks for header files.
 
 AC_SYS_LARGEFILE
-AC_CHECK_HEADERS([sys/cdefs.h sys/feature_tests.h])
+AC_CHECK_HEADERS([sys/cdefs.h sys/feature_tests.h mysql.h])
 AC_CHECK_HEADERS([execinfo.h paths.h pwd.h grp.h uuid/uuid.h])
 AC_CHECK_HEADERS([sandbox.h])
 AC_CHECK_HEADERS([ws2tcpip.h])
@@ -202,6 +203,17 @@ do {
   AC_MSG_RESULT(no)
 ])
 
+AC_ARG_WITH([mysql],
+        [AS_HELP_STRING([--with-mysql=path : path to mysql headers])],
+        [MYSQL_INCLUDE=$withval && CFLAGS="${CFLAGS} $withval" ],
+        [])
+
+
+AC_ARG_WITH([mysql_lib],
+        [AS_HELP_STRING([--with-mysql_lib=path : path to mysql lib])],
+        [MYSQL_LIBRARY=$withval && LDFLAGS="${LDFLAGS} $withval"],
+	[])
+	
 dnl Checks for library functions.
 
 AC_SEARCH_LIBS(pow, [m])
@@ -251,10 +263,10 @@ case $host_os in
 esac
 
 ac_configure_args="$ac_configure_args CC='$CC'"
-ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS'"
+ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS $MYSQL_INCLUDE'"
 ac_configure_args="$ac_configure_args CPP='$CPP'"
 ac_configure_args="$ac_configure_args CPPFLAGS='$CPPFLAGS'"
-ac_configure_args="$ac_configure_args LDFLAGS='$LDFLAGS'"
+ac_configure_args="$ac_configure_args LDFLAGS='$LDFLAGS $MYSQL_LIBRARY'"
 ac_configure_args="$ac_configure_args LIBS='$LIBS'"
 
 dnl Output.
