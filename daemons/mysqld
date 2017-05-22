@@ -125,6 +125,7 @@ mysqld-exec() {
 
 	act "Populate the parameter table"
 	echo "INSERT IGNORE INTO parameter(variable,value) VALUES ('state all things','ON') " | $sql $db[things] 2>/dev/null
+	echo "INSERT IGNORE INTO parameter(variable,value) VALUES ('party mode','OFF') " | $sql $db[things] 2>/dev/null
 
 	# create trigger and redis function
 	sql_integrate_with_redis $H/data/mysqld.integrated_redis

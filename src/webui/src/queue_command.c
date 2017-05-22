@@ -19,6 +19,7 @@ int queue_command(struct http_request * req) {
     attributes_set_t attr=attrinit();
     redisContext *redis = NULL;
     redisReply   *reply = NULL;
+    int rv;
 
     /* Parsing parameter */
     http_populate_get(req);
@@ -26,7 +27,9 @@ int queue_command(struct http_request * req) {
     PARSE_PARAMETER(op);
     PARSE_PARAMETER(macaddr);
 
-    if ((strcmp(op,"ALL_THINGS_OFF")==0)||(strcmp(op,"ALL_THINGS_ON")==0)) { /* op is parsed so macaddr we don't need and we'll take it from the request*/
+    if ((strcmp(op,"ALL_THINGS_OFF")==0)||(strcmp(op,"ALL_THINGS_ON")==0)||
+            (strcmp(op,"PARTY_MODE_OFF")==0)||(strcmp(op,"PARTY_MODE_ON")==0)
+    ) { /* op is parsed so macaddr we don't need and we'll take it from the request*/
       bad_parsing=0;
     } else {
 
@@ -81,7 +84,14 @@ int queue_command(struct http_request * req) {
 
         ip2mac(ipaddr_type,calling_ipaddr,calling_macaddr,&attr);
 
-        int rv=change_authorization_to_browse(req,calling_macaddr,ip4,ip6,redis,op);
+        rv=change_authorization_to_browse(req,calling_macaddr,ip4,ip6,redis,op);
+        if (rv!=KORE_RESULT_OK) {
+            return rv;
+        }
+    }
+
+    if ( (strcmp(op,"PARTY_MODE_OFF")==0)||(strcmp(op,"PARTY_MODE_ON")==0)) {
+        rv=change_party_mode_to(req,&attr,strcmp(op,"PARTY_MODE_ON")==0);
         if (rv!=KORE_RESULT_OK) {
             return rv;
         }

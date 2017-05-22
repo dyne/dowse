@@ -43,14 +43,14 @@ char *to_upper(char*str){
 }
 
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr,attributes_set_t *ptr_attr) {
-    func("converting from %s %s on %s",ipaddr_type,ipaddr_value,getenv("interface"));
+    int rv;
+      func("converting from %s %s on %s",ipaddr_type,ipaddr_value,getenv("interface"));
 
     char *address=getenv("address");
       if (((address!=NULL)&&(strcmp(ipaddr_value,address)==0))||(strcmp(ipaddr_value,"127.0.0.1")==0))  {
       sprintf(macaddr,"00:00:00:00:00:00");
       return KORE_RESULT_OK;
     } else {
-      int rv;
       if (strcmp(ipaddr_type,"ipv4")==0) {
 	if (strcmp(ipaddr_value,"127.0.0.1")==0) {
 	  return KORE_RESULT_ERROR;
@@ -176,7 +176,7 @@ int convert_from_ipv6(char *ipaddr_value, char *mac_addr,attributes_set_t *ptr_a
     sin = (struct sockaddr_in6 *) &areq.arp_ha;
     sin->sin6_family = ARPHRD_ETHER;
 
-    /* TODO definizione di device su cui è attestata webui */
+    /* TODO definizione di device su cui �� attestata webui */
     char *dev=getenv("interface");
     if (dev==NULL) {
         dev="eth0";
