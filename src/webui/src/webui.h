@@ -54,13 +54,6 @@
 
 #define __EVENT_NEW_MAC_ADDRESS "new_mac_address"
 
-#ifndef DB_HOST /* if it's not redefined at runtime */
-#define DB_HOST "127.0.0.1"
-#define DB_USER "root"
-#define DB_PASSWORD "p4ssw0rd"
-#define DB_SID "things"
-#define DB_SOCK_DIRECTORY "$R/mysqld/mysqld.sock"
-#endif
 
 
 #define PARSE_PARAMETER(PAR)\

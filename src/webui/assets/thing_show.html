@@ -62,7 +62,7 @@
   <div class="container">
     <img src="/img/dowseLogo.png" width="200">
     <div class="row">
-      <div class="col-md-4">
+      <div class="col-md-2">
         <h3>Network Status</h3>
 	<!--TMPL_IF name="cur_state" value="ON"-->
         <a href="/cmd?op=ALL_THINGS_OFF">
@@ -71,6 +71,18 @@
 	<!--TMPL_ELSIF name="cur_state" value="OFF"-->
 	<a href="/cmd?op=ALL_THINGS_ON">
           <img src="/img/Big_BTN_off.png" width="64" class="center-block" alt="network access enabled" title="enable network access for all things">
+	</a>
+	<!--/TMPL_IF-->
+      </div>
+      <div class="col-md-2">
+        <h3>Party mode</h3>
+	<!--TMPL_IF name="party_mode" value="ON"-->
+        <a href="/cmd?op=PARTY_MODE_OFF">
+          <img src="/img/partymode_ON.png" width="64" class="center-block" alt="party mode enabled" title="restrict the access on the network to only enabled things">
+        </a>
+	<!--TMPL_ELSIF name="party_mode" value="OFF"-->
+	<a href="/cmd?op=PARTY_MODE_ON">
+          <img src="/img/partymode_OFF.png" width="64" class="center-block" alt="party mode disabled" title="enable the network at all things and ENJOY THE BEER !!!!">
 	</a>
 	<!--/TMPL_IF-->
       </div>

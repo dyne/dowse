@@ -99,6 +99,9 @@ int thing_show(struct http_request *req) {
     sprintf(line,"select value as cur_state from parameter where variable='state all things'");
     sql_select_into_attributes(line,NULL,&attributes);
 
+    sprintf(line,"select value as party_mode  from parameter where variable='party mode'");
+    sql_select_into_attributes(line,NULL,&attributes);
+
     load_current_identity(req,&attributes);
     func("Request from [%s] [%s]",identity.ipaddr_value,identity.macaddr);
 

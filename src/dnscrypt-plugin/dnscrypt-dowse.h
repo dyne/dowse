@@ -25,7 +25,6 @@
 
 // just for NI_MAXHOST
 #include <netdb.h>
-
 #include <libdowse/dowse.h>
 
 // expiration in seconds for the domain hit counter
