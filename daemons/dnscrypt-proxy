@@ -155,12 +155,11 @@ __search_for_a_dns () {
 
     PID_LIST=$(print "GET dnscrypt-pid-child-list " | redis dynamic | tr '_' ' ')
 
-    LOCK=$(print "GET lock_of_check_and_select_dns " | redis dynamic )
+    LOCK=$(print "GET lock_check_and_select_dns " | redis dynamic )
 
     # in this moment we can unlock the semaphore if the pendulum spawn another team it don't change our  PID_LIST variable 
-    unlock check_and_select_dns $LOCK 
+    unlock check_and_select_dns $LOCK
     kill -9 ${PID_LIST}  
-    
     
 }
 
@@ -195,9 +194,6 @@ dnscrypt-check_and_select_dns() {
 	[[ "$nlock" = "0" ]] && {
 	    func "lock check_and_select_dns already locked"
 	    return 1 }
-
-	# salviamo il lock 
-	print "SET lock_of_check_and_select_dns $nlock" | redis dynamic
 	
 	#local servertype=",.,yes,yes" ## DNSSEC + No logs
 	#local servertype=",.,yes,no"  ## DNSSEC
@@ -207,11 +203,11 @@ dnscrypt-check_and_select_dns() {
 
 	DNS=$(print "GET dns-server-selected" | redis dynamic)
 
-	if [ [ $DNS = "(nil)" ] || ! __is_dns_reachable ( $DNS ) ]; then
-	    
+	if [ [ $DNS = "(nil)" ] || ! __is_dns_reachable ( $DNS ) ]; then	    
 	    func "Choosing a random available dnscrypt server"
 	    __spawn_dns_selection
 
+	    
 	    __save_child_pid_on_redis
 	else
 	   unlock check_and_select_dns $nlock
