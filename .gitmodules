@@ -16,3 +16,6 @@
 [submodule "src/netdata"]
 	path = src/netdata
 	url = https://github.com/firehol/netdata
+[submodule "src/node-red"]
+	path = src/node-red
+	url = https://github.com/node-red/node-red.git
