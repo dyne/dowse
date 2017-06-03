@@ -109,6 +109,43 @@ case `uname -m` in
 		;;
 esac
 
+[[ "$1" = "node-red" ]] && {
+	notice "Import nodejs and npm for node-red dashboard"
+	mkdir -p $S/build/nodejs
+	pushd $S/build/nodejs
+	case $CPU in
+		x64)
+			[[ -r node-v6.10.3-linux-x64.tar.xz ]] ||
+				curl https://nodejs.org/dist/v6.10.3/node-v6.10.3-linux-x64.tar.xz -o node-v6.10.3-linux-x64.tar.xz
+			[[ -d node-v6.10.3-linux-x64 ]] ||
+				tar xvf node-v6.10.3-linux-x64.tar.xz
+			;;
+		*)
+			error "Unknown machine architecture for nodejs"
+			;;
+	esac
+	popd
+	path+=($S/build/nodejs/node-v6.10.3-linux-x64/bin)
+	rehash
+	[[ -r $S/build/node-red/README.md ]] || {
+		act "copying node-red source to build location"
+		cp -ra $S/src/node-red $S/build/node-red }
+
+	[[ -d $S/build/node-red/node_modules/bcrypt ]] || {
+		act "installing dependencies for node-red"
+		pushd $S/build/node-red
+		npm install
+		popd }
+
+	[[ -r $S/build/node-red/public/red/red.js ]] || {
+		notice "building node-red source"
+		pushd $S/build/node-red
+		npm run build
+		popd
+	}
+	return 0
+}
+
 
 # Check if Apt based
 command -v apt-get >/dev/null && {
@@ -286,40 +323,5 @@ command -v pacman >/dev/null && {
     fi
 
 }
-
-notice "Import nodejs and npm for node-red dashboard"
-mkdir -p $S/build/nodejs
-pushd $S/build/nodejs
-case $CPU in
-	x64)
-		[[ -r node-v6.10.3-linux-x64.tar.xz ]] || 
-			curl https://nodejs.org/dist/v6.10.3/node-v6.10.3-linux-x64.tar.xz -o node-v6.10.3-linux-x64.tar.xz
-		[[ -d node-v6.10.3-linux-x64 ]] ||
-			tar xvf node-v6.10.3-linux-x64.tar.xz
-		;;
-	*)
-		error "Unknown machine architecture for nodejs"
-		;;
-esac
-popd
-path+=($S/build/nodejs/node-v6.10.3-linux-x64/bin)
-rehash
-[[ -r $S/build/node-red/README.md ]] || {
-	act "copying node-red source to build location"
-	cp -ra $S/src/node-red $S/build/node-red }
-
-[[ -d $S/build/node-red/node_modules/bcrypt ]] || {
-	act "installing dependencies for node-red"
-	pushd $S/build/node-red
-	npm install
-	popd }
-
-[[ -r $S/build/node-red/public/red/red.js ]] || {
-	notice "building node-red source"
-	pushd $S/build/node-red
-	npm run build
-	popd
-}
-
 
 return 0

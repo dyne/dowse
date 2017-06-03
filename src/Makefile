@@ -16,17 +16,18 @@ LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64 -Llibb64
 
 all: base parsers springs
 	./import.sh redis-server
-	./import.sh redis-cli 
-	./import.sh ${DB_TYPE} 
+	./import.sh redis-cli
+	./import.sh ${DB_TYPE}
 	./import.sh nmap-macs
-	install -s -p modprobe        ../build/bin 
-	install -s -p dowse-to-gource ../build/bin 
-	install -s -p dowse-to-osc    ../build/bin 
-	install -s -p dowse-to-mqtt   ../build/bin 
-	install -s -p hiredis-lock    ../build/bin 
-	install -s -p dowse-cmd-fifo  ../build/bin 
-	install -s -p parse-ip-neigh  ../build/bin 
-	./checksum.sh 
+	./import.sh node-red
+	install -s -p modprobe        ../build/bin
+	install -s -p dowse-to-gource ../build/bin
+	install -s -p dowse-to-osc    ../build/bin
+	install -s -p dowse-to-mqtt   ../build/bin
+	install -s -p hiredis-lock    ../build/bin
+	install -s -p dowse-cmd-fifo  ../build/bin
+	install -s -p parse-ip-neigh  ../build/bin
+	./checksum.sh
 	./compile.sh sup
 
 libs: b64
@@ -113,7 +114,7 @@ dowse-to-gource: dowse-to-gource.o
 dowse-to-osc: dowse-to-osc.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
-dowse-to-mqtt: mosquitto dowse-to-mqtt.o 
+dowse-to-mqtt: mosquitto dowse-to-mqtt.o
 	$(CC) $(CFLAGS) -o $@ dowse-to-mqtt.o $(LIBS) -L./mosquitto/lib/ -lmosquitto    -lpthread
 
 
