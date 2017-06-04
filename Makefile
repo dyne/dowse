@@ -35,9 +35,9 @@ install:
 	install -p -m 644 dowse ${DESTDIR}${PREFIX}/zshrc
 	install -p -m 755 pendulum ${DESTDIR}${PREFIX}/bin/pendulum
 	install -d ${DESTDIR}${PREFIX}/mysql
-	cp -rav build/mysql/* ${DESTDIR}${PREFIX}/mysql
+	cp -ra build/mysql/* ${DESTDIR}${PREFIX}/mysql
 	install -d ${DESTDIR}${PREFIX}/node-red
-	cp -rav build/node-red/* ${DESTDIR}${PREFIX}/node-red
+	cp -ra build/node-red/* ${DESTDIR}${PREFIX}/node-red
 	make -C src     install
 	make -C zlibs   install
 	make -C daemons install
