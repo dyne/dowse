@@ -130,6 +130,8 @@ source $R/daemons/seccrond
 # source $R/daemons/tor
 source $R/daemons/webui
 source $R/daemons/mysqld
+source $R/daemons/node-red
+
 
 # conclude initialization
 source /usr/share/zuper/zuper.init

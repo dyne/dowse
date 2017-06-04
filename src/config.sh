@@ -111,6 +111,7 @@ execrules=(
 	mysqld       user
 	mysql        user
 	hiredis-lock user
+	node-red     user
 
 	# springs
 	dowse-to-mqtt  user
@@ -153,6 +154,7 @@ execmap=(
 	omshell       $PREFIX/bin/omshell
 	mysqld        $PREFIX/mysql/bin/mysqld
 	mysql         $PREFIX/mysql/bin/mysql
+	node-red      $PREFIX/node-red/red.js
 
 	dowse-to-mqtt  $PREFIX/bin/dowse-to-mqtt
 	dowse-to-osc   $PREFIX/bin/dowse-to-osc
