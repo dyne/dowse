@@ -38,6 +38,9 @@ install:
 	cp -ra build/mysql/* ${DESTDIR}${PREFIX}/mysql
 	install -d ${DESTDIR}${PREFIX}/node-red
 	cp -ra build/node-red/* ${DESTDIR}${PREFIX}/node-red
+	install -d ${DESTDIR}${PREFIX}/nodejs
+	cp -ra build/nodejs/* ${DESTDIR}${PREFIX}/nodejs
+
 	make -C src     install
 	make -C zlibs   install
 	make -C daemons install

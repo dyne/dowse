@@ -110,22 +110,27 @@ case `uname -m` in
 esac
 
 [[ "$1" = "node-red" ]] && {
+	node_dist="node-v6.10.3-linux-x64"
 	notice "Import nodejs and npm for node-red dashboard"
 	mkdir -p $S/build/nodejs
 	pushd $S/build/nodejs
 	case $CPU in
 		x64)
-			[[ -r node-v6.10.3-linux-x64.tar.xz ]] ||
-				curl https://nodejs.org/dist/v6.10.3/node-v6.10.3-linux-x64.tar.xz -o node-v6.10.3-linux-x64.tar.xz
-			[[ -d node-v6.10.3-linux-x64 ]] ||
-				tar xvf node-v6.10.3-linux-x64.tar.xz
+			[[ -r ${node_dist}.tar.xz ]] ||
+				curl https://nodejs.org/dist/v6.10.3/${node_dist}.tar.xz \
+					 -o ${node_dist}.tar.xz
+			[[ -d ${node_dist} ]] || {
+				tar xf ${node_dist}.tar.xz
+				rm -rf node_dir
+				mv ${node_dist} node_dir
+			}
 			;;
 		*)
 			error "Unknown machine architecture for nodejs"
 			;;
 	esac
 	popd
-	path+=($S/build/nodejs/node-v6.10.3-linux-x64/bin)
+	path+=($S/build/nodejs/node_dir/bin)
 	rehash
 	[[ -r $S/build/node-red/README.md ]] || {
 		act "copying node-red source to build location"
