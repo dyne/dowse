@@ -1,0 +1,16 @@
+#![Dowse scan the network]
+time:Actor
+pendulum:Pendulum[a]
+nmap:external command
+found:MySQL
+redis:Redis-server[a]
+
+time:=pendulum.nmap
+pendulum:xml=nmap.scan 
+pendulum:=pendulum.preprocess()
+pendulum:=pendulum.parse()
+[c: for all entry]
+pendulum:=found.INSERT(on duplicate key update) 
+found:=found.create_dns_entry()
+found:=redis.SET(dns-lease-<mac_address>)
+[/c]

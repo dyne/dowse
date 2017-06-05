@@ -1,0 +1,29 @@
+#![A new thing appears in the Dowse network]
+
+thing:HTTP device
+dns:DNS[a]
+redis:Redis-server[a]
+webui:Webui[a]
+/pendulum:PENDULUM[a]
+/event:MySql
+/found:MySql
+/ebtables:ebtables[a]
+
+thing:ip=dns.query();
+
+dns:=redis.get("authorization-<mac-address>");
+*1 dns
+if not explicitly authorized  
+redirect on captive_client
+*1
+
+thing:=webui.GET /captive_client;
+
+webui:=found.new();
+found:=redis.PUBLISH("trigger-channel")
+webui:=event.new();
+webui:=redis.SET("admin")
+*2 redis
+If the admin enter to WebUi,
+will be redirected to captive_portal
+*2

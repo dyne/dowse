@@ -1,0 +1,40 @@
+#![Dowse scan the network]
+actor:Actor
+redis:Redis-server[a]
+pendulum:Pendulum[a]
+ebtables:eb tables[a]
+found:MySQL
+parameter:MySQL
+
+pendulum:=redis.SUBSCRIBE(channel-command)
+actor:=redis.PUBLISH(command)
+redis:=pendulum.dowse-cmd-fifo
+
+[c:alt cmd IS ALL_THINGS_OFF ]
+pendulum:=ebtables.ACCEPT(macaddress of command generator
+pendulum:=found.UPDATE authorized SET DISABLE_TO_BROWSE
+pendulum:=parameter.UPDATE state_all_things=OFF
+[/c]
+[c:alt cmd IS ALL_THINGS_ON ]
+pendulum:=ebtables.ACCEPT(all)
+pendulum:=found.UPDATE authorized SET ENABLE_TO_BROWSE
+pendulum:=parameter.UPDATE state_all_things=ON
+[/c]
+
+[c:alt cmd IS THING_ON ]
+pendulum:=ebtables.DELETE(macaddres related old rules)
+pendulum:=ebtables.ACCEPT(macaddress)
+pendulum:=ebtables.SAVE(rules)
+
+pendulum:=found.UPDATE authorized SET ENABLE_TO_BROWSE
+[/c]
+
+[c:alt cmd IS THING_OFF ]
+pendulum:=ebtables.DELETE(macaddres related old rules)
+pendulum:=ebtables.REJECT(macaddress)
+pendulum:=ebtables.SAVE(rules)
+
+pendulum:=found.UPDATE authorized SET ENABLE_TO_BROWSE
+[/c]
+
+pendulum:=redis.DEL(command related ACK request)
