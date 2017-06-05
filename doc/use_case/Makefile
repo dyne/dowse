@@ -4,4 +4,7 @@ OUT=$(subst .sd,.pdf,$(IN))
 all: $(OUT)
 
 %.pdf : %.sd
-	java -jar ../sdedit-4.2-beta8.jar -o $@ -t pdf $<
+	java -jar ../sdedit-4.2-beta8.jar -o $@ -t pdf -r Landscape $< 
+
+clean:
+	/bin/rm -f $(OUT)
