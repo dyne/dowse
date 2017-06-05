@@ -1,0 +1,23 @@
+#![The admin enable/disable a thing using captive portal admin ]
+
+admin:Actor
+webui:Webui[a]
+redis:Redis-server[a]
+pendulum:Pendulum[a]
+event:MySql[]
+
+admin:=webui.Do you want to enable it? ("Yes/No")
+webui:=webui.POST("/modify_event","macaddr",enable/disable)
+webui:=webui.change_authorization_to_browse(enable/disable)
+[c:change_authorization_to_browse ]
+webui:=redis.SET(key_command,ACK_REQUESTED).EXPIRE(timeout)
+webui:=redis.PUBLISH( channel-command ,key_command,enable/disable things)
+	[c:loop wait until pendulum is accomplished task "]
+		webui:=redis.GET(key_command)
+	[/c]
+[/c]
+
+[c:modify_event]
+webui:=event.UPDATE event of that things SET recognized=true
+[/c]
+

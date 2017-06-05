@@ -1,0 +1,14 @@
+#![Title of the use case]
+
+admin:Actor
+webui:Webui[a]
+found:MySql[]
+redis:Redis-server[a]
+
+admin:=webui.CHANGE("new name")
+webui:=found.UPDATE(name)
+found:=redis.DEL("dns-lease-<old_name>")
+
+found:=found.create_dns_entry(new_name);
+found:=redis.SET("dns-lease-<new_name>");
+
