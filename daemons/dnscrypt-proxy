@@ -52,16 +52,26 @@ dnscrypt-proxy-conf() {
 	print $rconf | redis dynamic
 }
 
+#
+# The startup of dnscrypt server is no more required, because it's responsibilty of the "pendulum > check_and_select_dns" function
+# that :
+#  1) search a new proxy if the oldest is undefined or no more reachable
+#  2) when a new endpoint is found it's  stop + start the DNS server.
+#
+
 dnscrypt-proxy-exec() {
 
 	args=""
 	[[ $* =~ debug ]] && args+=",debug"
 	[[ $* =~ offline ]] && args+=",offline"
 
-	# grab a random server
+	# grab a  server
 	# dnscrypt-roundrobin
 
-	# temporary hard-code dyne.org until roundrobin is fixed
+	# grab the last used server
+	dnscrypt_name=$(print "GET dns-server-selected"|redis dynamic|sed 's/(nil)//')
+	
+	# if undefined, eg at the first startup, it takes a default value
 	dnscrypt_name=${1:-dnscrypt.eu-nl}
 	#dnscrypt_ipaddr=198.199.70.248:5553
 	#dnscrypt_name=2.dnscrypt-cert.dyne.org
@@ -70,7 +80,7 @@ dnscrypt-proxy-exec() {
 	func "Launching dnscrypt-proxy to listen on port 53"
 	act "dnscrypt proxy server: $dnscrypt_name"
 # TODO definire la variabile d'ambiente interface 
-    if [[ $DEBUG = 1 ]]; then
+	if [[ $DEBUG = 1 ]]; then
 		DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
 						DOWSE_LAN_ADDRESS_IP4=$address \
 						DOWSE_LAN_NETMASK_IP4=$netmask \
@@ -130,7 +140,7 @@ dnscrypt-roundrobin() {
 }
 
 #=======================================
-# Added code
+# Code for check DNS availability
 #=======================================
 __search_for_a_dns () {
     # 
@@ -190,28 +200,35 @@ __save_child_pid_on_redis() {
 }
 
 dnscrypt-check_and_select_dns() {
-	nlock=`lock check_and_select_dns 0`
-	[[ "$nlock" = "0" ]] && {
-	    func "lock check_and_select_dns already locked"
-	    return 1 }
+    func ""
+    func ""
+    func ""
+    func "entering dnscrypt-check_and_select_dns()"
+    nlock=`lock check_and_select_dns 0`
+    [[ "$nlock" = "0" ]] && {
+	func "lock check_and_select_dns already locked"
+	return 1 }
+    
+    #local servertype=",.,yes,yes" ## DNSSEC + No logs
+    #local servertype=",.,yes,no"  ## DNSSEC
+    local servertype=",.,no,yes"  ## No logs
+    
+    func "Check if the DNS selected on the Redis server is available"
+    
+    DNS=$(print "GET dns-server-selected" | redis dynamic)
+
+    func "DNS = ${DNS} "
+    if [ [ $DNS = "(nil)" ] || ! __is_dns_reachable ( $DNS ) ]; then
+
+	print "DEL dns-server-selected" | redis dynamic
 	
-	#local servertype=",.,yes,yes" ## DNSSEC + No logs
-	#local servertype=",.,yes,no"  ## DNSSEC
-	local servertype=",.,no,yes"  ## No logs
-
-	func "Check if the DNS selected on the Redis server is available"
-
-	DNS=$(print "GET dns-server-selected" | redis dynamic)
-
-	if [ [ $DNS = "(nil)" ] || ! __is_dns_reachable ( $DNS ) ]; then	    
-	    func "Choosing a random available dnscrypt server"
-	    __spawn_dns_selection
-
-	    
-	    __save_child_pid_on_redis
-	else
-	   unlock check_and_select_dns $nlock
-	fi
+	func "Choosing a random available dnscrypt server"
+	__spawn_dns_selection
+	
+	__save_child_pid_on_redis
+    else
+	unlock check_and_select_dns $nlock
+    fi
 
 }
 
