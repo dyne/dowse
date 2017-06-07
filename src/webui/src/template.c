@@ -19,7 +19,7 @@ int template_load(const char *asset_path, template_t *tmpl) {
     stat(asset_path, &buf);
 
 #ifdef DYNAMIC_ASSET_LOADING
-    func("template_load in DYNAMIC WAY of [%s]  %d\n", __FUNCTION__, asset_path, buf.st_size);
+    func("template_load in DYNAMIC WAY of [%s]  %d %d\n", __FUNCTION__, asset_path, buf.st_size);
     tmpl->data = (u_int8_t*) malloc(sizeof(char) * (buf.st_size + 1));
 
     tmpl->len = buf.st_size;
@@ -43,7 +43,7 @@ int template_load(const char *asset_path, template_t *tmpl) {
     tmpl->static_asset = 0;
     return 0;
 #else
-    func("template_load in STATIC WAY of [%s]  %d\n", __FUNCTION__,asset_path, buf.st_size);
+    func("template_load in STATIC WAY of [%s]  %d %d\n", __FUNCTION__,asset_path, buf.st_size);
     map_t assetmap;
     asset_t *rasset;
     assetmap = asset_init();
