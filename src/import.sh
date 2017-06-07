@@ -102,7 +102,7 @@ pkg-download() {
 
 # Check CPU architecture
 target=unknown
-case `gcc -v 2>&1 | awk '/^Target:/ { print $2 }` in
+case `gcc -v 2>&1 | awk '/^Target:/ { print $2 }'` in
 	x86_64*) target=x64   ;;
 	armv*)   target=armv7 ;;
 	*) warning "unknown target architecture, add to src/import.sh"
