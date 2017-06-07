@@ -448,5 +448,17 @@ dowse-status() {
     return 0
 }
 
+dowse-npm() {
+	fn dowse-npm $*
+	freq=($R/nodejs/node_dir/bin)
+	ckreq || return $?
+
+	NODE_PATH="$R/nodejs/node_dir/lib/node_modules:$R/node-red/node_modules" \
+			 $R/nodejs/node_dir/bin/node \
+			 $R/nodejs/node_dir/lib/node_modules/npm/bin/npm-cli.js $*
+	return $?
+}
+
+
 # }}}
 
