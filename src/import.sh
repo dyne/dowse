@@ -101,54 +101,92 @@ pkg-download() {
 }
 
 # Check CPU architecture
-CPU=unknown
-case `uname -m` in
-	x86_64) CPU=x64 ;;
-	*)
-		warning "unknown machine architecture, add to src/import.sh"
-		;;
+target=unknown
+case `gcc -v 2>&1 | awk '/^Target:/ { print $2 }` in
+	x86_64*) target=x64   ;;
+	armv*)   target=armv7 ;;
+	*) warning "unknown target architecture, add to src/import.sh"
+	   ;;
 esac
 
-[[ "$1" = "node-red" ]] && {
-	node_dist="node-v6.10.3-linux-x64"
-	notice "Import nodejs and npm for node-red dashboard"
-	mkdir -p $S/build/nodejs
-	pushd $S/build/nodejs
-	case $CPU in
-		x64)
-			[[ -r ${node_dist}.tar.xz ]] ||
-				curl https://nodejs.org/dist/v6.10.3/${node_dist}.tar.xz \
-					 -o ${node_dist}.tar.xz
-			[[ -d ${node_dist} ]] || {
-				tar xf ${node_dist}.tar.xz
-				rm -rf node_dir
-				mv ${node_dist} node_dir
-			}
-			;;
-		*)
-			error "Unknown machine architecture for nodejs"
-			;;
-	esac
-	popd
-	path+=($S/build/nodejs/node_dir/bin)
-	rehash
-	[[ -r $S/build/node-red/README.md ]] || {
-		act "copying node-red source to build location"
-		cp -ra $S/src/node-red $S/build/node-red }
-
-	[[ -d $S/build/node-red/node_modules/bcrypt ]] || {
-		act "installing dependencies for node-red"
+node-red-addmod() {
+	[[ -d "$S/build/node-red/node_modules/$1" ]] || {
+		act "installing node-red module: $1"
 		pushd $S/build/node-red
-		npm install
-		popd }
-
-	[[ -r $S/build/node-red/public/red/red.js ]] || {
-		notice "building node-red source"
-		pushd $S/build/node-red
-		npm run build
+		$S/build/nodejs/node_dir/bin/npm install "$1"
 		popd
 	}
-	return 0
+}
+
+[[ "$1" = "node-red" ]] && {
+	node_dist=""
+	case $target in
+		x64)   node_dist="node-v6.10.3-linux-x64" ;;
+		armv7) node_dist="node-v6.11.0-linux-armv7l" ;;
+		*) error "Unknown machine architecture for nodejs"
+		   return 1
+		   ;;
+	esac
+
+    notice "Import nodejs and npm for node-red dashboard"
+    mkdir -p $S/build/nodejs
+    pushd $S/build/nodejs
+    [[ -r ${node_dist}.tar.xz ]] ||
+        curl https://nodejs.org/dist/v6.10.3/${node_dist}.tar.xz \
+             -o ${node_dist}.tar.xz
+    [[ -d ${node_dist} ]] || {
+        tar xf ${node_dist}.tar.xz
+        rm -rf node_dir
+        mv ${node_dist} node_dir
+    }
+    popd
+
+    path+=($S/build/nodejs/node_dir/bin)
+    rehash
+    [[ -r $S/build/node-red/README.md ]] || {
+        act "copying node-red source to build location"
+        cp -ra $S/src/node-red $S/build/node-red
+    }
+
+    [[ -d $S/build/node-red/node_modules/bcrypt ]] || {
+        act "installing dependencies for node-red"
+        pushd $S/build/node-red
+        $S/build/nodejs/node_dir/bin/npm update
+        $S/build/nodejs/node_dir/bin/npm install
+        popd }
+
+    node-red-addmod node-red-dashboard
+    node-red-addmod node-red-contrib-ifttt
+    node-red-addmod node-red-contrib-got
+    node-red-addmod node-red-contrib-get-hrefs
+    node-red-addmod node-red-contrib-get-feeds
+    node-red-addmod node-red-contrib-device-stats
+    node-red-addmod node-red-contrib-chatbot
+    node-red-addmod node-red-ddm
+    node-red-addmod node-red-node-pisrf
+    node-red-addmod node-red-node-random
+    node-red-addmod node-red-node-smooth
+    node-red-addmod node-red-node-twitter
+
+    [[ -d $S/build/node-red/node_modules/node-red-dashboard ]] || {
+        act "installing module node-red-dashboard"
+        NODE_PATH=$S/build/node-red/node_modules \
+                 npm install node-red-dashboard
+    }
+
+    [[ -d $S/build/node-red/node_modules/node-red-dashboard ]] || {
+        act "installing module node-red-dashboard"
+        NODE_PATH=$S/build/node-red/node_modules \
+                 npm install node-red-dashboard
+    }
+
+    [[ -r $S/build/node-red/public/red/red.js ]] || {
+        notice "building node-red source"
+        pushd $S/build/node-red
+        npm run build
+        popd
+    }
+    return 0
 }
 
 
