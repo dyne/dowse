@@ -73,11 +73,11 @@ module.exports = {
 
     // By default, all user data is stored in the Node-RED install directory. To
     // use a different location, the following property can be used
-    userDir: '$H/run/node-red',
+    userDir: '$R/node-red',
 
     // Node-RED scans the 'nodes' directory in the install directory to find nodes.
     // The following property can be used to specify an additional directory to scan.
-    nodesDir: '$H/run/node-red/nodes',
+    nodesDir: '$H/node-red',
 
     // By default, the Node-RED UI is available at http://localhost:1880/
     // The following property can be used to specifiy a different root path.
@@ -105,7 +105,7 @@ module.exports = {
 
     // If you installed the optional node-red-dashboard you can set it's path
     // relative to httpRoot
-    //ui: { path: "ui" },
+    ui: { path: "ui" },
 
     // Securing Node-RED
     // -----------------
@@ -221,7 +221,8 @@ node-red-exec() {
 
 	# TODO: eliminate version from path
 	path+=($R/nodejs/node_dir/bin)
-	launch nodejs $R/node-red/red.js -s $conf $* &
+	NODE_PATH="$R/nodejs/node_dir/lib/node_modules:$R/node-red/node_modules" \
+			 launch nodejs $R/node-red/red.js -s $conf $* &
 	# TODO: here we save the pid + 1 but it may not work everywhere
 	print $(( $! + 1 )) > $H/run/node-red.pid
 	savepid node-red $H/run/node-red.pid
