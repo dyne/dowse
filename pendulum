@@ -456,7 +456,6 @@ m_unlock () {
 }
 
 
-
 search_for_a_dns () {
     func "$! spawned search_for_a_dns R=[$R]"
     #
@@ -467,7 +466,7 @@ search_for_a_dns () {
     local _rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers-grepped.csv)"
     
     func " $$   # check if DNS is reachable"
-    eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R ${_rndresolv[(ws:,:)1]} -t 1 -m 1"
+    __is_dns_reachable ${_rndresolv[(ws:,:)1]}
     
     [[ $? = 0 ]] || {
 	act "$$ : no good news from ${_rndresolv}"
@@ -506,13 +505,21 @@ search_for_a_dns () {
 }
 
 
- __is_dns_reachable() {
+__is_dns_reachable() {
      [[ $1 = "(nil)" ]] && { return 1 }
      [[ $1 = "" ]] && { return 1 }
      [[ $1 = " " ]] && { return 1 }
 
      act " Checking if dns  [$1] is reachable"
-     eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R $1 -t 1 -m 1"
+
+     LOG_MODE=1
+     
+     [[ $DEBUG = 1 ]] && {
+	 LOG_MODE=7
+     }
+     
+     eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R $1 -t 720 -m $LOG_MODE"
+     
      rv=$?
      [[ $rv = 0 ]] || { error "DNS [$1] is not reachable" }
 
