@@ -47,7 +47,7 @@ int variable(struct http_request * req) {
 	/**/
     WEBUI_DEBUG;
     html_rendered = kore_buf_release(out, &len);
-    http_request_header(req,"content-type","application/json");
+    http_response_header(req,"content-type","application/json");
     http_response(req, 200, html_rendered, len);
 
     /**/

@@ -20,7 +20,7 @@ int serve_asset(struct http_request *req) {
 	http_populate_get(req);
 
 	if( http_argument_get_string(req, "o", &asset_name) ) {
-		func("asset file requested: %s", asset_name);
+		act("asset file requested: %s", asset_name);
 
 		assetmap = asset_init();
 		func("assetmap initialised");

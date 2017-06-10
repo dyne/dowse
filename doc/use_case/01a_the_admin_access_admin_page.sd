@@ -1,0 +1,16 @@
+#![The admin access to admin captive_portal]
+
+admin:Actor
+webui:Webui[a]
+found:MySql[]
+redis:Redis-server[a]
+
+admin:=webui.GET("captive_admin")
+webui:=found.CALL("redirect_admin_to_captive_portal('admin')");
+
+[c:loop for all admin not explicitly 'DISABLE_TO_BROWSE' ]
+
+
+found:=redis.SET("authorization-mac-<mac-address>  admin")
+
+[/c]

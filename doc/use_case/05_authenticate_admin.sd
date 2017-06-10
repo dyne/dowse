@@ -1,0 +1,25 @@
+#![Authenticate a user]
+user:Actor
+webui:WebUi[a]
+kore:Kore[a]
+found:MySQL
+redis:Redis-server[a]
+
+user:=webui.GET(page)
+webui:=webui.get_ip_from_request()
+
+webui:=webui.ip 2 mac-address()
+
+webui:=found.SELECT (authorization) WHERE(macaddress)
+
+[c:alt if macaddress is not enabled to browse ]
+webui:=webui.redirect("http://dowse.it/captive_client")
+[/c]
+
+[c:alt if macaddress is admin ]
+webui:level_of_authorization=redis.GET(authorization-mac)
+[c:alt if level_of_authorization indicates event to handle]
+webui:=webui.redirect("http://dowse.it/captive_admin")
+[/c]
+[/c]
+

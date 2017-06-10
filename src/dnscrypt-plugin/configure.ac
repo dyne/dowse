@@ -66,12 +66,13 @@ AC_CHECK_TOOL([AR], [ar], [ar])
 
 
 AS_IF([test -d /usr/local/include], [
-  CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+  CFLAGS="$CFLAGS -I/usr/local/include "
 ])
 
 AS_IF([test -d /usr/local/lib], [
-  LDFLAGS="$LDFLAGS -L/usr/local/lib"
+  LDFLAG=S"$LDFLAGS -L/usr/local/lib"
 ])
+
 
 dnl Checks for header files.
 
@@ -202,6 +203,7 @@ do {
   AC_MSG_RESULT(no)
 ])
 
+	
 dnl Checks for library functions.
 
 AC_SEARCH_LIBS(pow, [m])

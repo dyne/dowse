@@ -59,7 +59,8 @@ uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, 
 
 
 // contain the logic if a macaddress should be redirect to captive_portal or not.
-int where_should_be_redirected_to_captive_portal(char *mac_address, plugin_data_t *data );
+int where_should_be_redirected_to_captive_portal(char *mac_address, char * ipaddr_type,char*ip,plugin_data_t *data );
+
 
 // ip2mac address translation tool
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) ;
@@ -391,17 +392,20 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
     char *ip=inet_ntoa(((struct sockaddr_in *)from_sa)->sin_addr);
 
-    /* TODO Ottimizzare ip2mac perchè fà delle conversione non piu' utili inet_ntoa -> char[] -> inet_aton */
+    /* TODO Ottimizzare ip2mac perche' fa' delle conversione non piu' utili inet_ntoa -> char[] -> inet_aton */
+    char ipaddr_type[16];
+    ipaddr_type[0]=0;
+
 
 	/* retrieve mac_address for captive_portal functionalities */
-    if (ip2mac(NULL, ip, mac_address)!=0) { /* Non e' riuscito ad ottenere il macaddress*/
+    if (ip2mac(ipaddr_type, ip, mac_address)!=0) { /* Non e' riuscito ad ottenere il macaddress*/
         snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, "127.0.0.1");
         redirect_somewhere=1;
         data->reply= cmd_redis(data->redis,
                 "GET dns-lease-dowse.it");
         func("redirect on captive portal due to : ip2mac internal error");
     } else {
-        int rv = where_should_be_redirected_to_captive_portal(mac_address, data);
+        int rv = where_should_be_redirected_to_captive_portal(mac_address,ipaddr_type,ip,data);
 
         if (rv != 0) {
             /* create the response to captive_portal IP-ADDRESS */
@@ -722,7 +726,6 @@ int publish_query(plugin_data_t *data) {
 	freeReplyObject(data->reply);
 
 
-//  fprintf(stderr,"DNS: %s\n", outnew);
 
 	return 0;
 }
@@ -745,7 +748,9 @@ int publish_query(plugin_data_t *data) {
  *
  *
  * */
-int where_should_be_redirected_to_captive_portal(char *mac_address, plugin_data_t *data ){
+int where_should_be_redirected_to_captive_portal(char *mac_address, char * ipaddr_type,char*ip,plugin_data_t *data ){
+    int is_party_mode=0;
+
     /**/
     data->reply = cmd_redis(data->redis, "GET authorization-mac-%s", mac_address);
     if(data->reply->len) {
@@ -753,7 +758,47 @@ int where_should_be_redirected_to_captive_portal(char *mac_address, plugin_data_
 
         return (strcmp(data->reply->str,"admin_should_check")==0); /**/
     } else {
+        redisReply *tmp_reply= cmd_redis(data->redis,"GET party-mode");
+
+        func("DEBUG %s %d",__FILE__,__LINE__);
+        if (tmp_reply->len > 0 ) {
+            func("DEBUG %s %d",__FILE__,__LINE__);
+            is_party_mode = (strcmp(tmp_reply->str,"ON")==0);
+            //--- TODO ma non bisogna librerare data->reply ?
+        }
+        func("DEBUG %s %d",__FILE__,__LINE__);
+        freeReplyObject(tmp_reply);
+
+        if (is_party_mode) {
+            func("DEBUG %s %d",__FILE__,__LINE__);
+            char ip4[32], ip6[32];
+
+            //-
+            if (strcmp(ipaddr_type, "ipv4") == 0) {
+                sprintf(ip4, ip);
+                ip6[0]=0;
+            } else {
+                ip4[0]=0;
+                sprintf(ip6, ip);
+            }
+            func("DEBUG %s %d",__FILE__,__LINE__);
+
+
+            //--- change authorization level
+            redisReply * tmp_reply2 = cmd_redis(data->redis,
+                    "SET authorization-mac-%s authorized_to_browse",
+                    mac_address);
+            func("DEBUG %s %d",__FILE__,__LINE__);
+
+            freeReplyObject(tmp_reply2);
+
+            return 0;
+        }
+        func("DEBUG %s %d",__FILE__,__LINE__);
+
+
         /* it's not authorized to browse */
         return 1;
     }
 }
+

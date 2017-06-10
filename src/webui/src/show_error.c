@@ -35,14 +35,16 @@ int apply_template_and_return(struct http_request *req, attributes_set_t attribu
     struct kore_buf*out;
     size_t len;
     u_int8_t *data;
-    out=kore_buf_alloc(0);
+    if (req != NULL) {
+        out = kore_buf_alloc(0);
 
-    template_load(path_asset_template_html,&tmpl);
-    template_apply(&tmpl,attribute_list,out);
+        template_load(path_asset_template_html, &tmpl);
+        template_apply(&tmpl, attribute_list, out);
 
-    data=kore_buf_release(out,&len);
-    http_response(req,ret_value,data,len);
-    attrfree(attribute_list);
-    kore_free(data);
+        data = kore_buf_release(out, &len);
+        http_response(req, ret_value, data, len);
+        attrfree(attribute_list);
+        kore_free(data);
+    }
     return KORE_RESULT_OK;
 }

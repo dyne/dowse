@@ -43,12 +43,14 @@ char *to_upper(char*str){
   }
   return str;
 }
-    
+
+int convert_from_ipv4(char *ipaddr_value, char *mac_addr);
+int convert_from_ipv6(char *ipaddr_value, char *mac_addr);
 
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) {
     char loc_ipaddr_type[6];
 
-    if (ipaddr_type == NULL) {
+    if ((ipaddr_type == NULL)||strcmp(ipaddr_type,"")==0) {
         int a, b, c, d;
         func("sscanf from %s on %s", ipaddr_value, getenv("interface"));
         int rv = sscanf(ipaddr_value, "%d.%d.%d.%d", &a, &b, &c, &d);
@@ -76,6 +78,9 @@ int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) {
 	rv=convert_from_ipv4(ipaddr_value, macaddr);
       } else {
 	rv=convert_from_ipv6(ipaddr_value, macaddr);
+      }
+      if (ipaddr_type!=NULL){
+          sprintf(ipaddr_type,loc_ipaddr_type);
       }
       to_upper(macaddr);
       return rv;
