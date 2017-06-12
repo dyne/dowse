@@ -47,7 +47,10 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <stdarg.h>
+#include <kore.h>
 #include <ctemplate.h>
+#include <webui_debug.h>
+
 
 /* To prevent infinite TMPL_INCLUDE cycles, we limit the depth */
 
@@ -134,8 +137,10 @@ struct tagnode {
 struct template {
     const char *filename;  /* name of template file */
     const char *tmplstr;   /* contents of template file */
-    FILE *out;             /* template output file pointer */
-    FILE *errout;          /* error output file pointer */
+    //FILE *out;             /* template output file pointer */
+    //FILE *errout;          /* error output file pointer */
+    struct kore_buf *out;             /* template output file pointer */
+    struct kore_buf *errout;          /* error output file pointer */
     tagnode *roottag;      /* root of parse tree */
     const TMPL_fmtlist
         *fmtlist;          /* list of format functions */
@@ -206,6 +211,10 @@ struct TMPL_loop {
 
 /* mymalloc() is a malloc wrapper that exits on failure */
 
+
+#define __append_string(str,buf) kore_buf_append(buf,str,strlen(str))
+#define __append_char(c,buf) kore_buf_append(buf,&(c),1)
+
 static void *
 mymalloc(size_t size) {
     void *ret = malloc(size);
@@ -224,7 +233,7 @@ mymalloc(size_t size) {
 
 static template *
 newtemplate(const char *filename, const char *tmplstr,
-    const TMPL_fmtlist *fmtlist, FILE *out, FILE *errout)
+    const TMPL_fmtlist *fmtlist, struct kore_buf *out, struct kore_buf *errout)
 {
     template *t;
     FILE *fp;
@@ -233,7 +242,7 @@ newtemplate(const char *filename, const char *tmplstr,
 
     if (tmplstr == 0 && filename == 0) {
         if (errout != 0) {
-            fputs("C Template library: no template specified\n", errout);
+            __append_string("C Template library: no template specified\n", errout);
         }
         return 0;
     }
@@ -250,7 +259,7 @@ newtemplate(const char *filename, const char *tmplstr,
         }
         else {
             if (errout != 0) {
-                fprintf(errout, "C Template library: failed to read "
+                kore_buf_appendf(errout, "C Template library: failed to read "
                     "template from file \"%s\"\n", filename);
             }
             if (buf != 0) {
@@ -437,7 +446,7 @@ scancomment(template *t, const char *p) {
     /* end of template, comment not terminated */
 
     if (t->errout != 0) {
-        fprintf(t->errout, "\"<*\" in file \"%s\" line %d "
+        kore_buf_appendf(t->errout, "\"<*\" in file \"%s\" line %d "
             "has no \"*>\"\n", t->filename, linenum);
     }
     t->error = 1;
@@ -748,7 +757,7 @@ failure:
         free(fmt);
     }
     if (kind != 0 && t->errout != 0) {
-        fprintf(t->errout, "Ignoring bad %s tag %sin file \"%s\" line %d\n",
+        kore_buf_appendf(t->errout, "Ignoring bad %s tag %sin file \"%s\" line %d\n",
             tagname(kind), err, t->filename, t->tagline);
     }
     return 0;
@@ -872,7 +881,7 @@ parseif(template *t, int stop) {
     }
     else {
         if (t->errout != 0) {
-            fprintf(t->errout, "TMPL_IF tag in file \"%s\" line %d "
+            kore_buf_appendf(t->errout, "TMPL_IF tag in file \"%s\" line %d "
                 "has no /TMPL_IF tag\n", t->filename, linenum);
         }
         t->error = 1;
@@ -906,7 +915,7 @@ parseloop(template *t, int stop) {
     }
     else {
         if (t->errout != 0) {
-            fprintf(t->errout, "TMPL_LOOP tag in file \"%s\" line %d "
+            kore_buf_appendf(t->errout, "TMPL_LOOP tag in file \"%s\" line %d "
                 "has no /TMPL_LOOP tag\n", t->filename, linenum);
         }
         t->error = 1;
@@ -947,7 +956,7 @@ parselist(template *t, int stop) {
             /* unexpected terminator tag -- keep going */
 
             if (t->errout != 0) {
-                fprintf(t->errout, "Unexpected %s tag in file \"%s\" "
+                kore_buf_appendf(t->errout, "Unexpected %s tag in file \"%s\" "
                     "line %d\n", tagname(tag->kind), t->filename,
                     t->tagline);
             }
@@ -1079,33 +1088,18 @@ is_true(const tagnode *iftag, const TMPL_varlist *varlist) {
  */
 
 static void
-write_text(const char *p, int len, FILE *out) {
-    int i, k;
-
-    for (i = 0; i < len; i++) {
-
-        /* check for \ or \\ before \n or \r\n */
-
-        if (p[i] == '\\') {
-            k = i + 1;
-            if (k < len && p[k] == '\\') {
-                k++;
-            }
-            if (k < len && p[k] == '\r') {
-                k++;
-            }
-            if (k < len && p[k] == '\n') {
-                if (p[i + 1] == '\\') {
-                    i++;      /* skip first \ */
-                }
-                else {
-                    i = k;    /* skip \ and line terminator */
-                    continue;
-                }
-            }
-        }
-        fputc(p[i], out);
+write_text(const char *p, int len, struct kore_buf *out) {
+    if ( out->length < out->offset + len ){
+        warn(" write_text %s %d  .... %d += %d ... %d"
+                ,__FILE__,__LINE__
+                ,out->offset
+                ,len
+                ,out->length
+        );
     }
+
+    kore_buf_append(out,p,len);
+
 }
 
 /*
@@ -1206,13 +1200,13 @@ walk(template *t, tagnode *tag, const TMPL_varlist *varlist) {
             break;
         }
 
-        /* Use the tag's format function or else just use fputs() */
+        /* Use the tag's format function or else just use __append_string() */
 
         if (tag->tag.var.fmtfunc != 0) {
             tag->tag.var.fmtfunc(value, t->out);
         }
         else {
-            fputs(value, t->out);
+            __append_string(value, t->out);
         }
         break;
 
@@ -1454,7 +1448,7 @@ TMPL_free_varlist(TMPL_varlist *varlist) {
  * tag.  Parameter "fmtfunc" is a pointer to a user supplied function
  * with a prototype like this:
  *
- *   void funcname(const char *value, FILE *out);
+ *   void funcname(const char *value, struct kore_buf *out);
  *
  * The function should output "value" to "out" with appropriate
  * formatting or encoding.
@@ -1524,21 +1518,37 @@ TMPL_free_looplist(TMPL_loop*looplist){
 int
 TMPL_write(const char *filename, const char *tmplstr,
     const TMPL_fmtlist *fmtlist, const TMPL_varlist *varlist,
-    FILE *out, FILE *errout)
+    struct kore_buf *out, struct kore_buf *errout)
 {
     int ret;
     template *t;
+    PUSH_PERF()
 
     if ((t = newtemplate(filename, tmplstr, fmtlist, out, errout)) == 0) {
         return -1;
     }
+
+    POP_PERF()
+    PUSH_PERF()
+
     t->roottag = parselist(t, 0);
+
+    POP_PERF()
+    PUSH_PERF()
+
     walk(t, t->roottag, varlist);
+    POP_PERF()
+
+    PUSH_PERF()
     ret = t->error == 0 ? 0 : -1;
     if (tmplstr == 0 && t->tmplstr != 0) {
         free((void *) t->tmplstr);
     }
+    POP_PERF()
+
+    PUSH_PERF()
     freetag(t->roottag);
+    POP_PERF()
     free(t);
     return ret;
 }
@@ -1550,40 +1560,40 @@ TMPL_write(const char *filename, const char *tmplstr,
  */
 
 void
-TMPL_encode_entity(const char *value, FILE *out) {
+TMPL_encode_entity(const char *value, struct kore_buf *out) {
     for (; *value != 0; value++) {
         switch(*value) {
 
         case '&':
-            fputs("&amp;", out);
+            __append_string("&amp;", out);
             break;
 
         case '<':
-            fputs("&lt;", out);
+            __append_string("&lt;", out);
             break;
 
         case '>':
-            fputs("&gt;", out);
+            __append_string("&gt;", out);
             break;
 
         case '"':
-            fputs("&quot;", out);
+            __append_string("&quot;", out);
             break;
 
         case '\'':
-            fputs("&#39;", out);
+            __append_string("&#39;", out);
             break;
 
         case '\n':
-            fputs("&#10;", out);
+            __append_string("&#10;", out);
             break;
 
         case '\r':
-            fputs("&#13;", out);
+            __append_string("&#13;", out);
             break;
 
         default:
-            fputc(*value, out);
+            __append_char(*value, out);
             break;
         }
     }
@@ -1592,24 +1602,27 @@ TMPL_encode_entity(const char *value, FILE *out) {
 /* TMPL_encode_url() does URL encoding (%xx)  */
 
 void
-TMPL_encode_url(const char *value, FILE *out) {
+TMPL_encode_url(const char *value, struct kore_buf *out) {
     static const char hexdigit[] = "0123456789ABCDEF";
     int c;
+    char ch;
 
     for (; *value != 0; value++) {
         if (isalnum(*value) || *value == '.' ||
             *value == '-' || *value == '_')
         {
-            fputc(*value, out);
+            __append_char(*value, out);
             continue;
         }
         if (*value == ' ') {
-            fputc('+', out);
+            ch='+';
+            __append_char(ch, out);
             continue;
         }
         c = (unsigned char) *value;
-        fputc('%', out);
-        fputc(hexdigit[c >> 4],  out);
-        fputc(hexdigit[c & 0xf], out);
+        ch='%';
+        __append_char(ch, out);
+        __append_char(hexdigit[c >> 4],  out);
+        __append_char(hexdigit[c & 0xf], out);
     }
 }
