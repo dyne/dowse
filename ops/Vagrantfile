@@ -1,5 +1,6 @@
 Vagrant.configure(2) do |config|
-  config.vm.box = "https://files.devuan.org/devuan_jessie_beta/testing/devuan_jessie_1.0.0-beta2_amd64_vagrant.box"
+  config.vm.box = "https://files.devuan.org/devuan_jessie/virtual/devuan_jessie_1.0.0_amd64_vagrant.box"
+  #config.vm.box = "file://./devuan_jessie_1.0.0_amd64_vagrant.box"
   config.ssh.username = "root"
   config.ssh.password = "toor"
   config.vm.guest = :debian
