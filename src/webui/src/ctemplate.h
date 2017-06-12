@@ -11,7 +11,7 @@
 typedef struct TMPL_varlist TMPL_varlist;
 typedef struct TMPL_loop  TMPL_loop;
 typedef struct TMPL_fmtlist TMPL_fmtlist;
-typedef void (*TMPL_fmtfunc) (const char *, FILE *);
+typedef void (*TMPL_fmtfunc) (const char *, struct kore_buf *);
 
 /*
 
@@ -36,10 +36,10 @@ void TMPL_free_fmtlist(TMPL_fmtlist *fmtlist);
 
 int TMPL_write(const char *filename, const char *tmplstr,
     const TMPL_fmtlist *fmtlist, const TMPL_varlist *varlist,
-    FILE *out, FILE *errout);
+    struct kore_buf *out, struct kore_buf *errout);
 
-void TMPL_encode_entity(const char *value, FILE *out);
+void TMPL_encode_entity(const char *value, struct kore_buf *out);
 
-void TMPL_encode_url   (const char *value, FILE *out);
+void TMPL_encode_url   (const char *value, struct kore_buf *out);
 
 #endif
