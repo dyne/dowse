@@ -21,11 +21,15 @@
 
 #include <webui.h>
 
- extern redisContext *log_redis;
+extern redisContext *log_redis;
+
+
 
 void kore_preload() {
     log_entering();
+    assetmap = asset_init();
 
+    _init_performance(&perf_cont);
     startup_attributes = attrinit();
     error_during_startup=0;
 
@@ -63,6 +67,8 @@ void kore_preload() {
     }
 
 }
+
+
 
 int check_if_reset_admin_device() {
     log_entering();
