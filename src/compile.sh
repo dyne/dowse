@@ -14,13 +14,15 @@ PREFIX=${PREFIX:-/usr/local/dowse}
 CFLAGS="-Wall -fPIC -fPIE -Os"
 LDFLAGS="-fPIC -fPIE -pie"
 
+# 2nd argument when present is number of threads used building
+THREADS=${2:-1}
 
 [[ -x $R/build/bin/$1 ]] && {
     act "$1 found in $R/build/bin/$1"
     act "delete it from build/bin to force recompilation"
     return 0 }
 
-notice "Compiling $1"
+notice "Compiling $1 using ${THREADS} threads"
 
 
 
@@ -30,7 +32,7 @@ case $1 in
 		pushd $R/src/log
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
-			  make
+			  make -j${THREADS}
 		popd
 		;;
 
@@ -38,11 +40,11 @@ case $1 in
 	    pushd $R/src/maria2redis
 
 		case `uname -m` in
-			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1" make ;;
+			i686*) CFLAGS+=" -D_LARGEFILE64_SOURCE=1" make -j${THREADS};;
 			arm*)  CFLAGS="-Wall -fPIC -D_LARGEFILE64_SOURCE=1" \
-				     LDFLAGS="-s" make ;;
+				     LDFLAGS="-s" make -j${THREADS};;
 			x86_64)  CFLAGS="-Wall -fPIC -D_LARGEFILE64_SOURCE=1" \
-				       LDFLAGS="-s" make ;;
+				       LDFLAGS="-s" make -j${THREADS};;
 		esac
 		popd
 		;;
@@ -59,17 +61,17 @@ case $1 in
 			  LDFLAGS="$LDFLAGS" \
 			  cmake -DLWS_WITH_SSL=OFF -DLWS_WITH_SHARED=OFF \
 			  -DLWS_WITHOUT_TESTAPPS=ON -DLWS_IPV6=ON -DLWS_STATIC_PIC=ON $cmakeflags . &&
-			make
+			make -j${THREADS}
 		popd
 		;;
 
 	mosquitto)
 		pushd $R/src/mosquitto
-		make -C lib &&
+		make -C lib -j${THREADS} &&
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
-			  make &&
-			install -s -p src/mosquitto $R/build/bin &&
+			  make -j${THREADS} &&
+			install -s -p src/mosquitto $R/build/bin
 		# make WITH_BRIDGE=no WITH_TLS=no WITH_WEBSOCKETS=yes WITH_DOCS=no \
 		# LWS_LIBRARY_VERSION_NUMBER=2.0 &&
 		popd
@@ -83,27 +85,27 @@ case $1 in
 		autoreconf -i 
 		CFLAGS="$CFLAGS" 
 		LDFLAGS="$LDFLAGS" 
+		# dhcpd fails building with multiple threads
 		./configure --enable-paranoia --enable-execute &&
-		    
 		    make && {
 			install -s -p server/dhcpd    $R/build/bin &&
 			    install -s -p dhcpctl/omshell $R/build/bin
-		    } &&
+		    }
 		popd
 		;;
 
     seccrond)
         pushd $R/src/seccrond
-        CFLAGS="$CFLAGS" make &&
-        install -s -p seccrond $R/build/bin
+        CFLAGS="$CFLAGS" make -j${THREADS} &&
+			install -s -p seccrond $R/build/bin
         popd
         ;;
 
     # first kore, then webui (which is built with kore)
     kore)
         [[ -x $R/build/kore ]] || {
-            pushd $R/src/kore  &&
-            make NOTLS=1 DEBUG=1 &&
+            pushd $R/src/kore
+			make -j${THREADS} NOTLS=1 DEBUG=1
             popd
         }
         ;;
@@ -135,7 +137,7 @@ EOF
         cat conf/build.conf.dist >> conf/build.conf
 
 	act "launch the actual build"
-	make all &&
+	make all -j${THREADS} &&
         install -s -p webui $R/build/bin &&
         popd
         ;;
@@ -151,23 +153,23 @@ EOF
               --with-webdir=${PREFIX}/netdata \
               --localstatedir=$HOME/.dowse \
               --sysconfdir=/etc/dowse &&
-            make &&
-            install -s -p src/netdata $R/build/bin &&
+            make -j${THREADS} &&
+            install -s -p src/netdata $R/build/bin
         popd
         ;;
 
 	netdata-plugins)
 		pushd $R/src/netdata
-		make
+		make -j${THREADS}
 		popd
 		;;
 
     netdiscover)
         pushd $R/src/netdiscover &&
         autoreconf && \
-            CFLAGS="$CFLAGS" ./configure --prefix=${PREFIX} && \
-            make && \
-            install -s -p src/netdiscover $R/build/bin &&
+            CFLAGS="$CFLAGS" ./configure --prefix=${PREFIX} &&
+            make -j${THREADS} &&
+            install -s -p src/netdiscover $R/build/bin
         popd
         ;;
 
@@ -175,7 +177,7 @@ EOF
         pushd $R/src/sup
         # make sure latest config.h is compiled in
         rm -f $R/src/sup/sup.o
-        make && install -s -p $R/src/sup/sup $R/build &&
+        make -j${THREADS} && install -s -p $R/src/sup/sup $R/build
         popd
         ;;
 
@@ -183,20 +185,20 @@ EOF
         pushd $R/src/dnscrypt-proxy
 	## least bloated solution
 		git checkout -- src/proxy &&
-		patch -p1 < $R/src/patches/dnscrypt-noreuseableport.patch &&
-		./autogen.sh &&
-         ./configure --without-systemd --enable-plugins --prefix=${PREFIX} &&
-            make && 
-            install -s -p src/proxy/dnscrypt-proxy $R/build/bin &&
-         popd
+			patch -p1 < $R/src/patches/dnscrypt-noreuseableport.patch &&
+			./autogen.sh &&
+			./configure --without-systemd --enable-plugins --prefix=${PREFIX} &&
+			make -j${THREADS} && 
+			install -s -p src/proxy/dnscrypt-proxy $R/build/bin
+        popd
         ;;
 
     dnscrypt_dowse.so)
         pushd $R/src/dnscrypt-plugin
 		autoreconf -i &&
 			./configure &&
-			make &&
-            install -s -p .libs/dnscrypt_dowse.so $R/build/bin &&
+			make -j${THREADS} &&
+            install -s -p .libs/dnscrypt_dowse.so $R/build/bin
         popd
         ;;
 
@@ -204,8 +206,8 @@ EOF
         pushd $R/src/pgld &&
 	    CFLAGS="$CFLAGS" \
 		  LDFLAGS="$LDFLAGS" \
-		  make &&
-        install -s -p $R/src/pgld/pgld $R/build/bin &&
+		  make -j${THREADS} &&
+        install -s -p $R/src/pgld/pgld $R/build/bin
         popd
         ;;
 

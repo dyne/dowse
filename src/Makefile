@@ -1,5 +1,6 @@
 DESTDIR ?=
 PREFIX ?= /usr/local/dowse
+THREADS ?= 1
 
 ifeq ($(wildcard /usr/bin/mariadb_config),)
   DB_CFG=/usr/bin/mysql_config
@@ -41,42 +42,42 @@ b64:
 	@make -C libb64
 
 libparse-datetime:
-	@make -C libparse-datetime
+	@make -C libparse-datetime -j${THREADS}
 
 dnscrypt-proxy:
-	@./compile.sh dnscrypt-proxy
+	@./compile.sh dnscrypt-proxy ${THREADS}
 
 dnscrypt_dowse.so:
-	@./compile.sh dnscrypt_dowse.so
+	@./compile.sh dnscrypt_dowse.so ${THREADS}
 
 pgld:
-	@./compile.sh pgld
+	@./compile.sh pgld ${THREADS}
 
 netdata:
 	@rm -f netdata/web/version.txt
-	@./compile.sh netdata
-	@./compile.sh netdata-plugins
+	@./compile.sh netdata ${THREADS}
+	@./compile.sh netdata-plugins ${THREADS}
 
 dhcpd:
-	@./compile.sh dhcpd
+	@./compile.sh dhcpd ${THREADS}
 
 libwebsockets:
-	@./compile.sh libwebsockets
+	@./compile.sh libwebsockets ${THREADS}
 
 mosquitto: libwebsockets
-	@./compile.sh mosquitto
+	@./compile.sh mosquitto ${THREADS}
 
 kore:
-	@./compile.sh kore
+	@./compile.sh kore ${THREADS}
 
 webui: kore
-	@./compile.sh webui
+	@./compile.sh webui ${THREADS}
 
 seccrond:
-	@./compile.sh seccrond
+	@./compile.sh seccrond ${THREADS}
 
 maria2redis:
-	@./compile.sh maria2redis
+	@./compile.sh maria2redis ${THREADS}
 
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo

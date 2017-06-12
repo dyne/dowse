@@ -1,6 +1,7 @@
 DESTDIR?=
 PREFIX?=/usr/local/dowse
 CONFDIR?=/etc/dowse
+THREADS?=1
 
 include config.mk
 
@@ -22,7 +23,7 @@ config:
 	@mkdir -p build/db
 
 sources:
-	make -C src
+	THREADS=${THREADS} make -C src
 
 clean:
 	@rm -rf build
