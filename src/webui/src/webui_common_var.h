@@ -30,6 +30,19 @@ __WEBUI_EXTERN__ struct identity_t{
 } identity;
 
 
+typedef struct performance_context{
+   #define SIZE_OF_TIME_STACK (32)
+   int perf_stack;
+   struct timeval time_stack[SIZE_OF_TIME_STACK];
+   const char *file_stack[SIZE_OF_TIME_STACK];
+   const char *function_stack[SIZE_OF_TIME_STACK];
+   int row_stack[SIZE_OF_TIME_STACK];
+
+} performance_context;
+
+__WEBUI_EXTERN__ performance_context perf_cont;
+__WEBUI_EXTERN__ map_t assetmap;
+
 /* To wrote global_messages we wrote on global_attributes set
  * __WEBUI_EXTERN__ attributes_set_t global_messages;
  * */

@@ -20,6 +20,8 @@
  */
 #define __WEBUI_MAIN_FILE__
 #include <webui.h>
+ #include <sys/time.h>
+
 
 int thing_show_cb(attributes_set_t *data, int argc, MYSQL_ROW argv,
         MYSQL_FIELD *azColName) {
@@ -65,6 +67,54 @@ int thing_show_cb(attributes_set_t *data, int argc, MYSQL_ROW argv,
 
 }
 
+/* */
+void _init_performance(struct performance_context *p){
+    p->perf_stack=0;
+}
+
+void _push_performance(char const*file,char const*function,int row){
+    struct performance_context *p=&perf_cont;
+
+    int k=p->perf_stack;
+    struct timeval *dest=&(p->time_stack[k]);
+
+    p->file_stack[k]=file;
+    p->function_stack[k]=function;
+    p->row_stack[k]=row;
+
+    p->perf_stack++;
+
+    struct timezone tmp_timezone;
+    gettimeofday(dest,&tmp_timezone);
+}
+
+
+void _pop_performance(char const*f,char const *function,int row){
+    struct timeval _now,*_before;
+    struct timezone tmp_timezone;
+
+    struct performance_context *p=&perf_cont;
+    p->perf_stack--;
+
+    _before=&(p->time_stack[p->perf_stack]);
+
+    gettimeofday(&_now,&tmp_timezone);
+
+
+    unsigned long long diff=(_now.tv_sec-_before->tv_sec)*1000000+(_now.tv_usec-_before->tv_usec);
+
+    fprintf(stderr,"\nPERFORMANCE from %s:%d %s  to %s:%d %s %llu\n"
+            ,p->file_stack[p->perf_stack]
+            ,p->row_stack[p->perf_stack]
+            ,p->function_stack[p->perf_stack]
+            ,f,row,function
+            ,diff);
+
+}
+
+
+
+/**/
 int thing_show(struct http_request *req) {
     u_int8_t *response;
     size_t len;
@@ -75,18 +125,19 @@ int thing_show(struct http_request *req) {
 
 
 
+    PUSH_PERF()
     WEBUI_DEBUG
     ;
     http_populate_get(req);
 
     // we shouldn't free the result in macaddr
     if (http_argument_get_string(req, "macaddr", &macaddr)) {
-        func( "thing_show macaddr %s", macaddr);
+        act( "thing_show macaddr %s", macaddr);
         //--- prepare where condition
         snprintf(where_condition, ml, "WHERE upper(F.macaddr)=upper('%s') and F.macaddr <>'00:00:00:00:00:00'", macaddr);
     } else {
-        err( "thing_show get argument error");
-        func( "thing_show called without argument");
+        //warn( "thing_show get argument error");
+        act( "thing_show called without argument");
         //--- prepare where condition
         snprintf(where_condition, ml, " WHERE F.macaddr<>'00:00:00:00:00:00'");
     }
@@ -128,7 +179,8 @@ int thing_show(struct http_request *req) {
     fprintf(stderr,"query [%s]",line);
     WEBUI_DEBUG
     ;
-    buf = kore_buf_alloc(mb);
+    /* performance index tuning */
+    buf = kore_buf_alloc(2*mb);
 
     WEBUI_DEBUG
     ;
@@ -147,7 +199,9 @@ int thing_show(struct http_request *req) {
     // SQL query
     sqlquery(line, thing_show_cb, &attributes);
 
+    PUSH_PERF()
     template_apply(&tmpl, attributes, buf);
+    POP_PERF()
 
     WEBUI_DEBUG
     ;
@@ -166,6 +220,7 @@ int thing_show(struct http_request *req) {
     //    kore_buf_free(buf);
 
     //  kore_free(data);
+    POP_PERF()
 
     return (KORE_RESULT_OK);
 }

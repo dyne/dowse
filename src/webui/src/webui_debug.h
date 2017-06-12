@@ -59,4 +59,13 @@ WEBUI_DEF_ERROR_LEVEL_MESSAGE_PROTOTYPE(error);
 #define   log_entering() func("Entering into %s \t\t\t(%s:%d) ",__FUNCTION__,__FILE__,__LINE__)
 
 
+#define push_performance(p) _push_performance(__FILE__,__FUNCTION__,__LINE__)
+#define pop_performance(p) _pop_performance(__FILE__,__FUNCTION__,__LINE__)
+
+#define PUSH_PERF() {}
+//push_performance();
+#define POP_PERF() {}
+//pop_performance();
+
+
 #endif
