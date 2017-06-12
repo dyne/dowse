@@ -34,6 +34,34 @@
  *
  * The this page doesn't do nothing, because it doesn't need nothing.
  * */
+
+//#define DYNAMIC_ASSET_LOADING
+#ifndef DYNAMIC_ASSET_LOADING
+int proxy(struct http_request * req) {
+
+    char path_file[256];
+
+    if (strstr(req->path, "..")) {
+        return _404(req);
+    }
+
+    sprintf(path_file, "assets%s", req->path);
+
+    func("template_load in STATIC WAY of [%s]  %d\n", __FUNCTION__,path_file);
+
+    asset_t *rasset;
+
+    if (hashmap_get(assetmap, path_file, (void**)&rasset) == MAP_MISSING) {
+        err("Error at line %s %d : Requested a non compiled asset [%s]", __FILE__, __LINE__,path_file);
+        return _404(req);
+    }
+
+    http_response_header(req, "content-type",rasset->type);
+    http_response(req, 200, rasset->data, rasset->len);
+
+    return KORE_RESULT_OK;
+}
+#else
 int proxy(struct http_request * req) {
     char*out;
     size_t len;
@@ -46,7 +74,7 @@ int proxy(struct http_request * req) {
     }
 
     sprintf(path_file,"./assets/%s",req->path);
-    
+
     int fd;
 
     /* */
@@ -78,6 +106,7 @@ int proxy(struct http_request * req) {
    free(out);
    return KORE_RESULT_OK;
 }
+#endif
 
 int _404(struct http_request*req){
 

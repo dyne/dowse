@@ -66,73 +66,62 @@ int _internal_static_template_load(u_int8_t *str, int len, template_t *tmpl) {
     return 0;
 }
 
-void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out) {
-    char out_name[] = "/tmp/out_stream_XXXXXX";
-    char err_name[] = "/tmp/err_stream_XXXXXX";
-    FILE*out_stream, *err_stream;
-    char buf_str[1024], end;
-    int some_error, rv;
+void template_apply(template_t *tmpl, attributes_set_t al, struct kore_buf *out_stream) {
 
-    rv=mkstemp(out_name);
-    if (rv==-1) {
-      err("Error on create temp file [%s]",strerror(errno));
-    } else {
-      close(rv);
-    }
-    rv=mkstemp(err_name);
-    if (rv==-1) {
-      err("Error on create temp file [%s]",strerror(errno));
-    } else {
-      close(rv);
-    }
+    struct kore_buf *err_stream;
 
-    func(
-            "[%s] Template applying out file was [%s] err file was [%s] ",
-            __where_i_am__, out_name, err_name);
+    int  rv;
+    PUSH_PERF()
 
-    out_stream = fopen(out_name, "rw+");
-    err_stream = fopen(err_name, "rw+");
+
 
     WEBUI_DEBUG
     ;
+
+    // TODO
+    err_stream=kore_buf_alloc(500*1024);
+
     TMPL_write(NULL, (const char *)tmpl->data, tmpl->fmtlist, al->varlist, out_stream,
             err_stream);
+    POP_PERF();
+
+    PUSH_PERF();
 
 //  size=ftell(out_stream);
-    func( " out [%s] [%d] ", __where_i_am__, ftell(out_stream));
+    func( " out [%s] [%d] ", __where_i_am__, out_stream->length);
+    func( " err [%s] [%d] ", __where_i_am__, err_stream->length);
 
-    some_error = 0;
-    rewind(out_stream);
-    rewind(err_stream);
 
-    while ((rv = fread(buf_str, 1, sizeof(buf_str), err_stream)) > 0) {
-        buf_str[rv] = 0;
+    POP_PERF();
+
+    PUSH_PERF();
+
+    while ((rv = err_stream->offset) > 0) {
         char m[1024];
-        snprintf(m, sizeof(m), "%s %s", __where_i_am__, buf_str);
-        err( m);
+        char ending_char=0;
+        kore_buf_append(err_stream,&ending_char,1);
+        snprintf(m, sizeof(m), "%s %s", __where_i_am__, err_stream->data);
         err(m);
-        some_error = 1;
     }
-    if (!some_error) {
-        while ((rv = fread(buf_str, 1, sizeof(buf_str), out_stream)) > 0) {
-            buf_str[rv] = 0;
-//	  func("%s %s",__where_i_am__,buf_str);
-            kore_buf_append(out, buf_str, rv);
-        }
-    }
+
+    POP_PERF();
+
+    PUSH_PERF();
 
     WEBUI_DEBUG
-    end = 0;
 
-    kore_buf_append(out, &end, 1);
 
-    fclose(out_stream);
-    fclose(err_stream);
+    /* TODO dump err_stream */
 
-    unlink(out_name);
-    unlink(err_name);
+    POP_PERF();
+
+    PUSH_PERF();
+
 
     template_free(tmpl);
+    POP_PERF();
+
+
 }
 
 void template_free(template_t *t) {

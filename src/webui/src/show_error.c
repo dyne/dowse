@@ -36,10 +36,12 @@ int apply_template_and_return(struct http_request *req, attributes_set_t attribu
     size_t len;
     u_int8_t *data;
     if (req != NULL) {
-        out = kore_buf_alloc(0);
+        out = kore_buf_alloc(mb);
 
         template_load(path_asset_template_html, &tmpl);
         template_apply(&tmpl, attribute_list, out);
+
+        func("Returning %d byte ",out->length);
 
         data = kore_buf_release(out, &len);
         http_response(req, ret_value, data, len);
