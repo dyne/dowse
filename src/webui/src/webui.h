@@ -23,7 +23,7 @@
 #include <../database.h>
 #include <show_error.h>
 
-#define mb (1024*500)
+#define mb (1024*1024)
 #define ml (1024*3)
 #define RESET_ADMIN_FILE "./reset_admin_file"
 
