@@ -6,7 +6,7 @@ dnscrypt_dowse_la_LIBTOOLFLAGS = --tag=disable-static
 
 dnscrypt_dowse_la_SOURCES = dnscrypt-dowse.c domainlist.c ip2mac.c
 
-dnscrypt_dowse_la_LIBADD = @LDNS_LIBS@ -lhiredis -ljemalloc -L../libdowse -l:libdowse.a
+dnscrypt_dowse_la_LIBADD = @LDNS_LIBS@ -lhiredis -ljemalloc -L../libdowse -l:libdowse.a -L../libb64 -l:libb64.a
 
 dnscrypt_dowse_la_CFLAGS = -Os -Wall -I../dnscrypt-proxy/src/include -I.. 
 
