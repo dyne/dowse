@@ -377,8 +377,16 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	// get the source ip
 	from_sa = dcplugin_get_client_address(dcp_packet);
 	from_len = dcplugin_get_client_address_len(dcp_packet);
-	getnameinfo((struct sockaddr *)from_sa, from_len,
+	int res=getnameinfo((struct sockaddr *)from_sa, from_len,
 	            data->from, sizeof(data->from), NULL, 0, 0x0);
+
+	if (res) {
+	    int res=getnameinfo((struct sockaddr *)from_sa, from_len,
+	                    data->from, sizeof(data->from), NULL, 0, NI_NUMERICHOST);
+
+	    warn("we can't resolve the hostname of calling IP we use the numeric form [%s]",data->from);
+
+	}
 
 	// publish info to redis channel
 	publish_query(data);
