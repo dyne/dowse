@@ -325,6 +325,9 @@ EOF
     # netdata dashboard for the technical status
     start netdata
 
+	# nodejs/node-red
+	start node-red
+
 	start seccrond
 
     notice "Dowse succesfully started" # , web interface up on:"
