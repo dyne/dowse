@@ -89,11 +89,12 @@ const char * dcplugin_long_description(DCPlugin * const dcplugin) {
 	return
 		"This plugin checks all settings in Dowse and operates filtering on dnscrypt queries accordingly\n";
 }
-
 int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	int i;
 
+
 	func("compile time : %s", __TIME__);
+
 
 	plugin_data_t *data = malloc(sizeof(plugin_data_t));
 	memset(data, 0x0, sizeof(plugin_data_t));

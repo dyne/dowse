@@ -25,6 +25,9 @@
 
 #include <dowse.h>
 
+redisContext *minimal_connect_redis(char *host, int port, int db,int minimal_log) ;
+void _minimal_err(char *msg,int sizeof_msg,const char *fmt, ...);
+
 int minimal_okredis(redisContext *r, redisReply *res) {
     if(!res) {
         fprintf(stderr,"redis error: %s\n", r->errstr);
@@ -79,31 +82,50 @@ redisReply *cmd_redis(redisContext *redis, const char *format, ...) {
 	res = redisCommand(redis, command);
 	va_end(args);
 
-	if( okredis(redis, res) )
-		return res;
-	else
-		return NULL;
+	if ( okredis(redis, res) ) {
+        return res;
+	} else {
+        return NULL;
+	}
 }
 
 redisContext *connect_redis(char *host, int port, int db) {
+    return minimal_connect_redis(host, port, db,0);
+}
+
+
+redisContext *minimal_connect_redis(char *host, int port, int db,int minimal_log) {
 	redisContext   *rx;
 	redisReply     *reply;
-	func("Connecting to redis on %s port %u", host, port);
+	if (!minimal_log) {
+	    func("Connecting to redis on %s port %u", host, port);
+	}
 	struct timeval timeout = { 1, 500 };
 	rx = redisConnectWithTimeout(host, port, timeout);
 	/* rx = redisConnect(REDIS_HOST, REDIS_PORT); */
 
 	if (rx == NULL || rx->err) {
 		if (rx) {
-			err("Redis connection error: %s", rx->errstr);
+		    if (!minimal_log) {
+		        err("Redis connection error: %s", rx->errstr);
+		    } else {
+		        char msg[256];
+		        _minimal_err(msg,sizeof(msg),"Redis connection error: %s", rx->errstr);
+		    }
 			redisFree(rx);
 			return NULL;
 		} else {
-			err("Connection error: can't allocate redis context");
+		    if (!minimal_log) {
+		        err("Connection error: can't allocate redis context");
+		    } else {
+                char msg[256];
+                _minimal_err(msg,sizeof(msg),"Connection error: can't allocate redis context");
+            }
 		}
 	}
 	// select the dynamic database where is dns_query_channel
-	reply = cmd_redis(rx, "SELECT %u", db);
+	reply = minimal_cmd_redis(rx, "SELECT %u", db);
+
 	// TODO: check if result is OK
 	// fprintf(stderr,"SELECT: %s\n", reply->str);
 	if(reply) freeReplyObject(reply);
