@@ -353,6 +353,9 @@ dowse-stop() {
     #     dowse-module-stop
     # done
 
+	# stop nodejs/node-red
+	stop node-red
+
     # stop the dashboard
     stop netdata
 
