@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <b64/cencode.h>
-
+#include "dowse.h"
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -23,28 +23,59 @@
 redisContext *log_redis  = NULL;//connect_redis("127.0.0.1", 6379, 0);
 base64_encodestate b64_state;
 redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...) ;
-  
-void toredis(char *pfx, char *msg) {
-    if (log_redis) {
+void _minimal_err(char *msg,int sizeof_msg,const char *fmt, ...);
+redisContext *connect_redis(char *host, int port, int db);
+redisContext *minimal_connect_redis(char *host, int port, int db,int minimal_log) ;
 
+void toredis(char *pfx, char *msg) {
+
+    if (!log_redis) {
+        if (1) { /* TODO sostituire con getenv() */
+
+            log_redis = minimal_connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic,1); /* we call in minimal_log */
+
+            if (!log_redis) {
+                char msg[256];
+
+                _minimal_err(msg,sizeof(msg),"Redis server is not running");
+
+                return;
+            }
+        } else {
+            return ;
+        }
+    }
+
+
+    if (log_redis) {
         redisReply *reply;
-        reply=redisCommand(log_redis, "PUBLISH log-channel %s:%ld:%s", pfx,time(NULL), msg);
+
+        reply=redisCommand(log_redis, "PUBLISH log-channel (%d):%s:%ld:%s", getpid(),pfx,time(NULL), msg);
 
         if (reply && reply->len) {
+
             fprintf(stderr,"%s %d redis_reply %s\n",
                     __FILE__,__LINE__,reply->str);
         }
         if (reply) {
+
             freeReplyObject(reply);
         }
 
         char command[256];
         char b64_encoded[512];
+
         base64_init_encodestate(&b64_state);
+
+
         int rv=base64_encode_block(msg, strlen(msg), b64_encoded, &b64_state);
 
+
         int rv2=base64_encode_blockend(b64_encoded+rv,&b64_state);
+
+
         b64_encoded[rv+rv2-1]=0;
+
 
         sprintf(command,"LPUSH log-queue %s:%ld:%s", (pfx),time(NULL), b64_encoded);
         /* Using the plain msg variable the values are splitted by the blank character */
@@ -89,23 +120,30 @@ void func(const char *fmt, ...) {
 	return;
 }
 
+void _minimal_err(char *msg,int sizeof_msg,const char *fmt, ...) {
+    size_t len;
+
+    va_list args;
+    va_start(args, fmt);
+
+    vsnprintf(msg, sizeof_msg, fmt, args);
+    len = strlen(msg);
+    write(2, ANSI_COLOR_RED " [!] " ANSI_COLOR_RESET, 5+5+4);
+    write(2, msg, len);
+    write(2, "\n", 1);
+    fsync(2);
+
+    va_end(args);
+
+}
+
+
 void err(const char *fmt, ...) {
-	va_list args;
-
+    va_list args;
 	char msg[256];
-	size_t len;
-
 	va_start(args, fmt);
-
-	vsnprintf(msg, sizeof(msg), fmt, args);
-	len = strlen(msg);
-	write(2, ANSI_COLOR_RED " [!] " ANSI_COLOR_RESET, 5+5+4);
-	write(2, msg, len);
-	write(2, "\n", 1);
-	fsync(2);
-
+	_minimal_err(msg,sizeof(msg),fmt,args);
 	va_end(args);
-
 	toredis("ERROR", msg);
 
 }
