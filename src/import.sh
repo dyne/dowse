@@ -104,7 +104,7 @@ pkg-download() {
 target=unknown
 case `gcc -v 2>&1 | awk '/^Target:/ { print $2 }'` in
 	x86_64*) target=x64   ;;
-	armv*)   target=armv7 ;;
+	arm*)   target=armv7 ;;
 	*) warning "unknown target architecture, add to src/import.sh"
 	   ;;
 esac
@@ -122,7 +122,7 @@ node-red-addmod() {
 	node_dist=""
 	case $target in
 		x64)   node_dist="node-v6.10.3-linux-x64" ;;
-		armv7) node_dist="node-v6.11.0-linux-armv7l" ;;
+		armv7) node_dist="node-v6.10.3-linux-armv7l" ;;
 		*) error "Unknown machine architecture for nodejs"
 		   return 1
 		   ;;
