@@ -34,92 +34,35 @@ char *dowse2bootstrap(char*log_level){
 
 int print_error_list(struct http_request * req) {
     log_entering();
-    template_t tmpl;
-	attributes_set_t attr;
-    u_int8_t *html_rendered;
-    struct kore_buf *out;
-    size_t len;
-    out = kore_buf_alloc(0);
-	attr=attrinit();
+     template_t tmpl;
+    attributes_set_t attributes;
+    struct kore_buf *buf;
+    char *address;
+
+    // allocate output buffer
+    buf = kore_buf_alloc(1024*1000);
+
+    // load template
+    template_load
+        ("assets/print_error_list.html", &tmpl);
+    attributes = attrinit();
+
+    address = getenv("address");
+    if(!address) address = "127.0.0.1";
+
+    attrcat(attributes, "address", address);
 
 
-	extern redisContext *log_redis;
-	redisContext *backup_log_redis=log_redis;
-	log_redis=NULL; /* To disable redis logging (otherwise infinite loop) */
+    template_apply(&tmpl,attributes,buf);
 
-	redisContext *redis_shell = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
-    if (!redis_shell) {
-        const char m[] = "Problem during rendering of error list: Redis server is not running";
-        webui_add_error_message(&attr, m);
-        err(m);
-        log_redis=backup_log_redis; /* Restore redis logging*/
-        return apply_template_and_return(req, attr,
-                "assets/print_error_list.html",
-                200);
-    }
-
-	/**/
-    redisReply*reply=NULL;
-    base64_decodestate b64_state;
-
-    while (1) {
-        reply= minimal_cmd_redis(redis_shell,"RPOP log-queue");
-
-        if (reply->len ) {
-
-            char *tmp=(char*)malloc(reply->len+1);
-            sprintf(tmp,"%s",reply->str);
-
-            char *sep=index(tmp,':');
-            char *sep2=index(sep+1,':');
-
-            char *level_message=tmp;
-            char *time_message=sep+1; (*sep)=0;
-            char *body_message=sep2+1; (*sep2)=0;
-
-            /* Decode message was encoded in b64 to escaping character */
-            char command[256];
-            base64_init_decodestate(&b64_state);
-            int rv=base64_decode_block(body_message, strlen(body_message), command, &b64_state);
-
-            command[rv]=0;
-
-            /* Decode the time in time_human_readable */
-            char time_human_readable[256];
-            relative_time(time_message,time_human_readable);
-
-            /**/
-            attributes_set_t t=attrinit();
-
-            t=attrcat(t,TMPL_VAR_LEVEL_MESSAGE,dowse2bootstrap(level_message));
-            t=attrcat(t,TMPL_VAR_TEXT_MESSAGE,command);
-            t=attrcat(t,TMPL_VAR_TIME_MESSAGE,time_human_readable);
-
-            attr=attr_add(attr,TMPL_VAR_MESSAGE_LOOP,t);
-
-            freeReplyObject(reply);
-            free(tmp);
-        } else {
-            break;
-        }
-
-    }
+    http_response_header(req, "content-type", "text/html");
+    http_response(req, 200, buf->data, buf->offset);
 
 
-    template_load("assets/print_error_list.html",&tmpl);
-    template_apply(&tmpl,attr,out);
+    template_free(&tmpl);
+    attrfree(attributes);
 
-	/**/
-    html_rendered = kore_buf_release(out, &len);
-    http_response(req, 200, html_rendered, len);
+    kore_buf_free(buf);
 
-    /**/
-    kore_free(html_rendered);
-	attrfree(attr);
-
-
-	redisFree(redis_shell);
-    log_redis=backup_log_redis; /* Restore redis logging*/
-
-    return (KORE_RESULT_OK);
+    return(KORE_RESULT_OK);
 }

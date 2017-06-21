@@ -77,7 +77,7 @@ void toredis(char *pfx, char *msg) {
         b64_encoded[rv+rv2-1]=0;
 
 
-        sprintf(command,"LPUSH log-queue %s:%ld:%s", (pfx),time(NULL), b64_encoded);
+        sprintf(command,"PUBLISH log-queue %d:%s:%ld:%s", getpid(),(pfx),time(NULL), b64_encoded);
         /* Using the plain msg variable the values are splitted by the blank character */
         //        sprintf(command,"LPUSH log-queue %s:%s", pfx,msg);
 

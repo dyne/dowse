@@ -116,6 +116,8 @@ void _pop_performance(char const*f,char const *function,int row){
 
 /**/
 int thing_show(struct http_request *req) {
+    template_t tmpl;
+
     u_int8_t *response;
     size_t len;
     attributes_set_t attributes;
