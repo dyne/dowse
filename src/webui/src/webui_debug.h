@@ -51,6 +51,7 @@ WEBUI_DEF_ERROR_LEVEL_MESSAGE_PROTOTYPE(error);
 #define TMPL_VAR_LEVEL_MESSAGE "level"
 #define TMPL_VAR_TEXT_MESSAGE "text"
 #define TMPL_VAR_TIME_MESSAGE "when"
+#define TMPL_VAR_PID_MESSAGE "who"
 
 #define TMPL_VAR_MESSAGE_LOOP "message_loop"
 

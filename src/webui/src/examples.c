@@ -1,7 +1,7 @@
 #include <webui.h>
 
 int websocket_example(struct http_request *req) {
-	// template_t tmpl;
+    template_t tmpl;
 	attributes_set_t attributes;
 	struct kore_buf *buf;
 	char *address;
