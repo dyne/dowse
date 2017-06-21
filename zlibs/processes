@@ -60,15 +60,9 @@ start() {
 	args="$*"
 
 
-    execpath=${execmap[$_daemon]}
-    [[ "$execpath" = "" ]] && {
-		execpath=${execmap[${_daemon%-*}]}
-		[[ "$execpath" = "" ]] && {
-			error "$_daemon not found in execpath"
-			return 1 }
-	}
-    func "execpath: $execpath"
-
+    command -v ${_daemon}-exec > /dev/null || {
+		warning "${_daemon}-exec : daemon not found"
+		return 1 }
 
     _pid=`getpid $_daemon`
     [[ "$_pid" = "" ]] || {
@@ -82,36 +76,31 @@ start() {
 
     act "generating configuration for $_daemon"
     conf=$H/run/$_daemon.conf
-    $_daemon-conf > $conf
+    ${_daemon}-conf > $conf
 
     act "starting daemon: $_daemon $*"
 
-    if command -v $_daemon-exec > /dev/null; then
-        # we preload jemalloc for better memory handling
-		# need to detect the path for it
-		case `uname -m` in
-			x86_64)
-				func "set LD_PRELOAD for jemalloc arch x84_64 ($_daemon)"
-				LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1 \
-							  $_daemon-exec $args
-					;;
+    # we preload jemalloc for better memory handling
+    # need to detect the path for it
+    case `uname -m` in
+        x86_64)
+            func "set LD_PRELOAD for jemalloc arch x84_64 ($_daemon)"
+            LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1 \
+                      ${_daemon}-exec $args
+            ;;
 
-			i686)
-				func "set LD_PRELOAD for jemalloc arch i686 ($_daemon)"
-				LD_PRELOAD=/usr/lib/i386-linux-gnu/libjemalloc.so.1 \
-						  $_daemon-exec $args
-					;;
+        i686)
+            func "set LD_PRELOAD for jemalloc arch i686 ($_daemon)"
+            LD_PRELOAD=/usr/lib/i386-linux-gnu/libjemalloc.so.1 \
+                      ${_daemon}-exec $args
+            ;;
 
-			*) $_daemon-exec $args ;;
+        *) ${_daemon}-exec $args ;;
 
-		esac
+    esac
 
-		func "$_daemon-exec $args"
-        return $?
-    else
-        warning "daemon executable not found: $execpath"
-        return 1
-    fi
+    func "${_daemon}-exec $args"
+    return $?
 }
 
 stop() {
@@ -127,8 +116,8 @@ stop() {
         return 1
     else
         act "stopping $_daemon ($_pid)"
-        if command -v $_daemon-kill > /dev/null; then
-            $_daemon-kill
+        if command -v ${_daemon}-kill > /dev/null; then
+            ${_daemon}-kill
         else
             killpid $_pid
             waitpid $_pid || {

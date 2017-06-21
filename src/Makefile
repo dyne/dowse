@@ -1,5 +1,6 @@
 DESTDIR ?=
 PREFIX ?= /usr/local/dowse
+THREADS ?= 1
 
 ifeq ($(wildcard /usr/bin/mariadb_config),)
   DB_CFG=/usr/bin/mysql_config
@@ -15,17 +16,18 @@ LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64 -Llibb64
 
 all: base parsers springs
 	./import.sh redis-server
-	./import.sh redis-cli 
-	./import.sh ${DB_TYPE} 
+	./import.sh redis-cli
+	./import.sh ${DB_TYPE}
 	./import.sh nmap-macs
-	install -s -p modprobe        ../build/bin 
-	install -s -p dowse-to-gource ../build/bin 
-	install -s -p dowse-to-osc    ../build/bin 
-	install -s -p dowse-to-mqtt   ../build/bin 
-	install -s -p hiredis-lock    ../build/bin 
-	install -s -p dowse-cmd-fifo  ../build/bin 
-	install -s -p parse-ip-neigh  ../build/bin 
-	./checksum.sh 
+	./import.sh node-red
+	install -s -p modprobe        ../build/bin
+	install -s -p dowse-to-gource ../build/bin
+	install -s -p dowse-to-osc    ../build/bin
+	install -s -p dowse-to-mqtt   ../build/bin
+	install -s -p hiredis-lock    ../build/bin
+	install -s -p dowse-cmd-fifo  ../build/bin
+	install -s -p parse-ip-neigh  ../build/bin
+	./checksum.sh
 	./compile.sh sup
 
 libs: b64
@@ -41,42 +43,42 @@ b64:
 	@make -C libb64
 
 libparse-datetime:
-	@make -C libparse-datetime
+	@make -C libparse-datetime -j${THREADS}
 
 dnscrypt-proxy:
-	@./compile.sh dnscrypt-proxy
+	@./compile.sh dnscrypt-proxy ${THREADS}
 
 dnscrypt_dowse.so:
-	@./compile.sh dnscrypt_dowse.so
+	@./compile.sh dnscrypt_dowse.so ${THREADS}
 
 pgld:
-	@./compile.sh pgld
+	@./compile.sh pgld ${THREADS}
 
 netdata:
 	@rm -f netdata/web/version.txt
-	@./compile.sh netdata
-	@./compile.sh netdata-plugins
+	@./compile.sh netdata ${THREADS}
+	@./compile.sh netdata-plugins ${THREADS}
 
 dhcpd:
-	@./compile.sh dhcpd
+	@./compile.sh dhcpd ${THREADS}
 
 libwebsockets:
-	@./compile.sh libwebsockets
+	@./compile.sh libwebsockets ${THREADS}
 
 mosquitto: libwebsockets
-	@./compile.sh mosquitto
+	@./compile.sh mosquitto ${THREADS}
 
 kore:
-	@./compile.sh kore
+	@./compile.sh kore ${THREADS}
 
 webui: kore
-	@./compile.sh webui
+	@./compile.sh webui ${THREADS}
 
 seccrond:
-	@./compile.sh seccrond
+	@./compile.sh seccrond ${THREADS}
 
 maria2redis:
-	@./compile.sh maria2redis
+	@./compile.sh maria2redis ${THREADS}
 
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
@@ -112,7 +114,7 @@ dowse-to-gource: dowse-to-gource.o
 dowse-to-osc: dowse-to-osc.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
-dowse-to-mqtt: mosquitto dowse-to-mqtt.o 
+dowse-to-mqtt: mosquitto dowse-to-mqtt.o
 	$(CC) $(CFLAGS) -o $@ dowse-to-mqtt.o $(LIBS) -L./mosquitto/lib/ -lmosquitto    -lpthread
 
 

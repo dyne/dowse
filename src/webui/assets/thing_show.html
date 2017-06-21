@@ -37,6 +37,7 @@
           <li><a href="/">home</a></li>
           <li class="active"><a href="/things">things</a></li>
           <li><a href="http://dowse.it:29999/#menu_Dowse">netdata</a></li>
+          <li><a href="http://dowse.it:1880">node-red</a></li>
           <li><a href="http://github.com/dyne/dowse/wiki">documentation</a></li>
         </ul>
       </div>
@@ -164,7 +165,7 @@
                 <!--TMPL_ELSE-->
                 <td><img src="/na_state-16x16.png" alt="n/a state" title="n/a state"></td>
                 <!--/TMPL_IF-->
-		
+
 	        <td>
 		<!--TMPL_IF name="admin" value="yes"-->
 	 	 <form class="form-inline" action="/modify_priv_things" method="post">
@@ -188,7 +189,7 @@
 		       <input type="hidden" name="url_from" value="/things">
 		       <input type="hidden" name="macaddr" value="<!--TMPL_VAR name="macaddr"-->">
 		       <input type="hidden" name="column" value="admin">
-		       <input type="hidden" name="value"  value="yes">		       
+		       <input type="hidden" name="value"  value="yes">
 		     </div>
 		     <button class="btn-dowse dowseIsNotAdmin">
 		       <i class="fa fa-user" aria-hidden="true"></i>
@@ -200,7 +201,7 @@
 		</td>
 
 		<!--TMPL_ELSE--> <!--- of IF name=can_i_disable_it" -->
-		
+
                   <!--TMPL_IF name="authorized" value="NOT ENABLED TO BROWSE"-->
                   <td><img src="/img/button_OFF.png" width="28" alt="network access disabled"></td>
                   <!--TMPL_ELSIF name="authorized" value="DISABLE_TO_BROWSE"-->
@@ -214,7 +215,7 @@
  	         <td>
 		   <!--TMPL_IF name="admin" value="yes"-->
 		       <i class="fa fa-user-plus" aria-hidden="true"></i>
-<!--		   
+<!--
 		  <img src="/img/button_ON.png" width="28" alt="admin privileges enabled" title="admin privileges enabled">
 -->
 <!--TMPL_ELSE-->

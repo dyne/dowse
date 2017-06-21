@@ -1,6 +1,7 @@
 DESTDIR?=
 PREFIX?=/usr/local/dowse
 CONFDIR?=/etc/dowse
+THREADS?=1
 
 include config.mk
 
@@ -22,7 +23,7 @@ config:
 	@mkdir -p build/db
 
 sources:
-	make -C src
+	THREADS=${THREADS} make -C src
 
 clean:
 	@rm -rf build
@@ -34,7 +35,12 @@ install:
 	install -p -m 644 dowse ${DESTDIR}${PREFIX}/zshrc
 	install -p -m 755 pendulum ${DESTDIR}${PREFIX}/bin/pendulum
 	install -d ${DESTDIR}${PREFIX}/mysql
-	cp -rav build/mysql/* ${DESTDIR}${PREFIX}/mysql
+	cp -ra build/mysql/* ${DESTDIR}${PREFIX}/mysql
+	install -d ${DESTDIR}${PREFIX}/node-red
+	cp -ra build/node-red/* ${DESTDIR}${PREFIX}/node-red
+	install -d ${DESTDIR}${PREFIX}/nodejs
+	cp -ra build/nodejs/* ${DESTDIR}${PREFIX}/nodejs
+
 	make -C src     install
 	make -C zlibs   install
 	make -C daemons install

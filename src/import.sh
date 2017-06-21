@@ -100,6 +100,96 @@ pkg-download() {
 	exit 0
 }
 
+# Check CPU architecture
+target=unknown
+case `gcc -v 2>&1 | awk '/^Target:/ { print $2 }'` in
+	x86_64*) target=x64   ;;
+	arm*)   target=armv7 ;;
+	*) warning "unknown target architecture, add to src/import.sh"
+	   ;;
+esac
+
+node-red-addmod() {
+	[[ -d "$S/build/node-red/node_modules/$1" ]] || {
+		act "installing node-red module: $1"
+		pushd $S/build/node-red
+		$S/build/nodejs/node_dir/bin/npm install "$1"
+		popd
+	}
+}
+
+[[ "$1" = "node-red" ]] && {
+	node_dist=""
+	case $target in
+		x64)   node_dist="node-v6.10.3-linux-x64" ;;
+		armv7) node_dist="node-v6.10.3-linux-armv7l" ;;
+		*) error "Unknown machine architecture for nodejs"
+		   return 1
+		   ;;
+	esac
+
+    notice "Import nodejs and npm for node-red dashboard"
+    mkdir -p $S/build/nodejs
+    pushd $S/build/nodejs
+    [[ -r ${node_dist}.tar.xz ]] ||
+        curl https://nodejs.org/dist/v6.10.3/${node_dist}.tar.xz \
+             -o ${node_dist}.tar.xz
+    [[ -d ${node_dist} ]] || {
+        tar xf ${node_dist}.tar.xz
+        rm -rf node_dir
+        mv ${node_dist} node_dir
+    }
+    popd
+
+    path+=($S/build/nodejs/node_dir/bin)
+    rehash
+    [[ -r $S/build/node-red/README.md ]] || {
+        act "copying node-red source to build location"
+        cp -ra $S/src/node-red $S/build/node-red
+    }
+
+    [[ -d $S/build/node-red/node_modules/bcrypt ]] || {
+        act "installing dependencies for node-red"
+        pushd $S/build/node-red
+        $S/build/nodejs/node_dir/bin/npm update
+        $S/build/nodejs/node_dir/bin/npm install
+        popd }
+
+    node-red-addmod node-red-dashboard
+    node-red-addmod node-red-contrib-ifttt
+    node-red-addmod node-red-contrib-got
+    node-red-addmod node-red-contrib-get-hrefs
+    node-red-addmod node-red-contrib-get-feeds
+    node-red-addmod node-red-contrib-device-stats
+    node-red-addmod node-red-contrib-chatbot
+    node-red-addmod node-red-ddm
+    node-red-addmod node-red-node-pisrf
+    node-red-addmod node-red-node-random
+    node-red-addmod node-red-node-smooth
+    node-red-addmod node-red-node-twitter
+
+    [[ -d $S/build/node-red/node_modules/node-red-dashboard ]] || {
+        act "installing module node-red-dashboard"
+        NODE_PATH=$S/build/node-red/node_modules \
+                 npm install node-red-dashboard
+    }
+
+    [[ -d $S/build/node-red/node_modules/node-red-dashboard ]] || {
+        act "installing module node-red-dashboard"
+        NODE_PATH=$S/build/node-red/node_modules \
+                 npm install node-red-dashboard
+    }
+
+    [[ -r $S/build/node-red/public/red/red.js ]] || {
+        notice "building node-red source"
+        pushd $S/build/node-red
+        npm run build
+        popd
+    }
+    return 0
+}
+
+
 # Check if Apt based
 command -v apt-get >/dev/null && {
     notice "Importing binary packages from apt repositories..."

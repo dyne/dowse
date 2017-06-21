@@ -130,6 +130,8 @@ source $R/daemons/seccrond
 # source $R/daemons/tor
 source $R/daemons/webui
 source $R/daemons/mysqld
+source $R/daemons/node-red
+
 
 # conclude initialization
 source /usr/share/zuper/zuper.init
@@ -323,6 +325,9 @@ EOF
     # netdata dashboard for the technical status
     start netdata
 
+	# nodejs/node-red
+	start node-red
+
 	start seccrond
 
     notice "Dowse succesfully started" # , web interface up on:"
@@ -347,6 +352,9 @@ dowse-stop() {
     #     dowse-module-load $m || continue
     #     dowse-module-stop
     # done
+
+	# stop nodejs/node-red
+	stop node-red
 
     # stop the dashboard
     stop netdata
@@ -445,6 +453,18 @@ dowse-status() {
     fi
     return 0
 }
+
+dowse-npm() {
+	fn dowse-npm $*
+	freq=($R/nodejs/node_dir/bin)
+	ckreq || return $?
+
+	NODE_PATH="$R/nodejs/node_dir/lib/node_modules:$R/node-red/node_modules" \
+			 $R/nodejs/node_dir/bin/node \
+			 $R/nodejs/node_dir/lib/node_modules/npm/bin/npm-cli.js $*
+	return $?
+}
+
 
 # }}}
 
