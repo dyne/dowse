@@ -54,7 +54,8 @@ void ctrlc(int sig) {
 
 int main(int argc, char **argv) {
     // settings for
-    char *channel  = "dns-query-channel";
+  char channel[256];
+  snprintf(channel,sizeof(channel), "dns-query-channel");
     char id[25];
     const char *host;
     int port    = 1883;
@@ -76,8 +77,13 @@ int main(int argc, char **argv) {
 		    case 'p':			    
 			    snprintf(pidfile,MAX_OUTPUT,"%s",optarg);
 			    break;
+		    case 'c':
+		      snprintf(channel,sizeof(channel),"%s", optarg);
+		      break;
 	    }
     }
+
+
 
     if(argv[optind] == NULL) {
 	    err("usage: %s [-p pidfile] host [port]", argv[0]);
@@ -111,7 +117,7 @@ int main(int argc, char **argv) {
 	    notice("connected to mosquitto server %s on port %u", host, port);
     }
 
-    reply = cmd_redis(redis,"SUBSCRIBE dns-query-channel");
+    reply = cmd_redis(redis,"SUBSCRIBE %s",channel);
     freeReplyObject(reply);
 
     if(pidfile[0]) {
