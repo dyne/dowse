@@ -1,4 +1,4 @@
 # These variables will be filled up upon calling `make`
 
-DOWSE_USER =
-DOWSE_HOME =
+DOWSE_USER = nop
+DOWSE_HOME = /home/nop

@@ -21,6 +21,7 @@
  */
 #include <webui.h>
 #include <b64/cdecode.h>
+#include <hiredis/hiredis.h>
 
 /* TODO this mapping can be made also on CSS */
 char *dowse2bootstrap(char*log_level){
@@ -32,12 +33,24 @@ char *dowse2bootstrap(char*log_level){
     return "ERROR";
 }
 
+
+
+extern redisContext *log_redis; // connect_redis("127.0.0.1", 6379, 0);
+extern int logredis_retry_to_connect;
+
 int print_error_list(struct http_request * req) {
     log_entering();
-     template_t tmpl;
+    template_t tmpl;
     attributes_set_t attributes;
     struct kore_buf *buf;
     char *address;
+    /* save old state */
+    redisContext *backup_log_redis=log_redis;
+    int backup_logredis_retry_to_connect=logredis_retry_to_connect;
+
+    /*  avoid circular loop on redis log */
+    logredis_retry_to_connect=0;
+    log_redis=NULL;
 
     // allocate output buffer
     buf = kore_buf_alloc(1024*1000);
@@ -63,6 +76,10 @@ int print_error_list(struct http_request * req) {
     attrfree(attributes);
 
     kore_buf_free(buf);
+
+    /* restore old state */
+    log_redis=backup_log_redis;
+    logredis_retry_to_connect=backup_logredis_retry_to_connect;
 
     return(KORE_RESULT_OK);
 }
