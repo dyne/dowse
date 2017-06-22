@@ -54,9 +54,16 @@ void ctrlc(int sig) {
 
 int main(int argc, char **argv) {
     // settings for
-  char channel[256];
-  snprintf(channel,sizeof(channel), "dns-query-channel");
-    char id[25];
+  char *channel_list;   int len_channel_list;
+
+  #define DNS_QUERY_CHANNEL "dns-query-channel"
+  len_channel_list=strlen(DNS_QUERY_CHANNEL);
+
+  channel_list=(char*) malloc(len_channel_list+1);
+  
+  snprintf(channel_list,len_channel_list+1,DNS_QUERY_CHANNEL);
+  
+  char id[25];
     const char *host;
     int port    = 1883;
     int keepalive = 60;
@@ -72,13 +79,19 @@ int main(int argc, char **argv) {
 
     pidfile[0]=0x0;
 
-    while((opt = getopt(argc, argv, "p:")) != -1) {
+    while((opt = getopt(argc, argv, "p:c:")) != -1) {
 	    switch(opt) {
 		    case 'p':			    
 			    snprintf(pidfile,MAX_OUTPUT,"%s",optarg);
 			    break;
 		    case 'c':
-		      snprintf(channel,sizeof(channel),"%s", optarg);
+		      len_channel_list+=(strlen(optarg)+1); /* +1 for the blank */
+		      char *new_list=malloc(len_channel_list+1);
+		      snprintf(new_list,len_channel_list+1,"%s %s",channel_list,optarg);
+
+		      free(channel_list);
+		      channel_list=new_list;
+		      
 		      break;
 	    }
     }
@@ -117,7 +130,7 @@ int main(int argc, char **argv) {
 	    notice("connected to mosquitto server %s on port %u", host, port);
     }
 
-    reply = cmd_redis(redis,"SUBSCRIBE %s",channel);
+    reply = cmd_redis(redis,"SUBSCRIBE %s ",channel_list);
     freeReplyObject(reply);
 
     if(pidfile[0]) {
@@ -154,9 +167,22 @@ int main(int argc, char **argv) {
         mres = mosquitto_loop(mosq, -1, 1);
         if(mres) mosquitto_reconnect(mosq);
 
-        mres = mosquitto_publish(mosq, NULL, channel,
+	if (strcmp(reply->element[0]->str,"message")!=0) {
+	  /* only the "message" should be forwarded on mqtt to the "subscribe" */
+	  continue;
+	}
+	/* every message is forwarded on the mqtt using the same name channel (reply->element[1]->str)
+	 */
+        mres = mosquitto_publish(mosq, NULL, reply->element[1]->str,
                                  reply->element[2]->len, reply->element[2]->str,
                                  1 /*qos*/, false);
+	/*	
+	for (int i=0;i<reply->elements;i++){
+	  fprintf(stderr," %d %s\n",i,reply->element[i]->str);
+	}
+	fprintf(stderr,"\n------------\n");
+	*/
+	
         // Returns
         //  MOSQ_ERR_SUCCESS	on success.
         //  MOSQ_ERR_INVAL	if the input parameters were invalid.

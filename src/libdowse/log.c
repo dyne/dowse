@@ -21,6 +21,8 @@
 #include <hiredis/hiredis.h>
 
 redisContext *log_redis  = NULL;//connect_redis("127.0.0.1", 6379, 0);
+int logredis_retry_to_connect=1;
+
 base64_encodestate b64_state;
 redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...) ;
 void _minimal_err(char *msg,int sizeof_msg,const char *fmt, ...);
@@ -29,7 +31,7 @@ redisContext *minimal_connect_redis(char *host, int port, int db,int minimal_log
 
 void toredis(char *pfx, char *msg) {
 
-    if (!log_redis) {
+    if ((!log_redis) && (logredis_retry_to_connect)){
         if (1) { /* TODO sostituire con getenv() */
 
             log_redis = minimal_connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic,1); /* we call in minimal_log */

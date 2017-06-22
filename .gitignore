@@ -193,3 +193,6 @@ src/mosquitto/src/mosquitto
 webui.pid
 src/thingsdb.h
 src/parse-ip-neigh
+config.mk
+ops/Vagrantfile
+
