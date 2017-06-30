@@ -6,5 +6,5 @@
 }
 
 for i in $@; do
-	sudo luatool.py -b 115200 -p /dev/ttyUSB0 -f "$i" -t "$(basename $i)"
+	sudo ./luatool.py -b 115200 -p /dev/ttyUSB0 -f "$i" -t "$(basename $i)"
 done
