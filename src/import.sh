@@ -155,6 +155,7 @@ node-red-addmod() {
         $S/build/nodejs/node_dir/bin/npm install
         popd }
 
+	# node red default modules
     node-red-addmod node-red-dashboard
     node-red-addmod node-red-contrib-ifttt
     node-red-addmod node-red-contrib-got
@@ -167,6 +168,7 @@ node-red-addmod() {
     node-red-addmod node-red-node-random
     node-red-addmod node-red-node-smooth
     node-red-addmod node-red-node-twitter
+	node-red-addmod node-red-node-openweathermap
 
     [[ -d $S/build/node-red/node_modules/node-red-dashboard ]] || {
         act "installing module node-red-dashboard"
