@@ -193,6 +193,7 @@ act "checking requirements to run dowse..."
 }
 
 mkdir -p $H/log
+mkdir -p $H/log/netdata
 mkdir -p $H/run
 mkdir -p $H/data/mysql
 
