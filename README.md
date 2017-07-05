@@ -11,6 +11,8 @@ Whitepaper: https://files.dyne.org/dowse/dowse_whitepaper.pdf
 
 [![Build Status](https://api.travis-ci.org/dyne/dowse.svg)](https://travis-ci.org/dyne/dowse)
 
+[![Dowse project stats](https://www.openhub.net/p/dowse/widgets/project_thin_badge.gif)](https://www.openhub.net/p/dowse)
+
 # Introduction
 
 Dowse is a **transparent proxy** facilitating the awareness of ingoing
@@ -32,7 +34,8 @@ C, Perl, Python etc.
 
 Dowse is an ongoing development effort rapidly gaining momentum for
 its simplicity and usefulness. Here a recent backstage video:
-https://www.youtube.com/watch?v=vquh3IXcduc
+
+[![The making of Dowse](https://img.youtube.com/vi/vquh3IXcduc/0.jpg)](https://www.youtube.com/watch?v=vquh3IXcduc)
 
 # Features
 
