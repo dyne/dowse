@@ -35,7 +35,7 @@ C, Perl, Python etc.
 Dowse is an ongoing development effort rapidly gaining momentum for
 its simplicity and usefulness. Here a recent backstage video:
 
-[![The making of Dowse](https://img.youtube.com/vi/vquh3IXcduc/0.jpg)](https://www.youtube.com/watch?v=vquh3IXcduc)
+[![The making of Dowse](https://img.youtube.com/vi/wDLyYk_TQtI/0.jpg)](https://www.youtube.com/watch?v=wDLyYk_TQtI)
 
 # Features
 
