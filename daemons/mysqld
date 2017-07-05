@@ -21,10 +21,38 @@ tmpdir		= /tmp
 lc-messages-dir	= $R/mysql/share
 skip-external-locking
 bind-address		= 127.0.0.1
+#======================================
+# /etc/my.cnf:
+innodb_buffer_pool_size=5M
+innodb_log_buffer_size=256K
+query_cache_size=0
+max_connections=5
+key_buffer_size=8
+thread_cache_size=0
+host_cache_size=0
+innodb_ft_cache_size=1600000
+innodb_ft_total_cache_size=32000000
+
+# per thread or per operation settings
+thread_stack=131072
+sort_buffer_size=32K
+read_buffer_size=8200
+read_rnd_buffer_size=8200
+max_heap_table_size=16K
+tmp_table_size=1K
+bulk_insert_buffer_size=0
+join_buffer_size=128
+net_buffer_length=1K
+innodb_sort_buffer_size=64K
+
+#settings that relate to the binary log (if enabled)
+binlog_cache_size=4K
+binlog_stmt_cache_size=4K
+#======================================
 
 key_buffer		= 16M
 max_allowed_packet	= 16M
-thread_stack		= 192K
+#thread_stack		= 192K
 thread_cache_size       = 8
 
 myisam-recover         = BACKUP
@@ -33,7 +61,7 @@ myisam-recover         = BACKUP
 #thread_concurrency     = 10
 
 query_cache_limit	= 1M
-query_cache_size        = 16M
+query_cache_size        = 4M
 
 # Be aware that this log type is a performance killer.
 # As of 5.1 you can enable the log at runtime!
