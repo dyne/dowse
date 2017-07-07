@@ -30,10 +30,10 @@ void _minimal_err(char *msg,int sizeof_msg,const char *fmt, ...);
 
 int minimal_okredis(redisContext *r, redisReply *res) {
     if(!res) {
-        fprintf(stderr,"redis error: %s\n", r->errstr);
+      fprintf(stderr," [%s:%d] redis error: %s\n", __FUNCTION__,__LINE__,r->errstr);
         return(0);
     } else if( res->type == REDIS_REPLY_ERROR ) {
-        fprintf(stderr,"redis error: %s\n", res->str);
+        fprintf(stderr," [%s:%d] redis error: %s\n", __FUNCTION__,__LINE__, res->str);
         return(0);
     } else {
         return(1);
