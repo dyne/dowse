@@ -30,7 +30,8 @@ redisContext *connect_redis(char *host, int port, int db);
 redisContext *minimal_connect_redis(char *host, int port, int db,int minimal_log) ;
 
 void toredis(char *pfx, char *msg) {
-
+  return ; /* WIP */
+  
     if ((!log_redis) && (logredis_retry_to_connect)){
         if (1) { /* TODO sostituire con getenv() */
 
