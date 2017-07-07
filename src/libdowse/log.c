@@ -93,7 +93,12 @@ void toredis(char *pfx, char *msg) {
         }
         if (reply) {
             freeReplyObject(reply);
-        }
+        } else {
+	  if (log_redis) {
+	    redisFree(log_redis);
+	  }
+	  log_redis = NULL;
+	}
 
     }
 }
