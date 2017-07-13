@@ -69,10 +69,10 @@ dnscrypt-proxy-exec() {
 	# dnscrypt-roundrobin
 
 	# grab the last used server
-	dnscrypt_name=$(print "GET dns-server-selected"|redis dynamic|sed 's/(nil)//')
+	dns_selected=$(print "GET dns-server-selected"|redis dynamic|sed 's/(nil)//')
 	
 	# if undefined, eg at the first startup, it takes a default value
-	dnscrypt_name=${1:-dnscrypt.eu-nl}
+	dnscrypt_name=${dns_selected:-dnscrypt.eu-nl}
 	#dnscrypt_ipaddr=198.199.70.248:5553
 	#dnscrypt_name=2.dnscrypt-cert.dyne.org
 	#dnscrypt_key=162F:051A:BACA:A042:A0C9:7769:91B4:BBA8:FE10:8F72:53CB:5077:A055:9BCF:AD39:73C5
