@@ -52,7 +52,7 @@ binlog_stmt_cache_size=4K
 
 key_buffer		= 16M
 max_allowed_packet	= 16M
-#thread_stack		= 192K
+thread_stack		= 192K
 thread_cache_size       = 8
 
 myisam-recover         = BACKUP
@@ -65,8 +65,8 @@ query_cache_size        = 4M
 
 # Be aware that this log type is a performance killer.
 # As of 5.1 you can enable the log at runtime!
-#general_log_file        = $H/log/mysql.log
-#general_log             = 1
+##general_log_file        = $H/log/general_mysql.log
+##general_log             = 1
 
 # Error log - should be very few entries.
 log_error = $H/log/mysql_error.log
