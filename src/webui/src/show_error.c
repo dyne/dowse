@@ -10,13 +10,13 @@
 
 void show_mysql_error(MYSQL *mysql,attributes_set_t *ptr_attrl) {
 #define __SIZE (2048)
- char *log_message=kore_malloc(__SIZE);
+ char log_message[__SIZE];
 
  snprintf(log_message, __SIZE,
                        "Error(%d) [%s] \"%s\"", mysql_errno(mysql),
                                                 mysql_sqlstate(mysql),
                                                 mysql_error(mysql));
- err( "%s: [%s]\n", log_message, DB_SID);
+ err( "%s\n", log_message);
 
  webui_add_error_message(ptr_attrl,log_message);
 
