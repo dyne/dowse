@@ -1,0 +1,22 @@
+#!/bin/bash
+
+
+LIST="webui dnscrypt-proxy mysqld pendulum redis-served dhcpd ebtables iptables pgld mosquitto node-red seccrond"
+
+PIDLIST=""
+for i in $LIST ; do
+    R=`pidof $i| tr '  ' ' '`
+    printf "%s\t\t\t-> [%s]\n" $i "$R"
+    if [ -z "$R" ] ; then
+	continue;
+    fi
+    if [ -z "$PIDLIST" ] ; then
+	PIDLIST="$R"
+    else
+	PIDLIST="$PIDLIST $R"
+    fi
+done
+
+#set -x
+ps -p "$PIDLIST" -o pid,cmd,command,pcpu,pmem,state,nice,pri,rtprio,sched,sgi_p,policy,wchan,etime
+
