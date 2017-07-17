@@ -1,4 +1,5 @@
-CFLAGS ?= -ggdb -Wall  -fPIE -fPIC -pie -DDEBUG=1
+CFLAGS ?= -ggdb -Wall  -fPIE -fPIC -pie 
+#-DDEBUG=1
 
 CC = gcc
 AR = ar
