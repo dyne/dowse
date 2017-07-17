@@ -25,6 +25,7 @@ bind-address		= 127.0.0.1
 # /etc/my.cnf:
 innodb_buffer_pool_size=5M
 innodb_log_buffer_size=256K
+
 query_cache_size=0
 max_connections=5
 key_buffer_size=8
@@ -65,17 +66,17 @@ query_cache_size        = 4M
 
 # Be aware that this log type is a performance killer.
 # As of 5.1 you can enable the log at runtime!
-##general_log_file        = $H/log/general_mysql.log
-##general_log             = 1
+general_log_file        = $H/log/general_mysql.log
+general_log             = 1
 
 # Error log - should be very few entries.
 log_error = $H/log/mysql_error.log
 
 # Here you can see queries with especially long duration
-#slow_query_log_file = $H/log/mysql-slow.log
-#slow_query_log      = 1
-#long_query_time = 2
-#log_queries_not_using_indexes
+slow_query_log_file = $H/log/mysql-slow.log
+slow_query_log      = 1
+long_query_time = 1
+log_queries_not_using_indexes
 
 # The following can be used as easy to replay backup logs or for replication.
 # note: if you are setting up a replication slave, see README.Debian about
@@ -106,6 +107,15 @@ no-auto-rehash
 
 [isamchk]
 key_buffer		= 16M
+
+
+# to reduce CPU consumption
+skip_name_resolve = ON
+
+# only to eliminate false warning
+innodb_log_file_size=1048576
+innodb_buffer_pool_instances=1
+
 EOF
 }
 
