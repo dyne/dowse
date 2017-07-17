@@ -17,6 +17,12 @@ for i in $LIST ; do
     fi
 done
 
+echo ""
+for i in $PIDLIST ; do
+ ls -ld /proc/$i ;
+done
+
+echo ""
 #set -x
 ps -p "$PIDLIST" -o pid,cmd,command,pcpu,pmem,state,nice,pri,rtprio,sched,sgi_p,policy,wchan,etime
 
