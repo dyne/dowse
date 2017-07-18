@@ -46,7 +46,7 @@ for filename in ${(f)"$(find assets -type f)"}; do
 
   snprintf(atmp.type, 256, "`mimetype -b $filename`");
   atmp.len  = asset_len_$fnorm;
-  atmp.data = asset_$fnorm;
+  atmp.data = (const u_int8_t*)asset_$fnorm;
   tmp = kore_malloc(sizeof(asset_t));
   tmp = memcpy(tmp, &atmp, sizeof(asset_t));
   hashmap_put(assetmap, "$pathname", tmp);
