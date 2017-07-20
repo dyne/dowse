@@ -24,5 +24,5 @@ done
 
 echo ""
 #set -x
-ps -p "$PIDLIST" -o pid,cmd,command,pcpu,pmem,state,nice,pri,rtprio,sched,sgi_p,policy,wchan,etime
+ps -p "$PIDLIST" -o pid,cmd,command,pcpu,pmem,state,nice,pri,rtprio,sched,sgi_p,policy,wchan=WIDE-WCHAN-COLUMN,etime
 

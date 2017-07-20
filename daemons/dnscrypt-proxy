@@ -80,6 +80,9 @@ dnscrypt-proxy-exec() {
 	func "Launching dnscrypt-proxy to listen on port 53"
 	act "dnscrypt proxy server: $dnscrypt_name"
 # TODO definire la variabile d'ambiente interface 
+	ulimit -c unlimited
+	TMP=`date +%Y%m%d_%H%M%S`
+
 	if [[ $DEBUG = 1 ]]; then
 		DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
 						DOWSE_LAN_ADDRESS_IP4=$address \
@@ -88,7 +91,7 @@ dnscrypt-proxy-exec() {
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
-						-l $H/log/dnscrypt.log \
+						-l $H/log/dnscrypt.log.${TMP} \
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
@@ -104,11 +107,11 @@ dnscrypt-proxy-exec() {
 						domain=$lan \
 						interface=$interface \
 						launch dnscrypt-proxy -a $address:53 \
-						-p $pid -l $H/log/dnscrypt.log \
+						-p $pid -l $H/log/dnscrypt.log.${TMP} \
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
-						-d -m 4 -u $dowse_uid
+						-d -m 7 -u $dowse_uid
 		# log only warning conditions
 
     fi
@@ -130,7 +133,7 @@ dnscrypt-roundrobin() {
 	local _rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers-grepped.csv)"
 
 	# check if alive
-	eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R ${_rndresolv[(ws:,:)1]} -t 720 -m 1"
+	eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R ${_rndresolv[(ws:,:)1]} -t 720 -m 7"
 
 	[[ $? = 0 ]] || dnscrypt-roundrobin
 
@@ -152,7 +155,7 @@ __search_for_a_dns () {
     local _rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers-grepped.csv)"
     
     # check if alive
-    eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R ${_rndresolv[(ws:,:)1]} -t 1 -m 1"
+    eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R ${_rndresolv[(ws:,:)1]} -t 1 -m 7"
     
     [[ $? = 0 ]] || return 
     
@@ -175,7 +178,7 @@ __search_for_a_dns () {
 
 
 __is_dns_reachable() {
-    eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R $1 -t 1 -m 1"
+    eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R $1 -t 1 -m 7"
     return $?
 }
 
