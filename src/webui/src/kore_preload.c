@@ -25,7 +25,7 @@ extern redisContext *log_redis;
 
 
 
-void kore_preload() {
+void kore_parent_configure() {
     log_entering();
     assetmap = asset_init();
 
