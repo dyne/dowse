@@ -206,7 +206,7 @@ watchdog_daemons() {
 			continue
 		}
 
-                for pid in $pid_list ; do 
+        for pid in ${=pid_list} ; do
 			act "$pid \t $daemon" 2>&1 #| tee -a $H/log/watchdog.log
 			if [[ -r /proc/${pid}/stat ]]; then
 				[[ $DEBUG = 1 ]] && {
@@ -235,7 +235,7 @@ watchdog_daemons() {
 				fi
 				break;
 			fi
-                done
+        done
 	done
 
 	# daemons that should always be running
