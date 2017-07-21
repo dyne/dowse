@@ -115,7 +115,7 @@ dnscrypt-proxy-exec() {
 
     fi
     pidof dnscrypt-proxy > $pid
-    savepid dnscrypt-proxy $pid
+    #savepid dnscrypt-proxy $pid
 }
 
 dnscrypt-roundrobin() {
