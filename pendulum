@@ -197,52 +197,61 @@ watchdog_daemons() {
 			func "watchdog skip seccrond parent"
 			continue }
 
-		pid=`cat $d`
-		[[ "$pid" = "" ]] && {
-			err="$d pidfile found empty"
+		pid_list=`cat $d`
+		[[ "$pid_list" = "" ]] && {
+			NOW=`date +%Y/%m/%d %H:%M:%S`
+			err="$NOW $d pidfile found empty. Note: We will skip it "
 			error $err
 			print $err >> $H/log/watchdog.log
 			continue
 		}
-		act "$pid \t $daemon"
-		if [[ -r /proc/${pid}/stat ]]; then
-			[[ $DEBUG = 1 ]] && {
-				func "found running: $daemon"
-				func "`cat /proc/$pid/cmdline`"
-			}
 
-		else
-			err="$daemon not found running (crash?)"
-			error $err
-			print $err >> $H/log/watchdog.log
-			# delete old pid
-			rm -f $d
-			act "attempting restart: $daemon"
-			start $daemon
-			if [[ $? = 0 ]]; then
-				err="succesfully restarted: $daemon"
-				notice $err
-				print $err >> $H/log/watchdog.log
+                for pid in $pid_list ; do 
+			act "$pid \t $daemon" 2>&1 #| tee -a $H/log/watchdog.log
+			if [[ -r /proc/${pid}/stat ]]; then
+				[[ $DEBUG = 1 ]] && {
+					func "found running: $daemon"
+					func "`cat /proc/$pid/cmdline`"
+				}
+
 			else
-				err="watchdog fails to restart: $daemon"
+				NOW=`date +%Y/%m/%d %H:%M:%S`
+				err="$NOW a component of $daemon [$pid] was not found running (crash?)"
 				error $err
 				print $err >> $H/log/watchdog.log
+				# delete and kill old pid 
+				kill -9 $pid_list
+				rm -f $d
+				act "attempting restart: $daemon"
+				start $daemon
+				if [[ $? = 0 ]]; then
+					err="$NOW (stat) succesfully restarted: $daemon"
+					notice $err
+					print $err >> $H/log/watchdog.log
+				else
+					err="watchdog fails to restart: $daemon"
+					error $err
+					print $err >> $H/log/watchdog.log
+				fi
+				break;
 			fi
-		fi
+                done
 	done
 
 	# daemons that should always be running
 	core_daemons=(redis-server dnscrypt-proxy)
+	#echo "Home [$H]" | tee -a $H/log/watchdog.log
 	for d in $core_daemons; do
 		pidfile=$H/run/$d.pid
 		[[ -r $pidfile ]] || {
-			start $d
+			start $d 2>&1 | tee -a $H/log/watchdog.log
 			if [[ $? = 0 ]]; then
-				err="succesfully restarted: $daemon"
+				NOW=`date +%Y/%m/%d %H:%M:%S`
+				err="$NOW (core_daemons) succesfully restarted: $d "
 				notice $err
 				print $err >> $H/log/watchdog.log
 			else
-				err="watchdog fails to restart: $daemon"
+				err="watchdog fails to restart: $d "
 				error $err
 				print $err >> $H/log/watchdog.log
 			fi
