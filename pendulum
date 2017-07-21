@@ -199,7 +199,7 @@ watchdog_daemons() {
 
 		pid_list=`cat $d`
 		[[ "$pid_list" = "" ]] && {
-			NOW=`date +%Y/%m/%d %H:%M:%S`
+			NOW=`date +"%Y/%m/%d %H:%M:%S"`
 			err="$NOW $d pidfile found empty. Note: We will skip it "
 			error $err
 			print $err >> $H/log/watchdog.log
@@ -215,7 +215,7 @@ watchdog_daemons() {
 				}
 
 			else
-				NOW=`date +%Y/%m/%d %H:%M:%S`
+				NOW=`date +"%Y/%m/%d %H:%M:%S"`
 				err="$NOW a component of $daemon [$pid] was not found running (crash?)"
 				error $err
 				print $err >> $H/log/watchdog.log
@@ -246,7 +246,7 @@ watchdog_daemons() {
 		[[ -r $pidfile ]] || {
 			start $d 2>&1 | tee -a $H/log/watchdog.log
 			if [[ $? = 0 ]]; then
-				NOW=`date +%Y/%m/%d %H:%M:%S`
+				NOW=`date +"%Y/%m/%d %H:%M:%S"`
 				err="$NOW (core_daemons) succesfully restarted: $d "
 				notice $err
 				print $err >> $H/log/watchdog.log
