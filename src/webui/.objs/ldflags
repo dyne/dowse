@@ -1,1 +1,0 @@
--rdynamic -lcrypto -ldl
