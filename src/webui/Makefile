@@ -11,8 +11,8 @@ TMP=src/.tmp_file
 all: cproto asset
 	rm -f assets/*~
 #	cp -f conf/webui.conf.dist conf/webui.conf
-	../kore/kore flavor prod
-	../kore/kore build
+	../kore/kodev/kodev flavor prod
+	../kore/kodev/kodev build
 
 echo:
 	@echo ${INCLUDEOPTS}
@@ -25,22 +25,22 @@ cproto:
 	/bin/mv -f ${TMP} ${WEBUI_PROTOTYPE_H}
 
 run:
-	../kore/kore run
+	../kore/kodev/kodev run
 
 asset src/assetmap.c:
 	@echo "Creating assetmap.c" ; ./map_assets > src/assetmap.c
 
 build:
-	../kore/kore build
+	../kore/kodev/kodev build
 
 debug: cproto src/assetmap.c
 	rm -f assets/*~
 	cp -f conf/webui-debug.conf.dist conf/webui.conf
-	../kore/kore flavor dev
-	../kore/kore build
+	../kore/kodev/kodev flavor dev
+	../kore/kodev/kodev build
 ##	./webui -r -n -f
 
 clean:
 	rm -f webui
-	../kore/kore clean
+	../kore/kodev/kodev clean
 

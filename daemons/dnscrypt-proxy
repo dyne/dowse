@@ -90,7 +90,7 @@ dnscrypt-proxy-exec() {
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
-						-l $H/log/dnscrypt.log.${TMP} \
+						-p $pid -l $H/log/dnscrypt.log.${TMP} \
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
@@ -106,7 +106,7 @@ dnscrypt-proxy-exec() {
 						domain=$lan \
 						interface=$interface \
 						launch dnscrypt-proxy -a $address:53 \
-						-l $H/log/dnscrypt.log.${TMP} \
+						-p $pid -l $H/log/dnscrypt.log \
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
@@ -114,7 +114,6 @@ dnscrypt-proxy-exec() {
 		# log only warning conditions
 
     fi
-    pidof dnscrypt-proxy > $pid
     #savepid dnscrypt-proxy $pid
 }
 
