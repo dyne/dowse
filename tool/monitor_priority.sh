@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-LIST="webui dnscrypt-proxy mysqld pendulum redis-served dhcpd ebtables iptables pgld mosquitto node-red seccrond"
+LIST="webui dnscrypt-proxy mysqld pendulum redis-server dhcpd ebtables iptables pgld mosquitto node-red seccrond netdata"
 
 PIDLIST=""
 for i in $LIST ; do
