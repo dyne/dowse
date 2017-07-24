@@ -106,6 +106,7 @@ case $1 in
         [[ -x $R/build/kore ]] || {
             pushd $R/src/kore
 			make -j${THREADS} NOTLS=1 DEBUG=1
+			ln -s $PWD/includes $PWD/includes/kore
             popd
         }
         ;;
@@ -189,7 +190,7 @@ EOF
 			./autogen.sh &&
 			./configure --without-systemd --enable-plugins --prefix=${PREFIX} &&
 			make -j${THREADS} && 
-			install -s -p src/proxy/dnscrypt-proxy $R/build/bin
+			install -p src/proxy/dnscrypt-proxy $R/build/bin
         popd
         ;;
 
