@@ -113,6 +113,112 @@ Using https://www.devuan.org just compile and install Dowse following
 the procedure above. Images are available for a several popular ARM
 devices including RaspberryPI2 and 3, BananaPI, Cubieboard etc.
 
+# Starting Dowse
+
+Here below an example start script launching all services in
+Dowse. Some can be commented / expunged ad-hoc depending from use
+cases, since the only vital functions are `redis-server`, `dhcpd` and
+`dnscrypt-proxy`.
+
+```zsh
+#/usr/bin/env zsh
+
+source /etc/dowse/settings
+source /usr/local/dowse/zshrc
+
+    notice "Starting Dowse"
+
+    # start the redis daemon (core k/v service)
+    start redis-server
+
+	notice "Starting all daemons in Dowse"
+
+    # launch the dhcp daemon
+    start dhcpd
+
+    # start the dns encrypted tunneling
+    start dnscrypt-proxy
+
+    # start the sql database
+    start mysqld
+
+    # start web interface
+    start webui
+
+	# start the mqtt/websocket hub
+	start mosquitto
+
+    # netdata dashboard for the technical status
+    start netdata
+
+	# nodejs/node-red
+	start node-red
+
+	# start the cronjob handler (with resolution to seconds)
+	start seccrond
+
+    notice "Dowse succesfully started"
+
+}
+```
+
+Adding the following line one can set up an open network, what we call it "party mode":
+
+```
+echo "set party-mode ON" | redis-cli
+```
+
+As a good practice, such a script can be launched from `/etc/rc.local` for user dowse using `setuidgid` from the `daemontools` package.
+
+The next is an example on how to stop dowse, for instance from a stop.sh script:
+
+```zsh
+#/usr/bin/env zsh
+
+source /usr/local/dowse/zshrc
+
+	notice "Stopping all daemons in Dowse"
+
+	stop seccrond
+
+	stop mosquitto
+
+    stop webui
+
+    stop mysqld
+
+	# stop nodejs/node-red
+	stop node-red
+
+    # stop the dashboard
+    stop netdata
+
+    # stop the dns crypto tunnel
+    stop dnscrypt-proxy
+
+    # stop the dhcp server
+    stop dhcpd
+    
+    # remove the layer 2 firewall rules
+    ebtables-stop
+
+    # remove the layer 3 firewall rules
+    iptables-snat-off
+    iptables-stop
+
+    # restore backup if present
+    # [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
+    #     mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
+    # }
+
+    stop redis-server
+
+    notice "Dowse has stopped running."
+```
+
+The scripts above are found in dowse source as `start.sh` and `stop.sh` and can be customised and called from the system at boot. It is also possible to run an interactive console with completion where dowse commands are available using the `console.sh` script. Once in the console all the above start/stop commands and even more internals will be available to be launched interactively.
+
+
 # Visualization
 
 The DNS visualization is produced in a custom format which can be
