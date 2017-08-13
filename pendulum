@@ -424,176 +424,43 @@ EOF
 	return 0
 }
 
+# DNS rotation if a dnscrypt server is down
+# TODO: check currently used server, trigger rotation if necessary
+round_robin_dns() {
+	fn round_robin_dns $*
 
-# DNS functions
+    local _dnslog==1
 
-#=======================================
-# Code for check DNS availability
-#=======================================
-
-# multiple lock
-m_lock () {
-    local _lock_name="$1"
-    local _val_to_loc="$2"
-
-    _sem="m_lock_$1"
-    _val="$2"
-
-    RV=$(print "SET ${_sem} ${_val} NX" | redis runtime )
-
-   
-    [[ "$RV" = "OK" ]] && return 0;
-
-    return 1
-}
+    [[ $DEBUG = 1 ]] && _dnslog=7
 
 
-m_unlock () {
-    local _sem="m_lock_$1"
-    local _val="$2"
-#    print "DECRBY $_sem $_val "
-    eval "NV=$(print "DECRBY $_sem $_val " | redis runtime)"
-    func " m_unlock : NV = $NV"
-    
-    [[ $NV = "0" ]] && {
-	_tmp=$(print "DEL $_sem " | redis runtime )
-	return 0 }
-
-
-    func " m_unlock : after DECRBY NV = $NV"
-    return 0
-}
-
-
-search_for_a_dns () {
-    func "$! spawned search_for_a_dns R=[$R]"
-    #
-    sed 1q $R/share/dnscrypt-resolvers.csv > $R/share/dnscrypt-resolvers-grepped.csv
-    grep $servertype $R/share/dnscrypt-resolvers.csv >> $R/share/dnscrypt-resolvers-grepped.csv
-    
-    # prints a random line from the resolvers csv file
-    local _rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers-grepped.csv)"
-    
-    func " $$   # check if DNS is reachable"
-    __is_dns_reachable ${_rndresolv[(ws:,:)1]}
-    
-    [[ $? = 0 ]] || {
-	act "$$ : no good news from ${_rndresolv}"
-	m_unlock check_and_select_dns 1
-	return 0
-    }
+	# generate a random entry for dnscrypt-proxy test with a single csv line
+	ztmp
+	local _dnsrand=$ztmpfile
+	sed 1q $R/share/dnscrypt-resolvers.csv $_dnsrand
+    local _rndresolv
+	_rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $_dnsrand)"
     dnscrypt_name="${_rndresolv[(ws:,:)1]}"
 
-    func "dnscrypt_name = ${dnscrypt_name}"
-    # Saving on redis the dnscrypt_name
-    act "$! > GOOD NEWS from ${_rndresolv}"
-    print "SET dns-server-selected ${dnscrypt_name}" | redis dynamic
-    
-    rm -f $R/share/dnscrypt-resolvers-grepped.csv
-
-#    PID_LIST=$(print "GET dnscrypt-pid-child-list " | redis dynamic | tr '_' ' ')
-
-    PID_LIST=$(print "GET dnscrypt-pid-child-list " | redis dynamic)
-    pid_array=("${(@s/_/)PID_LIST}")
-    LOCK=$(print "GET lock_check_and_select_dns" | redis dynamic )
-
-    act " restarting dnscrypt-proxy "
-    stop dnscrypt-proxy
-    start dnscrypt-proxy
-    
-    func " unlocking check_and_select_dns [$LOCK]"
-    # in this moment we can unlock the semaphore if the pendulum spawn another team it don't change our  PID_LIST variable
-    m_unlock check_and_select_dns 1
-
-#    for i in $pid_array ; do
-#	echo $i
-#	ps aux|grep $i
-#	kill -9 ${i}
-#    done
-
-}
-
-
-__is_dns_reachable() {
-     [[ $1 = "(nil)" ]] && { return 1 }
-     [[ $1 = "" ]] && { return 1 }
-     [[ $1 = " " ]] && { return 1 }
-
-     act " Checking if dns  [$1] is reachable"
-
-     LOG_MODE=1
-     
-     [[ $DEBUG = 1 ]] && {
-	 LOG_MODE=7
-     }
-     
-     eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R $1 -t 720 -m $LOG_MODE"
-     
-     rv=$?
-     [[ $rv = 0 ]] || { error "DNS [$1] is not reachable" }
-
-    return $rv
-}
-
- check_and_select_dns() {
-
-     let nlock=$(grep -c processor /proc/cpuinfo )/2
+	func "rrdns: testing $dnscrypt_name"
 	
-     if [[ $nlock < 1 ]]; then
-	 let nlock=1;
-     fi
-     
-     func ""
-     func "entering dnscrypt-check_and_select_dns()"
-     func "nlock=$nlock"
-     eval "m_lock check_and_select_dns $nlock"
-     [[ $? = 1 ]] && {
-	 error "lock check_and_select_dns already locked"
-	 return 1 }
+	# run the dnscrupt-proxy in test mode with 10s timeout
+	${execmap[dnscrypt-proxy]} -L $_dnsrand -R ${dnscrypt_name} -t 10 -m $_dnslog
 
-
-     #local servertype=",.,yes,yes" ## DNSSEC + No logs
-     #local servertype=",.,yes,no"  ## DNSSEC
-     local servertype=",.,no,yes"  ## No logs
-    
-    act "Check if the DNS selected on the Redis server is available"
-    
-    DNS=$(print "GET dns-server-selected" | redis dynamic)
-
-    func "DNS = ${DNS} "    
-    __is_dns_reachable $DNS ;
     if [[ $? = 0 ]]; then
-	act "Ok ! DNS is reachable"
-	eval "m_unlock check_and_select_dns $nlock"
-    else
-	warn "DNS nil or not reachable"
-	print "DEL dns-server-selected" | redis dynamic
-	
-	warn "Choosing a random available dnscrypt server"
-#	spawn dns selection
-
-	func " spawning search [nlock=$nlock]"
-	for i in $(seq 1 $nlock ); do
-	    search_for_a_dns &
-	done
-	
-	#	Save child pid on redis
-	PID_LIST=""
-	for i in ${${(v)jobstates##*:*:}%=*} ; do
-	    PID_LIST+="_"$i
-	done
-
-	func " Saving child list on redis [$PID_LIST]"
-	print "SET dnscrypt-pid-child-list $PID_LIST" | redis dynamic
-    fi
-
+		# unreachable, then recur with another random target
+		dnscrypt-roundrobin
+	else
+		func "rrdns: found working"
+		func "${_rndresolv}"
+		# Saving on redis the dnscrypt_name
+		print "SET dns-server-selected ${dnscrypt_name}" | redis dynamic
+	fi
+	return 0
 }
-
-
 
 ################
 # MAIN functions
-
 
 fn "pendulum $*"
 
@@ -674,11 +541,15 @@ case "$1" in
 		unlock netscan $slid
         ;;
 
-    check_and_select_dns)
-	check_and_select_dns
-	return 0
-	;;
-    procscan)
-        # TODO: pgrep
-        ;;
+    rrdns)
+		dlid=`lock rrdns 30`
+		[[ $? = 0 ]] || {
+			func "rrdns already running"
+			return 1 }
+
+		round_robin_dns
+
+		unlock rrdns $dlid
+		;;
+
 esac
