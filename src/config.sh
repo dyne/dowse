@@ -171,7 +171,7 @@ execmap=(
     # TODO: sup list of authorized modules (using libkmod)
     modprobe      $PREFIX/bin/modprobe
     pgld          $PREFIX/bin/pgld
-    libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so.1
+    libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so
     nmap          /usr/bin/nmap
 )
 

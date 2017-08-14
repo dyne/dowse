@@ -85,13 +85,13 @@ start() {
     case `uname -m` in
         x86_64)
             func "set LD_PRELOAD for jemalloc arch x84_64 ($_daemon)"
-            LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.1 \
+            LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so \
                       ${_daemon}-exec $args
             ;;
 
         i686)
             func "set LD_PRELOAD for jemalloc arch i686 ($_daemon)"
-            LD_PRELOAD=/usr/lib/i386-linux-gnu/libjemalloc.so.1 \
+            LD_PRELOAD=/usr/lib/i386-linux-gnu/libjemalloc.so \
                       ${_daemon}-exec $args
             ;;
 
