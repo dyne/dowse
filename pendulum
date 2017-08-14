@@ -424,37 +424,63 @@ EOF
 	return 0
 }
 
-# DNS rotation if a dnscrypt server is down
-# TODO: check currently used server, trigger rotation if necessary
+# DNS rotation if current dnscrypt server is unreachable
 round_robin_dns() {
 	fn round_robin_dns $*
 
-    local _dnslog==1
+    local _dnslog=1
+	local _ttl=1
 
     [[ $DEBUG = 1 ]] && _dnslog=7
 
+	# check currently used server, trigger rotation only if necessary
+	local _dns
+    _dns=$(print "GET dns-server-selected" | redis dynamic)
+	# trim a nil response from redis as empty string
+	# TODO: should it go into the redis wrapper?
+	_dns=${_dns/\(nil\)/}
+	[[ "$_dns" = "" ]] || {
+		# test currently used dns
+		${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv \
+								   -R ${_dns} -t $_ttl -m $_dnslog
+		# return success if current dns works and rotation not
+		# necessary
+		[[ $? = 0 ]] && {
+			func "rrdns: current dnscrypt server '$_dns' OK"
+			return 0 }
+	}
 
-	# generate a random entry for dnscrypt-proxy test with a single csv line
+	warning "rrdns: current dnscrypt server is unreachable, rotating"
+
+	# generate a random entry for dnscrypt-proxy test with a single
+	# csv line TODO: choose specific servertype with no logs, dnssec
+	# etc.
 	ztmp
 	local _dnsrand=$ztmpfile
-	sed 1q $R/share/dnscrypt-resolvers.csv $_dnsrand
+	sed 1q $R/share/dnscrypt-resolvers.csv > $_dnsrand
     local _rndresolv
-	_rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $_dnsrand)"
+	_rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers.csv)"
+	print "$_rndresolv" >> $_dnsrand
     dnscrypt_name="${_rndresolv[(ws:,:)1]}"
 
 	func "rrdns: testing $dnscrypt_name"
-	
-	# run the dnscrupt-proxy in test mode with 10s timeout
-	${execmap[dnscrypt-proxy]} -L $_dnsrand -R ${dnscrypt_name} -t 10 -m $_dnslog
+
+	(sleep $_ttl; rm -f $_dnsrand) &
+	# run the dnscrypt-proxy in test mode with 10s timeout
+	${execmap[dnscrypt-proxy]} -L $_dnsrand -R ${dnscrypt_name} \
+							   -t $_ttl -m $_dnslog
 
     if [[ $? = 0 ]]; then
-		# unreachable, then recur with another random target
-		dnscrypt-roundrobin
-	else
 		func "rrdns: found working"
 		func "${_rndresolv}"
 		# Saving on redis the dnscrypt_name
 		print "SET dns-server-selected ${dnscrypt_name}" | redis dynamic
+		# stop the currently running daemon
+		stop dnscrypt-proxy
+		# let the watchdog start it
+	else
+		# unreachable, then recur with another random target
+		dnscrypt-roundrobin
 	fi
 	return 0
 }
