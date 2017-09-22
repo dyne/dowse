@@ -70,8 +70,10 @@ Installation and activation takes a few steps, only `make install` needs root:
 
 1. Download dowse on a GNU/Linux box (we use Devuan Jessie)
 
-	git clone https://github.com/dyne/dowse dowse-src
-	git submodule update --init
+```
+git clone https://github.com/dyne/dowse dowse-src
+git submodule update --init
+```
 
 2. Install all requirements, here below the list of packages. To avoid installing more than needed, consider using the `--no-install-recommends` flag in APT or similar for other package managers.
 
