@@ -1,16 +1,18 @@
 #!/usr/bin/zsh
 
-
 redis() {
-#    fn redis $*
+
     _db="${db[$1]}"
     req=(_db)
     ckreq || return 1
 
 	cat | launch redis-cli -n $_db --raw
-    [[ $? = 0 ]] && return 0
+    [[ $? = 0 ]] && {
+		# success
+		return 0
+	}
 
-	print "ERROR sending commands via redis-cli"
+	error "failure sending commands to redis db $_db"
 	return 1
 
 }
