@@ -68,19 +68,23 @@ dnscrypt-proxy-exec() {
 	# dnscrypt-roundrobin
 
 	# grab the last used server
-	dns_selected=$(print "GET dns-server-selected"|redis dynamic|sed 's/(nil)//')
+	dns_selected=$(print "GET dns-server-selected" | redis dynamic)
+	dns_selected=${dns_selected/\(nil\)/}
 	
 	# if undefined, eg at the first startup, it takes a default value
 	dnscrypt_name=${dns_selected:-dnscrypt.eu-nl}
-	#dnscrypt_ipaddr=198.199.70.248:5553
-	#dnscrypt_name=2.dnscrypt-cert.dyne.org
-	#dnscrypt_key=162F:051A:BACA:A042:A0C9:7769:91B4:BBA8:FE10:8F72:53CB:5077:A055:9BCF:AD39:73C5
 
 	func "Launching dnscrypt-proxy to listen on port 53"
 	act "dnscrypt proxy server: $dnscrypt_name"
-# TODO definire la variabile d'ambiente interface 
+	
+	# TODO: why this ?! and why here?? this is a global setting for
+	# something very delicate that is overwritten on every
+	# dnscrypt-proxy execution. likely to cause problems. old comment:
+	# "definire la variabile d'ambiente interface"
 	ulimit -c unlimited
-	TMP=`date +%Y%m%d_%H%M%S`
+
+	# why a new log on each run? this is likely to use up all i/o
+	# TMP=`date +%Y%m%d_%H%M%S`
 
 	if [[ $DEBUG = 1 ]]; then
 		DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
@@ -90,7 +94,7 @@ dnscrypt-proxy-exec() {
 						hostname=$hostname \
 						domain=$lan \
 						launch dnscrypt-proxy -a $address:53 \
-						-l $H/log/dnscrypt.log.${TMP} \
+						-l $H/log/dnscrypt.log \
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
@@ -106,7 +110,7 @@ dnscrypt-proxy-exec() {
 						domain=$lan \
 						interface=$interface \
 						launch dnscrypt-proxy -a $address:53 \
-						-l $H/log/dnscrypt.log.${TMP} \
+						-l $H/log/dnscrypt.log \
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
@@ -118,119 +122,4 @@ dnscrypt-proxy-exec() {
     savepid dnscrypt-proxy $pid
 }
 
-dnscrypt-roundrobin() {
-	#local servertype=",.,yes,yes" ## DNSSEC + No logs
-	#local servertype=",.,yes,no"  ## DNSSEC
-	local servertype=",.,no,yes"  ## No logs
-
-	func "Choosing a random available dnscrypt server"
-
-	sed 1q $R/share/dnscrypt-resolvers.csv > $R/share/dnscrypt-resolvers-grepped.csv
-	grep $servertype $R/share/dnscrypt-resolvers.csv >> $R/share/dnscrypt-resolvers-grepped.csv
-
-	# prints a random line from the resolvers csv file
-	local _rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers-grepped.csv)"
-
-	# check if alive
-	eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R ${_rndresolv[(ws:,:)1]} -t 720 -m 7"
-
-	[[ $? = 0 ]] || dnscrypt-roundrobin
-
-	dnscrypt_name="${_rndresolv[(ws:,:)1]}"
-
-	rm -f $R/share/dnscrypt-resolvers-grepped.csv
-}
-
-#=======================================
-# Code for check DNS availability
-#=======================================
-__search_for_a_dns () {
-    # 
-    sed 1q $R/share/dnscrypt-resolvers.csv > $R/share/dnscrypt-resolvers-grepped.csv
-    grep $servertype $R/share/dnscrypt-resolvers.csv >> $R/share/dnscrypt-resolvers-grepped.csv
-
-    
-    # prints a random line from the resolvers csv file
-    local _rndresolv="$(perl -wne '$a = $_ if rand $. < 1 ; END { print $a }' $R/share/dnscrypt-resolvers-grepped.csv)"
-    
-    # check if alive
-    eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R ${_rndresolv[(ws:,:)1]} -t 1 -m 7"
-    
-    [[ $? = 0 ]] || return 
-    
-    dnscrypt_name="${_rndresolv[(ws:,:)1]}"
-
-    # Saving on redis the dnscrypt_name
-    print "SET dns-server-selected ${dnscrypt_name}" | redis dynamic
-    
-    rm -f $R/share/dnscrypt-resolvers-grepped.csv
-
-    PID_LIST=$(print "GET dnscrypt-pid-child-list " | redis dynamic | tr '_' ' ')
-
-    LOCK=$(print "GET lock_check_and_select_dns " | redis dynamic )
-
-    # in this moment we can unlock the semaphore if the pendulum spawn another team it don't change our  PID_LIST variable 
-    unlock check_and_select_dns $LOCK
-    kill -9 ${PID_LIST}  
-    
-}
-
-
-__is_dns_reachable() {
-    eval "${execmap[dnscrypt-proxy]} -L $R/share/dnscrypt-resolvers.csv -R $1 -t 1 -m 7"
-    return $?
-}
-
-__spawn_dns_selection() {
-
-    let N=$(grep -c processor /proc/cpuinfo )/2
-
-    if (( $N < 1 )); then
-	let N=1;
-    fi
-    
-    for i in $(seq 1 $N); do
-	search_for_a_dns &
-    done
-}
-
-__save_child_pid_on_redis() {
-    
-    PID_LIST=`echo "${${(v)jobstates##*:*:}%=*}" | tr ' ' '_'`
-
-    print "SET dnscrypt-pid-child-list $PID_LIST" | redis dynamic
-}
-
-dnscrypt-check_and_select_dns() {
-    func ""
-    func ""
-    func ""
-    func "entering dnscrypt-check_and_select_dns()"
-    nlock=`lock check_and_select_dns 0`
-    [[ "$nlock" = "0" ]] && {
-	func "lock check_and_select_dns already locked"
-	return 1 }
-    
-    #local servertype=",.,yes,yes" ## DNSSEC + No logs
-    #local servertype=",.,yes,no"  ## DNSSEC
-    local servertype=",.,no,yes"  ## No logs
-    
-    func "Check if the DNS selected on the Redis server is available"
-    
-    DNS=$(print "GET dns-server-selected" | redis dynamic)
-
-    func "DNS = ${DNS} "
-    if [ [ $DNS = "(nil)" ] || ! __is_dns_reachable ( $DNS ) ]; then
-
-	print "DEL dns-server-selected" | redis dynamic
-	
-	func "Choosing a random available dnscrypt server"
-	__spawn_dns_selection
-	
-	__save_child_pid_on_redis
-    else
-	unlock check_and_select_dns $nlock
-    fi
-
-}
 
