@@ -22,9 +22,12 @@
 # 02139, USA.
 
 dhcpd-conf() {
-	netzero=${address%.*}.0
-	netC=${netzero%.*}
-	netB=${netC%.*}
+	netzero=${dowse_net}
+	# if no base network specified, use class C
+	# TODO: better deduction based on netmask if known
+	[[ "$netzero" = "" ]] && netzero=${address%.*}.0
+	range_start=${dowse_guests[(ws:,:)1]}
+	range_stop=${dowse_guests[(ws:,:)2]}
 cat <<EOF
 option routers $address;
 option domain-name "dowse.it";
@@ -36,7 +39,7 @@ local-address $address;
 omapi-port 7911;
 
 subnet ${netzero} netmask $netmask {
-  range ${netC}.101 ${netC}.249;
+  range ${range_start} ${range_stop};
 
   on commit {
     set clip = binary-to-ascii(10, 8, ".", leased-address);

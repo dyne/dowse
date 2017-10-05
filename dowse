@@ -51,10 +51,16 @@ mkdir -p $H
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(R H E debug quiet script fun settings network)
+vars+=(R H E debug quiet script fun network)
 vars+=(last_notice last_act last_func)
 vars+=(root sql)
 arrs+=(mods)
+
+# network configuration
+
+vars+=(settings address interface hostname wan lan firewall)
+vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
+
 # use mysql
 sql_wp=(launch mysql --defaults-file=$H/run/mysqld.conf -A -u root)
 sql=(launch mysql --defaults-file=$H/run/mysqld.conf -A -u root -pp4ssw0rd)

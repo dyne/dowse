@@ -1,8 +1,5 @@
 #!/usr/bin/env zsh
 
-vars+=(settings address interface hostname wan lan firewall)
-vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
-
 conf-load() {
 	fn conf-load
 
@@ -53,7 +50,7 @@ conf-load() {
 			dowse_guests=$subn.0.101,$subn.255.199,48h
 		elif [[ $range == 8 ]]; then
 			subn=${wan[(ws:.:)1]}
-			dowsenet=${subn}.0.0.0/8
+			dowse_net=${subn}.0.0.0/8
 			netmask=255.0.0.0
 			dowse_guests=$subn.0.0.101,$subn.255.255.199,48h			
 		fi
