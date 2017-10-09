@@ -14,6 +14,7 @@
 #ifndef WEBUI_COMMON_VAR_H_
 #define WEBUI_COMMON_VAR_H_
 
+#include <hiredis/hiredis.h>
 
 // used with kore_buf_(create/appendf/free)
 
@@ -42,6 +43,9 @@ typedef struct performance_context{
 
 __WEBUI_EXTERN__ performance_context perf_cont;
 __WEBUI_EXTERN__ map_t assetmap;
+
+// global redis connection for the storage database
+__WEBUI_EXTERN__ redisContext *redis_storage;
 
 /* To wrote global_messages we wrote on global_attributes set
  * __WEBUI_EXTERN__ attributes_set_t global_messages;

@@ -23,7 +23,10 @@
 
 extern redisContext *log_redis;
 
+// declared in webui_preload
+extern redisContext *redis_storage;
 
+// this is called on initialisation
 
 void kore_parent_configure() {
     log_entering();
@@ -35,17 +38,28 @@ void kore_parent_configure() {
 
     log_redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
     if (!log_redis) {
-        const char m[] = "Redis server is not running";
+        const char m[] = "Error connecting to redis dynamic database for logging";
         webui_add_error_message(&startup_attributes, m);
         err(m);
 
         error_during_startup =1;
     }
+
+    redis_storage = connect_redis(REDIS_HOST, REDIS_PORT, db_storage);
+    if (!redis_storage) {
+	    const char m[] = "Error connecting to redis storage database";
+	    webui_add_error_message(&startup_attributes, m);
+	    err(m);
+	    error_during_startup =1;
+    }
+
     act("Kore preload");
     if (check_if_reset_admin_device()) {
         WEBUI_DEBUG
         reset_admin_device();
     }
+
+
     /* Setup in redis the authorization-mac-* entry for all authorized */
     setup_authorization(&startup_attributes);
 
