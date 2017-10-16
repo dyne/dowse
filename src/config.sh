@@ -42,25 +42,24 @@ mkdir -p $S/build/db
 
 # id     SQL                       NMAP
 thingindex='
-macaddr  varchar(18) primary key ; /address[@addrtype=\"mac\"]/@addr
-ip4      text                    ; /address[@addrtype=\"ipv4\"]/@addr
-ip6      text                    ; /address[@addrtype=\"ipv6\"]/@addr
-hostname text                    ; /hostnames/hostname[0]/@name
+macaddr  varchar(18) primary key ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@addr
+ip4      text                    ; /nmaprun/host[\$i]/address[@addrtype=\"ipv4\"]/@addr
+ip6      text                    ; /nmaprun/host[\$i]/address[@addrtype=\"ipv6\"]/@addr
+hostname text                    ; /nmaprun/host[\$i]/hostnames/hostname[0]/@name
 iface    text
 state    varchar(16) default "on"
-os       text                    ; /os/osmatch[1]/@name
+os       text                    ; /nmaprun/host[\$i]/os/osmatch[1]/@name
 dhcp     text
 gateway  text
 network  text
 notes    text
 last     DATETIME ON UPDATE CURRENT_TIMESTAMP
 age      DATETIME DEFAULT CURRENT_TIMESTAMP
-vendor   text                    ; /address[@addrtype=\"mac\"]/@vendor
+vendor   text                    ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@vendor
 admin    text
 name     text
 authorized     varchar(32) default "NOT ENABLED TO BROWSE"
 '
-
 print - "$thingindex" > $S/build/db/thing.idx
 
 # index of all database fields for an event occured in the network
