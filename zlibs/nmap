@@ -31,18 +31,12 @@ maps+=(nmap_item_paths)
 
 nmap-preprocess() {
     fn nmap-preprocess
-    nmap_array=()
-	#   nmapfile="$H/run/nmap.xml"
-
     freq=($nmapfile)
     req=(processedfile)
     ckreq || return 1
 
     func "launching xmlstarlet on $nmapfile"
     cat $nmapfile | xmlstarlet ed -d '/nmaprun/host[status[@state="down"]]' > "$processedfile"
-
-    hostcount=$(nmap-selectXPath "count(/nmaprun/host)")
-    act  "Finding value for nmap_array on ${hostcount} hosts in 'up' state..."
 }
 
 nmap-selectXPath() {
@@ -60,54 +54,23 @@ nmap-parse() {
     freq=($nmapfile $thingidx)
     ckreq || return $?
 
-    nmap-preprocess || return $?
-
     nmap_array=()
     # pick only entries from thingindex that have nmap addresses
     for i in $(awk '/\; \/.*@/ {print $1}' $thingidx); do
         nmap_array+=($i)
     done
 
-    _sql_insert=""
+    hostcount=$(nmap-selectXPath "count(/nmaprun/host)")
+    act  "Finding value for nmap_array on ${hostcount} hosts in 'up' state..."
 
-    local _columns=""
-    for item in $nmap_array ; do
-        nmap_item_paths[$item]=$(awk -F\; '/^[\ \t]*'"$item"'/ {print $2}' $thingidx | tr -d ' ')
-        # local printstr="export xpath_$item=$STR"
-        # print $printstr  >> $varfile
-        [[ "$_columns" = "" ]] && _columns="$item" || _columns="${_columns},${item}"
-    done
-
-    func "hostcount="$hostcount
-	for i in $(seq 1 $hostcount); do
-        local _values=""
-        local _update_stm=""
-        local _s=""
-
-
-        # column is item
-        for column in $nmap_array ; do
-			xpathStr="/nmaprun/host[$i]/$nmap_item_paths[$column]"
-			_val=$(nmap-selectXPath ${xpathStr})
-
-			[[ "$_values" = "" ]] && _values="'$_val'" || _values="${_values},'${_val}'"
-
-			if [[ "${column}" = "macaddr" ]]; then
-				continue
-			else
-				_s="${column}='${_val}'" ;
-				[[ "$_update_stm" = "" ]] && _update_stm="${_s}" || _update_stm="${_update_stm},${_s}"
-			fi
-        done
-		
-		act "columns: $_columns"
-		act "values: $_values"
-		act "keys: $_update_stm"
-#        _new_stm="INSERT INTO found ( $_columns ) VALUES ( $_values ) ON DUPLICATE KEY UPDATE  $_update_stm ;"
-#        _sql_insert+=$_new_stm
-
-    done
-
-#    print $_sql_insert # | tee | $sql $db[things]
-
+	for i in $(seq 1 $hostcount);do
+		_redis_query="HMSET thing_$(nmap-selectXPath '/nmaprun/host['$i']/address[@addrtype="mac"]/@addr')"
+		[[ "$_redis_query" = "HMSET thing_" ]] && continue  # skip if there's no MAC
+		for item in $nmap_array; do
+			_field="$(awk -F\; '/^[\ \t]*'$item'/ {print $2}' $thingidx | sed "s/\$i/$i/")"
+			_val="$(nmap-selectXPath $_field)"
+			[[ -n "$_val" ]] && _redis_query="$_redis_query $item '$_val'"
+		done
+		print "$_redis_query"
+	done
 }
