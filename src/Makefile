@@ -2,14 +2,6 @@ DESTDIR ?=
 PREFIX ?= /usr/local/dowse
 THREADS ?= 1
 
-ifeq ($(wildcard /usr/bin/mariadb_config),)
-  DB_CFG=/usr/bin/mysql_config
-  DB_TYPE=mysqldb
-else
-  DB_CFG=/usr/bin/mariadb_config
-  DB_TYPE=mariadb
-endif
-
 CC = gcc
 CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
 LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64 -Llibb64
@@ -17,7 +9,6 @@ LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64 -Llibb64
 all: base parsers springs
 	./import.sh redis-server
 	./import.sh redis-cli
-	./import.sh ${DB_TYPE}
 	./import.sh nmap-macs
 	./import.sh node-red
 	install -s -p modprobe        ../build/bin
@@ -34,9 +25,9 @@ libs: b64
 	make -C libdowse
 	make -C libparse-datetime
 
-.PHONY: dnscrypt-proxy kore libwebsockets modprobe netdata seccrond webui hiredis-lock libparse-datetime maria2redis mosquitto pgld sup
+.PHONY: dnscrypt-proxy kore libwebsockets modprobe netdata seccrond webui hiredis-lock libparse-datetime mosquitto pgld sup
 
-base: config libs modprobe sup hiredis-lock libparse-datetime dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto kore webui seccrond maria2redis
+base: config libs modprobe sup hiredis-lock libparse-datetime dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto kore webui seccrond
 	@echo "Compiled base"
 
 b64:
@@ -76,10 +67,6 @@ webui: kore
 
 seccrond:
 	@./compile.sh seccrond ${THREADS}
-
-maria2redis:
-	@./compile.sh maria2redis ${THREADS}
-
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"

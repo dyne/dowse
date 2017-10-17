@@ -226,52 +226,6 @@ command -v apt-get >/dev/null && {
                 cp $tmp/usr/sbin/dhcpd $S/build/bin
             }
             ;;
-
-        mysqldb)
-            [[ -r $S/build/mysql ]] || {
-				### temporary for older de*an version
-					mysqlver=5.6
-					grep 'jessie' /etc/os-release >/dev/null && mysqlver=5.5
-				###
-				act "fetching mysqldb sql server"
-				deb-download mysql-server-core-$mysqlver
-				deb-download mysql-server
-				deb-download mysql-client-$mysqlver
-				mkdir -p $S/build/mysql/bin
-				mkdir -p $S/build/mysql/share
-				mkdir -p $S/build/mysql/plugin
-				cp -ra $tmp/usr/share/mysql/*      $S/build/mysql/share/
-				cp -ra $S/src/maria2redis/lib_mysqludf_redis_v2.so \
-				   $S/build/mysql/plugin
-				cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
-				cp $tmp/usr/sbin/mysqld    $S/build/mysql/bin
-				cp $tmp/usr/bin/mysql      $S/build/mysql/bin
-				cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
-				cp $tmp/usr/bin/mysql_install_db $S/build/mysql/bin
-				cp $tmp/usr/bin/my_print_defaults $S/build/mysql/bin
-            }
-            ;;
-        mariadb)
-            [[ -r $S/build/mysql ]] || {
-				act "fetching mariadb sql server"
-				# deb-download mariadb-server-10.0
-				deb-download mariadb-server-core-10.0
-				deb-download mariadb-server-10.0
-				deb-download mariadb-client-core-10.0
-				mkdir -p $S/build/mysql/bin
-				mkdir -p $S/build/mysql/share
-				mkdir -p $S/build/mysql/plugin
-				cp -ra $tmp/usr/share/mysql/*      $S/build/mysql/share/
-				cp -ra $S/src/maria2redis/lib_mysqludf_redis_v2.so \
-				   $S/build/mysql/plugin
-				cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
-				cp $tmp/usr/sbin/mysqld    $S/build/mysql/bin
-				cp $tmp/usr/bin/mysql      $S/build/mysql/bin
-				cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
-				cp $tmp/usr/bin/mysql_install_db $S/build/mysql/bin
-				cp $tmp/usr/bin/my_print_defaults $S/build/mysql/bin
-            }
-            ;;
         *)
             error "package not known: $1"
             act "add package extraction procedure to src/import.sh"
@@ -285,12 +239,7 @@ command -v apt-get >/dev/null && {
     esac
 
     popd
-    if [[ $DEBUG = 1 ]]; then
-        func "MariaDB packages downloaded in $tmp"
-    else
-        rm -rf $tmp
-    fi
-
+	rm -rf $tmp
 }
 
 # Check if is Arch Linux
@@ -327,27 +276,6 @@ command -v pacman >/dev/null && {
                 cp $tmp/usr/bin/dhcpd $S/build/bin
             }
             ;;
-
-        mariadb)
-            [[ -r $S/build/mysql ]] || {
-				act "fetching mariadb sql server"
-				pkg-download mariadb
-				pkg-download libmariadbclient
-				pkg-download mariadb-clients
-				mkdir -p $S/build/mysql/bin
-				mkdir -p $S/build/mysql/share
-				mkdir -p $S/build/mysql/plugin
-				cp -ra $tmp/usr/share/mysql/*      $S/build/mysql/share/
-				cp -ra $S/src/maria2redis/lib_mysqludf_redis_v2.so \
-				   $S/build/mysql/plugin
-				cp -ra $tmp/usr/lib/mysql/plugin/* $S/build/mysql/plugin/
-				cp $tmp/usr/bin/mysqld     $S/build/mysql/bin
-				cp $tmp/usr/bin/mysql      $S/build/mysql/bin
-				cp $tmp/usr/bin/mysqlcheck $S/build/mysql/bin
-				cp $tmp/usr/bin/mysql_install_db $S/build/mysql/bin
-				cp $tmp/usr/bin/my_print_defaults $S/build/mysql/bin
-            }
-            ;;
         *)
             error "package not known: $1"
             act "add package extraction procedure to src/import.sh"
@@ -361,12 +289,7 @@ command -v pacman >/dev/null && {
     esac
 
     popd
-    if [[ $DEBUG = 1 ]]; then
-        func "MariaDB packages downloaded in $tmp"
-    else
-        rm -rf $tmp
-    fi
-
+	rm -rf $tmp
 }
 
 return 0
