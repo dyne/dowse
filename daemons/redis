@@ -110,11 +110,12 @@ redis-server-exec() {
     print "flushdb" | redis dynamic 2>&1 > /dev/null
 
 	# we consider these to tell us if it's the initial startup of redis
-	print "exists state_all_things" | redis storage || {
+	# yes, redis returns 1 if a key is found
+	print "exists state_all_things" | redis storage && {
 		print "set state_all_things on" | redis storage
 	}
 
-	print "exists party_mode" | redis storage || {
+	print "exists party_mode" | redis storage && {
 		print "set party_mode off" | redis storage
 	}
 
