@@ -379,14 +379,12 @@ EOF
 			# launch xtables-multi iptables -A FORWARD -s $ipb -j $acl
 			# launch xtables-multi iptables -A FORWARD -d $ipb -j $acl
 			if [[ "$al" = "on" ]]; then
-			    AUTH="ENABLE_TO_BROWSE"
+			    AUTH="yes"
 			else
-			    AUTH="DISABLE_TO_BROWSE"
+			    AUTH="no"
 			fi
-			cat <<EOF | $sql $db[things]
-UPDATE found SET authorized='$AUTH'
-WHERE (macaddr='$macb' and '$macb' <> '');
-EOF
+
+			print "hset thing_$macb enable_to_browse $AUTH" | redis storage
 
 			# Delete the ACK request
 			print "DEL ACK_${action}_$epoch" | redis dynamic
