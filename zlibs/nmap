@@ -64,12 +64,15 @@ nmap-parse() {
     act  "Finding value for nmap_array on ${hostcount} hosts in 'up' state..."
 
 	# thing defaults
-	thing_defaults="isadmin 'NO' enable_to_browse 'NO'"
+	thing_defaults="isadmin 'no' enable_to_browse 'no'"
 
 	for i in $(seq 1 $hostcount);do
 		_redis_query="hmset thing_$(nmap-selectXPath '/nmaprun/host['$i']/address[@addrtype="mac"]/@addr')"
 		_redis_query=$_redis_query:l
 		[[ "$_redis_query" = "hmset thing_" ]] && continue  # skip if there's no MAC
+		local _key="$(print $_redis_query | awk '{print $2}')"
+		local _key="$(print hgetall $_key | redis storage)"
+		[[ -n "$_key" ]] || _redis_query="$_redis_query $thing_defaults"
 		for item in $nmap_array; do
 			_field="$(awk -F\; '/^[\ \t]*'$item'/ {print $2}' $thingidx | sed "s/\$i/$i/")"
 			_val="$(nmap-selectXPath $_field)"
@@ -82,7 +85,6 @@ nmap-parse() {
 			[[ -n "$age" ]] || _redis_query="$_redis_query age $time"
 			_redis_query="$_redis_query last $time"
 		done
-		_redis_query="$_redis_query $thing_defaults"
 		print "$_redis_query" | redis storage
 	done
 }
