@@ -166,15 +166,6 @@ UPDATE found SET $_k = '$obj[$_k]' WHERE macaddr = '$obj[macaddr]';"
 
 }
 
-# finds out LAN neighbours, their mac and their state
-# this establishes mac addresses as indexes
-pendulum_ip_neigh() {
-    fn pendulum_ip_neigh $*
-
-	ip neigh | parse-ip-neigh
-
-}
-
 watchdog_daemons() {
 	# map all running pids
 	# for p in ${(f)"$(ps -o pid ax)"}; do
@@ -354,12 +345,8 @@ EOF
 		;;
 
 	    THING_OFF|THING_ON)
-			# 1st arg is the ip to block
-			local macb
-			macb=${cmd[(ws:,:)5]}
-			# on/off string lowercase for db
-			local al
-			al=${action[(ws:_:)2]:l}
+			local macb=${cmd[(ws:,:)5]}
+			local state=${action[(ws:_:)2]}
 
 			[[ "$macb" = "" ]] && {
 				error "invalid mac block cmd: $cmd"
@@ -378,7 +365,7 @@ EOF
 			save_ebtables
 			# launch xtables-multi iptables -A FORWARD -s $ipb -j $acl
 			# launch xtables-multi iptables -A FORWARD -d $ipb -j $acl
-			if [[ "$al" = "on" ]]; then
+			if [[ "$state" = "ON" ]]; then
 			    AUTH="yes"
 			else
 			    AUTH="no"
@@ -558,9 +545,7 @@ case "$1" in
 
         # parse everything in this map
         obj=()
-        pendulum_ip_neigh
-        # pendulum_arp_scan
-        _pendulum_commit_changes
+		ip neigh | parse-ip-neigh.py
 
 		unlock netscan $slid
         ;;

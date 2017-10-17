@@ -6,7 +6,7 @@ CC = gcc
 CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
 LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64 -Llibb64
 
-all: base parsers springs
+all: base springs
 	./import.sh redis-server
 	./import.sh redis-cli
 	./import.sh nmap-macs
@@ -17,7 +17,7 @@ all: base parsers springs
 	install -s -p dowse-to-mqtt   ../build/bin
 	install -s -p hiredis-lock    ../build/bin
 	install -s -p dowse-cmd-fifo  ../build/bin
-	install -s -p parse-ip-neigh  ../build/bin
+	install -p parse-ip-neigh.py  ../build/bin
 	./checksum.sh
 	./compile.sh sup
 
@@ -65,9 +65,6 @@ seccrond:
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
 
-parsers: parse-ip-neigh
-	@echo "Dowse parsers compiled"
-
 config:
 	@./config.sh ${DESTDIR}${PREFIX}
 
@@ -85,9 +82,6 @@ hiredis-lock: hiredis-lock.o
 
 modprobe: modprobe.o kmod_log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lkmod
-
-parse-ip-neigh: parse-ip-neigh.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -DDB_HOST=\"localhost\" -DDB_USER=\"root\" -DDB_PASSWORD=\"p4ssw0rd\" -DDB_SID=\"things\" -DDB_SOCK_DIRECTORY=\"$(HOME)/.dowse/run/mysql/mysqld.sock\"  `${DB_CFG} --include` `${DB_CFG} --libs`
 
 dowse-to-gource: dowse-to-gource.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)

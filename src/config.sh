@@ -118,7 +118,6 @@ execrules=(
 
 	nmap          root
 	dhcpd         root
-    webui         root
     dnscrypt-proxy root
     ifconfig      root
     route         root
@@ -146,7 +145,6 @@ execmap=(
     redis-server  $PREFIX/bin/redis-server
 	tinyproxy     $PREFIX/bin/tinyproxy
     netdata       $PREFIX/bin/netdata
-    webui         $PREFIX/bin/webui
 	seccrond      $PREFIX/bin/seccrond
 	mosquitto     $PREFIX/bin/mosquitto
 	dhcpd         $PREFIX/bin/dhcpd
