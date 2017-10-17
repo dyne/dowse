@@ -111,15 +111,6 @@ case $1 in
 		popd
 		;;
 
-    netdiscover)
-        pushd $R/src/netdiscover &&
-        autoreconf && \
-            CFLAGS="$CFLAGS" ./configure --prefix=${PREFIX} &&
-            make -j${THREADS} &&
-            install -s -p src/netdiscover $R/build/bin
-        popd
-        ;;
-
     sup)
         pushd $R/src/sup
         # make sure latest config.h is compiled in
