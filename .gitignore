@@ -13,6 +13,7 @@ zlibs/zuper-dev
 *.lo
 *.la
 *.a
+*.pyc
 .deps
 .libs
 *.dirstamp
