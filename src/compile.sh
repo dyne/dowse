@@ -73,7 +73,8 @@ case $1 in
 		CFLAGS="$CFLAGS"
 		LDFLAGS="$LDFLAGS"
 		# dhcpd fails building with multiple threads
-		./configure --enable-paranoia --enable-execute &&
+		./configure --enable-paranoia --enable-execute \
+			--disable-dhcpv6 &&
 		    make && {
 			install -s -p server/dhcpd    $R/build/bin &&
 			    install -s -p dhcpctl/omshell $R/build/bin
