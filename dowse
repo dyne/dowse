@@ -374,7 +374,7 @@ dowse-stop() {
 
     # stop the firewall peerguardian
     stop pgld
-    
+
     # remove the layer 2 firewall rules
     ebtables-stop
 

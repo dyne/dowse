@@ -219,7 +219,7 @@ watchdog_daemons() {
 				err="$NOW a component of $daemon [$pid] was not found running (crash?)"
 				error $err
 				print $err >> $H/log/watchdog.log
-				# delete and kill old pid 
+				# delete and kill old pid
 				kill -9 $pid_list
 				rm -f $d
 				act "attempting restart: $daemon"
@@ -283,7 +283,7 @@ exec_next_cmd() {
 		return 1 }
 	func "action: $action"
 	epoch=${cmd[(ws:,:)4]}
-	func "ackid we use epoch: $epoch" 
+	func "ackid we use epoch: $epoch"
 
 	# set acl on/off switch matching the action
 	acl=DROP
@@ -329,8 +329,8 @@ EOF
 
 		# Delete the ACK request
 		print "DEL ACK_${action}_$epoch" | redis dynamic
-		
-		;; 
+
+		;;
 	    ALL_THINGS_ON)
 
 		# TODO: check if valid mac address
@@ -347,11 +347,11 @@ EOF
 UPDATE parameter SET value='ON' WHERE variable='state all things'
 EOF
 
-		
+
 		# Delete the ACK request
 		print "DEL ACK_${action}_$epoch" | redis dynamic
-		
-		;; 
+
+		;;
 
 	    THING_OFF|THING_ON)
 			# 1st arg is the ip to block
@@ -366,8 +366,8 @@ EOF
 				return 1 }
 			# TODO: check if valid mac address
 			func "# delete old rule"
-			launch ebtables -D FORWARD -s $macb -j $old_acl 
-			launch ebtables -D FORWARD -d $macb -j $old_acl 
+			launch ebtables -D FORWARD -s $macb -j $old_acl
+			launch ebtables -D FORWARD -d $macb -j $old_acl
 
 			func "ebtables -I FORWARD 1 -s $macb -j $acl"
 			func "ebtables -I FORWARD 1 -d $macb -j $acl"
@@ -513,7 +513,7 @@ case "$1" in
 			return 1 }
 
 		exec_next_cmd
-		
+
 		unlock nextcmd $ncmd
 
 		;;
