@@ -70,12 +70,11 @@ case $1 in
 		act "also prepare to wait more for the BIND export libs"
 		act "when you see ISC_LOG_ROLLINFINITE then is almost there"
 		autoreconf -i
-		CFLAGS="$CFLAGS"
-		LDFLAGS="$LDFLAGS"
-		# dhcpd fails building with multiple threads
+		# dhcpd fails building with multiple threads (still?)
+		CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
 		./configure --enable-paranoia --enable-execute \
 			--disable-dhcpv6 &&
-		    make && {
+		    make -j${THREADS} && {
 			install -s -p server/dhcpd    $R/build/bin &&
 			    install -s -p dhcpctl/omshell $R/build/bin
 		    }
