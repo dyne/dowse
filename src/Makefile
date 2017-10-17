@@ -23,18 +23,14 @@ all: base springs
 
 libs: b64
 	make -C libdowse
-	make -C libparse-datetime
 
-.PHONY: dnscrypt-proxy libwebsockets modprobe netdata seccrond hiredis-lock libparse-datetime mosquitto pgld sup
+.PHONY: dnscrypt-proxy libwebsockets modprobe netdata seccrond hiredis-lock mosquitto pgld sup
 
-base: config libs modprobe sup hiredis-lock libparse-datetime dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto seccrond
+base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto seccrond
 	@echo "Compiled base"
 
 b64:
 	@make -C libb64
-
-libparse-datetime:
-	@make -C libparse-datetime -j${THREADS}
 
 dnscrypt-proxy:
 	@./compile.sh dnscrypt-proxy ${THREADS}
@@ -122,4 +118,3 @@ clean:
 	make -C mosquitto            clean
 	make -C seccrond			 clean
 	make -C libdowse			 clean
-	make -C libparse-datetime    clean
