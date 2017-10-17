@@ -59,7 +59,7 @@ install: install-zlibs
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
 	install -d ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
 	install -s -p -m 644 src/dnscrypt-plugin/.libs/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
-	chown -R ${DOWSE_USER}:${DOWSE_USER} ${DOWSE_HOME}/.dowse
+	chown -R ${DOWSE_USER}:${DOWSE_USER} ${DESTDIR}${DOWSE_HOME}/.dowse
 
 
 # here sup is installed with suid bit. sup is a secure application we
@@ -71,5 +71,6 @@ install: install-zlibs
 uninstall:
 	rm -rf ${DESTDIR}${CONFDIR}
 	rm -rf ${DESTDIR}${PREFIX}
+	rm -rf ${DESTDIR}${DOWSE_HOME}/.dowse
 
 .PHONY: all config sources clean install uninstall
