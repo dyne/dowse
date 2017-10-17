@@ -80,24 +80,7 @@ start() {
 
     act "starting daemon: $_daemon $*"
 
-    # we preload jemalloc for better memory handling
-    # need to detect the path for it
-    case `uname -m` in
-        x86_64)
-            func "set LD_PRELOAD for jemalloc arch x84_64 ($_daemon)"
-            LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so \
-                      ${_daemon}-exec $args
-            ;;
-
-        i686)
-            func "set LD_PRELOAD for jemalloc arch i686 ($_daemon)"
-            LD_PRELOAD=/usr/lib/i386-linux-gnu/libjemalloc.so \
-                      ${_daemon}-exec $args
-            ;;
-
-        *) ${_daemon}-exec $args ;;
-
-    esac
+	${_daemon}-exec $args ;;
 
     func "${_daemon}-exec $args"
     return $?
