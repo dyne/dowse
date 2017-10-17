@@ -75,10 +75,12 @@ git clone https://github.com/dyne/dowse dowse-src
 git submodule update --init
 ```
 
-2. Install all requirements, here below the list of packages. To avoid installing more than needed, consider using the `--no-install-recommends` flag in APT or similar for other package managers.
+2. Install all requirements, here below the list of packages. To avoid installing
+   more than needed, consider using the `--no-install-recommends` flag in APT or
+   similar for other package managers.
 
 ```
-zsh iptables ebtables sqlite3 procps gettext-base net-tools autoconf automake libssl-dev libbind-dev libpcap-dev unzip wget gcc g++ make cmake libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc libldns-dev  libreadline5 libpcre3 libaio1 libfile-mimeinfo-perl libmariadb-client-lgpl-dev cproto xmlstarlet nmap libaprutil1-dev libltdl-dev patch libb64-dev uuid-dev python-redis python-hiredis dnsutils valgrind build-essential libmysqld-dev libapr1 libapr1-dev libaprutil1-dev curl
+zsh iptables ebtables sqlite3 procps gettext-base net-tools autoconf automake libssl-dev libbind-dev libpcap-dev unzip wget gcc g++ make cmake libtool liblo-dev libnetfilter-conntrack3 libnetfilter-queue-dev libsqlite3-dev libjemalloc-dev libseccomp2 libsodium-dev libhiredis-dev libkmod-dev bind9-host bison gawk libevent-dev libjansson-dev asciidoc libldns-dev  libreadline5 libpcre3 libaio1 libfile-mimeinfo-perl xmlstarlet nmap libaprutil1-dev libltdl-dev patch libb64-dev uuid-dev python-redis python-hiredis dnsutils valgrind build-essential libmysqld-dev libapr1 libapr1-dev libaprutil1-dev curl python3-flask python3-redis
 ```
 
 3. Choose which user should be running dowse: your own is fine, or
@@ -141,12 +143,6 @@ source /usr/local/dowse/zshrc
     # start the dns encrypted tunneling
     start dnscrypt-proxy
 
-    # start the sql database
-    start mysqld
-
-    # start web interface
-    start webui
-
 	# start the mqtt/websocket hub
 	start mosquitto
 
@@ -164,13 +160,15 @@ source /usr/local/dowse/zshrc
 }
 ```
 
-Adding the following line one can set up an open network, what we call it "party mode":
+Adding the following line one can set up an open network, what we call it "party
+mode":
 
 ```
 echo "set party-mode ON" | redis-cli
 ```
 
-As a good practice, such a script can be launched from `/etc/rc.local` for user dowse using `setuidgid` from the `daemontools` package.
+As a good practice, such a script can be launched from `/etc/rc.local` for user
+dowse using `setuidgid` from the `daemontools` package.
 
 The next is an example on how to stop dowse, for instance from a stop.sh script:
 
@@ -185,10 +183,6 @@ source /usr/local/dowse/zshrc
 
 	stop mosquitto
 
-    stop webui
-
-    stop mysqld
-
 	# stop nodejs/node-red
 	stop node-red
 
@@ -200,7 +194,7 @@ source /usr/local/dowse/zshrc
 
     # stop the dhcp server
     stop dhcpd
-    
+
     # remove the layer 2 firewall rules
     ebtables-stop
 
@@ -218,7 +212,11 @@ source /usr/local/dowse/zshrc
     notice "Dowse has stopped running."
 ```
 
-The scripts above are found in dowse source as `start.sh` and `stop.sh` and can be customised and called from the system at boot. It is also possible to run an interactive console with completion where dowse commands are available using the `console.sh` script. Once in the console all the above start/stop commands and even more internals will be available to be launched interactively.
+The scripts above are found in dowse source as `start.sh` and `stop.sh` and can
+be customised and called from the system at boot. It is also possible to run an
+interactive console with completion where dowse commands are available using the
+`console.sh` script. Once in the console all the above start/stop commands and
+even more internals will be available to be launched interactively.
 
 
 # Visualization
@@ -288,7 +286,7 @@ welcomes contributions: https://github.com/dyne/domain-list
 Dowse development is supported by: NLNET foundation (2015)
                                    SIDNfonds   (2015-2016)
 
-Dowse is Copyright (C) 2012-2016 by the Dyne.org Foundation
+Dowse is Copyright (C) 2012-2017 by the Dyne.org Foundation
 
 	This source code is free software; you can redistribute it and/or
 	modify it under the terms of the GNU General Public License as
