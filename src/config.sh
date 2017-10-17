@@ -44,7 +44,6 @@ mkdir -p $S/build/db
 thingindex='
 macaddr  varchar(18) primary key ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@addr
 ip4      text                    ; /nmaprun/host[\$i]/address[@addrtype=\"ipv4\"]/@addr
-ip6      text                    ; /nmaprun/host[\$i]/address[@addrtype=\"ipv6\"]/@addr
 hostname text                    ; /nmaprun/host[\$i]/hostnames/hostname[0]/@name
 iface    text
 state    varchar(16) default "on"
@@ -70,7 +69,6 @@ level enum("'"danger"'","'"success"'","'"info"'","'"warning"'") not null
 age      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT "'" when is it happened ? "'"
 macaddr  varchar(18)  COMMENT "'" who ? "'"
 ip4  text  COMMENT "'" who ? "'"
-ip6  text  COMMENT "'" who ? "'"
 description    text   COMMENT "'" what ? "'"
 '
 

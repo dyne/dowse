@@ -268,16 +268,6 @@ exec_next_cmd() {
 
 			;;
 
-		# IP6_OFF|IP6_ON)
-		# 	# 1st arg is the ip to block
-		# 	ipb=${cmd[(ws:,:)5]}
-		# 	[[ "$ipb" = "" ]] && {
-		# 		error "invalid ip6block cmd: $cmd"
-		# 		return 1 }
-		# 	# TODO: check if valid ip6 ip
-		# 	launch xtables-multi ip6tables -A FORWARD -s $ipb -j $acl
-		# 	launch xtables-multi ip6tables -A FORWARD -d $ipb -j $acl
-
 		# MAC_OFF|MAC_ON)
 		# 	# 1st arg is the mac to block
 		# 	macb=${cmd[(ws:,:)5]}

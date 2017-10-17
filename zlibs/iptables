@@ -306,15 +306,6 @@ iptables-start() {
     iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT
     iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A INPUT   -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-
-
-    # func "Open the network to ipv6"
-    # ip6tables -F
-    # ip6tables -P INPUT ACCEPT
-    # ip6tables -P FORWARD ACCEPT
-    # ip6tables -P OUTPUT ACCEPT
-
 }
 
 iptables-stop() {

@@ -47,7 +47,7 @@ case $1 in
 		CFLAGS="$CFLAGS" \
 			  LDFLAGS="$LDFLAGS" \
 			  cmake -DLWS_WITH_SSL=OFF -DLWS_WITH_SHARED=OFF \
-			  -DLWS_WITHOUT_TESTAPPS=ON -DLWS_IPV6=ON -DLWS_STATIC_PIC=ON $cmakeflags . &&
+			  -DLWS_WITHOUT_TESTAPPS=ON -DLWS_STATIC_PIC=ON $cmakeflags . &&
 			make -j${THREADS}
 		popd
 		;;

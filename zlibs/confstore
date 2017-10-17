@@ -21,7 +21,6 @@ conf-load() {
 	net_devices=()
 	net.scan_devices
 	net_ip4_addr=()
-	net_ip6_addr=()
 	net.scan_addresses
 
 	for d in $net_devices; do
