@@ -88,47 +88,6 @@ case $1 in
         popd
         ;;
 
-    # first kore, then webui (which is built with kore)
-    kore)
-        [[ -x $R/build/kore ]] || {
-            pushd $R/src/kore
-			make -j${THREADS} NOTLS=1 DEBUG=1
-            popd
-        }
-        ;;
-    webui)
-        pushd $R/src/webui 
-        notice "Generating WebUI configuration"
-        act "chroot: $HOME/.dowse"
-        act "uid:    $USER"
-        cat <<EOF > conf/webui.conf
-chroot    $HOME/.dowse
-runas     $USER
-pidfile   $HOME/.dowse/run/webui.pid
-EOF
-        cat conf/webui.conf.dist >> conf/webui.conf
-
-	cat <<EOF > conf/build.conf
-# generated at build time
-cflags = -DDB_SOCK_DIRECTORY="$HOME/.dowse/run/mysql/mysqld.sock"
-EOF
-	if [ -x /usr/bin/mariadb_config ]; then
-	    export DB_CFG=/usr/bin/mariadb_config
-	else
-	    export DB_CFG=/usr/bin/mysql_config
-	fi
-
-	echo "cflags  = "`${DB_CFG} --include` >> conf/build.conf
-	echo "ldflags = "`${DB_CFG} --libs` >> conf/build.conf
-
-        cat conf/build.conf.dist >> conf/build.conf
-
-	act "launch the actual build"
-	make all -j${THREADS} &&
-        install -s -p webui $R/build/bin &&
-        popd
-        ;;
-
     netdata)
         pushd $R/src/netdata
 		git checkout -- web

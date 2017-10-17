@@ -25,9 +25,9 @@ libs: b64
 	make -C libdowse
 	make -C libparse-datetime
 
-.PHONY: dnscrypt-proxy kore libwebsockets modprobe netdata seccrond webui hiredis-lock libparse-datetime mosquitto pgld sup
+.PHONY: dnscrypt-proxy libwebsockets modprobe netdata seccrond hiredis-lock libparse-datetime mosquitto pgld sup
 
-base: config libs modprobe sup hiredis-lock libparse-datetime dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto kore webui seccrond
+base: config libs modprobe sup hiredis-lock libparse-datetime dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto seccrond
 	@echo "Compiled base"
 
 b64:
@@ -58,12 +58,6 @@ libwebsockets:
 
 mosquitto: libwebsockets
 	@./compile.sh mosquitto ${THREADS}
-
-kore:
-	@./compile.sh kore ${THREADS}
-
-webui: kore
-	@./compile.sh webui ${THREADS}
 
 seccrond:
 	@./compile.sh seccrond ${THREADS}
@@ -111,8 +105,6 @@ install:
 	install -p -m 644 domain-list/data/* ${DESTDIR}${PREFIX}/domain-list/data
 	install -d ${DESTDIR}${PREFIX}/share
 	install dnscrypt-proxy/dnscrypt-resolvers.csv ${DESTDIR}${PREFIX}/share/
-	install -d ${DESTDIR}${PREFIX}/webui
-	cp -rav webui/* ${DESTDIR}${PREFIX}/webui/
 	make -C netdata install
 	make -C netdata-plugins install
 #	@./compile.sh install
@@ -132,7 +124,6 @@ clean:
 	make -C pgld                 clean
 	make -C netdata              clean
 	make -C netdata-plugins      clean
-	make -C kore				 clean
 	make -C libwebsockets	     clean
 	make -C mosquitto            clean
 	make -C seccrond			 clean
