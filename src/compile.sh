@@ -69,9 +69,9 @@ case $1 in
 		act "please wait while preparing the build environment"
 		act "also prepare to wait more for the BIND export libs"
 		act "when you see ISC_LOG_ROLLINFINITE then is almost there"
-		autoreconf -i 
-		CFLAGS="$CFLAGS" 
-		LDFLAGS="$LDFLAGS" 
+		autoreconf -i
+		CFLAGS="$CFLAGS"
+		LDFLAGS="$LDFLAGS"
 		# dhcpd fails building with multiple threads
 		./configure --enable-paranoia --enable-execute &&
 		    make && {
@@ -134,7 +134,7 @@ case $1 in
 			patch -p1 < $R/src/patches/dnscrypt-noreuseableport.patch &&
 			./autogen.sh &&
 			./configure --without-systemd --enable-plugins --prefix=${PREFIX} &&
-			make -j${THREADS} && 
+			make -j${THREADS} &&
 			install -s -p src/proxy/dnscrypt-proxy $R/build/bin
         popd
         ;;
