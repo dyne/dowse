@@ -62,7 +62,6 @@ def main():
         if RSTOR.hget(i, 'isadmin') == 'yes':
             admin_devices.append(RSTOR.hgetall(i))
 
-    # XXX: fill there properly
     caller_info = {}
     caller_info['ip'] = request.environ['REMOTE_ADDR']
     caller_info['mac'] = ip2mac(caller_info['ip'])
@@ -125,7 +124,12 @@ def modify_priv_things():
     modifies thing privileges
     currently handles admin/nonadmin
     """
-    # XXX: do validation
+    caller_info = {}
+    caller_info['ip'] = request.environ['REMOTE_ADDR']
+    caller_info['mac'] = ip2mac(caller_info['ip'])
+    if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') != 'yes':
+        return 'You are unauthorized to perform this action.\n'
+
     thing_mac = request.form['macaddr']
     if request.form['column'] != 'admin':
         return "<h1>400 - Bad request</h1>\n"
@@ -144,6 +148,10 @@ def test_admin():
     """
     configures an initial admin device
     """
+    for i in RSTOR.keys('thing_*'):
+        if RSTOR.hget(i, 'isadmin') == 'yes':
+            return 'An admin device already exists. Sorry.\n'
+
     thing_mac = request.form['curmac']
     thing_name = request.form['name']
     thing_name = thing_name.replace(' ', '_')
