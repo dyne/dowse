@@ -10,7 +10,7 @@ all: base parsers springs
 	./import.sh redis-server
 	./import.sh redis-cli
 	./import.sh nmap-macs
-	./import.sh node-red
+	#./import.sh node-red
 	install -s -p modprobe        ../build/bin
 	install -s -p dowse-to-gource ../build/bin
 	install -s -p dowse-to-osc    ../build/bin

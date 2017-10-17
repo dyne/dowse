@@ -130,7 +130,7 @@ source $R/daemons/redis
 source $R/daemons/seccrond
 # source $R/daemons/tinyproxy
 # source $R/daemons/tor
-source $R/daemons/node-red
+# source $R/daemons/node-red
 
 
 # conclude initialization
@@ -321,7 +321,7 @@ EOF
     start netdata
 
 	# nodejs/node-red
-	start node-red
+	# start node-red
 
 	start seccrond
 
@@ -345,7 +345,7 @@ dowse-stop() {
     # done
 
 	# stop nodejs/node-red
-	stop node-red
+	# stop node-red
 
     # stop the dashboard
     stop netdata
