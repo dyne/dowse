@@ -61,10 +61,6 @@ arrs+=(mods)
 vars+=(settings address interface hostname wan lan firewall)
 vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
-# use mysql
-sql_wp=(launch mysql --defaults-file=$H/run/mysqld.conf -A -u root)
-sql=(launch mysql --defaults-file=$H/run/mysqld.conf -A -u root -pp4ssw0rd)
-
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
 DEBUG=${DEBUG:-0}
@@ -134,8 +130,6 @@ source $R/daemons/redis
 source $R/daemons/seccrond
 # source $R/daemons/tinyproxy
 # source $R/daemons/tor
-source $R/daemons/webui
-source $R/daemons/mysqld
 source $R/daemons/node-red
 
 
@@ -201,7 +195,7 @@ act "checking requirements to run dowse..."
 mkdir -p $H/log
 mkdir -p $H/log/netdata
 mkdir -p $H/run
-mkdir -p $H/data/mysql
+mkdir -p $H/data
 
 _verbose "Dowse command: ::1 commands::" "$*"
 _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
@@ -320,12 +314,6 @@ EOF
         # start peerguardian (must be at end, after any other iptables setting)
         start pgld
 
-    # start the sql database
-    start mysqld
-
-    # start web interface
-    start webui
-
 	# start the mqtt/websocket hub
 	start mosquitto
 
@@ -350,10 +338,6 @@ dowse-stop() {
 	stop seccrond
 
 	stop mosquitto
-
-    stop webui
-
-    stop mysqld
 
     # for m in `dowse-module-list`; do
     #     dowse-module-load $m || continue
