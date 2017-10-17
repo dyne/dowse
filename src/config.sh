@@ -42,22 +42,11 @@ mkdir -p $S/build/db
 
 # id     SQL                       NMAP
 thingindex='
-macaddr  varchar(18) primary key ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@addr
-ip4      text                    ; /nmaprun/host[\$i]/address[@addrtype=\"ipv4\"]/@addr
-hostname text                    ; /nmaprun/host[\$i]/hostnames/hostname[0]/@name
-iface    text
-state    varchar(16) default "on"
-os       text                    ; /nmaprun/host[\$i]/os/osmatch[1]/@name
-dhcp     text
-gateway  text
-network  text
-notes    text
-last     DATETIME ON UPDATE CURRENT_TIMESTAMP
-age      DATETIME DEFAULT CURRENT_TIMESTAMP
-vendor   text                    ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@vendor
-admin    text
-name     text
-authorized     varchar(32) default "NOT ENABLED TO BROWSE"
+macaddr  ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@addr
+ip4      ; /nmaprun/host[\$i]/address[@addrtype=\"ipv4\"]/@addr
+hostname ; /nmaprun/host[\$i]/hostnames/hostname[0]/@name
+os       ; /nmaprun/host[\$i]/os/osmatch[1]/@name
+vendor   ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@vendor
 '
 print - "$thingindex" > $S/build/db/thing.idx
 
