@@ -115,7 +115,7 @@ source $R/zlibs/ebtables
 source $R/zlibs/confstore
 source $R/zlibs/redis
 source $R/zlibs/nmap
-source $R/zlibs/sql
+# source $R/zlibs/sql
 
 # source $R/daemons/consul
 source $R/daemons/dhcpd
