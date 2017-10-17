@@ -21,7 +21,7 @@
 main webui module
 """
 
-from time import time
+from time import time, sleep
 from flask import Flask, request, redirect, render_template
 from redis import StrictRedis
 
@@ -135,8 +135,6 @@ def modify_priv_things():
         return '<h1>400 - Bad request</h1>\n'
 
     RSTOR.hset('thing_%s' % thing_mac, 'isadmin', state)
-    if state == 'yes':
-        RSTOR.hset('thing_%s' % thing_mac, 'enable_to_browse', state)
 
     return redirect(request.form['url_from'], code=302)
 
@@ -152,8 +150,8 @@ def test_admin():
     if not thing_mac or not thing_name:
         return '<h1>400 - Bad request</h1>\n'
 
-    RSTOR.hset('thing_%s' % thing_mac, 'isadmin', 'yes')
-    RSTOR.hset('thing_%s' % thing_mac, 'name', thing_name)
+    vals = {'isadmin': 'yes', 'name': thing_name}
+    RSTOR.hmset('thing_%s' % thing_mac, vals)
 
     return redirect('/', code=302)
 
@@ -185,6 +183,7 @@ def cmd():
                                                             oper, int(time()),
                                                             macaddr))
     # print('CMD,%s,%s,%d,%s' % (caller_info['ip'], oper, int(time()), macaddr))
+    sleep(3)
 
     return redirect('/things', code=302)
 
