@@ -161,6 +161,11 @@ def cmd():
     """
     executes commands called from the webui
     """
+    caller_info = {}
+    caller_info['ip'] = request.environ['REMOTE_ADDR']
+    caller_info['mac'] = ip2mac(caller_info['ip'])
+    if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') != 'yes':
+        return 'You are unauthorized to perform this action.\n'
 
     oper = request.args.get('op')
     if oper == 'THING_OFF' or oper == 'THING_ON':
@@ -170,19 +175,15 @@ def cmd():
             return 'Missing MAC address in request.\n'
         if not ip4:
             return 'Missing IP address in request.\n'
+    elif oper == 'ALL_THINGS_OFF' or oper == 'ALL_THINGS_ON':
+        macaddr = caller_info['mac']
     else:
         return 'Invalid request.\n'
-
-    caller_info = {}
-    caller_info['ip'] = request.environ['REMOTE_ADDR']
-    caller_info['mac'] = ip2mac(caller_info['ip'])
-    if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') != 'yes':
-        return 'You are unauthorized to perform this action.\n'
 
     RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s' % (caller_info['ip'],
                                                             oper, int(time()),
                                                             macaddr))
-    # print('CMD,%s,%s,%d,%s' % (caller_info['ip'], oper, int(time()), macaddr))
+    #print('CMD,%s,%s,%d,%s' % (caller_info['ip'], oper, int(time()), macaddr))
     sleep(3)
 
     return redirect('/things', code=302)

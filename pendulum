@@ -205,14 +205,12 @@ exec_next_cmd() {
 		launch ebtables -A FORWARD -j DROP
 		save_ebtables
 
-		cat <<EOF | $sql $db[things]
-UPDATE found SET authorized='DISABLE_TO_BROWSE'
-WHERE ( '$ip_admin' not in (ip4 , ip6))
-EOF
-
-				cat <<EOF | $sql $db[things]
-UPDATE parameter SET value='OFF' WHERE variable='state all things'
-EOF
+		local _things="$(print keys thing_* | redis storage)"
+		for i in $_things; do
+			[[ "$i" = "thing_$mac_admin" ]] && continue
+			print "hset $i enable_to_browse no" | redis storage
+		done
+		print "set state_all_things off" | redis storage
 
 		# Delete the ACK request
 		print "DEL ACK_${action}_$epoch" | redis dynamic
@@ -225,15 +223,11 @@ EOF
 		launch ebtables -A FORWARD -j ACCEPT
 		save_ebtables
 
-
-		cat <<EOF | $sql $db[things]
-UPDATE found SET authorized='ENABLE_TO_BROWSE'
-EOF
-
-		cat <<EOF | $sql $db[things]
-UPDATE parameter SET value='ON' WHERE variable='state all things'
-EOF
-
+		local _things="$(print keys thing_* | redis storage)"
+		for i in $_things; do
+			print "hset $i enable_to_browse yes" | redis storage
+		done
+		print "set state_all_things on" | redis storage
 
 		# Delete the ACK request
 		print "DEL ACK_${action}_$epoch" | redis dynamic
