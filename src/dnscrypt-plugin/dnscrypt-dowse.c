@@ -429,7 +429,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	    LDNS_FREE(outbuf);
 	    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
 
-
     }
 
     // check if party_mode is on then no need to control authorization to browse
@@ -716,11 +715,21 @@ int publish_query(plugin_data_t *data) {
 	// timestamp
 	time(&epoch_t);
 
-	// compose the path of the detected query
-	snprintf(outnew, MAX_OUTPUT,
-	         "DNS,%s,%d,%lu,%s,%s",
-	         data->from, val,
-	         epoch_t, extracted, data->tld);
+	// retrieve thing's name from redis
+	data->reply = cmd_redis(data->redis_stor, "HGET thing_%s name", data->mac);
+	if(data->reply->str) { // we have the name
+		// compose the path of the detected query
+		snprintf(outnew, MAX_OUTPUT,
+		         "DNS,%s,%d,%lu,%s,%s",
+		         data->reply->str, val,
+		         epoch_t, extracted, data->tld);
+	} else {
+		snprintf(outnew, MAX_OUTPUT,
+		         "DNS,%s,%d,%lu,%s,%s",
+		         data->from, val,
+		         epoch_t, extracted, data->tld);
+	}
+	freeReplyObject(data->reply);
 
 	// add domainlist group if found
 	if(data->listpath) {
