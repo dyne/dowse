@@ -146,15 +146,28 @@ watchdog_daemons() {
 	done
 }
 
+change_thing_state() {
+	fn thing_state $*
+	local state="$1"
+	local ip="$2"
+	local mac="$3"
+	req=(state ip mac)
+	ckreq || return 1
+
+	if [[ "$state" = "ON" ]]; then
+		iptables -A FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT
+		print "hset thing_$mac enable_to_browse yes" | redis storage
+	else
+		iptables -A FORWARD -m mac --mac-source $mac -j DROP
+		print "hset thing_$mac enable_to_browse no" | redis storage
+	fi
+}	
+
 exec_next_cmd() {
 	fn exec_next_cmd $*
 	local cmd
 	cmd=`launch dowse-cmd-fifo`
 	[[ "$cmd" = "" ]] && return 1
-
-	# all uppercase
-	cmd=$cmd:u
-	func "cmd: $cmd"
 
 	# check if valid command (prefix CMD)
 	[[ "${cmd[1,4]}" = "CMD," ]] || {
@@ -177,106 +190,49 @@ exec_next_cmd() {
 	[[ "$action" =~ "THING_ON"  ]] && { acl=ACCEPT ; old_acl=DROP ;}
 	[[ "$action" =~ "THING_OFF" ]] && { acl=DROP ; old_acl=ACCEPT;}
 
-	case $action in
-	    ALL_THINGS_OFF)
-		# 5th arg is the admin macaddress to NOT disable
-		local mac_admin
-		mac_admin=${cmd[(ws:,:)5]}
-		[[ "$mac_admin" = "" ]] && {
-		    error "invalid mac admin address: $mac_admin"
-		    return 1 }
+    case $action in
+        ALL_THINGS_OFF)
+            # 5th arg is the admin macaddress to NOT disable
+            local mac_admin
+            mac_admin=${cmd[(ws:,:)5]}
+            [[ "$mac_admin" = "" ]] && {
+                error "invalid mac admin address: $mac_admin"
+                return 1 }
 
-		ip_admin=${cmd[(ws:,:)2]}
-		[[ "$ip_admin" = "" ]] && {
-		    error "invalid ip admin address: $ip_admin"
-		    return 1 }
+            ip_admin=${cmd[(ws:,:)2]}
+            [[ "$ip_admin" = "" ]] && {
+                error "invalid ip admin address: $ip_admin"
+                return 1 }
 
-		mac_wan=`/usr/sbin/arp -en| egrep "\b$wan\b"| awk '{print $3}'`
-		[[ "$mac_wan" = "" ]] && {
-		    error " mac address of IP router : $wan is invalid : $mac_wan"
-		    return 1 }
-
-		# TODO: check if valid mac address
-		launch ebtables -F
-		launch ebtables -A FORWARD -s $mac_admin  -j ACCEPT
-		launch ebtables -A FORWARD -s $mac_wan  -j ACCEPT
-		launch ebtables -A FORWARD -d $mac_admin  -j ACCEPT
-		launch ebtables -A FORWARD -d $mac_wan  -j ACCEPT
-		launch ebtables -A FORWARD -j DROP
-		save_ebtables
-
-		local _things="$(print keys thing_* | redis storage)"
-		for i in $_things; do
-			[[ "$i" = "thing_$mac_admin" ]] && continue
-			print "hset $i enable_to_browse no" | redis storage
-		done
-		print "set state_all_things off" | redis storage
-
-		# Delete the ACK request
-		print "DEL ACK_${action}_$epoch" | redis dynamic
-
-		;;
-	    ALL_THINGS_ON)
-
-		# TODO: check if valid mac address
-		launch ebtables -F
-		launch ebtables -A FORWARD -j ACCEPT
-		save_ebtables
-
-		local _things="$(print keys thing_* | redis storage)"
-		for i in $_things; do
-			print "hset $i enable_to_browse yes" | redis storage
-		done
-		print "set state_all_things on" | redis storage
-
-		# Delete the ACK request
-		print "DEL ACK_${action}_$epoch" | redis dynamic
-
-		;;
-
-	    THING_OFF|THING_ON)
-			local macb=${cmd[(ws:,:)5]}
-			local state=${action[(ws:_:)2]}
-
-			[[ "$macb" = "" ]] && {
-				error "invalid mac block cmd: $cmd"
-				return 1 }
-			# TODO: check if valid mac address
-			func "# delete old rule"
-			launch ebtables -D FORWARD -s $macb -j $old_acl
-			launch ebtables -D FORWARD -d $macb -j $old_acl
-
-			func "ebtables -I FORWARD 1 -s $macb -j $acl"
-			func "ebtables -I FORWARD 1 -d $macb -j $acl"
-			func "# add new rule"
-			launch ebtables -I FORWARD 1 -s $macb -j $acl
-			launch ebtables -I FORWARD 1 -d $macb -j $acl
-
-			save_ebtables
-			# launch xtables-multi iptables -A FORWARD -s $ipb -j $acl
-			# launch xtables-multi iptables -A FORWARD -d $ipb -j $acl
-			if [[ "$state" = "ON" ]]; then
-			    AUTH="yes"
-			else
-			    AUTH="no"
-			fi
-
-			print "hset thing_$macb enable_to_browse $AUTH" | redis storage
-
-			# Delete the ACK request
-			print "DEL ACK_${action}_$epoch" | redis dynamic
-
+            local _things="$(print keys 'thing_*' | redis storage)"
+            for i in ${=_things}; do
+                [[ "$i" = "thing_$mac_admin" ]] && continue
+                print "hset $i enable_to_browse no" | redis storage
+                local mac=${i[(ws:_:)2]}
+                local ip=`print "hget $i ip4" | redis storage`
+                change_thing_state "OFF" $ip $mac
+            done
+            print "set state_all_things off" | redis storage
 			;;
 
-		# MAC_OFF|MAC_ON)
-		# 	# 1st arg is the mac to block
-		# 	macb=${cmd[(ws:,:)5]}
-		# 	[[ "$macb" = "" ]] && {
-		# 		error "invalid macblock cmd: $cmd"
-		# 		return 1 }
-		# 	# TODO: check if valid mac
-		# 	launch ebtables -A FORWARD -s $macb -j $acl
-		# 	launch ebtables -A FORWARD -d $macb -j $acl
+
+        ALL_THINGS_ON)
+            local _things="$(print keys 'thing_*' | redis storage)"
+            for i in ${=_things}; do
+                print "hset $i enable_to_browse yes" | redis storage
+                local mac=${i[(ws:_:)2]}
+                local ip=`print "hget $i ip4" | redis storage`
+                change_thing_state "ON" $ip $mac
+            done
+            print "set state_all_things on" | redis storage
+			;;
+
+        THING_OFF|THING_ON)
+            local macb=${cmd[(ws:,:)5]}
+            local ipb=${cmd[(ws:,:)6]}
+            local state=${action[(ws:_:)2]}
+            change_thing_state $state $ipb $macb
+            ;;
 
 		DOMAIN_OFF|DOMAIN_ON)
 			error "TODO: domainblock command"

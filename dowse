@@ -263,7 +263,7 @@ dowse-start() {
     [[ "$firewall" = "yes" ]] && {
 
         ebtables-stop
-        ebtables-start
+        # ebtables-start
 
         iptables-stop
         iptables-start

@@ -52,9 +52,14 @@ ebtables-stop() {
     
     act "flushing ebtables (layer 2 firewall)"
     ebtables -P FORWARD ACCEPT
-    ebtables -P OUTPUT ACCEPT
-    ebtables -P INPUT ACCEPT
+    ebtables -P OUTPUT  ACCEPT
+    ebtables -P INPUT   ACCEPT
     ebtables -F
+    ebtables -t nat -P PREROUTING  ACCEPT
+    ebtables -t nat -P OUTPUT      ACCEPT
+    ebtables -t nat -P POSTROUTING ACCEPT
+    ebtables -t nat -F
+
 }
 
 

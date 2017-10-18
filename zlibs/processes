@@ -80,7 +80,7 @@ start() {
 
     act "starting daemon: $_daemon $*"
 
-	${_daemon}-exec $args ;;
+	${_daemon}-exec $args
 
     func "${_daemon}-exec $args"
     return $?
