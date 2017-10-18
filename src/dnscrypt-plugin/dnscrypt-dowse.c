@@ -434,14 +434,18 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
     // check if party_mode is on then no need to control authorization to browse
     data->reply = cmd_redis(data->redis_stor,"GET party_mode");
-    if( strncmp(data->reply->str,"yes",3) == 0) party_mode = 1;
+    if(data->reply->str)
+	    if( strncmp(data->reply->str,"yes",3) == 0)
+		    party_mode = 1;
     freeReplyObject(data->reply);
 
     if(!party_mode) {
 
 	    // check if the mac address is authorized
 	    data->reply = cmd_redis(data->redis_stor, "HGET thing_%s enable_to_browse", data->mac);
-	    if( strncmp(data->reply->str, "yes", 3) == 0) enable_to_browse = 1;
+	    if(data->reply->str)
+		    if( strncmp(data->reply->str, "yes", 3) == 0)
+			    enable_to_browse = 1;
 	    freeReplyObject(data->reply);
 
 	    if(!enable_to_browse) {

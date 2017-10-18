@@ -36,7 +36,7 @@ valgrind --leak-check=full \--track-origins=yes \
 	 -a $address:54540 \
 	 -l debug/runtests.log \
 	 -L ../dnscrypt-proxy/dnscrypt-resolvers.csv \
-	 -R "dnscrypt.eu-nl" \
+	 -R "ipredator" \
 	 -X `pwd`/.libs/dnscrypt_dowse.so,debug \
 	 -m 7 -d
 # log level informational (7 for debug)
