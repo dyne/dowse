@@ -51,7 +51,8 @@ typedef struct {
 	char tld[MAX_TLD]; // tld (domain extension, 1st dot)
 
 	char from[NI_MAXHOST]; // hostname or ip originating the query
-    // char mac[32]; // mac address (could be just 12 chars)
+	char mac[32]; // mac address (could be just 12 chars)
+	char *ip4; // sin_addr conversion returned by inet_ntoa
 
 	char ownip4[NI_MAXHOST];
 	char netmask_ip4[NI_MAXHOST];
@@ -66,6 +67,7 @@ typedef struct {
 	map_t domainlist;
 
 	redisContext *redis;
+	redisContext *redis_stor;
 	redisReply   *reply;
 
 	// using db_runtime to store cached hits

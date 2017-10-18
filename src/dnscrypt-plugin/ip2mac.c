@@ -47,44 +47,45 @@ char *to_upper(char*str){
 int convert_from_ipv4(char *ipaddr_value, char *mac_addr);
 int convert_from_ipv6(char *ipaddr_value, char *mac_addr);
 
+// fills the resul tin the macaddr value, instantiated by caller
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) {
-    char loc_ipaddr_type[6];
+	char loc_ipaddr_type[6];
 
-    if ((ipaddr_type == NULL)||strcmp(ipaddr_type,"")==0) {
-        int a, b, c, d;
-        func("sscanf from %s on %s", ipaddr_value, getenv("interface"));
-        int rv = sscanf(ipaddr_value, "%d.%d.%d.%d", &a, &b, &c, &d);
+	if ((ipaddr_type == NULL)||strcmp(ipaddr_type,"")==0) {
+		int a, b, c, d;
+		func("sscanf from %s on %s", ipaddr_value, getenv("interface"));
+		int rv = sscanf(ipaddr_value, "%d.%d.%d.%d", &a, &b, &c, &d);
 
-        if (rv == 4) {
-            sprintf(loc_ipaddr_type, "ipv4");
-        } else {
-            sprintf(loc_ipaddr_type, "ipv6");
-        }
-    } else {
-        snprintf(loc_ipaddr_type, sizeof(loc_ipaddr_type), "%s", ipaddr_type);
-    }
-    func("converting from %s  %s on %s", loc_ipaddr_type, ipaddr_value,
-            getenv("interface"));
+		if (rv == 4) {
+			sprintf(loc_ipaddr_type, "ipv4");
+		} else {
+			sprintf(loc_ipaddr_type, "ipv6");
+		}
+	} else {
+		snprintf(loc_ipaddr_type, sizeof(loc_ipaddr_type), "%s", ipaddr_type);
+	}
+	func("converting from %s  %s on %s", loc_ipaddr_type, ipaddr_value,
+	     getenv("interface"));
 
-    int rv;
-    char *address=getenv("address");
-    if (
-	((address!=NULL)&&(strcmp(ipaddr_value,getenv("address"))==0))
-	 || (strcmp(ipaddr_value,"127.0.0.1")==0))  {
-      sprintf(macaddr,"00:00:00:00:00:00");
-      return IP2MAC_RESULT_OK;
-    } else {
-      if (strcmp(loc_ipaddr_type, "ipv4") == 0) {
-	rv=convert_from_ipv4(ipaddr_value, macaddr);
-      } else {
-	rv=convert_from_ipv6(ipaddr_value, macaddr);
-      }
-      if (ipaddr_type!=NULL){
-          sprintf(ipaddr_type,loc_ipaddr_type);
-      }
-      to_upper(macaddr);
-      return rv;
-    }
+	int rv;
+	char *address=getenv("address");
+	if (
+		((address != NULL) && (strncmp(ipaddr_value, 256, getenv("address"))==0))
+		|| (strcmp(ipaddr_value,"127.0.0.1") == 0))  {
+		sprintf(macaddr,"00:00:00:00:00:00");
+		return IP2MAC_RESULT_OK;
+	} else {
+		if (strcmp(loc_ipaddr_type, "ipv4") == 0) {
+			rv = convert_from_ipv4(ipaddr_value, macaddr);
+		} else {
+			rv=convert_from_ipv6(ipaddr_value, macaddr);
+		}
+		if (ipaddr_type!=NULL){
+			sprintf(ipaddr_type,loc_ipaddr_type);
+		}
+		to_upper(macaddr);
+		return rv;
+	}
 
 
 }

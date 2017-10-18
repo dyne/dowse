@@ -152,6 +152,10 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 
 	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
 	if(!data->redis) return 1;
+
+	data->redis_stor = connect_redis(REDIS_HOST, REDIS_PORT, db_storage);
+	if(!data->redis_stor) return 1;
+
 	// TODO: check when redis is not connected and abort with an error
 
 	// CACHING DISABLED
@@ -184,8 +188,7 @@ int dcplugin_destroy(DCPlugin * const dcplugin) {
 
 DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDNSPacket *dcp_packet) {
 
-	struct sockaddr_storage *from_sa;
-	socklen_t from_len;
+
 	uint8_t* wire;
 	size_t wirelen;
 	uint16_t packet_id;
@@ -197,10 +200,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	char     question_str[MAX_QUERY];
 	int      question_len;
-
-	/* Captive portal */
-    char mac_address [16];
-	/**/
 
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
@@ -376,97 +375,94 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 
 	// get the source ip
+	struct sockaddr_storage *from_sa;
+	// socklen_t from_len;
+
 	from_sa = dcplugin_get_client_address(dcp_packet);
-	from_len = dcplugin_get_client_address_len(dcp_packet);
-	int res=getnameinfo((struct sockaddr *)from_sa, from_len,
-	            data->from, sizeof(data->from), NULL, 0, 0x0);
+	//	from_len = dcplugin_get_client_address_len(dcp_packet);
 
-	if (res) {
-	    int res=getnameinfo((struct sockaddr *)from_sa, from_len,
-	                    data->from, sizeof(data->from), NULL, 0, NI_NUMERICHOST);
+	// TODO: check if convenient to resolve also the hostname in this way
+	// if( getnameinfo((struct sockaddr *)from_sa, from_len,
+	//                 data->from, sizeof(data->from), NULL, 0, 0x0) != 0) {
+		
+	// 	getnameinfo((struct sockaddr *)from_sa, from_len,
+	// 	            data->from, sizeof(data->from), NULL, 0, NI_NUMERICHOST);
 
-	    warn("we can't resolve the hostname of calling IP we use the numeric form [%s]",data->from);
+	// 	// warn("we can't resolve the hostname of calling IP we use the numeric form [%s]",data->from);
+	// }
 
-	}
-
-	// publish info to redis channel
-	publish_query(data);
 
 
     size_t answer_size = 0;
     uint8_t *outbuf = NULL;
 
     char rr_to_redirect[1024];
-    int redirect_somewhere=0;
+    int party_mode=0;
+    int enable_to_browse = 0;
 
-    char *ip=inet_ntoa(((struct sockaddr_in *)from_sa)->sin_addr);
+    // TODO: check on return value if error
+    data->ip4 = inet_ntoa(((struct sockaddr_in *)from_sa)->sin_addr);
+    snprintf(data->from, NI_MAXHOST, "%s", data->ip4);
 
-    /* TODO Ottimizzare ip2mac perche' fa' delle conversione non piu' utili inet_ntoa -> char[] -> inet_aton */
+    // publish info to redis channel
+    publish_query(data);
+
+    // TODO: optimise ip2mac to remove unneeded conversions (utili inet_ntoa -> char[] -> inet_aton)
     char ipaddr_type[16];
-    ipaddr_type[0]=0;
+    ipaddr_type[0] = 0;
+
+    // retrieve mac_address of client and writes it into data->mac
+    if ( ip2mac(ipaddr_type, data->ip4, data->mac) != 0) {
+
+	    // redirect to dowse if it can't resolve the macaddress
+	    data->reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
+	    warning("can't resolv mac address of IP: %s", data->ip4);
+	    func("redirect on captive portal due to ip2mac() internal error");
+		    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->reply->str);
+	    freeReplyObject(data->reply);
+
+	    // return a wire packet immediately
+	    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
+	    if (!outbuf)
+		    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+	    dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+	    LDNS_FREE(outbuf);
+	    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
 
 
-	/* retrieve mac_address for captive_portal functionalities */
-    if (ip2mac(ipaddr_type, ip, mac_address)!=0) { /* Non e' riuscito ad ottenere il macaddress*/
-        snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, "127.0.0.1");
-        redirect_somewhere=1;
-        data->reply= cmd_redis(data->redis,
-                "GET dns-lease-dowse.it");
-        func("redirect on captive portal due to : ip2mac internal error");
-    } else {
-        int rv = where_should_be_redirected_to_captive_portal(mac_address,ipaddr_type,ip,data);
-
-        if (rv != 0) {
-            /* create the response to captive_portal IP-ADDRESS */
-            if (data->debug)
-                func("redirect on captive portal due to : %s",
-                        (data->reply->len ?
-                                data->reply->str : "NOT AUTHORIZED TO BROWSE"));
-
-            if (rv != -1) {
-                /* Taking the dowse.it address */
-                redisReply *tmp_reply = cmd_redis(data->redis,
-                        "GET dns-lease-dowse.it");
-
-                snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query,
-                        tmp_reply->str);
-                redirect_somewhere=1;
-
-                freeReplyObject(tmp_reply);
-            } else {
-                /* If it Taking the dowse.it address */
-                              redisReply *tmp_reply = cmd_redis(data->redis,
-                                      "GET dns-lease-dowse.it");
-
-                              snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query,
-                                      tmp_reply->str);
-                //snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, "127.0.0.1");
-                redirect_somewhere=1;
-            }
-
-        }
-    }
-    /* it should be redirected somewhere ? then render the response */
-    if (redirect_somewhere) {
-        func("%s %d",__FILE__,__LINE__);
-        outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
-        func("%s %d",__FILE__,__LINE__);
-
-        if (!outbuf)
-            return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
-        func("%s %d",__FILE__,__LINE__);
-
-        dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
-        func("%s %d",__FILE__,__LINE__);
-
-        if (outbuf)
-            LDNS_FREE(outbuf);
-        func("%s %d",__FILE__,__LINE__);
-
-        return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
     }
 
+    // check if party_mode is on then no need to control authorization to browse
+    data->reply = cmd_redis(data->redis_stor,"GET party_mode");
+    if( strncmp(data->reply->str,"yes",3) == 0) party_mode = 1;
+    freeReplyObject(data->reply);
 
+    if(!party_mode) {
+
+	    // check if the mac address is authorized
+	    data->reply = cmd_redis(data->redis_stor, "HGET thing_%s enable_to_browse", data->mac);
+	    if( strncmp(data->reply->str, "yes", 3) == 0) enable_to_browse = 1;
+	    freeReplyObject(data->reply);
+
+	    if(!enable_to_browse) {
+
+		    // redirect to dowse if it is not authorized
+		    data->reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
+		    func("redirect on captive portal for ip %s mac %s", data->ip4, data->mac);
+		    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->reply->str);
+		    freeReplyObject(data->reply);
+
+		    // return a wire packet immediately
+		    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
+		    if (!outbuf)
+			    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+		    dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+		    LDNS_FREE(outbuf);
+		    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+
+	    }
+
+    }
 
 	// DIRECT ENDPOINT
 	// resolve locally leased hostnames with a O(1) operation on redis
@@ -709,6 +705,7 @@ int publish_query(plugin_data_t *data) {
 	data->reply = cmd_redis(data->redis, "INCR dns-query-%s", extracted);
 	val = data->reply->integer;
 	freeReplyObject(data->reply);
+
 	data->reply = cmd_redis(data->redis, "EXPIRE dns-query-%s %u", extracted, DNS_HIT_EXPIRE); // DNS_HIT_EXPIRE
 	freeReplyObject(data->reply);
 
@@ -738,76 +735,3 @@ int publish_query(plugin_data_t *data) {
 
 	return 0;
 }
-
-/*
- *  Check in redis storage if it's present the authorization for that macaddress.
- *  The values it contain
- *
- *  KEY    : authorize-mac-11:22:33:44:55:66
- *  VALUES : (admin_should_check | admin | authorized_to_browse | disable_to_browse )
- *
- *  The value "admin_should_check" means that it's an administration mac-address
- *  and it should be check the captive_portal admin page to audit new events.
- * *
- *  The value "admin" means that it's an administration and it's authorized to browse
- *
- *  The value "authorized_to_browse" means that it's authorized to browse.
- *
- *  The value "disable_to_browse" means that it's not authorized to browse and should be redirected to 127.0.0.1.
- *
- *
- * */
-int where_should_be_redirected_to_captive_portal(char *mac_address, char * ipaddr_type,char*ip,plugin_data_t *data ){
-    int is_party_mode=0;
-
-    /**/
-    data->reply = cmd_redis(data->redis, "GET authorization-mac-%s", mac_address);
-    if(data->reply->len) {
-        if (strcmp(data->reply->str,"disable_to_browse")==0) return 1; /* we redirect on dowse and after it should be redirected on error_message page */
-
-        return (strcmp(data->reply->str,"admin_should_check")==0); /**/
-    } else {
-        redisReply *tmp_reply= cmd_redis(data->redis,"GET party-mode");
-
-        func("DEBUG %s %d",__FILE__,__LINE__);
-        if (tmp_reply->len > 0 ) {
-            func("DEBUG %s %d",__FILE__,__LINE__);
-            is_party_mode = (strcmp(tmp_reply->str,"ON")==0);
-            //--- TODO ma non bisogna librerare data->reply ?
-        }
-        func("DEBUG %s %d",__FILE__,__LINE__);
-        freeReplyObject(tmp_reply);
-
-        if (is_party_mode) {
-            func("DEBUG %s %d",__FILE__,__LINE__);
-            char ip4[32], ip6[32];
-
-            //-
-            if (strcmp(ipaddr_type, "ipv4") == 0) {
-                sprintf(ip4, ip);
-                ip6[0]=0;
-            } else {
-                ip4[0]=0;
-                sprintf(ip6, ip);
-            }
-            func("DEBUG %s %d",__FILE__,__LINE__);
-
-
-            //--- change authorization level
-            redisReply * tmp_reply2 = cmd_redis(data->redis,
-                    "SET authorization-mac-%s authorized_to_browse",
-                    mac_address);
-            func("DEBUG %s %d",__FILE__,__LINE__);
-
-            freeReplyObject(tmp_reply2);
-
-            return 0;
-        }
-        func("DEBUG %s %d",__FILE__,__LINE__);
-
-
-        /* it's not authorized to browse */
-        return 1;
-    }
-}
-
