@@ -94,7 +94,7 @@ void ethernet_mactoa(struct sockaddr *addr, char*buff) {
 
     unsigned char *ptr = (unsigned char *) addr->sa_data;
 
-    sprintf(buff, "%02X:%02X:%02X:%02X:%02X:%02X", (ptr[0] & 0377),
+    sprintf(buff, "%02x:%02x:%02x:%02x:%02x:%02x", (ptr[0] & 0377),
             (ptr[1] & 0377), (ptr[2] & 0377), (ptr[3] & 0377), (ptr[4] & 0377),
             (ptr[5] & 0377));
 }
