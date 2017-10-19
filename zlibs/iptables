@@ -251,13 +251,9 @@ iptables-snat-on() {
     # and http://www.spinics.net/lists/netdev/msg179687.html
     _sysctl net.ipv4.conf.$interface.accept_redirects=0
 
-    func "route all dns queries across dnsmasq"
-    iptables -t nat -A PREROUTING -i $interface -s $dowse_net \
-             -p udp --dport 53 -j DNAT --to-destination $address:53
-
-    func "setup route towards wired network"
-    iptables --table nat --append POSTROUTING \
-             --out-interface ${internet_interface} -j SNAT --to ${address}
+    # func "setup route towards wired network"
+    # iptables --table nat --append POSTROUTING \
+    #          --out-interface ${internet_interface} -j SNAT --to ${address}
     # Testing with dreamer lead to use of -j MASQUERADE without
     # destination and out-interface as external to ADSL router WAN
     # SNAT has better detection of open connections, beware.
