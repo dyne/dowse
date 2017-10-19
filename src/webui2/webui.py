@@ -178,6 +178,7 @@ def cmd():
     oper = request.args.get('op')
     if oper == 'THING_OFF' or oper == 'THING_ON':
         macaddr = request.args.get('macaddr')
+        ipb = RSTOR.hget('thing_%s' % macaddr, 'ip4')
         ip4 = request.args.get('ip4')
         if not macaddr:
             return 'Missing MAC address in request.\n'
@@ -188,9 +189,9 @@ def cmd():
     else:
         return 'Invalid request.\n'
 
-    RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s' % (caller_info['ip'],
-                                                            oper, int(time()),
-                                                            macaddr))
+    RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' % (caller_info['ip'],
+                                                               oper, int(time()),
+                                                               macaddr, ipb))
     #print('CMD,%s,%s,%d,%s' % (caller_info['ip'], oper, int(time()), macaddr))
     sleep(3)
 
