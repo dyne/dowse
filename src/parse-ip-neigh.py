@@ -10,19 +10,31 @@ table = sys.stdin.readlines()
 
 thing_defaults = {'isadmin': 'no', 'enable_to_browse': 'no'}
 
-for i in table:
-    thing = i.split()
-    if thing[6] == 'REACHABLE' and len(thing[5]) is 17:
-        if RSTOR.exists('thing_%s' % thing[5]):
-            RSTOR.hset('thing_%s' % thing[5], 'ip4', thing[0])
-        else:
-            thing_defaults = {
-                'isadmin': 'no',
-                'enable_to_browse': 'no',
-                'macaddr': thing[5],
-                'ip4': thing[0],
-                'age': int(time()),
-                'last': int(time()),
-            }
-            RSTOR.hmset('thing_%s' % thing[5], thingdefaults)
 
+def fill_thing_info(thing):
+    if RSTOR.exists('thing_%s' % thing[4]):
+        RSTOR.hset('thing_%s' % thing[4], 'ip4', thing[0])
+    else:
+        thing_defaults = {
+            'isadmin': 'no',
+            'enable_to_browse': 'no',
+            'macaddr': thing[4],
+            'ip4': thing[0],
+            'age': int(time()),
+            'last': int(time()),
+        }
+        RSTOR.hmset('thing_%s' % thing[4], thingdefaults)
+
+
+def main():
+    for i in table:
+        thing = i.split()
+        # we prefer that a thing is first reachable, otherwise we fallback to stale
+        if thing[5] == 'REACHABLE' and len(thing[4]) is 17:
+            fill_thing_info(thing)
+        elif thing[5] == 'STALE' and len(thing[4]) is 17:
+            fill_thing_info(thing)
+
+
+if __name__ == '__main__':
+    main()

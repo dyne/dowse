@@ -17,7 +17,7 @@ all: base springs
 	install -s -p dowse-to-mqtt   ../build/bin
 	install -s -p hiredis-lock    ../build/bin
 	install -s -p dowse-cmd-fifo  ../build/bin
-	install -p parse-ip-neigh.py  ../build/bin
+	cp -f parse-ip-neigh.py  ../build/bin
 	./checksum.sh
 	./compile.sh sup
 
