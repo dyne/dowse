@@ -64,7 +64,10 @@ def things():
     thingslist = []
     keys = RSTOR.keys('thing_*')
     for i in keys:
-        thingslist.append(RSTOR.hgetall(i))
+        sinthing = RSTOR.hgetall(i)
+        sinthing['age'] = parsetime(sinthing['age'])
+        sinthing['last'] = parsetime(sinthing['last'])
+        thingslist.append(sinthing)
 
     caller_info = {}
     caller_info['ip'] = request.environ['REMOTE_ADDR']
