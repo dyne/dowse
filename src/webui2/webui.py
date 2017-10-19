@@ -208,7 +208,8 @@ def websocket():
     caller_info['mac'] = ip2mac(caller_info['ip'])
     caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
 
-    return render_template('websocket.html', cur_info=caller_info)
+    return render_template('websocket.html', cur_info=caller_info,
+                           srv=request.host.split(':')[0])
 
 
 if __name__ == '__main__':
