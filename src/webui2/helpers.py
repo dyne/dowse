@@ -48,12 +48,12 @@ def parsetime(then):
     dm = int(ds / 60)
 
     def f(x):
-        if x > 1:
+        if int(x) > 1:
             return 's'
         return ''
 
     if ds < 60:
-        return '%d second%s ago' % ds, f(ds)
+        return '%d second%s ago' % (ds, f(ds))
     elif dm < 60:
         return '%d minute%s ago' % (dm, f(dm))
     elif dm < (24 * 60):
