@@ -101,7 +101,7 @@
               <th>First Seen</th>
               <th>Last Seen</th>
               <th>Vendor</th>
-              <th>IP Address</th>
+              <th>IP / MAC</th>
               <th>On/Off</th>
               <th>Role</th>
             </tr>
@@ -129,7 +129,7 @@
               <td>{{ thing['age'] }}</td>
               <td>{{ thing['last'] }}</td>
               <td>{{ thing['vendor'] }}</td>
-              <td>{{ thing['ip4'] }}</td>
+              <td>{{ thing['ip4'] }}<br>{{ thing['macaddr'] }}</td>
               {% if isadmin %}
                 {% if thing['enable_to_browse'] == 'yes' %}
                 <td>
