@@ -44,19 +44,24 @@ def parsetime(then):
     if not isinstance(then, int):
         then = int(then)
 
-    delta_seconds = int(time()) - then
-    delta_minutes = int(delta_seconds / 60)
+    ds = int(time()) - then
+    dm = int(ds / 60)
 
-    if delta_seconds < 60:
-        return '%d seconds ago' % delta_seconds
-    elif delta_minutes < 60:
-        return '%d minutes ago' % delta_minutes
-    elif delta_minutes < (24 * 60):
-        return '%d hours ago' % int(delta_minutes / 60)
-    elif delta_minutes < (24 * 60 * 7):
-        return '%d days ago' % int(delta_minutes / (60 * 24))
-    elif delta_minutes < (24 * 60 * 31):
-        return '%d weeks ago' % int(delta_minutes / (60 * 24 * 7))
-    elif delta_minutes < (24 * 60 * 365.25):
-        return '%d months ago' % int(delta_minutes / (60 * 24 * 30))
-    return '%d years ago' % int(delta_minutes / (60 * 24 * 365))
+    def f(x):
+        if x > 1:
+            return 's'
+        return ''
+
+    if ds < 60:
+        return '%d second%s ago' % ds, f(ds)
+    elif dm < 60:
+        return '%d minute%s ago' % (dm, f(dm))
+    elif dm < (24 * 60):
+        return '%d hour%s ago' % (int(dm / 60), f(dm/60))
+    elif dm < (24 * 60 * 7):
+        return '%d day%s ago' % (int(dm / (60*24)), f(dm/(60*24)))
+    elif dm < (24 * 60 * 31):
+        return '%d week%s ago' % (int(dm / (60*24*7)), f(dm/(60*24*7)))
+    elif dm < (24 * 60 * 365.25):
+        return '%d month%s ago' % (int(dm / (60*24*30), f(dm/60*24*30)))
+    return '%d year%s ago' % (int(dm / (60*24*365)), f(dm/(60*24*365)))
