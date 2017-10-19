@@ -26,6 +26,7 @@ from flask import Flask, request, redirect, render_template
 from redis import StrictRedis
 
 from config import (redis_host, redis_port, redis_dynamic, redis_storage)
+from helpers import (ip2mac, parsetime)
 
 
 APP = Flask(__name__)
@@ -34,22 +35,6 @@ RDYNA = StrictRedis(host=redis_host, port=redis_port, db=redis_dynamic,
                     decode_responses=True)
 RSTOR = StrictRedis(host=redis_host, port=redis_port, db=redis_storage,
                     decode_responses=True)
-
-
-def ip2mac(ipaddr):
-    """
-    returns mac address mapped to the given ip
-    """
-    # XXX: what do do on dual entries there one mac has multiple ips
-    arptable = open('/proc/net/arp').read()
-    arptable = arptable.split('\n')
-    arptable.pop(0)  # removes header
-    pairs = {}
-    for i in arptable:
-        line = i.split()
-        if line:
-            pairs[line[0]] = line[3]
-    return pairs.get(ipaddr, 'n/a')
 
 
 @APP.route('/')
@@ -93,7 +78,7 @@ def things():
     cur_state = RSTOR.get('state_all_things')
     party_mode = RSTOR.get('party_mode')
 
-    return render_template('thing_show.html', things=thingslist,
+    return render_template('things.html', things=thingslist,
                            isadmin=isadmin, cur_state=cur_state,
                            party_mode=party_mode, cur_info=caller_info)
 
