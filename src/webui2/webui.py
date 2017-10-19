@@ -175,6 +175,7 @@ def cmd():
     if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
+    ipb = ''
     oper = request.args.get('op')
     if oper == 'THING_OFF' or oper == 'THING_ON':
         macaddr = request.args.get('macaddr')
@@ -193,7 +194,7 @@ def cmd():
                                                                oper, int(time()),
                                                                macaddr, ipb))
     #print('CMD,%s,%s,%d,%s' % (caller_info['ip'], oper, int(time()), macaddr))
-    sleep(3)
+    sleep(2)
 
     return redirect('/things', code=302)
 
@@ -210,6 +211,11 @@ def websocket():
 
     return render_template('websocket.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
+
+
+@APP.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 
 if __name__ == '__main__':
