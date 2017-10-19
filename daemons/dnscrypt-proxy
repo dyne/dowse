@@ -64,15 +64,13 @@ dnscrypt-proxy-exec() {
 	[[ $* =~ debug ]] && args+=",debug"
 	[[ $* =~ offline ]] && args+=",offline"
 
-	# grab a  server
-	# dnscrypt-roundrobin
-
 	# grab the last used server
-	dns_selected=$(print "GET dns-server-selected" | redis dynamic)
-	dns_selected=${dns_selected/\(nil\)/}
+	#dns_selected=$(print "GET dns-server-selected" | redis dynamic)
+	#dns_selected=${dns_selected/\(nil\)/}
 	
 	# if undefined, eg at the first startup, it takes a default value
-	dnscrypt_name=${dns_selected:-dnscrypt.eu-nl}
+	#dnscrypt_name=${dns_selected:-dnscrypt.eu-nl}
+	dnscrypt_name="ipredator"
 
 	func "Launching dnscrypt-proxy to listen on port 53"
 	act "dnscrypt proxy server: $dnscrypt_name"

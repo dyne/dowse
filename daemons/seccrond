@@ -28,7 +28,7 @@ seccrond-conf() {
 */15 * * * * * $R/bin/pendulum netscan
 */10 * * * * * $R/bin/pendulum watchdog
 */1 * * * * * $R/bin/pendulum nextcmd
-*/5 * * * * * $R/bin/pendulum rrdns
+#*/5 * * * * * $R/bin/pendulum rrdns
 EOF
 }
 
