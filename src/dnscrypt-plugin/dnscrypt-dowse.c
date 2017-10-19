@@ -532,7 +532,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			return DCP_SYNC_FILTER_RESULT_DIRECT;
 		}
 	}
-	freeReplyObject(data->reply);
 
 	// if(from_sa->ss_family == AF_PACKET) { // if contains mac address
 	//  char *p = ((struct sockaddr_ll*) from_sa)->sll_addr;
