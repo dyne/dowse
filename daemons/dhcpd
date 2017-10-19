@@ -22,7 +22,7 @@
 # 02139, USA.
 
 dhcpd-conf() {
-	netzero=${dowse_net}
+	netzero=${dowse_net[(ws:/:)1]}
 	# if no base network specified, use class C
 	# TODO: better deduction based on netmask if known
 	[[ "$netzero" = "" ]] && netzero=${address%.*}.0
@@ -38,7 +38,7 @@ ddns-domainname "dowse.it";
 local-address $address;
 omapi-port 7911;
 
-subnet ${netzero} netmask $netmask {
+subnet ${netzero} netmask ${netmask} {
   range ${range_start} ${range_stop};
 
   on commit {
@@ -65,7 +65,7 @@ dhcpd-exec() {
 	# launch dhcpd -4 -pf $pid -user $dowse_uid -group $dowse_gid \
 	# 	   -chroot $H -lf $leases -cf $conf
 
-	launch dhcpd -4 -pf $pid -user $dowse_uid -group $dowse_gid \
+	launch dhcpd -pf $pid -user $dowse_uid -group $dowse_gid \
 		   -lf $leases -cf $conf
 
 	savepid dhcpd $pid
