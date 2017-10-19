@@ -21,8 +21,9 @@ DOWSE_DOMAINLIST=$R/../domain-list/data \
 				DOWSE_LAN_ADDRESS_IP4=127.0.0.1 \
 				hostname=$hostname \
 				domain=$lan \
+				LD_PRELOAD=$R/.libs/dnscrypt_dowse.so \
 			    valgrind --leak-check-heuristics=all --show-leak-kinds=all --track-origins=yes \
-				--sigill-diagnostics=no ../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
+				--sigill-diagnostics=no --leak-check=full ../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
 				-a 127.0.0.1:53530 \
 				-l debug/valgrind.log \
 				-r "178.216.201.222:2053" \

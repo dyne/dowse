@@ -70,7 +70,7 @@ int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) {
 	int rv;
 	char *address=getenv("address");
 	if (
-		((address != NULL) && (strncmp(ipaddr_value, 256, getenv("address"))==0))
+		((address != NULL) && (strncmp(ipaddr_value, getenv("address"), 256)==0))
 		|| (strcmp(ipaddr_value,"127.0.0.1") == 0))  {
 		sprintf(macaddr,"00:00:00:00:00:00");
 		return IP2MAC_RESULT_OK;

@@ -255,8 +255,14 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
     question_rdf      = ldns_rr_owner(question_rr);
 
-
-    snprintf(question_str, MAX_QUERY, "%s", ldns_rdf2str(question_rdf));
+    {
+	    char *tmp;
+	    tmp = ldns_rdf2str(question_rdf);
+	    if(tmp) {
+		    snprintf(question_str, MAX_QUERY, "%s", tmp);
+		    free(tmp);
+	    }
+    }
 
 
     // TODO: this needs a free(question_str)
@@ -294,6 +300,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			// import in ldns dname format
 			tmpname = ldns_dname_new_frm_str(question_str);
 			if (ldns_rdf_get_type(tmpname) != LDNS_RDF_TYPE_DNAME) {
+				ldns_rdf_deep_free(tmpname);
 				func("dropped packet: .arpa address is not dname");
 				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
 			}
@@ -308,6 +315,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			ldns_rdf_deep_free(tmpname);
 
 			snprintf(reverse_str, MAX_QUERY, "%s", ldns_rdf2str(reverse));
+			ldns_rdf_deep_free(reverse);
 
 			if(data->debug)
 				func("reverse: %s\n", reverse_str);
@@ -667,6 +675,9 @@ uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, 
 
 	// free all the packet structure here, outbuf is the wire format result
 	ldns_pkt_free(answer_pkt);
+	ldns_rr_free(answer_an_rr);
+	ldns_rr_list_free(answer_an);
+	ldns_rr_list_free(answer_qr);
 
 	if (status != LDNS_STATUS_OK) {
 		err("Error in answer_to_question : %s",
