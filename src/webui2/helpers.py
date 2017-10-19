@@ -40,8 +40,9 @@ def ip2mac(ipaddr):
 
 
 def parsetime(then):
+    # redis returns us a string
     if not isinstance(then, int):
-        then = int(time()) - 1
+        then = int(then)
 
     delta_seconds = int(time()) - then
     delta_minutes = int(delta_seconds / 60)
