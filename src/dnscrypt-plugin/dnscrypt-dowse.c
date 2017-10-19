@@ -65,21 +65,6 @@ int where_should_be_redirected_to_captive_portal(char *mac_address, char * ipadd
 // ip2mac address translation tool
 int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) ;
 
-// return a code valid for DCP and free all buffers in *data
-int return_packet(ldns_pkt *packet, plugin_data_t *data, int code) {
-    if(packet) {
-		ldns_pkt_free(packet);
-		packet=NULL;
-	}
-	if(data->reply) {
-        func("%s %d",__FILE__,__LINE__);
-		freeReplyObject(data->reply);
-        func("%s %d",__FILE__,__LINE__);
-		data->reply=NULL;
-	}
-	return code;
-}
-
 const char * dcplugin_description(DCPlugin * const dcplugin) {
 	return "Dowse plugin to filter dnscrypt queries";
 }
@@ -212,7 +197,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
     // enforce max dns query size
 	if(wirelen > MAX_DNS) // (RFC 6891)
-		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_KILL);
+		return DCP_SYNC_FILTER_RESULT_KILL;
 
 
 	// TODO: throttling to something like 200 calls per second
@@ -233,7 +218,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// import the wire packet to ldns format
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
-		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+		return DCP_SYNC_FILTER_RESULT_FATAL;
 
 
 	packet_id = ldns_pkt_id(packet);
@@ -271,10 +256,11 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 
 
-	if (question_len == 0)
+	if (question_len == 0) {
+		ldns_pkt_free(packet);
 		// this may be to drastic as FATAL? change if problems occur
-		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
-
+		return DCP_SYNC_FILTER_RESULT_FATAL;
+	}
 
 	// debug
 	if(data->debug)
@@ -301,8 +287,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			tmpname = ldns_dname_new_frm_str(question_str);
 			if (ldns_rdf_get_type(tmpname) != LDNS_RDF_TYPE_DNAME) {
 				ldns_rdf_deep_free(tmpname);
+				ldns_pkt_free(packet);
 				func("dropped packet: .arpa address is not dname");
-				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+				return DCP_SYNC_FILTER_RESULT_FATAL;
 			}
 
 			// reverse the domain
@@ -332,24 +319,27 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 				snprintf(tmprr, 1024, "%s 0 IN PTR %s",
 				         question_str, data->reply->str);
-
+				freeReplyObject(data->reply);
 				// render the packet into wire format (outbuf is saved with a memcpy)
 				outbuf = answer_to_question(packet_id, question_rr,
 				                            tmprr, &answer_size);
 
 				// free all the packet structure here, outbuf is the wire format result
 
-				if(!outbuf)
-					return
-						return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+				if(!outbuf) {
+					ldns_pkt_free(packet);
+					return DCP_SYNC_FILTER_RESULT_FATAL;
+				}
 
 				dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
 				if(outbuf) LDNS_FREE(outbuf);
 
-				return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+				ldns_pkt_free(packet);
+				return DCP_SYNC_FILTER_RESULT_DIRECT;
 
 			}
+			freeReplyObject(data->reply);
 
 			// check if the ip is part of the LAN, if yes avoid forwarding it and return not-found
 			// {
@@ -424,18 +414,22 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	    // redirect to dowse if it can't resolve the macaddress
 	    data->reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
-	    warning("can't resolv mac address of IP: %s", data->ip4);
+	    warn("can't resolv mac address of IP: %s", data->ip4);
 	    func("redirect on captive portal due to ip2mac() internal error");
 		    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->reply->str);
 	    freeReplyObject(data->reply);
 
 	    // return a wire packet immediately
 	    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
-	    if (!outbuf)
-		    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+	    if (!outbuf) {
+		    ldns_pkt_free(packet);
+		    return DCP_SYNC_FILTER_RESULT_FATAL;
+	    }
+
 	    dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 	    LDNS_FREE(outbuf);
-	    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+	    ldns_pkt_free(packet);
+	    return DCP_SYNC_FILTER_RESULT_DIRECT;
 
     }
 
@@ -465,11 +459,16 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 		    // return a wire packet immediately
 		    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
-		    if (!outbuf)
-			    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+		    if (!outbuf) {
+			    ldns_pkt_free(packet);
+			    return DCP_SYNC_FILTER_RESULT_FATAL;
+		    }
+
 		    dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 		    LDNS_FREE(outbuf);
-		    return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+
+		    ldns_pkt_free(packet);
+		    return DCP_SYNC_FILTER_RESULT_DIRECT;
 
 	    }
 
@@ -487,19 +486,24 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			func("local lease found: %s", data->reply->str);
 
 		snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
+		freeReplyObject(data->reply);
 
 		outbuf = answer_to_question(packet_id, question_rr,
 		                            tmprr, &answer_size);
 
-		if(!outbuf)
-			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+		if(!outbuf) {
+			ldns_pkt_free(packet);
+			return DCP_SYNC_FILTER_RESULT_FATAL;
+		}
 
 		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
 		if(outbuf) LDNS_FREE(outbuf);
-		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+		ldns_pkt_free(packet);
+		return DCP_SYNC_FILTER_RESULT_DIRECT;
 	}
 	////////////////
+	freeReplyObject(data->reply);
 
 	// free the buffers here in any case
 	// freeReplyObject(data->reply);
@@ -522,9 +526,13 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			data->reply->str[1] = wire[1];
 
 			dcplugin_set_wire_data(dcp_packet, data->reply->str, data->reply->len);
-			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+			freeReplyObject(data->reply);
+
+			ldns_pkt_free(packet);
+			return DCP_SYNC_FILTER_RESULT_DIRECT;
 		}
 	}
+	freeReplyObject(data->reply);
 
 	// if(from_sa->ss_family == AF_PACKET) { // if contains mac address
 	//  char *p = ((struct sockaddr_ll*) from_sa)->sll_addr;
@@ -544,19 +552,22 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		outbuf = answer_to_question(packet_id, question_rr,
 		                            tmprr, &answer_size);
 		if(!outbuf)
-			return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+			ldns_pkt_free(packet);
+			return DCP_SYNC_FILTER_RESULT_FATAL;
 
 		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
 		if(outbuf) LDNS_FREE(outbuf);
-		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_DIRECT);
+		ldns_pkt_free(packet);
+		return DCP_SYNC_FILTER_RESULT_DIRECT;
 	}
 
 
 	dcplugin_set_user_data(dcplugin, data);
 	if(data->debug)
 		func("%s (forwarding to dnscrypt)", data->query);
-	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
+	ldns_pkt_free(packet);
+	return DCP_SYNC_FILTER_RESULT_OK;
 	// return DCP_SYNC_FILTER_RESULT_OK;
 }
 
@@ -581,7 +592,7 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	wirelen = dcplugin_get_wire_data_len(dcp_packet);
 
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
-		return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_FATAL);
+		return DCP_SYNC_FILTER_RESULT_FATAL;
 
 	// just cache if return packet contains an answer
 	answers = ldns_pkt_answer(packet);
@@ -601,7 +612,8 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 		                           data->query, CACHE_EXPIRY, wire, wirelen);
 		okredis(data->cache, data->reply);
 	}
-	return return_packet(packet, data, DCP_SYNC_FILTER_RESULT_OK);
+	ldns_pkt_free(packet);
+	return DCP_SYNC_FILTER_RESULT_OK;
 
 
 	// test print out ip from packet
@@ -656,6 +668,7 @@ uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, 
 	// this may need the creation of more functions rather than remove this one
 	ldns_rr_new_frm_str(&answer_an_rr, answer, 0, NULL, NULL);
 
+	// after this push will free both with free(answer_an)
 	ldns_rr_list_push_rr(answer_an, answer_an_rr);
 
 	// create the packet and empty fields
@@ -675,7 +688,7 @@ uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, 
 
 	// free all the packet structure here, outbuf is the wire format result
 	ldns_pkt_free(answer_pkt);
-	ldns_rr_free(answer_an_rr);
+	// ldns_rr_free(answer_an_rr);
 	ldns_rr_list_free(answer_an);
 	ldns_rr_list_free(answer_qr);
 
