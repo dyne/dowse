@@ -57,13 +57,8 @@ int publish_query(plugin_data_t *data);
 // returned buffer must be freed with LDNS_FREE
 uint8_t *answer_to_question(uint16_t pktid, ldns_rr *question_rr, char *answer, size_t *asize);
 
-
-// contain the logic if a macaddress should be redirect to captive_portal or not.
-int where_should_be_redirected_to_captive_portal(char *mac_address, char * ipaddr_type,char*ip,plugin_data_t *data );
-
-
 // ip2mac address translation tool
-int ip2mac(char *ipaddr_type, char*ipaddr_value, char*macaddr) ;
+int ip4_derive_mac(plugin_data_t *data);
 
 const char * dcplugin_description(DCPlugin * const dcplugin) {
 	return "Dowse plugin to filter dnscrypt queries";
@@ -133,6 +128,23 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 			strncpy(data->netmask_ip4, stmp, NI_MAXHOST);
 			act("Own IPv4 netmask for LAN: %s", data->netmask_ip4);
 		}
+		// // cheap trick to verify if ip4
+		// if( sscanf(ipaddr, "%d.%d.%d.%d", &a, &b, &c, &d) != 4)
+		// 	return 1;
+	}
+
+	data->interface = getenv("interface");
+	if(!data->interface) {
+		err("Error: no interface configured in Dowse");
+		return DCP_SYNC_FILTER_RESULT_ERROR;
+	}
+
+	// Get an internet domain socket.
+	data->sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if(data->sock == -1) {
+		err("Cannot open an internet domain socket for mac resolution: %s",
+		    strerror(errno));
+		return DCP_SYNC_FILTER_RESULT_ERROR;
 	}
 
 	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
@@ -166,6 +178,7 @@ int dcplugin_destroy(DCPlugin * const dcplugin) {
 	free_domainlist(data);
 	redisFree(data->redis);
 	if(data->cache) redisFree(data->cache);
+	close(data->sock);
 	free(data);
 
 	return 0;
@@ -186,8 +199,19 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	char     question_str[MAX_QUERY];
 	int      question_len;
 
+	// to get the source ip
+	struct sockaddr_storage *from_sa;
+	// socklen_t from_len;
+
+	size_t answer_size = 0;
+	uint8_t *outbuf = NULL;
+
+	char rr_to_redirect[1024];
+	int party_mode=0;
+	int enable_to_browse = 0;
 
 	plugin_data_t *data = dcplugin_get_user_data(dcplugin);
+
 
 	wire = dcplugin_get_wire_data(dcp_packet);
 
@@ -198,7 +222,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
     // enforce max dns query size
 	if(wirelen > MAX_DNS) // (RFC 6891)
 		return DCP_SYNC_FILTER_RESULT_KILL;
-
 
 	// TODO: throttling to something like 200 calls per second
 	// FUNCTION LIMIT_API_CALL(ip)
@@ -218,7 +241,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// import the wire packet to ldns format
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
-		return DCP_SYNC_FILTER_RESULT_FATAL;
+		return DCP_SYNC_FILTER_RESULT_KILL;
 
 
 	packet_id = ldns_pkt_id(packet);
@@ -249,17 +272,12 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	    }
     }
 
-
-    // TODO: this needs a free(question_str)
 	question_len      = strlen(question_str);
 	// TODO: check if we need to query for more questions here
 
-
-
 	if (question_len == 0) {
 		ldns_pkt_free(packet);
-		// this may be to drastic as FATAL? change if problems occur
-		return DCP_SYNC_FILTER_RESULT_FATAL;
+		return DCP_SYNC_FILTER_RESULT_KILL;
 	}
 
 	// debug
@@ -289,7 +307,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 				ldns_rdf_deep_free(tmpname);
 				ldns_pkt_free(packet);
 				func("dropped packet: .arpa address is not dname");
-				return DCP_SYNC_FILTER_RESULT_FATAL;
+				return DCP_SYNC_FILTER_RESULT_KILL;
 			}
 
 			// reverse the domain
@@ -308,37 +326,36 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 				func("reverse: %s\n", reverse_str);
 
 			// resolve locally leased hostnames with a O(1) operation on redis
-			data->reply = cmd_redis(data->redis, "GET dns-reverse-%s", reverse_str);
-			if(data->reply->len) { // it exists, return that
-				size_t answer_size = 0;
-				uint8_t *outbuf = NULL;
-				char tmprr[1024];
+			data->reply = cmd_redis(data->redis_stor,
+			                        "GET dns-reverse-%s",
+			                        reverse_str);
+			if(data->reply)
+				if(data->reply->len) { // it exists, return that
+					char tmprr[1024];
 
-				if(data->debug)
-					func("found local reverse: %s", data->reply->str);
+					if(data->debug)
+						func("found local reverse: %s", data->reply->str);
 
-				snprintf(tmprr, 1024, "%s 0 IN PTR %s",
-				         question_str, data->reply->str);
-				freeReplyObject(data->reply);
-				// render the packet into wire format (outbuf is saved with a memcpy)
-				outbuf = answer_to_question(packet_id, question_rr,
-				                            tmprr, &answer_size);
+					snprintf(tmprr, 1024, "%s 0 IN PTR %s",
+					         question_str, data->reply->str);
+					freeReplyObject(data->reply);
+					// render the packet into wire format (outbuf is saved with a memcpy)
+					outbuf = answer_to_question(packet_id, question_rr,
+					                            tmprr, &answer_size);
 
-				// free all the packet structure here, outbuf is the wire format result
-
-				if(!outbuf) {
+					// free all the packet structure here, outbuf is the
+					// wire format result
 					ldns_pkt_free(packet);
-					return DCP_SYNC_FILTER_RESULT_FATAL;
+
+
+					if(!outbuf) return DCP_SYNC_FILTER_RESULT_KILL;
+
+					dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+
+					if(outbuf) LDNS_FREE(outbuf);
+					return DCP_SYNC_FILTER_RESULT_DIRECT;
 				}
 
-				dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
-
-				if(outbuf) LDNS_FREE(outbuf);
-
-				ldns_pkt_free(packet);
-				return DCP_SYNC_FILTER_RESULT_DIRECT;
-
-			}
 			freeReplyObject(data->reply);
 
 			// check if the ip is part of the LAN, if yes avoid forwarding it and return not-found
@@ -371,89 +388,42 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	data->query_len = strlen(data->query);
 	data->query[data->query_len-1] = '\0'; // eliminate terminating dot
 
-
-	// get the source ip
-	struct sockaddr_storage *from_sa;
-	// socklen_t from_len;
-
+	// sockaddr
 	from_sa = dcplugin_get_client_address(dcp_packet);
 	//	from_len = dcplugin_get_client_address_len(dcp_packet);
 
 	// TODO: check if convenient to resolve also the hostname in this way
 	// if( getnameinfo((struct sockaddr *)from_sa, from_len,
 	//                 data->from, sizeof(data->from), NULL, 0, 0x0) != 0) {
-		
 	// 	getnameinfo((struct sockaddr *)from_sa, from_len,
 	// 	            data->from, sizeof(data->from), NULL, 0, NI_NUMERICHOST);
 
-	// 	// warn("we can't resolve the hostname of calling IP we use the numeric form [%s]",data->from);
-	// }
-
-
-
-    size_t answer_size = 0;
-    uint8_t *outbuf = NULL;
-
-    char rr_to_redirect[1024];
-    int party_mode=0;
-    int enable_to_browse = 0;
-
     // TODO: check on return value if error
-    data->ip4 = inet_ntoa(((struct sockaddr_in *)from_sa)->sin_addr);
+	data->ip4_addr = ((struct sockaddr_in *)from_sa)->sin_addr;
+    data->ip4 = inet_ntoa(data->ip4_addr);
+    if(data->ip4 == 0) {
+	    error("Query from invalid address, error inet_ntoa(sockaddr_in)");
+	    ldns_pkt_free(packet);
+	    return DCP_SYNC_FILTER_RESULT_KILL;
+    }
+
     snprintf(data->from, NI_MAXHOST, "%s", data->ip4);
 
     // publish info to redis channel
     publish_query(data);
 
     // TODO: optimise ip2mac to remove unneeded conversions (utili inet_ntoa -> char[] -> inet_aton)
-    char ipaddr_type[16];
-    ipaddr_type[0] = 0;
 
-    // retrieve mac_address of client and writes it into data->mac
-    if ( ip2mac(ipaddr_type, data->ip4, data->mac) != 0) {
+    // skip checks if query comes from localhost
+    if(strcmp(data->ip4, "127.0.0.1") != 0) {
 
-	    // redirect to dowse if it can't resolve the macaddress
-	    data->reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
-	    warn("can't resolv mac address of IP: %s", data->ip4);
-	    func("redirect on captive portal due to ip2mac() internal error");
-		    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->reply->str);
-	    freeReplyObject(data->reply);
+	    // retrieve mac_address of client and writes it into data->mac
+	    if ( ip4_derive_mac(data) != 0) {
 
-	    // return a wire packet immediately
-	    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
-	    if (!outbuf) {
-		    ldns_pkt_free(packet);
-		    return DCP_SYNC_FILTER_RESULT_FATAL;
-	    }
-
-	    dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
-	    LDNS_FREE(outbuf);
-	    ldns_pkt_free(packet);
-	    return DCP_SYNC_FILTER_RESULT_DIRECT;
-
-    }
-
-    // check if party_mode is on then no need to control authorization to browse
-    data->reply = cmd_redis(data->redis_stor,"GET party_mode");
-    if(data->reply->str)
-	    if( strncmp(data->reply->str,"yes",3) == 0)
-		    party_mode = 1;
-    freeReplyObject(data->reply);
-
-    if(!party_mode) {
-
-	    // check if the mac address is authorized
-	    data->reply = cmd_redis(data->redis_stor, "HGET thing_%s enable_to_browse", data->mac);
-	    if(data->reply->str)
-		    if( strncmp(data->reply->str, "yes", 3) == 0)
-			    enable_to_browse = 1;
-	    freeReplyObject(data->reply);
-
-	    if(!enable_to_browse) {
-
-		    // redirect to dowse if it is not authorized
+		    // redirect to dowse if it can't resolve the macaddress
 		    data->reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
-		    func("redirect on captive portal for ip %s mac %s", data->ip4, data->mac);
+		    warn("can't resolv mac address of IP: %s", data->ip4);
+		    func("redirect on captive portal due to ip2mac() internal error");
 		    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->reply->str);
 		    freeReplyObject(data->reply);
 
@@ -461,22 +431,60 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
 		    if (!outbuf) {
 			    ldns_pkt_free(packet);
-			    return DCP_SYNC_FILTER_RESULT_FATAL;
+			    return DCP_SYNC_FILTER_RESULT_KILL;
 		    }
 
 		    dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 		    LDNS_FREE(outbuf);
-
 		    ldns_pkt_free(packet);
 		    return DCP_SYNC_FILTER_RESULT_DIRECT;
 
 	    }
 
-    }
+	    // check if party_mode is on then no need to control authorization to browse
+	    data->reply = cmd_redis(data->redis_stor,"GET party_mode");
+	    if(data->reply->str)
+		    if( strncmp(data->reply->str,"yes",3) == 0)
+			    party_mode = 1;
+	    freeReplyObject(data->reply);
+
+	    if(!party_mode) {
+
+		    // check if the mac address is authorized
+		    data->reply = cmd_redis(data->redis_stor, "HGET thing_%s enable_to_browse", data->mac);
+		    if(data->reply->str)
+			    if( strncmp(data->reply->str, "yes", 3) == 0)
+				    enable_to_browse = 1;
+		    freeReplyObject(data->reply);
+
+		    if(!enable_to_browse) {
+
+			    // redirect to dowse if it is not authorized
+			    data->reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
+			    func("redirect on captive portal for ip %s mac %s", data->ip4, data->mac);
+			    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->reply->str);
+			    freeReplyObject(data->reply);
+
+			    // return a wire packet immediately
+			    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
+			    if (!outbuf) {
+				    ldns_pkt_free(packet);
+				    return DCP_SYNC_FILTER_RESULT_KILL;
+			    }
+
+			    dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+			    LDNS_FREE(outbuf);
+
+			    ldns_pkt_free(packet);
+			    return DCP_SYNC_FILTER_RESULT_DIRECT;
+
+		    }
+	    }
+    } // check if not localhost
 
 	// DIRECT ENDPOINT
 	// resolve locally leased hostnames with a O(1) operation on redis
-	data->reply = cmd_redis(data->redis, "GET dns-lease-%s", data->query);
+	data->reply = cmd_redis(data->redis_stor, "GET dns-resolve-%s", data->query);
 	if(data->reply->len) { // it exists, return that
 		size_t answer_size = 0;
 		uint8_t *outbuf = NULL;
@@ -493,7 +501,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 		if(!outbuf) {
 			ldns_pkt_free(packet);
-			return DCP_SYNC_FILTER_RESULT_FATAL;
+			return DCP_SYNC_FILTER_RESULT_KILL;
 		}
 
 		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
@@ -504,12 +512,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	}
 	////////////////
 	freeReplyObject(data->reply);
-
-	// free the buffers here in any case
-	// freeReplyObject(data->reply);
-	// ldns_pkt_free(packet);
-
-//  fprintf(stderr,"%s - query contained this question\n", data->query);
 
 	if(data->cache) {
 		// check if the answer is cached (the key is the domain string)
@@ -552,7 +554,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		                            tmprr, &answer_size);
 		if(!outbuf)
 			ldns_pkt_free(packet);
-			return DCP_SYNC_FILTER_RESULT_FATAL;
+			return DCP_SYNC_FILTER_RESULT_KILL;
 
 		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
@@ -591,7 +593,7 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 	wirelen = dcplugin_get_wire_data_len(dcp_packet);
 
 	if (ldns_wire2pkt(&packet, wire, wirelen) != LDNS_STATUS_OK)
-		return DCP_SYNC_FILTER_RESULT_FATAL;
+		return DCP_SYNC_FILTER_RESULT_KILL;
 
 	// just cache if return packet contains an answer
 	answers = ldns_pkt_answer(packet);
@@ -633,7 +635,7 @@ DCPluginSyncFilterResult dcplugin_sync_post_filter(DCPlugin *dcplugin, DCPluginD
 				continue;
 			}
 			if ((answer_str = ldns_rdf2str(ldns_rr_a_address(answer))) == NULL) {
-				return DCP_SYNC_FILTER_RESULT_FATAL;
+				return DCP_SYNC_FILTER_RESULT_KILL;
 			}
 			func("ip: %s", answer_str);
 			free(answer_str);

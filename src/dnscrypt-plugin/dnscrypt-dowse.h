@@ -53,6 +53,7 @@ typedef struct {
 	char from[NI_MAXHOST]; // hostname or ip originating the query
 	char mac[32]; // mac address (could be just 12 chars)
 	char *ip4; // sin_addr conversion returned by inet_ntoa
+	struct in_addr ip4_addr;
 
 	char ownip4[NI_MAXHOST];
 	char netmask_ip4[NI_MAXHOST];
@@ -61,6 +62,8 @@ typedef struct {
 	struct in_addr ownip4_ia;
 	struct in_addr netmask_ip4_ia;
 	struct in_addr network_ip4_ia;
+	char *interface; // from getenv
+	int sock;
 
 	// map of known domains
 	char *listpath;

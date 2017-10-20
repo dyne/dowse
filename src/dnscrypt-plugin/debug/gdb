@@ -14,7 +14,7 @@ source ../../zuper/zuper.init
    error "dnscrypt_dowse.so not found in .libs (run make?)"
    return 1 }
 
-notice "Valgrind debug session on Debugging"
+notice "GDB debug session"
 act "`date`"
 
 DOWSE_DOMAINLIST=$R/../domain-list/data \
@@ -23,13 +23,11 @@ DOWSE_DOMAINLIST=$R/../domain-list/data \
 				domain=$lan \
 				interface=lo \
 				LD_PRELOAD=$R/.libs/dnscrypt_dowse.so \
-			    valgrind --leak-check-heuristics=all --show-leak-kinds=all --track-origins=yes \
-				--sigill-diagnostics=no --leak-check=full ../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
+			    gdb --args ../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
 				-a 127.0.0.1:53530 \
 				-l debug/valgrind.log \
-				-r "178.216.201.222:2053" \
-				-k "25C4:E188:2915:4697:8F9C:2BBD:B6A7:AFA4:01ED:A051:0508:5D53:03E7:1928:C066:8F21" \
-				-N "2.dnscrypt-cert.soltysiak.com" \
+	 			-L ../dnscrypt-proxy/dnscrypt-resolvers.csv \
+	 			-R "ipredator" \
 				-X $R/.libs/dnscrypt_dowse.so,cache,debug,$1 \
 				-m 7
 # log level informational (7 for debug)
