@@ -46,7 +46,7 @@
 #include <dnscrypt-dowse.h>
 
 // 24 hours
-#define CACHE_EXPIRY 86400
+#define CACHE_EXPIRY 5
 
 DCPLUGIN_MAIN(__FILE__);
 
@@ -153,11 +153,8 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	data->redis_stor = connect_redis(REDIS_HOST, REDIS_PORT, db_storage);
 	if(!data->redis_stor) return 1;
 
-	// TODO: check when redis is not connected and abort with an error
-
-	// CACHING DISABLED
-	// data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
-	// if(!data->cache) return 1;
+	data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
+	if(!data->cache) return 1;
 
 	// // save the cache connection to runtime db as logger
 	// log_redis = data->cache;
@@ -177,6 +174,7 @@ int dcplugin_destroy(DCPlugin * const dcplugin) {
 
 	free_domainlist(data);
 	redisFree(data->redis);
+	redisFree(data->redis_stor);
 	if(data->cache) redisFree(data->cache);
 	close(data->sock);
 	free(data);
@@ -296,6 +294,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		   question_str[question_len-2] == 'a') {
 			// TODO: shall we check for .in.addr? (RFC?)
 			// this is now considered a reverse call
+			func("reverse resolution call: %s", question_str);
 			ldns_rdf    *tmpname, *reverse;
 			char reverse_str[MAX_QUERY];
 
@@ -321,6 +320,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 			snprintf(reverse_str, MAX_QUERY, "%s", ldns_rdf2str(reverse));
 			ldns_rdf_deep_free(reverse);
+			reverse_str[ strlen(reverse_str)-1]='\0';
 
 			if(data->debug)
 				func("reverse: %s\n", reverse_str);
@@ -411,8 +411,6 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
     // publish info to redis channel
     publish_query(data);
-
-    // TODO: optimise ip2mac to remove unneeded conversions (utili inet_ntoa -> char[] -> inet_aton)
 
     // skip checks if query comes from localhost
     if(strcmp(data->ip4, "127.0.0.1") != 0) {
