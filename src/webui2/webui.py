@@ -175,6 +175,10 @@ def cmd():
             return 'Missing IP address in request.\n'
     elif oper == 'ALL_THINGS_OFF' or oper == 'ALL_THINGS_ON':
         macaddr = caller_info['mac']
+    elif oper == 'PARTY_MODE_OFF' or oper == 'PARTY_MODE_ON':
+        RSTOR.set('party_mode', oper.split('_')[2].lower())
+        sleep(2)
+        return redirect('/things', code=302)
     else:
         return 'Invalid request.\n'
 
