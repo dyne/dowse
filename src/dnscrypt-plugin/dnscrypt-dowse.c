@@ -482,7 +482,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// DIRECT ENDPOINT
 	// resolve locally leased hostnames with a O(1) operation on redis
-	data->reply = cmd_redis(data->redis_stor, "GET dns-resolve-%s", data->query);
+	data->reply = cmd_redis(data->redis_stor, "GET dns-lease-%s", data->query);
 	if(data->reply->len) { // it exists, return that
 		size_t answer_size = 0;
 		uint8_t *outbuf = NULL;
