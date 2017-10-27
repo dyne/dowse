@@ -327,7 +327,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 			// resolve locally leased hostnames with a O(1) operation on redis
 			data->reply = cmd_redis(data->redis_stor,
-			                        "GET dns-reverse-%s",
+			                        "GET dns-lease-%s",
 			                        reverse_str);
 			if(data->reply)
 				if(data->reply->len) { // it exists, return that
