@@ -10,7 +10,6 @@ all: base springs
 	./import.sh redis-server
 	./import.sh redis-cli
 	./import.sh nmap-macs
-	#./import.sh node-red
 	install -s -p modprobe        ../build/bin
 	install -s -p dowse-to-gource ../build/bin
 	install -s -p dowse-to-osc    ../build/bin
@@ -20,6 +19,9 @@ all: base springs
 	cp -f parse-ip-neigh.py  ../build/bin
 	./checksum.sh
 	./compile.sh sup
+
+node-red:
+	./import.sh node-red
 
 libs: b64
 	make -C libdowse
