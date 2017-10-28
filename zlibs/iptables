@@ -34,6 +34,31 @@ iptables() {
     fi
 }
 
+iptables-set-thing() {
+	fn set_iptables_thing $*
+	local state="$1"
+	local ip="$2"
+	local mac="$3"
+	req=(state ip mac)
+	ckreq || return 1
+
+	case $state in
+		accept|on|ACCEPT|ON)
+			[[ "`print "hget thing_$mac enable_to_browse" | redis storage`" = "yes" ]] && return 0
+			iptables -D FORWARD -m mac --mac-source $mac -j DROP || true
+			iptables -A FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT
+			print "hset thing_$mac enable_to_browse yes" | redis storage
+			;;
+		drop|off|DROP|OFF)
+			[[ "`print "hget thing_$mac enable_to_browse" | redis storage`" = "no" ]] && return 0
+			iptables -D FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT || true
+			iptables -A FORWARD -m mac --mac-source $mac -j DROP
+			print "hset thing_$mac enable_to_browse no" | redis storage
+			;;
+	esac
+}
+
+
 iptables-base-protection() {
     fn iptables-base-protection
 

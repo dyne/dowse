@@ -146,25 +146,6 @@ watchdog_daemons() {
 	done
 }
 
-change_thing_state() {
-	fn thing_state $*
-	local state="$1"
-	local ip="$2"
-	local mac="$3"
-	req=(state ip mac)
-	ckreq || return 1
-
-	if [[ "$state" = "ON" ]]; then
-		iptables -D FORWARD -m mac --mac-source $mac -j DROP || true
-		iptables -A FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT
-		print "hset thing_$mac enable_to_browse yes" | redis storage
-	else
-		iptables -D FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT || true
-		iptables -A FORWARD -m mac --mac-source $mac -j DROP
-		print "hset thing_$mac enable_to_browse no" | redis storage
-	fi
-}
-
 exec_next_cmd() {
 	fn exec_next_cmd $*
 	local cmd
@@ -212,7 +193,7 @@ exec_next_cmd() {
                 print "hset $i enable_to_browse no" | redis storage
                 local mac=${i[(ws:_:)2]}
                 local ip=`print "hget $i ip4" | redis storage`
-                change_thing_state "OFF" $ip $mac
+                iptables-set-thing "OFF" $ip $mac
             done
             print "set state_all_things off" | redis storage
 			;;
@@ -224,7 +205,7 @@ exec_next_cmd() {
                 print "hset $i enable_to_browse yes" | redis storage
                 local mac=${i[(ws:_:)2]}
                 local ip=`print "hget $i ip4" | redis storage`
-                change_thing_state "ON" $ip $mac
+                iptables-set-thing "ON" $ip $mac
             done
             print "set state_all_things on" | redis storage
 			;;
@@ -233,7 +214,7 @@ exec_next_cmd() {
             local macb=${cmd[(ws:,:)5]}
             local ipb=${cmd[(ws:,:)6]}
             local state=${action[(ws:_:)2]}
-            change_thing_state $state $ipb $macb
+            iptables-set-thing $state $ipb $macb
             ;;
 
 		DOMAIN_OFF|DOMAIN_ON)
