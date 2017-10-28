@@ -1,0 +1,17 @@
+#!/usr/bin/zsh
+
+print "compiling debug version of dnscrypt plugin in debug/dnscrypt_dowse.so"
+sources=(dnscrypt-dowse.c domainlist.c ip2mac.c)
+objs=()
+rm -f debug/*.o
+for s in $sources; do
+	o=${s%%.*}.o
+	gcc -c -ggdb -Wall -I. -fPIC -DPIC \
+		-DDEBUG=1 -I../dnscrypt-proxy/src/include -I.. \
+	 $s -o debug/$o
+	objs+=(debug/$o)
+done
+
+rm -f debug/dnscrypt_dowse.so
+gcc -fPIC -DPIC -shared -o debug/dnscrypt_dowse.so $objs \
+	-lldns -lhiredis -L../libdowse -l:libdowse.a
