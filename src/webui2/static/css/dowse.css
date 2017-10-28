@@ -83,11 +83,13 @@ tr
         top: 0;
         width: 50%;
     }
-}.navbar
+}
+.navbar-fluid
 {
 
     background-color: #ffffff;
     position:fixed;
+
 }.btn-dowse
 {
     background: #767B7C;
