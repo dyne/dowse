@@ -105,7 +105,7 @@ def modify_things():
 
     # set it in redis-dynamic, for reverse dns
     thing_ip = RSTOR.hget('thing_%s' % thing_mac, 'ip4')
-    RDYNA.set('dns-lease-%s' % thing_name, '%s', thing_ip)
+    RDYNA.set('dns-lease-%s' % thing_name, '%s' % thing_ip)
 
     return redirect(request.form['url_from'], code=302)
 
