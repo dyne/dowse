@@ -45,14 +45,14 @@ iptables-set-thing() {
 	case $state in
 		accept|on|ACCEPT|ON)
 			[[ "`print "hget thing_$mac enable_to_browse" | redis storage`" = "yes" ]] && return 0
-			iptables -D FORWARD -m mac --mac-source $mac -j DROP || true
-			iptables -A FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT
+			iptables -D FORWARD -i $interface -m mac --mac-source $mac -j DROP || true
+			iptables -A FORWARD -i $interface -s $ip -m mac --mac-source $mac -j ACCEPT
 			print "hset thing_$mac enable_to_browse yes" | redis storage
 			;;
 		drop|off|DROP|OFF)
 			[[ "`print "hget thing_$mac enable_to_browse" | redis storage`" = "no" ]] && return 0
-			iptables -D FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT || true
-			iptables -A FORWARD -m mac --mac-source $mac -j DROP
+			iptables -D FORWARD -i $interface -s $ip -m mac --mac-source $mac -j ACCEPT || true
+			iptables -A FORWARD -i $interface -m mac --mac-source $mac -j DROP
 			print "hset thing_$mac enable_to_browse no" | redis storage
 			;;
 	esac
