@@ -89,16 +89,20 @@ tr
 
 .navbar
 {
-    background-color: #5e6b76;
+    background-color: #FFFFFF;
 }
-
+.container
+{
+  position: absolute;
+  top: 150;
+}
 .btn-dowse
 {
     background: #767B7C
     border-radius: 5px;
     font-family: DINCondensed-Bold;
     font-size: 16px;
-    color: #000000;
+    color: #53606B;
 }
 
 .btn-dowse_sml
@@ -107,7 +111,7 @@ tr
     border-radius: 5px;
     font-family: DINCondensed-Bold;
     font-size: 16px;
-    color: #FFFFFF;
+    color: #53606B;
 }
 
 .dowsefont
@@ -156,6 +160,9 @@ tr
     color: #a0db4d;
 }
 
+a{
+  text-decoration-color: #53606B
+}
 
 tr.self
 {
