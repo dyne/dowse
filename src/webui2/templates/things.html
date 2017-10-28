@@ -95,9 +95,8 @@
         <table class="table">
           <thead>
             <tr>
-              <th>#</th>
+              <th></th>
               <th>Device Name</th>
-              <th>First Seen</th>
               <th>Last Seen</th>
               <th>Vendor</th>
               <th>IP / MAC</th>
@@ -112,7 +111,7 @@
             {% else %}
             <tr>
             {% endif %}
-              <td>#</td>
+              <td></td>
               <td>
                 <form class="form-inline" action="/modify_things" method="post">
                 <div class="form-group">
@@ -125,7 +124,6 @@
                 </div>
                 </form>
               </td>
-              <td>{{ thing['age'] }}</td>
               <td>{{ thing['last'] }}</td>
               <td>{{ thing['vendor'] }}</td>
               <td>{{ thing['ip4'] }}<br>{{ thing['macaddr'] }}</td>
