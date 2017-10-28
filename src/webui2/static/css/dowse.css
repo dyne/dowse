@@ -1,5 +1,3 @@
-
-
 /*
  * Style tweaks
  * --------------------------------------------------
@@ -11,13 +9,13 @@ body
     margin: 0;
     padding: 0;
     font-size: 100%;
-    font-family: 'Aalta DIN','Source Sans Pro', 'Ubuntu', sans-serif;
+    font-family: 'Source Sans Pro', 'Ubuntu', sans-serif;
     overflow-x: hidden;
 }
 
 body
 {
-    padding-top: 70px;
+    padding-top: 10px;
     color: #000000;
     background-color: #e2ecfb;
 }
@@ -29,7 +27,7 @@ footer
 
 tr
 {
-    tr: nth-child(even) {background-color: #f2f2f2};
+    tr: nth-child(even) {background-color: #f2f2f2;};
 }
 
 /*
@@ -41,7 +39,7 @@ tr
   font-family: 'Aalta DIN';
   font-style:  normal;
   font-weight: 400;
-  src: url(assets/fonts/alte-din-1451/din1451alt.ttf) format('ttf');
+  src: url(/din1451alt.ttf) format('ttf');
 }
 
 @media screen and (max-width: 767px)
@@ -85,21 +83,18 @@ tr
         top: 0;
         width: 50%;
     }
-}
-
-.navbar
+}.navbar
 {
-    background-color: #fff;
+
+    background-color: #ffffff;
     position:fixed;
-}
-
-.btn-dowse
+}.btn-dowse
 {
-    background: #F2CA68;
+    background: #767B7C;
     border-radius: 5px;
     font-family: DINCondensed-Bold;
     font-size: 16px;
-    color: #FFFFFF;
+    color: #53606B;
 }
 
 .btn-dowse_sml
@@ -120,7 +115,14 @@ tr
 
 .dowseIsAdmin
 {
-    background: #E0ACAC;
+    background-color: #059BA8;
+    border: 1px solid #979797;
+}
+
+
+.dowseIsNotAdmin
+{
+    background: #767B7C;
     border: 1px solid #979797;
 }
 
@@ -150,12 +152,8 @@ tr
     color: #a0db4d;
 }
 
-.dowseIsAdmin
-{
-    background-color: #f5c8c8;
-}
 
-tr.admin
+tr.self
 {
     background-color: #cdb3b3;
 }
