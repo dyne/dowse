@@ -236,7 +236,16 @@ exec_next_cmd() {
 
 		DOMAIN_OFF|DOMAIN_ON)
 			error "TODO: domainblock command"
-		;;
+			;;
+
+		NMAP_SCAN_IP)
+			local ipt=${cmd[(ws:,:)5]}
+			act "Starting nmap scan on IP $ipt"
+			for l in ${(f)"$(sup nmap -n -F -sS -v $ipt 2>&1)"}; do
+				print "publish nmap-channel '$l'" | redis dynamic
+			done
+			;;
+
 		*)
 			error "unknown action: $cmd"
 			;;

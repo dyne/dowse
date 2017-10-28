@@ -204,6 +204,18 @@ def websocket():
     return render_template('websocket.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
 
+@APP.route('/nmap')
+def nmap():
+    """
+    renders the nmap scan log
+    """
+    caller_info = {}
+    caller_info['ip'] = request.environ['REMOTE_ADDR']
+    caller_info['mac'] = ip2mac(caller_info['ip'])
+    caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
+
+    return render_template('nmap.html', cur_info=caller_info,
+                           srv=request.host.split(':')[0])
 
 @APP.errorhandler(404)
 def page_not_found(e):
