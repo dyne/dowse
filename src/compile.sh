@@ -71,7 +71,7 @@ case $1 in
 		act "when you see ISC_LOG_ROLLINFINITE then is almost there"
 		autoreconf -i
 		# dhcpd fails building with multiple threads (still?)
-		CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
+		CFLAGS="-Wall -Os" LDFLAGS="" \
 		./configure --enable-paranoia --enable-execute \
 			--disable-dhcpv6 &&
 		    make && {
