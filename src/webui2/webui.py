@@ -65,9 +65,8 @@ def things():
     keys = RSTOR.keys('thing_*')
     for i in keys:
         sinthing = RSTOR.hgetall(i)
-        # sinthing['age'] = parsetime(sinthing['age'])
-        # sinthing['last'] = parsetime(sinthing['last'])
-        if not sinthing['last']: sinthing['last'] = int(time())
+        mac = sinthing.get('macaddr')
+        if not mac: continue  # perhaps log; this means an incomplete thing
         thingslist.append(sinthing)
 
     thingslist_sorted = sort_things(thingslist)
