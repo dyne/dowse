@@ -78,7 +78,7 @@ redisReply *cmd_redis(redisContext *redis, const char *format, ...) {
 
 	va_start(args, format);
 	vsnprintf(command, 511, format, args);
-	func("cmd_redis: %s", command);
+	// func("cmd_redis: %s", command);
 	res = redisCommand(redis, command);
 	va_end(args);
 

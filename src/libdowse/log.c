@@ -122,8 +122,7 @@ void func(const char *fmt, ...) {
 
 	va_end(args);
 
-	toredis("DEBUG", msg);
-
+	// toredis("DEBUG", msg);
 #endif
 	return;
 }
@@ -135,7 +134,7 @@ void _minimal_err(char *msg,int sizeof_msg,const char *fmt, ...) {
     va_start(args, fmt);
 
     vsnprintf(msg, sizeof_msg, fmt, args);
-    len = strlen(msg);
+     len = strlen(msg);
     write(2, ANSI_COLOR_RED " [!] " ANSI_COLOR_RESET, 5+5+4);
     write(2, msg, len);
     write(2, "\n", 1);
@@ -152,7 +151,7 @@ void err(const char *fmt, ...) {
 	va_start(args, fmt);
 	_minimal_err(msg,sizeof(msg),fmt,args);
 	va_end(args);
-	toredis("ERROR", msg);
+	// toredis("ERROR", msg);
 
 }
 
@@ -174,7 +173,7 @@ void notice(const char *fmt, ...) {
 
 	va_end(args);
 
-	toredis("NOTICE", msg);
+	// toredis("NOTICE", msg);
 }
 
 
@@ -195,7 +194,7 @@ void act(const char *fmt, ...) {
 
 	va_end(args);
 
-	toredis("ACT", msg);
+	// toredis("ACT", msg);
 }
 
 
@@ -217,5 +216,5 @@ void warn(const char *fmt, ...) {
 
 	va_end(args);
 
-	toredis("WARN", msg);
+	// toredis("WARN", msg);
 }

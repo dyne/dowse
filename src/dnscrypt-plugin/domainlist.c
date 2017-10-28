@@ -100,6 +100,9 @@ void load_domainlist(plugin_data_t *data) {
 			trim(trimmed, strlen(line), line);
 			if(trimmed[0]=='\0') continue; // skip blank lines
 			// logerr("(%u) %s\t%s", trimmed[0], trimmed, dp->d_name);
+
+			// here valgrind complains about dereferencing but the
+			// hashmap holds the addresses so it is not a problem
 			hashmap_put(data->domainlist, strdup(trimmed), strdup(dp->d_name));
 		}
 		fclose(fp);

@@ -48,7 +48,8 @@ dnscrypt-proxy-conf() {
 	rconf+="SET dns-lease-gateway    ${wan}\n"
 	# load the local hosts reverses
 	rconf+="SET dns-reverse-${address}. ${hostname}.dowse.it\n"
-	rconf+="SET dns-reverse-${wan}. gateway\n"
+	[[ "$address" = "$gateway" ]] ||
+		rconf+="SET dns-reverse-${wan}. gateway\n"
 	print $rconf | redis dynamic
 }
 

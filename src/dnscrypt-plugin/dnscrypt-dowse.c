@@ -48,6 +48,10 @@
 // 24 hours
 #define CACHE_EXPIRY 5
 
+#ifndef DEBUG
+#define DEBUG 0
+#endif
+
 DCPLUGIN_MAIN(__FILE__);
 
 int publish_query(plugin_data_t *data);
@@ -84,13 +88,15 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 
 	data->cache = NULL;
 	data->offline = 0;
-	data->debug = 0;
+	data->debug = DEBUG;
+	if(data->debug) act("BUILD TIME DEBUG ON");
 
 	for(i=0; i<argc; i++) {
 		func("%u arg: %s", i, argv[i]);
 
 		if( strncmp(argv[i], "debug", 5) == 0) {
 			data->debug = 1;
+			act("RUN TIME DEBUG ON");
 			// TODO: check error
 		}
 
@@ -153,14 +159,14 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	data->redis_stor = connect_redis(REDIS_HOST, REDIS_PORT, db_storage);
 	if(!data->redis_stor) return 1;
 
-	data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
-	if(!data->cache) return 1;
+	// data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
+	// if(!data->cache) return 1;
 
 	// // save the cache connection to runtime db as logger
 	// log_redis = data->cache;
 
 	dcplugin_set_user_data(dcplugin, data);
-
+	notice("Dowse plugin initialisation succesfull");
 	return 0;
 }
 
@@ -327,7 +333,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 			// resolve locally leased hostnames with a O(1) operation on redis
 			data->reply = cmd_redis(data->redis_stor,
-			                        "GET dns-lease-%s",
+			                        "GET dns-reverse-%s",
 			                        reverse_str);
 			if(data->reply)
 				if(data->reply->len) { // it exists, return that
@@ -418,11 +424,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	    // retrieve mac_address of client and writes it into data->mac
 	    if ( ip4_derive_mac(data) != 0) {
 
-		    // redirect to dowse if it can't resolve the macaddress
-		    data->reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
 		    warn("can't resolv mac address of IP: %s", data->ip4);
 		    func("redirect on captive portal due to ip2mac() internal error");
-		    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->reply->str);
+		    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->ownip4);
 		    freeReplyObject(data->reply);
 
 		    // return a wire packet immediately
@@ -441,27 +445,27 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	    // check if party_mode is on then no need to control authorization to browse
 	    data->reply = cmd_redis(data->redis_stor,"GET party_mode");
-	    if(data->reply->str)
-		    if( strncmp(data->reply->str,"yes",3) == 0)
-			    party_mode = 1;
-	    freeReplyObject(data->reply);
+	    if(data->reply) {
+		    if(data->reply->str)
+			    if( strncmp(data->reply->str,"yes",3) == 0)
+				    party_mode = 1;
+		    freeReplyObject(data->reply);
+	    }
 
 	    if(!party_mode) {
-
 		    // check if the mac address is authorized
 		    data->reply = cmd_redis(data->redis_stor, "HGET thing_%s enable_to_browse", data->mac);
-		    if(data->reply->str)
-			    if( strncmp(data->reply->str, "yes", 3) == 0)
-				    enable_to_browse = 1;
-		    freeReplyObject(data->reply);
+		    if(data->reply) {
+			    if(data->reply->str)
+				    if( strncmp(data->reply->str, "yes", 3) == 0)
+					    enable_to_browse = 1;
+			    freeReplyObject(data->reply);
+		    }
 
 		    if(!enable_to_browse) {
-
 			    // redirect to dowse if it is not authorized
-			    data->reply = cmd_redis(data->redis, "GET dns-lease-dowse.it");
 			    func("redirect on captive portal for ip %s mac %s", data->ip4, data->mac);
-			    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->reply->str);
-			    freeReplyObject(data->reply);
+			    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->ownip4);
 
 			    // return a wire packet immediately
 			    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
@@ -482,55 +486,58 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 	// DIRECT ENDPOINT
 	// resolve locally leased hostnames with a O(1) operation on redis
-	data->reply = cmd_redis(data->redis_stor, "GET dns-lease-%s", data->query);
-	if(data->reply->len) { // it exists, return that
-		size_t answer_size = 0;
-		uint8_t *outbuf = NULL;
-		char tmprr[1024];
+	data->reply = cmd_redis(data->redis, "GET dns-lease-%s", data->query);
+	if(data->reply) {
+		if(data->reply->len) { // it exists, return that
+			size_t answer_size = 0;
+			uint8_t *outbuf = NULL;
+			char tmprr[1024];
 
-		if(data->debug)
-			func("local lease found: %s", data->reply->str);
+			if(data->debug)
+				func("local lease found: %s", data->reply->str);
 
-		snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
-		freeReplyObject(data->reply);
+			snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
+			freeReplyObject(data->reply);
 
-		outbuf = answer_to_question(packet_id, question_rr,
-		                            tmprr, &answer_size);
+			outbuf = answer_to_question(packet_id, question_rr,
+			                            tmprr, &answer_size);
 
-		if(!outbuf) {
+			if(!outbuf) {
+				ldns_pkt_free(packet);
+				return DCP_SYNC_FILTER_RESULT_KILL;
+			}
+
+			dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+
+			if(outbuf) LDNS_FREE(outbuf);
 			ldns_pkt_free(packet);
-			return DCP_SYNC_FILTER_RESULT_KILL;
+			return DCP_SYNC_FILTER_RESULT_DIRECT;
 		}
-
-		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
-
-		if(outbuf) LDNS_FREE(outbuf);
-		ldns_pkt_free(packet);
-		return DCP_SYNC_FILTER_RESULT_DIRECT;
+		////////////////
+		freeReplyObject(data->reply);
 	}
-	////////////////
-	freeReplyObject(data->reply);
 
 	if(data->cache) {
 		// check if the answer is cached (the key is the domain string)
 		data->reply = cmd_redis(data->cache, "GET dns-cache-%s", data->query);
-		if(data->reply->len) { // it exists in cache, return that
+		if(data->reply)
+			if(data->reply->len) { // it exists in cache, return that
 
-			if(data->debug)
-				func("found in cache wire packet of %u bytes", data->reply->len);
+				if(data->debug)
+					func("found in cache wire packet of %u bytes", data->reply->len);
 
 
-			// a bit dangerous, but veeery fast: working directly on the wire packet
-			// copy message ID (first 16 bits)
-			data->reply->str[0] = wire[0];
-			data->reply->str[1] = wire[1];
+				// a bit dangerous, but veeery fast: working directly on the wire packet
+				// copy message ID (first 16 bits)
+				data->reply->str[0] = wire[0];
+				data->reply->str[1] = wire[1];
 
-			dcplugin_set_wire_data(dcp_packet, data->reply->str, data->reply->len);
-			freeReplyObject(data->reply);
+				dcplugin_set_wire_data(dcp_packet, data->reply->str, data->reply->len);
+				freeReplyObject(data->reply);
 
-			ldns_pkt_free(packet);
-			return DCP_SYNC_FILTER_RESULT_DIRECT;
-		}
+				ldns_pkt_free(packet);
+				return DCP_SYNC_FILTER_RESULT_DIRECT;
+			}
 	}
 
 	// if(from_sa->ss_family == AF_PACKET) { // if contains mac address
@@ -729,30 +736,34 @@ int publish_query(plugin_data_t *data) {
 	// domain hit count
 	extracted = extract_domain(data);
 	data->reply = cmd_redis(data->redis, "INCR dns-query-%s", extracted);
-	val = data->reply->integer;
-	freeReplyObject(data->reply);
+	if(data->reply) {
+		val = data->reply->integer;
+		freeReplyObject(data->reply);
+	}
 
 	data->reply = cmd_redis(data->redis, "EXPIRE dns-query-%s %u", extracted, DNS_HIT_EXPIRE); // DNS_HIT_EXPIRE
-	freeReplyObject(data->reply);
+	if(data->reply) freeReplyObject(data->reply);
 
 	// timestamp
 	time(&epoch_t);
 
 	// retrieve thing's name from redis
 	data->reply = cmd_redis(data->redis_stor, "HGET thing_%s name", data->mac);
-	if(data->reply->str) { // we have the name
-		// compose the path of the detected query
-		snprintf(outnew, MAX_OUTPUT,
-		         "DNS,%s,%d,%lu,%s,%s",
-		         data->reply->str, val,
-		         epoch_t, extracted, data->tld);
-	} else {
-		snprintf(outnew, MAX_OUTPUT,
-		         "DNS,%s,%d,%lu,%s,%s",
-		         data->from, val,
-		         epoch_t, extracted, data->tld);
+	if(data->reply) {
+		if(data->reply->str) { // we have the name
+			// compose the path of the detected query
+			snprintf(outnew, MAX_OUTPUT,
+			         "DNS,%s,%d,%lu,%s,%s",
+			         data->reply->str, val,
+			         epoch_t, extracted, data->tld);
+		} else {
+			snprintf(outnew, MAX_OUTPUT,
+			         "DNS,%s,%d,%lu,%s,%s",
+			         data->from, val,
+			         epoch_t, extracted, data->tld);
+		}
+		freeReplyObject(data->reply);
 	}
-	freeReplyObject(data->reply);
 
 	// add domainlist group if found
 	if(data->listpath) {
@@ -765,7 +776,7 @@ int publish_query(plugin_data_t *data) {
 	}
 
 	data->reply = cmd_redis(data->redis, "PUBLISH dns-query-channel %s", outnew);
-	freeReplyObject(data->reply);
+	if(data->reply) freeReplyObject(data->reply);
 
 
 

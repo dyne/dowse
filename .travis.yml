@@ -19,5 +19,5 @@ before_install:
 script:
   - make
   - sudo make install
-  - cd src/dnscrypt-plugin && ./debug/runtests
+  - cd src/dnscrypt-plugin && ./debug/build && ./debug/runtests
 

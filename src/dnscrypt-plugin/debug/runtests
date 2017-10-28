@@ -4,7 +4,7 @@ R=`pwd`
 
 source ../../dowse
 
-[[ -r .libs/dnscrypt_dowse.so ]] || {
+[[ -r debug/dnscrypt_dowse.so ]] || {
    error "dnscrypt_dowse.so not found in .libs (run make?)"
    return 1 }
 
@@ -13,6 +13,9 @@ act "`date`"
 
 start redis-server
 
+act "hostname: $hostname"
+act "address: $address"
+act "wan: $wan"
 
 cat <<EOF | redis dynamic
 SET dns-lease-testlease1 10.0.0.101
@@ -21,9 +24,8 @@ SET dns-lease-${hostname} ${address}
 SET dns-reverse-10.0.0.101. testlease1
 SET dns-reverse-10.0.0.102. testlease2
 SET dns-reverse-${address}. ${hostname}
-SET dns-reverse-${wan}. gateway
 EOF
-
+# SET dns-reverse-${wan}. gateway
 
 DOWSE_DOMAINLIST=`pwd`/../domain-list/data 
 DOWSE_LAN_ADDRESS_IP4=$address 
@@ -37,7 +39,7 @@ valgrind --leak-check=full \--track-origins=yes \
 	 -l debug/runtests.log \
 	 -L ../dnscrypt-proxy/dnscrypt-resolvers.csv \
 	 -R "ipredator" \
-	 -X `pwd`/.libs/dnscrypt_dowse.so,debug \
+	 -X `pwd`/debug/dnscrypt_dowse.so,debug \
 	 -m 7 -d
 # log level informational (7 for debug)
 

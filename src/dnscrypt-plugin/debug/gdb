@@ -3,7 +3,7 @@
 R=`pwd`
 
 [[ -r ../../zuper/zuper ]] || {
-   print "usage: ./debug/valgrind (run from inside src/dnscrypt-plugin)"
+   print "usage: ./debug/gdb (run from inside src/dnscrypt-plugin)"
    return 1 }
 
 source ../../zuper/zuper
@@ -11,24 +11,25 @@ source ../../zuper/zuper
 source ../../zuper/zuper.init
 
 [[ -r .libs/dnscrypt_dowse.so ]] || {
-   error "dnscrypt_dowse.so not found in .libs (run make?)"
+   error "dnscrypt_dowse.so not found in debug (run debug/build)"
    return 1 }
 
-notice "GDB debug session"
+notice "GDB debug session, dnscrypt listening on port 55550"
 act "`date`"
 
 DOWSE_DOMAINLIST=$R/../domain-list/data \
 				DOWSE_LAN_ADDRESS_IP4=127.0.0.1 \
+				DOWSE_LAN_NETMASK_IP4=255.255.255.0 \
 				hostname=$hostname \
 				domain=$lan \
 				interface=lo \
-				LD_PRELOAD=$R/.libs/dnscrypt_dowse.so \
+				LD_PRELOAD=$R/debug/dnscrypt_dowse.so \
 			    gdb --args ../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
-				-a 127.0.0.1:53530 \
+				-a 127.0.0.1:55550 \
 				-l debug/valgrind.log \
 	 			-L ../dnscrypt-proxy/dnscrypt-resolvers.csv \
 	 			-R "ipredator" \
-				-X $R/.libs/dnscrypt_dowse.so,cache,debug,$1 \
+				-X $R/debug/dnscrypt_dowse.so,cache,debug,$1 \
 				-m 7
 # log level informational (7 for debug)
 

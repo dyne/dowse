@@ -37,14 +37,6 @@
 #define IP2MAC_ERROR (1)
 #define IP2MAC_RESULT_OK (0)
 
-char *to_upper(char*str){
-  int i;
-  for (i=0;i<strlen(str);i++) {
-    toupper(str[i]);
-  }
-  return str;
-}
-
 int convert_from_ipv4(char *ipaddr_value, char *mac_addr);
 int convert_from_ipv6(char *ipaddr_value, char *mac_addr);
 
