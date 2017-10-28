@@ -26,7 +26,7 @@ from flask import Flask, request, redirect, render_template
 from redis import StrictRedis
 
 from config import (redis_host, redis_port, redis_dynamic, redis_storage)
-from helpers import (ip2mac, parsetime)
+from helpers import (ip2mac, parsetime, sort_things)
 
 
 APP = Flask(__name__)
@@ -65,9 +65,16 @@ def things():
     keys = RSTOR.keys('thing_*')
     for i in keys:
         sinthing = RSTOR.hgetall(i)
-        sinthing['age'] = parsetime(sinthing['age'])
-        sinthing['last'] = parsetime(sinthing['last'])
+        # sinthing['age'] = parsetime(sinthing['age'])
+        # sinthing['last'] = parsetime(sinthing['last'])
         thingslist.append(sinthing)
+
+    thingslist_sorted = sort_things(thingslist)
+
+    thingslist = []
+    for i in thingslist_sorted:
+        i['last'] = parsetime(i['last'])
+        thingslist.append(i)
 
     caller_info = {}
     caller_info['ip'] = request.environ['REMOTE_ADDR']

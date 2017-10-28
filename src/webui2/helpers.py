@@ -39,6 +39,10 @@ def ip2mac(ipaddr):
     return pairs.get(ipaddr, 'n/a')
 
 
+def sort_things(unsorted_things):
+    return sorted(unsorted_things, key=lambda k: k['last'], reverse=True)
+
+
 def parsetime(then):
     # redis returns us a string
     if not isinstance(then, int):
