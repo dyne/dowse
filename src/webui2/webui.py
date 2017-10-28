@@ -67,6 +67,7 @@ def things():
         sinthing = RSTOR.hgetall(i)
         # sinthing['age'] = parsetime(sinthing['age'])
         # sinthing['last'] = parsetime(sinthing['last'])
+        if not sinthing['last']: sinthing['last'] = int(time())
         thingslist.append(sinthing)
 
     thingslist_sorted = sort_things(thingslist)
