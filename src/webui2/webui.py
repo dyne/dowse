@@ -94,6 +94,29 @@ def things():
                            party_mode=party_mode, cur_info=caller_info)
 
 
+@APP.route('/thing_show', methods=['GET'])
+def thing_show():
+    """
+    shows information about a specific thing
+    """
+    mac = request.args.get('mac')
+    if not mac:
+        return 'Invalid MAC address\n'
+
+    caller_info = {}
+    caller_info['ip'] = request.environ['REMOTE_ADDR']
+    caller_info['mac'] = ip2mac(caller_info['ip'])
+    caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
+    if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') == 'yes':
+        isadmin = True
+    else:
+        isadmin = False
+
+    thinginfo = RSTOR.hgetall('thing_%s' % mac)
+    return render_template('thing_show.html', thing=thinginfo,
+                           cur_info=caller_info, isadmin=isadmin)
+
+
 @APP.route('/modify_things', methods=['POST'])
 def modify_things():
     """
