@@ -118,7 +118,7 @@
                   <div class="input-group">
                     <input type="hidden" name="url_from" value="/things">
                     <input type="hidden" name="macaddr" value="{{ thing['macaddr'] }}">
-                    <input type="text" class="form-control" id="name" name="name" placeholder="{{ thing['name'] }}">
+                    <input type="text" class="form-control" id="name" name="name" pattern="[a-zA-Z0-9]{1,32}" placeholder="{{ thing['name'] }}">
                   </div>
                   <button class="btn-dowse" style="display:inline"><i class="fa fa-pencil" aria-hidden="true"></i></button>
                 </div>
