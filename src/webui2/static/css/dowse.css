@@ -11,7 +11,7 @@ body
     margin: 0;
     padding: 0;
     font-size: 100%;
-    font-family: 'Source Sans Pro', 'Ubuntu', sans-serif;
+    font-family: 'Aalta DIN','Source Sans Pro', 'Ubuntu', sans-serif;
     overflow-x: hidden;
 }
 
@@ -41,7 +41,7 @@ tr
   font-family: 'Aalta DIN';
   font-style:  normal;
   font-weight: 400;
-  src: url(/din1451alt.ttf) format('ttf');
+  src: url(assets/fonts/alte-din-1451/din1451alt.ttf) format('ttf');
 }
 
 @media screen and (max-width: 767px)
@@ -89,20 +89,17 @@ tr
 
 .navbar
 {
-    background-color: #FFFFFF;
+    background-color: #fff;
+    position:fixed;
 }
-.container
-{
-  position: absolute;
-  top: 150;
-}
+
 .btn-dowse
 {
-    background: #767B7C
+    background: #F2CA68;
     border-radius: 5px;
     font-family: DINCondensed-Bold;
     font-size: 16px;
-    color: #53606B;
+    color: #FFFFFF;
 }
 
 .btn-dowse_sml
@@ -111,7 +108,7 @@ tr
     border-radius: 5px;
     font-family: DINCondensed-Bold;
     font-size: 16px;
-    color: #53606B;
+    color: #FFFFFF;
 }
 
 .dowsefont
@@ -123,14 +120,7 @@ tr
 
 .dowseIsAdmin
 {
-    background-color: #059BA8;
-    border: 1px solid #979797;
-}
-
-
-.dowseIsNotAdmin
-{
-    background: #767B7C;
+    background: #E0ACAC;
     border: 1px solid #979797;
 }
 
@@ -160,11 +150,12 @@ tr
     color: #a0db4d;
 }
 
-a{
-  text-decoration-color: #53606B
+.dowseIsAdmin
+{
+    background-color: #f5c8c8;
 }
 
-tr.self
+tr.admin
 {
     background-color: #cdb3b3;
 }
