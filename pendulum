@@ -155,13 +155,15 @@ change_thing_state() {
 	ckreq || return 1
 
 	if [[ "$state" = "ON" ]]; then
+		iptables -D FORWARD -m mac --mac-source $mac -j DROP || true
 		iptables -A FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT
 		print "hset thing_$mac enable_to_browse yes" | redis storage
 	else
+		iptables -D FORWARD -s $ip -m mac --mac-source $mac -j ACCEPT || true
 		iptables -A FORWARD -m mac --mac-source $mac -j DROP
 		print "hset thing_$mac enable_to_browse no" | redis storage
 	fi
-}	
+}
 
 exec_next_cmd() {
 	fn exec_next_cmd $*
