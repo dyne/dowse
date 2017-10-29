@@ -22,6 +22,8 @@ main webui module
 """
 
 from time import time, sleep
+from os import getpid
+from argparse import ArgumentParser
 from flask import Flask, request, redirect, render_template
 from redis import StrictRedis
 
@@ -238,6 +240,7 @@ def websocket():
     return render_template('websocket.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
 
+
 @APP.route('/nmap')
 def nmap():
     """
@@ -251,10 +254,20 @@ def nmap():
     return render_template('nmap.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
 
+
 @APP.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('-p', '--pidfile')
+    args = parser.parse_args()
+
+    if args.pidfile:
+        pidf = open(args.pidfile, 'w')
+        pidf.write(str(getpid()))
+        pidf.close()
+
     APP.run(host='0.0.0.0', port=8000, debug=True)
