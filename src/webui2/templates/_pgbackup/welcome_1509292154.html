@@ -109,7 +109,7 @@
                         <th>Vendor</th>
                     </thead>
                     <tbody>
-                        {% for thing in admin_devices %}
+                         {% for thing in admin_devices %}
                         <tr>
                             <td></td>
                             <td>{{ thing['name'] }}</td>
@@ -124,7 +124,7 @@
             <form action="/reset_admin" method="get">
                 <button class="btn">Reset admin devices</button>
             </form>
-            {% else %}
+             {% else %}
             <div class="jumbotron">
                 <h3>Your administrator device is not configured.</h3>
                 <form action="/test_admin" method="post">
@@ -135,7 +135,7 @@
                     <button class="btn"> Use this device as the administrator </button>
                 </form>
             </div>
-            {% endif %}
+             {% endif %}
         </div>
     </div>
     <!-- /container -->
