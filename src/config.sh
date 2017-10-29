@@ -146,7 +146,6 @@ execmap=(
     xtables-multi /sbin/xtables-multi
     ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
-    ip            /sbin/ip
     arp           /usr/sbin/arp
     # TODO: sup list of authorized modules (using libkmod)
     modprobe      $PREFIX/bin/modprobe
