@@ -97,6 +97,7 @@
                 <h1>Welcome</h1>
                 <p>You are in a working environment watched by Dowse. From here you can access your Dowse device statistics, count and identify the things on the network and access all the peculiar development threads in Dowse</p>
             </div>
+            {% if (admin_devices is defined) and admin_devices %}
             <h3>The admin devices configured are:</h3>
             <div class="col-md-10 col-sm-4 col-xs-3 col-lg-12">
                 <table class="table">
