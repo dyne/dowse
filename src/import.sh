@@ -63,7 +63,7 @@ pkg-download() {
     if [[ "$bckfile" = "" ]]; then
 	# pacman needs root: https://bugs.archlinux.org/task/33369
 	#pacman -Swdd --noconfirm --cachedir $S/debs ${pkg}
-	cd $S/debs && curl -O -L $(pacman -Spdd ${pkg}) && cd -
+	cd $S/debs && wget $(pacman -Spdd ${pkg}) && cd -
         [[ $? = 0 ]] || {
             error "error downloading $pkg"
             return 1 }
@@ -96,7 +96,7 @@ pkg-download() {
 [[ "$1" = "nmap-macs" ]] && {
 	local nmap_macs="https://svn.nmap.org/nmap/nmap-mac-prefixes"
 	notice "importing latest nmap MAC database"
-	curl -L -o "$S/build/nmap-mac" "$nmap_macs"
+	wget -O "$S/build/nmap-mac" "$nmap_macs"
 	exit 0
 }
 
@@ -132,8 +132,8 @@ node-red-addmod() {
     mkdir -p $S/build/nodejs
     pushd $S/build/nodejs
     [[ -r ${node_dist}.tar.xz ]] ||
-        curl https://nodejs.org/dist/v6.10.3/${node_dist}.tar.xz \
-             -o ${node_dist}.tar.xz
+        wget -O ${node_dist}.tar.xz \
+			https://nodejs.org/dist/v6.10.3/${node_dist}.tar.xz
     [[ -d ${node_dist} ]] || {
         tar xf ${node_dist}.tar.xz
         rm -rf node_dir
