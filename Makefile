@@ -40,6 +40,8 @@ install: install-zlibs
 	install -p -m 644 dowse ${DESTDIR}${PREFIX}/zshrc
 	install -p -m 755 pendulum ${DESTDIR}${PREFIX}/bin/pendulum
 	make -C src install
+	install -d ${DESTDIR}${PREFIX}/webui2
+	cp -ra src/webui2/* ${DESTDIR}${PREFIX}/webui2/
 	install -d ${CONFDIR}
 	install -d ${CONFDIR}/blocklists
 	install -p -m 644 conf/settings.dist     ${CONFDIR}/settings.dist
