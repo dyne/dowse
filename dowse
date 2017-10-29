@@ -278,11 +278,12 @@ dowse-start() {
             loopback-isolate
 
             act "set up $interface interface with ip $address"
-            launch ifconfig $interface $address netmask $netmask up
+			launch ip addr add ${address}/${dowse_net[(ws:/:)2]} dev $interface
+			launch ip link set $interface up
 
             [[ "$wan" = "" ]] || {
                 act "set $wan as default gateway"
-                launch route add default gw $wan
+				launch ip route add default via $wan
             }
 
             act "setup snat trasversal"

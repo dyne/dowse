@@ -105,8 +105,7 @@ execrules=(
 	nmap          root
 	dhcpd         root
     dnscrypt-proxy root
-    ifconfig      root
-    route         root
+    ip            root
     iptables      root
     xtables-multi root
     ebtables      root
@@ -124,8 +123,7 @@ zkv.save execrules $S/build/db/execrules.zkv
 
 # paths for Devuan
 execmap=(
-    ifconfig      /sbin/ifconfig
-    route         /sbin/route
+    ip            /bin/ip
     dnscrypt-proxy $PREFIX/bin/dnscrypt-proxy
     redis-cli     $PREFIX/bin/redis-cli
     redis-server  $PREFIX/bin/redis-server
