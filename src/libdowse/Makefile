@@ -1,9 +1,9 @@
-CFLAGS ?= -ggdb -Wall  -fPIE -fPIC -pie 
+CFLAGS ?= -ggdb -Wall  -fPIE -fPIC -pie
 #-DDEBUG=1
 
 CC = gcc
 AR = ar
-OBJS = log.o redis.o hashmap.o parsetime.o find_nearest_asset.o
+OBJS = log.o redis.o hashmap.o parsetime.o
 
 all: libdowse.a
 
