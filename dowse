@@ -128,6 +128,7 @@ source $R/daemons/netdata
 source $R/daemons/pgld
 source $R/daemons/redis
 source $R/daemons/seccrond
+source $R/daemons/webui2
 # source $R/daemons/tinyproxy
 # source $R/daemons/tor
 # source $R/daemons/node-red
@@ -325,6 +326,8 @@ EOF
 
 	start seccrond
 
+	start webui2
+
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
 
@@ -334,6 +337,8 @@ dowse-stop() {
     fn dowse-stop
 
 	notice "Stopping all daemons in Dowse"
+
+	stop webui2
 
 	stop seccrond
 

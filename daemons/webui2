@@ -1,0 +1,26 @@
+#!/usr/bin/zsh
+
+webui2-conf() {}
+
+webui2-exec() {
+    fn webui2-exec $*
+    
+    func "launching webui2 on $hostname.$lan"
+
+    if [[ $DEBUG = 2 ]]; then
+		hostname=$hostname \
+				domain=$lan \
+				address=$address \
+				interface=$interface \
+				launch webui2
+    else
+		hostname=$hostname \
+				domain=$lan \
+				address=$address \
+				interface=$interface \
+				launch webui2 &
+		[[ $? = 0 ]] &&
+			savepid webui2 $H/run/webui2.pid
+    fi
+}
+
