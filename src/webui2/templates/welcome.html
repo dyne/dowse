@@ -107,7 +107,7 @@ trols="navbar">
       <hr>
       <h3>Your administrator device is not configured.</h3>
       <form action="/test_admin" method="post">
-        <input type=text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
+        <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
         <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['mac'] }}">
         <button class="btn-dowse">Use this device as the administrator</button>
       </form>
