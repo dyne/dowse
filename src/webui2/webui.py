@@ -68,7 +68,8 @@ def things():
     for i in keys:
         sinthing = RSTOR.hgetall(i)
         mac = sinthing.get('macaddr')
-        if not mac: continue  # perhaps log; this means an incomplete thing
+        if not mac:
+            continue  # perhaps log; this means an incomplete thing
         thingslist.append(sinthing)
 
     thingslist_sorted = sort_things(thingslist)
@@ -82,10 +83,10 @@ def things():
     caller_info['ip'] = request.environ['REMOTE_ADDR']
     caller_info['mac'] = ip2mac(caller_info['ip'])
     caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
+
+    isadmin = False
     if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') == 'yes':
         isadmin = True
-    else:
-        isadmin = False
 
     cur_state = RSTOR.get('state_all_things')
     party_mode = RSTOR.get('party_mode')
@@ -108,10 +109,10 @@ def thing_show():
     caller_info['ip'] = request.environ['REMOTE_ADDR']
     caller_info['mac'] = ip2mac(caller_info['ip'])
     caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
+
+    isadmin = False
     if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') == 'yes':
         isadmin = True
-    else:
-        isadmin = False
 
     thinginfo = RSTOR.hgetall('thing_%s' % mac)
     return render_template('thing_show.html', thing=thinginfo,
@@ -221,7 +222,7 @@ def cmd():
     RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' % (caller_info['ip'],
                                                                oper, int(time()),
                                                                macaddr, ipb))
-    #print('CMD,%s,%s,%d,%s' % (caller_info['ip'], oper, int(time()), macaddr))
+    # print('CMD,%s,%s,%d,%s' % (caller_info['ip'], oper, int(time()), macaddr))
     sleep(2)
 
     return redirect('/things', code=302)
