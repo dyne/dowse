@@ -11,7 +11,7 @@ source $R/zuper/zuper
 source $R/zuper/zuper.init
 
 PREFIX=${PREFIX:-/usr/local/dowse}
-CFLAGS="-Wall -fPIC -fPIE -Os"
+CFLAGS="-Wall -fPIC -fPIE -O3"
 LDFLAGS="-fPIC -fPIE -pie"
 
 # 2nd argument when present is number of threads used building

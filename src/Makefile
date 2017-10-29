@@ -3,8 +3,8 @@ PREFIX ?= /usr/local/dowse
 THREADS ?= 1
 
 CC = gcc
-CFLAGS = -Wall -fPIE -fPIC -pie -Os -I.
-LIBS = -ljemalloc -lhiredis -Llibdowse -l:libdowse.a -lb64 -Llibb64
+CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I.
+LIBS = -lhiredis -Llibdowse -l:libdowse.a
 
 all: base springs
 	./import.sh redis-server
