@@ -75,6 +75,6 @@ install-node-red:
 uninstall:
 	rm -rf ${DESTDIR}${CONFDIR}
 	rm -rf ${DESTDIR}${PREFIX}
-	rm -rf ${DESTDIR}${DOWSE_HOME}/.dowse
+	rm -rf ${DESTDIR}${DOWSE_HOME}/.dowse/*
 
 .PHONY: all config sources clean install uninstall
