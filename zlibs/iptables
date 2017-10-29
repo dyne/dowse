@@ -292,6 +292,24 @@ iptables-snat-off() {
 
 }
 
+iptables-restore-things() {
+	fn iptables-restore-things $*
+	local things
+	things=`print 'keys thing_*' | redis storage`
+	for t in ${(f)things}; do	   
+		state=`print "hget $t enable_to_browse" | redis storage`
+		if [[ "$state" = "yes" ]]; then
+			iptables -D FORWARD -i $interface -m mac --mac-source $mac -j DROP          || true
+			iptables -A FORWARD -i $interface -s $ip -m mac --mac-source $mac -j ACCEPT || true
+		elif [[ "$state" = "no" ]]; then
+			iptables -D FORWARD -i $interface -s $ip -m mac --mac-source $mac -j ACCEPT || true
+			iptables -A FORWARD -i $interface -m mac --mac-source $mac -j DROP          || true
+		else
+			warning "unknown state for $t / enable_to_browse: $state"
+		fi
+	done
+}
+
 iptables-start() {
     fn iptables-start
 
@@ -331,6 +349,10 @@ iptables-start() {
     iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT
     iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A INPUT   -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+	# Restore tables for all things enabled or disabled in redis storage
+	iptable-restore-things
+
 }
 
 iptables-stop() {
