@@ -257,7 +257,7 @@ def nmap():
 
 
 @APP.errorhandler(404)
-def page_not_found():
+def page_not_found(e):
     """
     HTTP 404 handling function
     """
