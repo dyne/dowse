@@ -351,7 +351,7 @@ iptables-start() {
     iptables -A INPUT   -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 	# Restore tables for all things enabled or disabled in redis storage
-	iptable-restore-things
+	iptables-restore-things
 
 }
 
