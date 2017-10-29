@@ -25,7 +25,7 @@ from time import time
 
 def ip2mac(ipaddr):
     """
-    returns mac address mapped to the given ip
+    Returns MAC address mapped to the given IP
     """
     # XXX: what do do on dual entries there one mac has multiple ips
     arptable = open('/proc/net/arp').read()
@@ -40,10 +40,16 @@ def ip2mac(ipaddr):
 
 
 def sort_things(unsorted_things):
+    """
+    Function to sort things by epoch
+    """
     return sorted(unsorted_things, key=lambda k: k['last'], reverse=True)
 
 
 def parsetime(then):
+    """
+    Parse epoch to return human-readable time
+    """
     # redis returns us a string
     if not isinstance(then, int):
         then = int(then)

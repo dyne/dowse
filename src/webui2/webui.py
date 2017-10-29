@@ -18,7 +18,7 @@
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
 """
-main webui module
+Main webui module
 """
 
 from time import time, sleep
@@ -42,7 +42,7 @@ RSTOR = StrictRedis(host=redis_host, port=redis_port, db=redis_storage,
 @APP.route('/')
 def main():
     """
-    main routine
+    Main routine
     """
     admin_devices = []
     for i in RSTOR.keys('thing_*'):
@@ -61,7 +61,7 @@ def main():
 @APP.route('/things')
 def things():
     """
-    table and control of things
+    Table and control of things
     """
     thingslist = []
     keys = RSTOR.keys('thing_*')
@@ -99,7 +99,7 @@ def things():
 @APP.route('/thing_show', methods=['GET'])
 def thing_show():
     """
-    shows information about a specific thing
+    Shows information about a specific thing
     """
     mac = request.args.get('mac')
     if not mac:
@@ -122,8 +122,8 @@ def thing_show():
 @APP.route('/modify_things', methods=['POST'])
 def modify_things():
     """
-    modify thing infos through POST requests
-    currently handles thing's name
+    Modify thing information through POST requests
+    Currently handles thing's name
     """
     # XXX: do validation
     thing_mac = request.form['macaddr']
@@ -146,8 +146,8 @@ def modify_things():
 @APP.route('/modify_priv_things', methods=['POST'])
 def modify_priv_things():
     """
-    modifies thing privileges
-    currently handles admin/nonadmin
+    Modifies thing privileges
+    This currently handles admin/nonadmin
     """
     caller_info = {}
     caller_info['ip'] = request.environ['REMOTE_ADDR']
@@ -171,7 +171,7 @@ def modify_priv_things():
 @APP.route('/test_admin', methods=['POST'])
 def test_admin():
     """
-    configures an initial admin device
+    Configures an initial admin device
     """
     for i in RSTOR.keys('thing_*'):
         if RSTOR.hget(i, 'isadmin') == 'yes':
@@ -192,7 +192,7 @@ def test_admin():
 @APP.route('/cmd', methods=['GET', 'POST'])
 def cmd():
     """
-    executes commands called from the webui
+    Executes commands called from the webui
     """
     caller_info = {}
     caller_info['ip'] = request.environ['REMOTE_ADDR']
@@ -231,7 +231,7 @@ def cmd():
 @APP.route('/websocket')
 def websocket():
     """
-    renders the websocket example
+    Renders the websocket example
     """
     caller_info = {}
     caller_info['ip'] = request.environ['REMOTE_ADDR']
@@ -245,7 +245,7 @@ def websocket():
 @APP.route('/nmap')
 def nmap():
     """
-    renders the nmap scan log
+    Renders the nmap scan log
     """
     caller_info = {}
     caller_info['ip'] = request.environ['REMOTE_ADDR']
