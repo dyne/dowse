@@ -68,19 +68,6 @@ iptables-base-protection() {
    # through the firewall without further filtering.
 
    # Create and flush the table.
-   iptables -N ASSURED
-   iptables -F ASSURED
-
-   # Allow all established connections and related traffic.
-   iptables -A ASSURED -m conntrack --ctstate ESTABLISHED -j ACCEPT
-   iptables -A ASSURED -m conntrack --ctstate RELATED -j ACCEPT
-
-   # Set conditions in which the tables will be traversed.
-   iptables -A INPUT -j ASSURED
-   iptables -A OUTPUT -j ASSURED
-   iptables -A FORWARD -j ASSURED
-
-   # Create and flush the table.
    iptables -N TCP
    iptables -F TCP
 
@@ -330,7 +317,7 @@ iptables-start() {
 
 
     # Allow packets from private subnets
-    iptables -A FORWARD -i ${interface} -s ${dowse_net} -j ACCEPT
+    # iptables -A FORWARD -i ${interface} -s ${dowse_net} -j ACCEPT
 
     # Allow DNS service
     iptables -A INPUT -i ${interface} -p udp --dport 53 -j ACCEPT
@@ -354,10 +341,10 @@ iptables-start() {
 		-j REDIRECT --to-port 8000 --destination ${address}
 
     # Keep state of connections from local machine and private subnets
-    iptables -A OUTPUT  -m state --state NEW -o ${interface} -j ACCEPT
-    iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT
-    iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
-    iptables -A INPUT   -m state --state ESTABLISHED,RELATED -j ACCEPT
+    # iptables -A OUTPUT  -m state --state NEW -o ${interface} -j ACCEPT
+    # iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT
+    # iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+    # iptables -A INPUT   -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 	# Restore tables for all things enabled or disabled in redis storage
 	iptables-restore-things
@@ -367,7 +354,6 @@ iptables-start() {
 iptables-stop() {
     act "Flushing iptables (layer 3 firewall)"
 
-    iptables -F ASSURED 2> /dev/null
     iptables -F TCP     2> /dev/null
     iptables -F ICMP    2> /dev/null
 
