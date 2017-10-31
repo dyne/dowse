@@ -151,7 +151,7 @@ $(document).ready(function() {
                     </div>
                     <!--/.nav-collapse -->
                 </div>
-        </div>         
+        </div>
 
         <!--/.container-fluid -->
     </nav>
@@ -167,14 +167,18 @@ $(document).ready(function() {
             </div>
             <div class="col-md-4">
                 <h3>Your Device Info:</h3>
-                <p><strong>Name:</strong> {{ cur_info['name'] }}<br><strong>MAC:</strong> {{ cur_info['macaddr'] }}<br><strong>IP:</strong> {{ cur_info['ip4'] }}<br></p>
+                <p>
+                  <strong>Name:</strong> {{ cur_info['name'] }}<br>
+                  <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br>
+                  <strong>IP:</strong> {{ cur_info['ip4'] }}<br>
+                </p>
             </div>
         </div>
         <div class="row">
-            Subscribed to 
+            Subscribed to
 
             <input type='text' id='topic' disabled />
-            Status: 
+            Status:
 
             <input type='text' id='status' size="80" disabled />
         </div>
@@ -182,10 +186,11 @@ $(document).ready(function() {
             <ul id='ws' style="font-family: 'Courier New', Courier, monospace;"></ul>
         </div>
     </div>
-    <!-- <script src="/static/js/jquery.min.js"></script> -->     
+    <!-- <script src="/static/js/jquery.min.js"></script> -->
 
     <!-- XXX: see if the above included is enough/breaks this one -->
     <script src="/static/js/bootstrap.min.js"></script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="/static/js/ie10-viewport-bug-workaround.js"></script>
 </body>
+</html>

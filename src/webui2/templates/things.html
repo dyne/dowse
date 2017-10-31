@@ -115,7 +115,11 @@
                 </div>
                 <div class="col-md-4">
                     <h3>Your Device Info:</h3>
-                    <p><strong>Name:</strong> {{ cur_info['name'] }}<br><strong>MAC:</strong> {{ cur_info['macaddr'] }}<br><strong>IP:</strong> {{ cur_info['ip4'] }}<br></p>
+                    <p>
+                      <strong>Name:</strong> {{ cur_info['name'] }}<br>
+                      <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br>
+                      <strong>IP:</strong> {{ cur_info['ip4'] }}<br>
+                    </p>
                 </div>
             </div>
             <div class="row">
@@ -207,7 +211,7 @@
                                         </form>
                                         {% endif %}
                                     </td>
-                                    {% else %} 
+                                    {% else %}
 
                                     <!-- if isadmin -->
                                     {% if thing['enable_to_browse'] == 'no' %}
@@ -232,7 +236,7 @@
                                         <!-- <img src="/static/img/button_OFF.png" width="28" alt="admin privileges disabled" title="admin privileges disabled"> -->
                                         {% endif %}
                                     </td>
-                                    {% endif %} 
+                                    {% endif %}
 
                                     <!-- if isadmin -->
                                 </tr>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+    <!-- welcome.html -->
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -93,10 +94,16 @@
                     </a>
                 </div>
                 <h2>Your Device Info:</h2>
-                <p><strong>Name:</strong> {{ cur_info['name']
-                }}<br><strong>MAC:</strong> {{ cur_info['macaddr'] }}<br><strong>IP:</strong> {{ cur_info['ip4'] }}<br></p>
+                <p>
+                   <strong>Name:</strong> {{ cur_info['name'] }}<br>
+                   <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br>
+                   <strong>IP:</strong> {{ cur_info['ip4'] }}<br>
+                </p>
                 <h1>Welcome</h1>
-                <p>You are in a working environment watched by Dowse. From here you can access your Dowse device statistics, count and identify the things on the network and access all the peculiar development threads in Dowse</p>
+                <p>You are in a working environment watched by Dowse. From here you can
+                   access your Dowse device statistics, count and identify the things on
+                   the network and access all the peculiar development threads in Dowse.
+                </p>
             </div>
             {% if (admin_devices is defined) and admin_devices %}
             <h3>The admin devices configured are:</h3>
@@ -148,3 +155,5 @@
 <script src="static/bootstrap/js/bootstrap.min.js"></script>
 <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 <script src="static/assets/js/ie10-viewport-bug-workaround.js"></script>
+</body>
+</html>
