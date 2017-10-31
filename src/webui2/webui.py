@@ -27,7 +27,8 @@ from argparse import ArgumentParser
 from flask import Flask, request, redirect, render_template
 
 from config import (RDYNA, RSTOR)
-from helpers import (parsetime, sort_things, get_caller_info)
+from helpers import (parsetime, sort_things, get_caller_info,
+                     fill_default_thing)
 
 
 APP = Flask(__name__)
@@ -194,9 +195,8 @@ def cmd():
     else:
         return 'Invalid request.\n'
 
-    RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' % (caller_info['ip4'],
-                                                               oper, int(time()),
-                                                               macaddr, ipb))
+    RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' %
+                  (caller_info['ip4'], oper, int(time()), macaddr, ipb))
     # print('CMD,%s,%s,%d,%s' % (caller_info['ip4'], oper, int(time()), macaddr))
     sleep(2)
 
@@ -232,15 +232,20 @@ def page_not_found(e):
 
     Returns actual 404, or 511, depending if you are enabled to
     browse or should be redirected to the captive portal.
-
-    TODO: point-of-entry for new things in redis
     """
-    ret = 511
     caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    enabled = caller_info.get('enable_to_browse')
+    if not enabled:
+        definfo = fill_default_thing(request.environ['REMOTE_ADDR'])
+        RSTOR.hmset('thing_%s' % definfo['macaddr'], definfo)
+        RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' %
+                      (definfo['ip4'], 'THING_OFF', int(time()),
+                       definfo['macaddr'], definfo['ip4']))
+
     if caller_info['enable_to_browse'] == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404
 
-    return render_template('captive_portal.html', cur_info=caller_info), ret
+    return render_template('captive_portal.html', cur_info=caller_info), 511
 
 
 if __name__ == '__main__':

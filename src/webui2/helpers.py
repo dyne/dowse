@@ -87,3 +87,20 @@ def get_caller_info(ip):
     if not ip:
         return None
     return RSTOR.hgetall('thing_%s' % ip2mac(ip))
+
+
+def fill_default_thing(ip):
+    """
+    Fill default info for a new thing.
+
+    Used in the 404 handler of webui.py
+    """
+    thing_defaults = {
+        'isadmin': 'no',
+        'enable_to_browse': 'no',
+        'macaddr': ip2mac(ip),
+        'ip4': ip,
+        'age': int(time()),
+        'last': int(time()),
+    }
+    return thing_defaults
