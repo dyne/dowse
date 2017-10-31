@@ -268,14 +268,14 @@ dowse-start() {
     [[ "$firewall" = "yes" ]] && {
 
         ebtables-stop
-        # ebtables-start
-
         iptables-stop
+
+        loopback-on
+
         iptables-start
 
         iptables-base-protection
 
-        loopback-on
         if loopback-only; then
             act "dry run on localhost only"
         else
