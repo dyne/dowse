@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 
 	signal(SIGINT, ctrlc);
 
-	redis = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
+	redis = connect_redis(db_runtime);
 	if(!redis) {
 		err("Dowse is not running");
 		exit(1);

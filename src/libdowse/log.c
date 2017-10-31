@@ -24,85 +24,83 @@ redisContext *log_redis  = NULL;//connect_redis("127.0.0.1", 6379, 0);
 int logredis_retry_to_connect=1;
 
 base64_encodestate b64_state;
-redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...) ;
-void _minimal_err(char *msg,int sizeof_msg,const char *fmt, ...);
-redisContext *connect_redis(char *host, int port, int db);
-redisContext *minimal_connect_redis(char *host, int port, int db,int minimal_log) ;
+redisReply *cmd_redis(redisContext *redis, const char *format, ...) ;
+redisContext *connect_redis(int db);
 
-void toredis(char *pfx, char *msg) {
-  return ; /* WIP */
+// void toredis(char *pfx, char *msg) {
+//   return ; /* WIP */
   
-    if ((!log_redis) && (logredis_retry_to_connect)){
-        if (1) { /* TODO sostituire con getenv() */
+//     if ((!log_redis) && (logredis_retry_to_connect)){
+//         if (1) { /* TODO sostituire con getenv() */
 
-            log_redis = minimal_connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic,1); /* we call in minimal_log */
+//             log_redis = connect_redis(db_dynamic); /* we call in minimal_log */
 
-            if (!log_redis) {
-                char msg[256];
+//             if (!log_redis) {
+//                 char msg[256];
 
-                _minimal_err(msg,sizeof(msg),"Redis server is not running");
+//                 _err("Redis server is not running");
 
-                return;
-            }
-        } else {
-            return ;
-        }
-    }
-
-
-    if (log_redis) {
-        redisReply *reply;
-
-        reply=redisCommand(log_redis, "PUBLISH log-channel (%d):%s:%ld:%s", getpid(),pfx,time(NULL), msg);
-
-        if (reply && reply->len) {
-
-            fprintf(stderr,"%s %d redis_reply %s\n",
-                    __FILE__,__LINE__,reply->str);
-        }
-        if (reply) {
-
-            freeReplyObject(reply);
-        }
-
-        char command[256];
-        char b64_encoded[512];
-
-        base64_init_encodestate(&b64_state);
+//                 return;
+//             }
+//         } else {
+//             return ;
+//         }
+//     }
 
 
-        int rv=base64_encode_block(msg, strlen(msg), b64_encoded, &b64_state);
+//     if (log_redis) {
+//         redisReply *reply;
+
+//         reply=redisCommand(log_redis, "PUBLISH log-channel (%d):%s:%ld:%s", getpid(),pfx,time(NULL), msg);
+
+//         if (reply && reply->len) {
+
+//             fprintf(stderr,"%s %d redis_reply %s\n",
+//                     __FILE__,__LINE__,reply->str);
+//         }
+//         if (reply) {
+
+//             freeReplyObject(reply);
+//         }
+
+//         char command[256];
+//         char b64_encoded[512];
+
+//         base64_init_encodestate(&b64_state);
 
 
-        int rv2=base64_encode_blockend(b64_encoded+rv,&b64_state);
+//         int rv=base64_encode_block(msg, strlen(msg), b64_encoded, &b64_state);
 
 
-        b64_encoded[rv+rv2-1]=0;
+//         int rv2=base64_encode_blockend(b64_encoded+rv,&b64_state);
 
 
-        sprintf(command,"PUBLISH log-queue %d:%s:%ld:%s", getpid(),(pfx),time(NULL), b64_encoded);
-        /* Using the plain msg variable the values are splitted by the blank character */
-        //        sprintf(command,"LPUSH log-queue %s:%s", pfx,msg);
+//         b64_encoded[rv+rv2-1]=0;
 
-        /**/
-//        reply=minimal_cmd_redis(log_redis,"%s",command);
-        reply=minimal_cmd_redis(log_redis,command,NULL);
 
-        if (reply && reply->len) {
-            fprintf(stderr,"%s %d redis_reply %s\n",
-                    __FILE__, __LINE__,reply->str);
-        }
-        if (reply) {
-            freeReplyObject(reply);
-        } else {
-	  if (log_redis) {
-	    redisFree(log_redis);
-	  }
-	  log_redis = NULL;
-	}
+//         sprintf(command,"PUBLISH log-queue %d:%s:%ld:%s", getpid(),(pfx),time(NULL), b64_encoded);
+//         /* Using the plain msg variable the values are splitted by the blank character */
+//         //        sprintf(command,"LPUSH log-queue %s:%s", pfx,msg);
 
-    }
-}
+//         /**/
+// //        reply=minimal_cmd_redis(log_redis,"%s",command);
+//         reply=cmd_redis(log_redis,command,NULL);
+
+//         if (reply && reply->len) {
+//             fprintf(stderr,"%s %d redis_reply %s\n",
+//                     __FILE__, __LINE__,reply->str);
+//         }
+//         if (reply) {
+//             freeReplyObject(reply);
+//         } else {
+// 	  if (log_redis) {
+// 	    redisFree(log_redis);
+// 	  }
+// 	  log_redis = NULL;
+// 	}
+
+//     }
+// }
 
 void func(const char *fmt, ...) {
 #if (DEBUG==1)

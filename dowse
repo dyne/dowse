@@ -114,6 +114,7 @@ source $R/zlibs/iptables
 source $R/zlibs/ebtables
 source $R/zlibs/confstore
 source $R/zlibs/redis
+source $R/zlibs/redis
 source $R/zlibs/nmap
 # source $R/zlibs/sql
 
@@ -127,6 +128,7 @@ source $R/daemons/dnscrypt-proxy
 source $R/daemons/netdata
 source $R/daemons/pgld
 source $R/daemons/redis
+source $R/daemons/redis-volatile
 source $R/daemons/seccrond
 source $R/daemons/webui2
 # source $R/daemons/tinyproxy
@@ -258,8 +260,10 @@ dowse-start() {
     }
     notice "Starting Dowse"
 
-    # start the redis daemon (core k/v service)
+    # start the redis daemons (core k/v service)
     start redis-server
+
+	start redis-volatile
 
     [[ "$firewall" = "yes" ]] && {
 
@@ -376,6 +380,8 @@ dowse-stop() {
     # [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
     #     mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
     # }
+
+	stop redis-volatile
 
     stop redis-server
 

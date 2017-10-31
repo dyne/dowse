@@ -153,10 +153,10 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 		return DCP_SYNC_FILTER_RESULT_ERROR;
 	}
 
-	data->redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+	data->redis = connect_redis(db_dynamic);
 	if(!data->redis) return 1;
 
-	data->redis_stor = connect_redis(REDIS_HOST, REDIS_PORT, db_storage);
+	data->redis_stor = connect_redis(db_storage);
 	if(!data->redis_stor) return 1;
 
 	// data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
@@ -727,7 +727,8 @@ void print_data_redis( redisContext *redis,char*prefix) {
 
 int publish_query(plugin_data_t *data) {
 	char *extracted;
-	int val, res;
+	int val = 1;
+	int res;
 	char *sval;
 
 	time_t epoch_t;

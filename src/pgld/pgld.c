@@ -586,7 +586,7 @@ int main(int argc, char *argv[]) {
     }
 
     // open redis connection
-    redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    redis = connect_redis(db_dynamic);
 
     // open logfile
     if (logfile_name != NULL) {

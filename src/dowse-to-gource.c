@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     char *dns, *ip, *action, *epoch, *domain, *tld, *group;
     long long int hits;
 
-    redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    redis = connect_redis(db_dynamic);
 
     signal(SIGINT, ctrlc);
 

@@ -25,39 +25,6 @@
 
 #include <dowse.h>
 
-redisContext *minimal_connect_redis(char *host, int port, int db,int minimal_log) ;
-void _minimal_err(char *msg,int sizeof_msg,const char *fmt, ...);
-
-int minimal_okredis(redisContext *r, redisReply *res) {
-    if(!res) {
-      fprintf(stderr," (%d)[%s:%d] redis error: %s\n", getpid(),__FUNCTION__,__LINE__,r->errstr);
-      return(0);
-    } else if( res->type == REDIS_REPLY_ERROR ) {
-        fprintf(stderr," (%d)[%s:%d] redis error: %s\n", getpid(), __FUNCTION__,__LINE__, res->str);
-        return(0);
-    } else {
-        return(1);
-    }
-}
-
-/* TODO Enhance minimal_cmd_redis using the backup/nullify/restore log_redis pointer technique */
-redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...) {
-    va_list args;
-
-    redisReply *res;
-    char command[512];
-
-    va_start(args, format);
-    vsnprintf(command, 511, format, args);
-    res = redisCommand(redis, command);
-    va_end(args);
-
-    if( minimal_okredis(redis, res) )
-        return res;
-    else
-        return NULL;
-}
-
 int okredis(redisContext *r, redisReply *res) {
 	if(!res) {
 		err("redis error: %s", r->errstr);
@@ -78,7 +45,6 @@ redisReply *cmd_redis(redisContext *redis, const char *format, ...) {
 
 	va_start(args, format);
 	vsnprintf(command, 511, format, args);
-	// func("cmd_redis: %s", command);
 	res = redisCommand(redis, command);
 	va_end(args);
 
@@ -89,46 +55,44 @@ redisReply *cmd_redis(redisContext *redis, const char *format, ...) {
 	}
 }
 
-redisContext *connect_redis(char *host, int port, int db) {
-    return minimal_connect_redis(host, port, db,0);
-}
 
+redisContext *connect_redis(int db) {
 
-redisContext *minimal_connect_redis(char *host, int port, int db,int minimal_log) {
-	redisContext   *rx;
-	redisReply     *reply;
-	if (!minimal_log) {
-	    func("Connecting to redis on %s port %u", host, port);
-	}
+	redisContext *rx = NULL;
+	int port;
+	char *redis_type;
+
 	struct timeval timeout = { 1, 500 };
-	rx = redisConnectWithTimeout(host, port, timeout);
-	/* rx = redisConnect(REDIS_HOST, REDIS_PORT); */
 
-	if (rx == NULL || rx->err) {
-		if (rx) {
-		    if (!minimal_log) {
-		        err("Redis connection error: %s", rx->errstr);
-		    } else {
-		        char msg[256];
-		        _minimal_err(msg,sizeof(msg),"Redis connection error: %s", rx->errstr);
-		    }
-			redisFree(rx);
-			return NULL;
-		} else {
-		    if (!minimal_log) {
-		        err("Connection error: can't allocate redis context");
-		    } else {
-                char msg[256];
-                _minimal_err(msg,sizeof(msg),"Connection error: can't allocate redis context");
-            }
-		}
+	switch(db) {
+	case db_runtime:
+	case db_dynamic:
+		port = 6378;
+		redis_type = "volatile";
+		break;
+
+	case db_storage:
+		port = 6379;
+		redis_type = "storage";
+		break;
 	}
-	// select the dynamic database where is dns_query_channel
-	reply = minimal_cmd_redis(rx, "SELECT %u", db);
 
-	// TODO: check if result is OK
-	// fprintf(stderr,"SELECT: %s\n", reply->str);
-	if(reply) freeReplyObject(reply);
+	act ("Connecting to %s redis on port %u", redis_type, port);
+
+	rx = redisConnectWithTimeout("127.0.0.1", port, timeout);
+
+	if (!rx) {
+		err("Connection error: can't allocate redis context");
+		return NULL;
+	}
+
+
+	if(rx->err) {
+		err("Redis connection error: %s", rx->errstr);
+		redisFree(rx);
+		return NULL;
+	}
+
 	return rx;
 }
 

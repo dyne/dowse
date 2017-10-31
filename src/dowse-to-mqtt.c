@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, ctrlc);
 
-    redis = connect_redis(REDIS_HOST, REDIS_PORT, db_dynamic);
+    redis = connect_redis(db_dynamic);
 
     mosquitto_lib_init();
     srand(time(NULL));

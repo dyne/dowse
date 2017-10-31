@@ -21,7 +21,7 @@ tcp-keepalive 0
 
 loglevel notice
 
-databases 16
+databases 1
 
 save 900 1
 save 300 10
@@ -37,13 +37,7 @@ dbfilename dump.rdb
 
 dir $H/run
 
-slave-serve-stale-data yes
-
-slave-read-only yes
-
 repl-disable-tcp-nodelay no
-
-slave-priority 100
 
 appendonly no
 
@@ -104,10 +98,6 @@ redis-server-exec() {
     func "redis $conf $* (pidfile: $pidfile)"
 
     launch redis-server $conf $*
-
-    act "blank volatile databases"
-    print "flushdb" | redis runtime 2>&1 > /dev/null
-    print "flushdb" | redis dynamic 2>&1 > /dev/null
 
 	# we consider these to tell us if it's the initial startup of redis
 	# yes, redis returns 1 if a key is found

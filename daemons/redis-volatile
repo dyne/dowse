@@ -7,7 +7,7 @@ redis-volatile-conf() {
 daemonize yes
 pidfile $H/run/redis-volatile.pid
 logfile $H/log/redis-volatile.log
-port 7379
+port 6378
 
 bind 127.0.0.1
 

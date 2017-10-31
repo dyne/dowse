@@ -53,7 +53,6 @@ void act(const char *fmt, ...);
 // parsetime
 int relative_time(char *utc, char *out);
 
-#define REDIS_HOST "127.0.0.1"
 #define REDIS_PORT 6379
 
 #define MAX_OUTPUT 512
@@ -66,13 +65,11 @@ int relative_time(char *utc, char *out);
 /*     size_t elements; // number of elements, for REDIS_REPLY_ARRAY */
 /*     struct redisReply **element; // elements vector for REDIS_REPLY_ARRAY */
 /* } redisReply; */
-int minimal_okredis(redisContext *r, redisReply *res);
 int okredis(redisContext *r, redisReply *res);
 
-redisReply *minimal_cmd_redis(redisContext *redis, const char *format, ...);
 redisReply *cmd_redis(redisContext *redis, const char *format, ...);
 
-redisContext *connect_redis(char *host, int port, int db);
+redisContext *connect_redis(int db);
 
 ///////////
 // hashmap
