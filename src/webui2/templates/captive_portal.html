@@ -74,15 +74,16 @@
                 <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
                 <div class="col-xs-6 col-md-3">
 </div>
-                <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['mac'] }}">
+                <input type="hidden" name="url_from" value="/">
+                <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">
                 <button class="btn"> Ask me if you can use this LAN </button>
             </form>
             <div>
                 <h2>Your Device Info:</h2>
                 <p>
                   <strong>Name:</strong> {{ cur_info['name'] }}<br>
-                  <strong>MAC:</strong> {{ cur_info['mac'] }}<br>
-                  <strong>IP:</strong> {{ cur_info['ip'] }}<br>
+                  <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br>
+                  <strong>IP:</strong> {{ cur_info['ip4'] }}<br>
                 </p>
                 <h1>Welcome to my home pal!</h1>
                 <p>If you ask me politely I might give you access to the web, or
@@ -93,16 +94,6 @@
                    DOWSE.&nbsp;
                 </p>
                 <p>For more info go to www.dowse.eu</p>
-            </div>
-            <div class="jumbotron">
-                <h3>Enter Your name to identify your device:</h3>
-                <form action="/modify_thing" method="post">
-                    <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
-                    <div class="col-xs-6 col-md-3"> </div>
-                    <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">
-                    <input type="hidden" name="url_from" value="/">
-                    <button class="btn"> Submit <>/button>
-                </form>
             </div>
         </div>
     </div>
