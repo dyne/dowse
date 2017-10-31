@@ -42,7 +42,7 @@ def main():
     caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
     if caller_info['enable_to_browse'] != 'yes' \
         and caller_info['isadmin'] != 'yes':
-        return render_template('captive_portal.html', cur_info=caller_info)
+        return redirect('/captive_portal', code=302)
 
     admin_devices = []
     for i in RSTOR.keys('thing_*'):
