@@ -1,0 +1,100 @@
+#!/usr/bin/env zsh
+
+redis-volatile-conf() {
+    fn redis-volatile-conf
+
+    cat <<EOF
+daemonize yes
+pidfile $H/run/redis-volatile.pid
+logfile $H/log/redis-volatile.log
+port 7379
+
+bind 127.0.0.1
+
+maxclients 100
+
+# evict less used keys when max memory is hit
+maxmemory 64mb
+maxmemory-policy allkeys-lru
+
+# TCP listen() backlog.
+#
+# In high requests-per-second environments you need an high backlog in order
+# to avoid slow clients connections issues. Note that the Linux kernel
+# will silently truncate it to the value of /proc/sys/net/core/somaxconn so
+# make sure to raise both the value of somaxconn and tcp_max_syn_backlog
+# in order to get the desired effect.
+tcp-backlog 1024
+
+timeout 0
+
+tcp-keepalive 0
+
+loglevel notice
+
+databases 1
+
+# don't save anything
+save ""
+appendonly no
+stop-writes-on-bgsave-error no
+
+dir $H/run/redis-volatile
+
+slowlog-log-slower-than 10000
+
+slowlog-max-len 128
+
+# latency-monitor-threshold 0
+
+notify-keyspace-events ""
+
+hash-max-ziplist-entries 512
+hash-max-ziplist-value 64
+
+list-max-ziplist-entries 512
+list-max-ziplist-value 64
+
+set-max-intset-entries 512
+
+zset-max-ziplist-entries 128
+zset-max-ziplist-value 64
+
+# hll-sparse-max-bytes 3000
+
+activerehashing no
+
+client-output-buffer-limit normal 0 0 0
+client-output-buffer-limit slave 256mb 64mb 60
+client-output-buffer-limit pubsub 32mb 8mb 60
+
+# By default "hz" is set to 10. Raising the value will use more CPU when
+# Redis is idle, but at the same time will make Redis more responsive when
+# there are many keys expiring at the same time, and timeouts may be
+# handled with more precision.
+#
+# The range is between 1 and 500, however a value over 100 is usually not
+# a good idea. Most users should use the default of 10 and raise this up to
+# 100 only in environments where very low latency is required.
+hz 20
+EOF
+}
+
+redis-volatile-exec() {
+    fn redis-volatile-exec $*
+    exe=${1:-${execmap[redis-server]}}
+    req=(conf exe)
+    freq=($conf $exe)
+    ckreq || return 1
+
+    [[ "$1" = "" ]] || shift 1
+
+    pidfile=`awk '/pidfile/ { print $2 }' $conf`
+    func "redis $conf $* (pidfile: $pidfile)"
+	mkdir -p $H/run/redis-volatile
+    launch redis-server $conf $*
+
+    savepid redis-volatile $pidfile
+
+    return $?
+}
