@@ -70,7 +70,7 @@
     <div class="jumbotron">
         <div class"col-xs-4" "col-md-3">
             {% if cur_info['name'] %}
-            <h3>Hi cur_info['name']. Please wait until you are authorized.</h3>
+            <h3>Hi {{ cur_info['name'] }}. Please wait until you are authorized.</h3>
             {% else %}
             <h3>Hallo, who are you?</h3>
             <form action="/test_admin" method="post">
