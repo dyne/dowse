@@ -186,7 +186,7 @@ def cmd():
         if not ip4:
             return 'Missing IP address in request.\n'
     elif oper == 'ALL_THINGS_OFF' or oper == 'ALL_THINGS_ON':
-        macaddr = caller_info['mac']
+        macaddr = caller_info['macaddr']
     elif oper == 'PARTY_MODE_OFF' or oper == 'PARTY_MODE_ON':
         RSTOR.set('party_mode', oper.split('_')[2].lower())
         sleep(2)
@@ -194,10 +194,10 @@ def cmd():
     else:
         return 'Invalid request.\n'
 
-    RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' % (caller_info['ip'],
+    RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' % (caller_info['ip4'],
                                                                oper, int(time()),
                                                                macaddr, ipb))
-    # print('CMD,%s,%s,%d,%s' % (caller_info['ip'], oper, int(time()), macaddr))
+    # print('CMD,%s,%s,%d,%s' % (caller_info['ip4'], oper, int(time()), macaddr))
     sleep(2)
 
     return redirect('/things', code=302)
