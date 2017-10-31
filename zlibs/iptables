@@ -342,7 +342,7 @@ iptables-start() {
 
     # Keep state of connections from local machine and private subnets
     iptables -A OUTPUT  -m state --state NEW -o ${interface} -j ACCEPT
-    # iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT
+    iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT
     iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A INPUT   -m state --state ESTABLISHED,RELATED -j ACCEPT
 
