@@ -229,8 +229,18 @@ def nmap():
 def page_not_found(e):
     """
     HTTP 404 handling function
+
+    Returns actual 404, or 511, depending if you are enabled to
+    browse or should be redirected to the captive portal.
+
+    TODO: point-of-entry for new things in redis
     """
-    return render_template('404.html'), 404
+    ret = 511
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    if caller_info['enable_to_browse'] == 'yes':
+        return render_template('404.html', cur_info=caller_info, msg=e), 404
+
+    return render_template('captive_portal.html', cur_info=caller_info), ret
 
 
 if __name__ == '__main__':
