@@ -39,12 +39,15 @@ def main():
     """
     Main routine
     """
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    if caller_info['enable_to_browse'] != 'yes' \
+        and caller_info['isadmin'] != 'yes':
+        return render_template('captive_portal.html', cur_info=caller_info)
+
     admin_devices = []
     for i in RSTOR.keys('thing_*'):
         if RSTOR.hget(i, 'isadmin') == 'yes':
             admin_devices.append(RSTOR.hgetall(i))
-
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
 
     return render_template('welcome.html', admin_devices=admin_devices,
                            cur_info=caller_info)
@@ -113,6 +116,9 @@ def modify_things():
     if not thing_mac or not thing_name:
         return '<h1>400 - Bad Request</h1>\n'
 
+    if RDYNA.get('dns-lease-%s' % thing_name):
+        return '<h1>This name already exists. Choose another one.</h1>\n'
+
     # set it in redis-storage
     RSTOR.hset('thing_%s' % thing_mac, 'name', thing_name)
 
@@ -163,6 +169,7 @@ def test_admin():
 
     vals = {'isadmin': 'yes', 'name': thing_name}
     RSTOR.hmset('thing_%s' % thing_mac, vals)
+    RDYNA.set('dns-lease-%s' % thing_name, request.environ['REMOTE_ADDR'])
 
     return redirect('/', code=302)
 
@@ -253,13 +260,15 @@ def page_not_found(e):
     browse or should be redirected to the captive portal.
     """
     caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
-    enabled = caller_info.get('enable_to_browse')
+    enabled = caller_info.get('enable_to_browse', False)
     if not enabled:
         definfo = fill_default_thing(request.environ['REMOTE_ADDR'])
         RSTOR.hmset('thing_%s' % definfo['macaddr'], definfo)
         RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' %
                       (definfo['ip4'], 'THING_OFF', int(time()),
                        definfo['macaddr'], definfo['ip4']))
+        RSTOR.hset('thing_%s', % definfo['macaddr'], 'enable_to_browse', 'no')
+        sleep(3)
 
     if caller_info['enable_to_browse'] == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404

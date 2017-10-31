@@ -69,15 +69,19 @@
     <!-- Main component for a primary marketing message or call to action -->
     <div class="jumbotron">
         <div class"col-xs-4" "col-md-3">
+            {% if cur_info['name'] %}
+            <h3>Hi cur_info['name']. Please wait until you are authorized.</h3>
+            {% else %}
             <h3>Hallo, who are you?</h3>
             <form action="/test_admin" method="post">
                 <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
                 <div class="col-xs-6 col-md-3">
 </div>
                 <input type="hidden" name="url_from" value="/">
-                <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">
+                <input type="hidden" id="macaddr" name="macaddr" value="{{ cur_info['macaddr'] }}">
                 <button class="btn"> Ask me if you can use this LAN </button>
             </form>
+            {% endif %}
             <div>
                 <h2>Your Device Info:</h2>
                 <p>
