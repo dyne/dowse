@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <!-- captive_portal.html -->
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -78,11 +79,30 @@
             </form>
             <div>
                 <h2>Your Device Info:</h2>
-                <p><strong>Name:</strong> {{ cur_info['name'] }}<br><strong>MAC:</strong> {{ cur_info['mac'] }}<br><strong>IP:</strong> {{ cur_info['ip'] }}<br></p>
+                <p>
+                  <strong>Name:</strong> {{ cur_info['name'] }}<br>
+                  <strong>MAC:</strong> {{ cur_info['mac'] }}<br>
+                  <strong>IP:</strong> {{ cur_info['ip'] }}<br>
+                </p>
                 <h1>Welcome to my home pal!</h1>
-                <p>If you ask me politely I might give you access to the web, or use of the toilet (or both) and even a cup of tea, according to how nice your devices behave.</p>
-                <p>This network is aware to what you and your devices do through DOWSE.&nbsp;</p>
+                <p>If you ask me politely I might give you access to the web, or
+                   use of the toilet (or both) and even a cup of tea, according
+                   to how nice your devices behave.
+                </p>
+                <p>This network is aware to what you and your devices do through
+                   DOWSE.&nbsp;
+                </p>
                 <p>For more info go to www.dowse.eu</p>
+            </div>
+            <div class="jumbotron">
+                <h3>Enter Your name to identify your device:</h3>
+                <form action="/modify_thing" method="post">
+                    <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
+                    <div class="col-xs-6 col-md-3"> </div>
+                    <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">
+                    <input type="hidden" name="url_from" value="/">
+                    <button class="btn"> Submit <>/button>
+                </form>
             </div>
         </div>
     </div>
@@ -95,3 +115,5 @@
 <script src="static/bootstrap/js/bootstrap.min.js"></script>
 <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 <script src="static/assets/js/ie10-viewport-bug-workaround.js"></script>
+</body>
+</html>
