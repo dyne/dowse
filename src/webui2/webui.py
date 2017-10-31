@@ -212,6 +212,16 @@ def cmd():
     return redirect('/things', code=302)
 
 
+@APP.route('/help')
+def helppage():
+    """
+    Renders the help page
+    """
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+
+    return render_template('help.html', cur_info=caller_info)
+
+
 @APP.route('/websocket')
 def websocket():
     """
