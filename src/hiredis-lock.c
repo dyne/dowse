@@ -80,17 +80,11 @@ int main(int argc, char **argv) {
 			if(!reply) { redisFree(redis); exit(1); }
 		}
 
-		switch(reply->type) {
-
-		case REDIS_REPLY_STATUS:
+		if(reply->type == REDIS_REPLY_STATUS)
 			if( strncmp(reply->str, "OK", 2) == 0) {
 				fprintf(stdout,"%lu\n", key);
 				res = 0;
 			}
-			break;
-
-		default: break;
-		}
 
 		// prints out "0" as key on failure
 		if(res==1) fprintf(stdout,"0\n");
@@ -110,29 +104,30 @@ int main(int argc, char **argv) {
 				res = 0;
 				func("succesful unlock: %s (key %s)", name, timeout);
 
-			} else // key mismatch, cannot remove lock
-				err("resource locked: %s", name);
-				
-			break;
+            } else // key mismatch, cannot remove lock
+                err("resource locked: %s", name);
 
-		case REDIS_REPLY_NIL:
-			// no lock found with that name
-			res = 0; // we assume a success
-			break;
+            break;
 
-			// TODO: better detail on statuses (lock not found, lock taken, etc...)
-		default: 
-			func("lock off reply: %u str %s", reply->type, reply->str);
-			break;
-		}
-		
-	} else {
-		err("action not supported: %s",action);
-		redisFree(redis);
-		exit(1);
-	}
+        case REDIS_REPLY_NIL:
+            // no lock found with that name
+            res = 0; // we assume a success
+            break;
 
-	if(reply) freeReplyObject(reply);
-	redisFree(redis);
-	exit(res);
+            // TODO: better detail on statuses (lock not found, lock taken, etc...)
+        default:
+            func("lock off reply: %u str %s", reply->type, reply->str);
+            break;
+        }
+
+    } else {
+        err("action not supported: %s",action);
+        redisFree(redis);
+        exit(1);
+    }
+
+    fflush(stdout);
+    if(reply) freeReplyObject(reply);
+    redisFree(redis);
+    exit(res);
 }
