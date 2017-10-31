@@ -167,6 +167,15 @@ def test_admin():
     return redirect('/', code=302)
 
 
+@APP.route('/captive_portal')
+def captive_portal():
+    """
+    Renders the actual captive portal page
+    """
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    return render_template('captive_portal.html', cur_info=caller_info)
+
+
 @APP.route('/cmd', methods=['GET', 'POST'])
 def cmd():
     """
@@ -245,7 +254,7 @@ def page_not_found(e):
     if caller_info['enable_to_browse'] == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404
 
-    return render_template('captive_portal.html', cur_info=caller_info), 511
+    return render_template('captive_portal_redir.html', cur_info=caller_info), 511
 
 
 if __name__ == '__main__':
