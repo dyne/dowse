@@ -281,6 +281,8 @@ dowse-start() {
         else
             loopback-isolate
 
+			act "flushing arp cache"
+			launch ip -s -s neigh flush all
             act "set up $interface interface with ip $address"
 			launch ip addr add ${address}/${dowse_net[(ws:/:)2]} dev $interface
 			launch ip link set $interface up
