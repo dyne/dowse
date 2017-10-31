@@ -36,42 +36,47 @@
                     </div>
                     <div id="navbar" class="navbar-collapse collapse">
                         <ul class="nav navbar-nav">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Documentation <span class="caret"></span></a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a href="help/">Help</a>
-                                    </li>
-                                    <li>
-                                        <a href="http://dowse.eu">Dowse-eu Website</a>
-                                    </li>
-                                    <li>
-                                        <a href="https://github.com/dyne/dowse/wiki">Wiki</a>
-                                    </li>
-                                    <li role="separator" class="divider"></li>
-                                    <li>
-                                        <a href="https://www.github.com/dyne/dowse">GitHub</a>
-                                    </li>
-                                    <li>
-                                        <a href="https://mailinglists.dyne.org/cgi-bin/mailman/listinfo/dowsers">mailing list</a>
-                                    </li>
-                                    <li>
-                                        <a href="https://irc.dyne.org">irc-channel: #dowsers</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>
-                    <!--/.nav-collapse -->
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Documentation <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a href="help/">Help</a>
+                                </li>
+                                <li>
+                                    <a href="http://dowse.eu">Dowse-eu Website</a>
+                                </li>
+                                <li>
+                                    <a href="https://github.com/dyne/dowse/wiki">Wiki</a>
+                                </li>
+                                <li role="separator" class="divider"></li>
+                                <li>
+                                    <a href="https://www.github.com/dyne/dowse">GitHub</a>
+                                </li>
+                                <li>
+                                    <a href="https://mailinglists.dyne.org/cgi-bin/mailman/listinfo/dowsers">mailing list</a>
+                                </li>
+                                <li>
+                                    <a href="https://irc.dyne.org">irc-channel: #dowsers</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
                 </div>
-                <!--/.container-fluid -->
-            </nav>
-            <!-- Main component for a primary marketing message or call to action -->
-            <div class="jumbotron">
+                <!--/.nav-collapse -->
+        </div>
+        <!--/.container-fluid -->
+    </nav>
+    <!-- Main component for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class"col-xs-4" "col-md-3">
+            <h3>Hallo, who are you?</h3>
+            <form action="/test_admin" method="post">
+                <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
                 <div class="col-xs-6 col-md-3">
-                    <a href="#" class="thumbnail">
-                        <img src="../static/img/dowse-logo.png" alt="">
-                    </a>
-                </div>
+</div>
+                <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['mac'] }}">
+                <button class="btn"> Ask me if you can use this LAN </button>
+            </form>
+            <div>
                 <h2>Your Device Info:</h2>
                 <p><strong>Name:</strong> {{ cur_info['name'] }}<br><strong>MAC:</strong> {{ cur_info['mac'] }}<br><strong>IP:</strong> {{ cur_info['ip'] }}<br></p>
                 <h1>Welcome to my home pal!</h1>
