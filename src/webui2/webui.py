@@ -25,18 +25,12 @@ from time import time, sleep
 from os import getpid
 from argparse import ArgumentParser
 from flask import Flask, request, redirect, render_template
-from redis import StrictRedis
 
-from config import (redis_host, redis_port, redis_dynamic, redis_storage)
-from helpers import (ip2mac, parsetime, sort_things)
+from config import (RDYNA, RSTOR)
+from helpers import (parsetime, sort_things, get_caller_info)
 
 
 APP = Flask(__name__)
-
-RDYNA = StrictRedis(host=redis_host, port=redis_port, db=redis_dynamic,
-                    decode_responses=True)
-RSTOR = StrictRedis(host=redis_host, port=redis_port, db=redis_storage,
-                    decode_responses=True)
 
 
 @APP.route('/')
@@ -49,10 +43,7 @@ def main():
         if RSTOR.hget(i, 'isadmin') == 'yes':
             admin_devices.append(RSTOR.hgetall(i))
 
-    caller_info = {}
-    caller_info['ip'] = request.environ['REMOTE_ADDR']
-    caller_info['mac'] = ip2mac(caller_info['ip'])
-    caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
 
     return render_template('welcome.html', admin_devices=admin_devices,
                            cur_info=caller_info)
@@ -79,14 +70,8 @@ def things():
         i['last'] = parsetime(i['last'])
         thingslist.append(i)
 
-    caller_info = {}
-    caller_info['ip'] = request.environ['REMOTE_ADDR']
-    caller_info['mac'] = ip2mac(caller_info['ip'])
-    caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
-
-    isadmin = False
-    if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') == 'yes':
-        isadmin = True
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    isadmin = caller_info['isadmin'] == 'yes'
 
     cur_state = RSTOR.get('state_all_things')
     party_mode = RSTOR.get('party_mode')
@@ -105,14 +90,8 @@ def thing_show():
     if not mac:
         return 'Invalid MAC address\n'
 
-    caller_info = {}
-    caller_info['ip'] = request.environ['REMOTE_ADDR']
-    caller_info['mac'] = ip2mac(caller_info['ip'])
-    caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
-
-    isadmin = False
-    if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') == 'yes':
-        isadmin = True
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    isadmin = caller_info['isadmin'] == 'yes'
 
     thinginfo = RSTOR.hgetall('thing_%s' % mac)
     return render_template('thing_show.html', thing=thinginfo,
@@ -149,10 +128,8 @@ def modify_priv_things():
     Modifies thing privileges
     This currently handles admin/nonadmin
     """
-    caller_info = {}
-    caller_info['ip'] = request.environ['REMOTE_ADDR']
-    caller_info['mac'] = ip2mac(caller_info['ip'])
-    if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') != 'yes':
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    if caller_info['isadmin'] != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
     thing_mac = request.form['macaddr']
@@ -194,10 +171,8 @@ def cmd():
     """
     Executes commands called from the webui
     """
-    caller_info = {}
-    caller_info['ip'] = request.environ['REMOTE_ADDR']
-    caller_info['mac'] = ip2mac(caller_info['ip'])
-    if RSTOR.hget('thing_%s' % caller_info['mac'], 'isadmin') != 'yes':
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    if caller_info['isadmin'] != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
     ipb = ''
@@ -233,10 +208,7 @@ def websocket():
     """
     Renders the websocket example
     """
-    caller_info = {}
-    caller_info['ip'] = request.environ['REMOTE_ADDR']
-    caller_info['mac'] = ip2mac(caller_info['ip'])
-    caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
 
     return render_template('websocket.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
@@ -247,10 +219,7 @@ def nmap():
     """
     Renders the nmap scan log
     """
-    caller_info = {}
-    caller_info['ip'] = request.environ['REMOTE_ADDR']
-    caller_info['mac'] = ip2mac(caller_info['ip'])
-    caller_info['name'] = RSTOR.hget('thing_%s' % caller_info['mac'], 'name')
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
 
     return render_template('nmap.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])

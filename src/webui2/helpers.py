@@ -23,6 +23,9 @@ webui helper module
 
 from time import time
 
+from config import (RDYNA, RSTOR)
+
+
 def ip2mac(ipaddr):
     """
     Returns MAC address mapped to the given IP
@@ -75,3 +78,12 @@ def parsetime(then):
     elif dm < (24 * 60 * 365.25):
         return '%d month%s ago' % (int(dm / (60*24*30), f(dm/60*24*30)))
     return '%d year%s ago' % (int(dm / (60*24*365)), f(dm/(60*24*365)))
+
+
+def get_caller_info(ip):
+    """
+    Returns a dictionary with the information of a request origin
+    """
+    if not ip:
+        return None
+    return RSTOR.hgetall('thing_%s' % ip2mac(ip))
