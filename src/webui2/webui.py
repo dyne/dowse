@@ -267,7 +267,7 @@ def page_not_found(e):
         RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' %
                       (definfo['ip4'], 'THING_OFF', int(time()),
                        definfo['macaddr'], definfo['ip4']))
-        RSTOR.hset('thing_%s', % definfo['macaddr'], 'enable_to_browse', 'no')
+        RSTOR.hset('thing_%s' % definfo['macaddr'], 'enable_to_browse', 'no')
         sleep(3)
 
     if caller_info['enable_to_browse'] == 'yes':
