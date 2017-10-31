@@ -18,9 +18,7 @@ webui2-exec() {
 				domain=$lan \
 				address=$address \
 				interface=$interface \
-				launch webui2 &
-		[[ $? = 0 ]] &&
-			savepid webui2 $H/run/webui2.pid
+				launch webui2 -p $H/run/webui2.pid 1>/dev/null 2>/dev/null &!
     fi
 }
 
