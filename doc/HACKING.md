@@ -70,7 +70,7 @@ Channel: `dns-query-channel`
 Represents the event of a dns query by an object on the net.
 
 Sources:
-- dnscap (dowse plugin)
+- dnscrypt-proxy (dowse/src/dnscrypt-plugin)
 
 Format:
 
@@ -96,8 +96,31 @@ SUBSCRIBE dns-query-channel
 EOF
 ```
 
+## HTTP
+
+Channel: `http-query-channel`
+
+Represents the event of an http/s query by any object on the net.
+
+Sources:
+- libpcap httpry (dowse/src/httpry)
+
+Format:
+
+```
+HTTP,IP,EPOCH,METHOD,HOST,PATH
+```
+
+Arguments:
+- `IP`: IPv4 address where the dns query comes from
+- `EPOCH`: time when query occurred, number of seconds since Epoch
+- `METHOD`: HTTP method used (GET,POST,PUT etc.)
+- `HOST`: hostname of the requested uri
+- `PATH`: path of the requested uri
 
 ## OBJ
+
+Channel: `obj-info-channel`
 
 Represents the event of establishing contact with a known or unknown network object, joining or leaving the network. Objects can also be found through scans and information about them can be updated.
 
