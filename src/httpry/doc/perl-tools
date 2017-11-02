@@ -1,0 +1,86 @@
+A number of Perl scripts are included with the project to provide a basic log
+parsing framework. There is a central Perl script (parse_log.pl) that handles
+all of the core log parsing duties, and a set of Perl plugins (plugins/*.pm)
+with associated config files (plugins/*.cfg) that perform assorted processing
+duties. It is straightforward to create or modify the plugins to customize
+processing.
+
+*** IMPORTANT! ***
+The log parser will attempt to use all plugins that it finds in the default
+plugin directory. To override this behavior, use the -p switch to specify
+plugins by path and name and/or use -d to specify an alternate directory to
+use. If the plugin requires a configuration file, it must be located in the
+same directory as the plugin and named '<plugin name>.cfg'. Additionally, any
+input log file needs to be a valid httpry log with the field specifier at the
+start of the file.
+
+These non-core Perl modules must be installed to run all scripts:
+        DBI
+
+
+Included Perl scripts:
+---------------------
+
+ ./scripts/parse_log.pl
+        Core script for plugins. Processes log files and delivers data to each
+        initialized plugin. Plugins are utilized by having a .pm extension
+        and being placed in the plugin directory (default is ./plugins). If
+        a plugins directory is specified (-d), that is used instead. If
+        no directory is specified, the script first searches the current
+        directory for a plugin directory followed by the base directory of
+        the script. The first directory found is used. To load only specific
+        plugins, use the -p switch to provide a comma-delimited list of
+        plugins (-d is not applied here, so specify them by their full path).
+        Most included plugins require a config file, which must be named
+        '<plugin name>.cfg' and placed in the same directory as the plugin.
+
+
+Included plugins for parse_log.pl:
+---------------------------------
+
+ ./scripts/plugins/common_log.pm
+        Outputs the log data in the standard common logfile format. This
+        allows webserver log analysis tools to be applied to the captured
+        data.
+
+ ./scripts/plugins/content_analysis.pm
+        Breaks the input file into flows, which are time delimited blocks of
+        log lines by client IP. It then searches for specified keywords and
+        scores the flows accordingly. Outputs a summary file listing all
+        scored flows, as well as flow data for each scored flow. Requires an
+        input file containing search terms.
+
+ ./scripts/plugins/db_dump.pm
+        Dumps log file data into a previously initialized database. Useful
+        for more extensive data mining or adding a more user-friendly web
+        interface. Use the included db_dump.mysql to create the required
+        database tables.
+
+ ./scripts/plugins/find_proxies.pm
+        Performs some basic tests looking for proxy usage. The tests are
+        currently rather rudimentary and generate quite a lot of noise.
+
+ ./scripts/plugins/hostnames.pm
+        Outputs a list of unique hostnames with counts found in the log data.
+
+ ./scripts/plugins/log_summary.pm
+        Provides summary information regarding the input files including
+        visited hosts, top talkers and file extensions, along with other
+        assorted data. Useful for a high-level overview of the input files.
+
+ ./scripts/plugins/sample_plugin.pm
+        An example plugin with no functionality designed to demonstrate how
+        plugins are structured and to provide a start for new plugins.
+
+ ./scripts/plugins/search_terms.pm
+        Outputs a raw dump of all entered search terms for a number of the
+        major search services. It also calculates the average length of
+        extracted search queries.
+
+ ./scripts/plugins/tokenize.pm
+        Outputs a set of tokens for each source IP address, broken into
+        separate output files (a token here is defined as a sequence of
+        alphanumeric characters delimited by non-alphanumeric characters).
+
+ ./scripts/plugins/xml_format.pm
+        Outputs the input log data in XML format.

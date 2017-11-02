@@ -1,0 +1,80 @@
+#!/bin/sh
+
+#
+#  ----------------------------------------------------
+#  httpry - HTTP logging and information retrieval tool
+#  ----------------------------------------------------
+#
+#  Copyright (c) 2005-2014 Jason Bittel <jason.bittel@gmail.com>
+#
+
+#
+# Start/stop/restart httpry as a daemon process. This script
+# was written for use under Slackware Linux, but should be
+# easily modifiable for a different system.
+#
+# You will need to add an output file here for httpry to write
+# to while in daemon mode. If there are any additional arguments
+# that need to be passed to httpry, add them to httpry_args.
+#
+
+output_file="httpry.log"
+httpry_args=""
+
+httpry_start() {
+        if [ ! -n "${output_file}" ] ; then
+                echo "Error: No output file provided; edit ${0} accordingly"
+                exit 1
+        fi
+
+        echo "Starting httpry using output file '${output_file}'..."
+        if [ -r "/var/run/httpry.pid" ] ; then
+                if [ ps acx | grep -q httpry ] ; then
+                        echo "Error: httpry already running with PID `cat /var/run/httpry.pid`"
+                        exit 1
+                else
+                        rm -f /var/run/httpry.pid
+                fi
+        fi
+
+        eval httpry -d -o ${output_file} ${httpry_args}
+}
+
+httpry_stop() {
+        echo "Stopping httpry..."
+        if [ -r "/var/run/httpry.pid" ] ; then
+                kill `cat /var/run/httpry.pid`
+                rm -f /var/run/httpry.pid
+        else
+                killall httpry
+        fi
+}
+
+httpry_reload() {
+        echo "Reloading httpry..."
+        if [ -r "/var/run/httpry.pid" ] ; then
+                kill -HUP `cat /var/run/httpry.pid`
+        else
+                killall -HUP httpry
+        fi
+}
+
+case ${1} in
+start)
+        httpry_start
+        ;;
+stop)
+        httpry_stop
+        ;;
+restart)
+        httpry_stop
+        sleep 1
+        httpry_start
+        ;;
+reload)
+        httpry_reload
+        ;;
+*)
+        echo "Usage: ${0} [start|stop|restart|reload]"
+        ;;
+esac

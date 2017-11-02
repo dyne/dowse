@@ -1,0 +1,32 @@
+Original author and primary maintainer:
+
+   Jason Bittel <jason.bittel@gmail.com>
+
+
+Significant suggestions or contributions:
+
+   Shawn Ashlee <shawn.ashlee@rackspace.com>
+      * Provided a spec file to generate RPMs
+
+   Philipp Buck <philipp.buck@gmail.com>
+      * Suggested source/destination port as output fields
+      * Provided a patch for reopening output files with SIGHUP
+      * Suggested line buffering for output files
+
+   Mark Carter <mark.carter@imperial.ac.uk>
+      * Provided a patch adding IPv6 support
+
+   Mats Erik Andersson <debian@gisladisker.se>
+      * Provided a patch adding IPv6 support
+
+   Dennis Opacki <dopacki@adotout.com>
+      * Provided a major patch adding a rate statistics mode
+
+   Emanuele Acri <crossbower@backtrack-linux.org>
+      * Provided a patch adding a force output flush option
+
+   Bart Roos <mail@bartroos.com>
+      * Provided a patch adding an option to specify the PID filename
+
+   Dustin Webber <dustin.webber@gmail.com>
+      * Provided a patch fixing compile errors on OSX

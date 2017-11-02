@@ -1,0 +1,125 @@
+This is the high level list of changes for each httpry release. Note that
+this changelog does not include changes to the log file parsing scripts,
+which are often updated significantly between releases as well. It only
+lists notable changes and fixes to the core httpry program.
+
+
+version 0.1.8
+   * added support for 802.1Q VLAN tagged packets
+   * added PATCH HTTP method to default method list
+   * changed packet parsing to continue without a full header present
+   * added PPP link type support
+   * added custom ethernet header offset option (-S)
+   * changed read timeout to be non-zero
+
+version 0.1.7
+   * added an option (-P) to specify the PID filename
+   * fixed compiling under OSX
+   * changed IPv6 parsing to follow extension headers if present
+   * changed rate statistics code to use a hash table data structure
+   * added a rps threshold option (-l) when in rate statistics mode
+   * changed rps display mode to -s, -t now just sets the display interval
+
+version 0.1.6
+   * added IPv6 support
+   * added a force output flush option (-F) to disable output buffering
+   * removed line buffering on output files
+   * added a HTTP request per second display mode (-t)
+
+version 0.1.5
+   * added a binary pcap dump file option (-b)
+   * changed -s to -f to be more mnemonic
+   * added SIGHUP handling for graceful reloads
+   * default to line buffering on output files
+   * added source-port and dest-port as available output fields
+
+version 0.1.4
+   * improved efficiency of header line parsing
+   * added support for parsing any request method (-m)
+   * default to capturing all HTTP packets with a standard RFC2616 method
+   * modified date/time stamp to be more consistent with ISO 8601
+   * messages now print to the syslog only when running as a daemon
+
+version 0.1.3
+   * improved parsing of non-standard spacing and line terminators
+   * fixed compiling under FreeBSD
+   * removed broken conditionals that caused pcap_breakloop to not be used
+   * fixed the program returning success even if the capture loop failed
+   * fixed a potential crash if the program was running in debug mode
+   * added a quiet option (-q) to suppress non-critical output
+
+version 0.1.2
+   * added support for multiple datalink packet header types
+   * added support for virtual devices and interfaces without an IP address
+   * output format structure is now a hybrid hash table/linked list
+   * removed -f option; capture filters are now passed as the final argument
+
+version 0.1.1
+   * fixed some minor format string parsing bugs
+   * added debug code to validate correct behavior (use 'make debug' to enable)
+   * added packet capture/processing statistics
+   * fixed error when changing output file owner after dropping privileges
+   * output format structure is now a hybrid tree/list for improved efficiency
+   * fixed the header parsing loop continuing into the response data
+   * added some additional sanity checks and more informative error strings
+
+version 0.1.0
+   * massive code rewrite/refactoring
+   * rewrote output format handling code
+   * removed config file option
+   * removed writing binary dump file
+   * removed option to specify run directory in daemon mode
+   * changed option letter -f to -r and -l to -f
+   * hugely improved the efficiency of packet parsing
+   * tweaked default capture filter
+   * eliminated some minor memory leaks on shutdown
+   * reduced data coupling within the program
+   * removed custom argument parser to make it more functional and consistent
+   * format string can now have internal whitespace and is now case insensitive
+
+version 0.0.9
+   * added parsing of both client requests and server responses
+   * default capture filter now less restrictive
+   * command line arguments now *always* take precedence over config options
+   * wrote custom command line argument parser
+   * removed chance to test against invalid data on exit
+   * all major packet fields are now available for output
+   * config file options now all lowercase
+   * output files are now chown'd to process owner
+   * -n switch now counts parsed packets, not total packets seen
+   * additional sanity checking for output file paths
+   * added necessary compile directives for OpenBSD
+   * '-' can be specified for the filename to force STDOUT
+
+version 0.0.8
+   * fixed crash on exit when reading from an input file
+   * handle whitespace properly in config file lines
+   * allow user to specify fields to output
+   * removed extended options switch (-x)
+   * configurable output data format (-s)
+   * parsed HTTP header fields stored in dynamic list
+   * error/log/warn macros encapsulated in header file
+   * moved TCP data fields to separate header file
+
+version 0.0.7
+   * option to read settings from a config file (-c)
+   * changed packet count switch from -c to -n
+   * fixed bug in packet count check
+   * cleaned up initialization logic in main()
+   * added config.h for setting compile time program defaults
+   * added option to display extended packet information (-x)
+   * added option to dump binary capture output file (-b)
+   * basic packet capture/parsing stats at program termination
+   * program now compiles cleanly as strict ANSI C
+
+version 0.0.6
+   * ability to change process owner (-u)
+   * added additional error checking when entering daemon mode
+   * completely reworked output data handling
+   * removed stdout suppression (-s) option
+   * daemon mode (-d) now requires output file (-o)
+   * error/log/warn message printing pushed into function macros
+   * standardized error and status message strings
+   * ability to specify running directory (-r)
+   * fixed an incorrect array initialization
+   * split version and help information into two commands (-v and -h)
