@@ -41,9 +41,9 @@ def main():
     Main routine
     """
     caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
-    if caller_info['enable_to_browse'] != 'yes' \
-        and caller_info['isadmin'] != 'yes':
-        return redirect('/captive_portal', code=302)
+    if caller_info.get('enable_to_browse', 'no') != 'yes' \
+        and caller_info.get('isadmin', 'no') != 'yes':
+        return redirect('http://dowse.it/captive_portal', code=302)
 
     admin_devices = []
     for i in RSTOR.keys('thing_*'):
@@ -181,7 +181,10 @@ def captive_portal():
     Renders the actual captive portal page
     """
     caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
-    return render_template('captive_portal.html', cur_info=caller_info)
+    resp = make_response(render_template('captive_portal.html',
+                                         cur_info=caller_info))
+    resp.headers = fill_http_headers(resp.headers)
+    return resp
 
 
 @APP.route('/cmd', methods=['GET', 'POST'])
@@ -273,11 +276,7 @@ def page_not_found(e):
     if caller_info.get('enable_to_browse', 'no') == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404
 
-    resp = make_response(render_template('captive_portal.html',
-                                         cur_info=caller_info))
-    resp.headers = fill_http_headers(resp.headers)
-    return resp
-
+    return redirect('http://dowse.it/captive_portal', code=302)
 
 if __name__ == '__main__':
     parser = ArgumentParser()
