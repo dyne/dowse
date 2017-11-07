@@ -285,8 +285,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.pidfile:
-        pidf = open(args.pidfile, 'w')
-        pidf.write(str(getpid()))
-        pidf.close()
+        with open(args.pidfile, 'w') as pidf:
+            pidf.write(str(getpid()))
 
     APP.run(host='0.0.0.0', port=8000, threaded=True, debug=True)
