@@ -24,11 +24,12 @@ Main webui module
 from time import time, sleep
 from os import getpid
 from argparse import ArgumentParser
-from flask import Flask, request, redirect, render_template
+from flask import (Flask, request, redirect, render_template,
+                   make_response)
 
 from config import (RDYNA, RSTOR)
 from helpers import (parsetime, sort_things, get_caller_info,
-                     fill_default_thing)
+                     fill_default_thing, fill_http_headers)
 
 
 APP = Flask(__name__)
@@ -256,12 +257,11 @@ def page_not_found(e):
     """
     HTTP 404 handling function
 
-    Returns actual 404, or 511, depending if you are enabled to
-    browse or should be redirected to the captive portal.
+    Returns actual 404, or directs you to the captive portal, depending if you
+    are enabled to browse or should be redirected.
     """
     caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
-    enabled = caller_info.get('enable_to_browse', False)
-    if not enabled:
+    if caller_info.get('enable_to_browse', 'no') != 'yes':
         definfo = fill_default_thing(request.environ['REMOTE_ADDR'])
         RSTOR.hmset('thing_%s' % definfo['macaddr'], definfo)
         RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' %
@@ -270,10 +270,13 @@ def page_not_found(e):
         RSTOR.hset('thing_%s' % definfo['macaddr'], 'enable_to_browse', 'no')
         sleep(3)
 
-    if caller_info['enable_to_browse'] == 'yes':
+    if caller_info.get('enable_to_browse', 'no') == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404
 
-    return render_template('captive_portal_redir.html', cur_info=caller_info), 511
+    resp = make_response(render_template('captive_portal.html',
+                                         cur_info=caller_info))
+    resp.headers = fill_http_headers(resp.headers)
+    return resp
 
 
 if __name__ == '__main__':

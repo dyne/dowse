@@ -26,6 +26,19 @@ from time import time
 from config import (RDYNA, RSTOR)
 
 
+def fill_http_headers(respdict):
+    """
+    Fills a make_response.headers dict with hardcoded headers.
+    Wishfully used to make Android figure out a captive portal.
+    """
+    assert isinstance(respdict, dict), 'Wrong type of var was fed.'
+
+    respdict['Cache-Control'] = 'no-cache, no-store, must-revalidate, post-check=0, pre-check=0'
+    respdict['Pragma'] = 'no-cache'
+    respdict['Expires'] = '0'
+    return respdict
+
+
 def ip2mac(ipaddr):
     """
     Returns MAC address mapped to the given IP
