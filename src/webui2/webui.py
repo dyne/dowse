@@ -142,7 +142,7 @@ def modify_priv_things():
 
     thing_mac = request.form['macaddr']
     if request.form['column'] != 'admin':
-        return "<h1>400 - Bad request</h1>\n"
+        return '<h1>400 - Bad request</h1>\n'
 
     state = request.form['value']
     if not state:
