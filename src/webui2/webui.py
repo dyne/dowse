@@ -287,4 +287,4 @@ if __name__ == '__main__':
         with open(args.pidfile, 'w') as pidf:
             pidf.write(str(getpid()))
 
-    APP.run(host='0.0.0.0', port=8000, threaded=True, debug=True)
+    APP.run(host='0.0.0.0', port=8000, threaded=True, debug=False)
