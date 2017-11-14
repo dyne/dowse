@@ -129,8 +129,9 @@
                     </tbody>
                 </table>
             </div>
-            <form action="/reset_admin" method="get">
-                <button class="btn">Reset admin devices</button>
+            <form action="/reset_admin" method="post">
+                <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">
+                <button class="btn"> Reset admin devices </button>
             </form>
             {% else %}
             <div class="jumbotron">

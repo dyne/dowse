@@ -177,6 +177,22 @@ def test_admin():
     return redirect('/', code=302)
 
 
+@APP.route('/reset_admin', methods=['POST'])
+def reset_admin():
+    """
+    Procedure to reset all admin devices
+    """
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    if caller_info['isadmin'] != 'yes':
+        return 'You are unauthorized to perform this action.\n'
+
+    for i in RSTOR.keys('thing_*'):
+        RSTOR.hmset(i, {'isadmin': 'no'})
+
+    sleep(5)
+    return redirect('/', code=302)
+
+
 @APP.route('/captive_portal')
 def captive_portal():
     """
