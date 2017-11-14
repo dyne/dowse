@@ -40,15 +40,17 @@ def main():
     """
     Main routine
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
-    if caller_info.get('enable_to_browse', 'no') != 'yes' \
-        and caller_info.get('isadmin', 'no') != 'yes':
-        return redirect('http://dowse.it/captive_portal', code=302)
-
     admin_devices = []
     for i in RSTOR.keys('thing_*'):
         if RSTOR.hget(i, 'isadmin') == 'yes':
             admin_devices.append(RSTOR.hgetall(i))
+
+    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    if caller_info.get('enable_to_browse', 'no') != 'yes' \
+        and caller_info.get('isadmin', 'no') != 'yes' \
+        and admin_devices:
+        return redirect('http://dowse.it/captive_portal', code=302)
+
 
     return render_template('welcome.html', admin_devices=admin_devices,
                            cur_info=caller_info)
