@@ -1,4 +1,0 @@
-{
-    "<!--TMPL_VAR name="name_of_variable" -->":
-	"<!--TMPL_VAR name="value_of_variable" -->"
-}

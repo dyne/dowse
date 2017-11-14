@@ -23,16 +23,13 @@ all: base springs
 node-red:
 	./import.sh node-red
 
-libs: b64
+libs:
 	make -C libdowse
 
 .PHONY: dnscrypt-proxy libwebsockets modprobe netdata seccrond hiredis-lock mosquitto pgld sup
 
 base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto seccrond
 	@echo "Compiled base"
-
-b64:
-	@make -C libb64
 
 dnscrypt-proxy:
 	@./compile.sh dnscrypt-proxy ${THREADS}

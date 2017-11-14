@@ -1,7 +1,8 @@
 /*  Dowse - ip2mac translation function
  *
- *  (c) Copyright 2016 Dyne.org foundation, Amsterdam
+ *  (c) Copyright 2016-2017 Dyne.org foundation, Amsterdam
  *  Written by Nicola Rossi <nicola@dyne.org>
+ *             Denis Roio <jaromil@dyne.org>
  *
  * This source code is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Public License as published

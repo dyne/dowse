@@ -35,6 +35,7 @@ int relative_time(char *local_time, char *out) {
     long int deltaMinutes;
 
     struct tm tt;
+
     // parse utc into a tm struct
     memset(&tt,0,sizeof(struct tm));
     if( ! strptime(local_time, "%Y-%m-%dT%H:%M:%SZ", &tt) ) {
