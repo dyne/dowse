@@ -281,10 +281,15 @@ def page_not_found(e):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-p', '--pidfile')
+    parser.add_argument('-d', '--debug', action='store_true')
     args = parser.parse_args()
 
     if args.pidfile:
         with open(args.pidfile, 'w') as pidf:
             pidf.write(str(getpid()))
 
-    APP.run(host='0.0.0.0', port=8000, threaded=True, debug=False)
+    dbg = False
+    if args.debug:
+        dbg = True
+
+    APP.run(host='0.0.0.0', port=8000, threaded=True, debug=dbg)
