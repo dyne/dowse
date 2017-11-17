@@ -24,7 +24,7 @@ from time import sleep
 from redis import StrictRedis
 
 ## server settings
-r = StrictRedis(host='localhost', port=6379, db=0)
+r = StrictRedis(host='localhost', port=6378, db=0)
 p = r.pubsub()
 #p.subscribe('dns-query-channel', 'pgl-info-channel')
 p.subscribe('dns-query-channel')
