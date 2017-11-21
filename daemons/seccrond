@@ -25,7 +25,6 @@ seccrond-conf() {
 	fn seccrond-conf
 	cat <<EOF
 */50 * * * * * $R/bin/pendulum nmap
-*/15 * * * * * $R/bin/pendulum netscan
 */10 * * * * * $R/bin/pendulum watchdog
 */1 * * * * * $R/bin/pendulum nextcmd
 #*/5 * * * * * $R/bin/pendulum rrdns
