@@ -7,18 +7,20 @@ webui2-exec() {
     
     func "launching webui2 on $hostname.$lan"
 
+	args="$*"
+
     if [[ $DEBUG = 2 ]]; then
 		hostname=$hostname \
 				domain=$lan \
 				address=$address \
 				interface=$interface \
-				launch webui2
+				launch webui2 $args
     else
 		hostname=$hostname \
 				domain=$lan \
 				address=$address \
 				interface=$interface \
-				launch webui2 -p $H/run/webui2.pid 1>/dev/null 2>/dev/null &!
+				launch webui2 -p $H/run/webui2.pid $args 1>/dev/null 2>/dev/null &!
     fi
 }
 
