@@ -37,6 +37,8 @@ db-time-format local;
 ddns-domainname "dowse.it";
 local-address $address;
 omapi-port 7911;
+default-lease-time 2592000;
+max-lease-time 7776000;
 
 subnet ${netzero} netmask ${netmask} {
   range ${range_start} ${range_stop};
