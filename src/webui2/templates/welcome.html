@@ -18,6 +18,7 @@
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+    <script type="text/javascript" src="dashboard.js"></script>
     </head>
     <body>
         <div class="container">
@@ -99,6 +100,35 @@
                    <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br>
                    <strong>IP:</strong> {{ cur_info['ip4'] }}<br>
                 </p>
+                <a href="#">
+     <img src="http://dowse.it:29999/api/v1/badge.svg?chart=system.cpu"></img>
+     <a href="#">
+<img src="http://dowse.it:29999/api/v1/badge.svg?chart=netdata.server_cpu"></img>
+</a>
+  </a>
+  <div style="width: 100%; text-align: center;">
+    <div data-netdata="system.cpu"
+            data-dimensions="user"
+            data-chart-library="gauge"
+            data-width="150px"
+            data-after="-60"
+            data-points="60"
+            data-title="Yes! Realtime!"
+            data-units="I am alive!"
+            data-colors="#FF5555"
+            ></div>
+    <br/>
+    <div data-netdata="Dowse.TLDs_hit"
+            data-dimensions="user"
+            data-chart-library="dygraph"
+            data-dygraph-theme="sparkline"
+            data-width="200px"
+            data-height="30px"
+            data-after="-60"
+            data-points="60"
+            data-colors="#FF5555"
+            ></div>
+</div>
                 <h1>Welcome</h1>
                 <p>You are in a working environment watched by Dowse. From here you can
                    access your Dowse device statistics, count and identify the things on

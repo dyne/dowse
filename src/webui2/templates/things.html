@@ -115,23 +115,19 @@
                 </div>
                 <div class="col-md-4">
                     <h3>Your Device Info:</h3>
-                    <p>
-                      <strong>Name:</strong> {{ cur_info['name'] }}<br>
-                      <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br>
-                      <strong>IP:</strong> {{ cur_info['ip4'] }}<br>
-                    </p>
+                    <p> <strong>Name:</strong> {{ cur_info['name'] }}<br> <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br> <strong>IP:</strong> {{ cur_info['ip4'] }}<br> </p>
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-12 col-sm-4 col-xs-3 col-lg-12">
+                <div class="col-md-12 col-lg-12 col-xs-12 col-sm-12">
                     <table class="table">
                         <thead>
                             <tr>
                                 <th></th>
                                 <th>Device Name</th>
-                                <th>Last Seen</th>
-                                <th>Vendor</th>
-                                <th>IP / MAC</th>
+                                <th class="hidden-xs">Last Seen</th>
+                                <th class="hidden-xs">Vendor</th>
+                                <th class="hidden-xs">IP / MAC</th>
                                 <th>On/Off</th>
                                 <th>Role</th>
                             </tr>
@@ -158,9 +154,9 @@
                                             </div>
                                         </form>
                                     </td>
-                                    <td>{{ thing['last'] }}</td>
-                                    <td>{{ thing['vendor'] }}</td>
-                                    <td>{{ thing['ip4'] }}
+                                    <td class="hidden-xs">{{ thing['last'] }}</td>
+                                    <td class="hidden-xs">{{ thing['vendor'] }}</td>
+                                    <td class="hidden-xs">{{ thing['ip4'] }}
                                         <br>
                                         <a href="/thing_show?mac={{ thing['macaddr'] }}">{{ thing['macaddr'] }}</a>
                                     </td>
@@ -212,7 +208,6 @@
                                         {% endif %}
                                     </td>
                                     {% else %}
-
                                     <!-- if isadmin -->
                                     {% if thing['enable_to_browse'] == 'no' %}
                                     <td>
@@ -237,7 +232,6 @@
                                         {% endif %}
                                     </td>
                                     {% endif %}
-
                                     <!-- if isadmin -->
                                 </tr>
                                 {% endfor %}

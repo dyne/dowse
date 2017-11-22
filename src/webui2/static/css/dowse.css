@@ -9,25 +9,23 @@ body
     margin: 0;
     padding: 0;
     font-size: 100%;
-    font-family: 'Aalta DIN','Source Sans Pro', 'Ubuntu', sans-serif;
+    font-family: 'Aalta DIN','Roboto Condensed','Source Sans Pro', 'Ubuntu', sans-serif;
     overflow-x: hidden;
 }
 
 body
 {
-    padding-top: 0px;
+    padding-top: 2px;
     color: #000000;
-    background-color: #e2ecfb;
+    background-color: #ffffff;
+    /* Oval: */
+    background-image: radial-gradient(50% 100%, #DBE2D0 0%, #ACB0A7 100%);
+    border: 1px solid #979797;
 }
 
 footer
 {
     padding: 30px 0;
-}
-
-tr
-{
-    tr: nth-child(even) {background-color: #f2f2f2;};
 }
 
 /*
@@ -39,7 +37,7 @@ tr
   font-family: 'Aalta DIN';
   font-style:  normal;
   font-weight: 400;
-  src: url(/din1451alt.ttf) format('ttf');
+  src: url(fonts/din1451alt.ttf) format('ttf');
 }
 
 @media screen and (max-width: 767px)
@@ -157,19 +155,20 @@ tr
 
 tr.self
 {
-    background-color: #cdb3b3;
+    background-color: #f6f6dd;
 }
 
 tr
 {
-    background-color: #D8D8D8;
+background-color: #DDDDC5;
 }
+
 
 .admin
 {
     width: 20;
     height: 20;
-    background-color: #ff9fb5;
+    background-color: #D8D8D8;
     font-weight: bold;
     text-decoration: blink;
     color: #f31b1b;
