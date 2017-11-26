@@ -71,7 +71,7 @@ dnscrypt-proxy-exec() {
 	
 	# if undefined, eg at the first startup, it takes a default value
 	#dnscrypt_name=${dns_selected:-dnscrypt.eu-nl}
-	dnscrypt_name="ipredator"
+	dnscrypt_name=${1:-"ipredator"}
 
 	func "Launching dnscrypt-proxy to listen on port 53"
 	act "dnscrypt proxy server: $dnscrypt_name"
