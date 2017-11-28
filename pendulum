@@ -87,10 +87,22 @@ watchdog_daemons() {
 		pid_list=`cat $d`
 		[[ "$pid_list" = "" ]] && {
 			NOW=`date +"%Y/%m/%d %H:%M:%S"`
-			err="$NOW $d pidfile found empty. Note: We will skip it "
+			err="$NOW $d pidfile found empty."
 			error $err
 			print $err >> $H/log/watchdog.log
-			continue
+
+			act "attempting restart: $daemon"
+			start $daemon
+			if [[ $? = 0 ]]; then
+				err="$NOW (stat) succesfully restarted: $daemon"
+				notice $err
+				print $err >> $H/log/watchdog.log
+			else
+				err="watchdog fails to restart: $daemon"
+				error $err
+				print $err >> $H/log/watchdog.log
+			fi
+			break;
 		}
 
         for pid in ${=pid_list} ; do
