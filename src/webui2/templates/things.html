@@ -88,11 +88,11 @@
                     <h3>Network Status</h3>
                     {% if cur_state == "on" %}
                     <a href="/cmd?op=ALL_THINGS_OFF">
-                        <img src="static/img/Big_BTN.png" width="64" class="center-block" alt="network access enabled" title="disable network access for all things">
+                        <img src="static/img/Big_BTN_ON.png" width="64" class="center-block" alt="network access enabled" title="disable network access for all things">
                     </a>
                     {% elif cur_state == "off" %}
                     <a href="/cmd?op=ALL_THINGS_ON">
-                        <img src="static/img/partymode_OFF.png" width="64" class="center-block" alt="network access enabled" title="enable network access for all things">
+                        <img src="static/img/Big_BTN_OFF.png" width="64" class="center-block" alt="network access enabled" title="enable network access for all things">
                     </a>
                     {% endif %}
                 </div>
@@ -100,11 +100,11 @@
                     <h3>Party mode</h3>
                     {% if party_mode == "on" %}
                     <a href="/cmd?op=PARTY_MODE_OFF">
-                        <img src="static/img/partymode_ON.png" width="64" class="center-block" alt="party mode enabled" title="restrict the access on the network to only enabled things">
+                        <img src="static/img/OpenAccess_ON_lw.png" width="64" class="center-block" alt="party mode enabled" title="restrict the access on the network to only enabled things">
                     </a>
                     {% elif party_mode == "off" %}
                     <a href="/cmd?op=PARTY_MODE_ON">
-                        <img src="static/img/partymode_OFF.png" width="64" class="center-block" alt="party mode disabled" title="enable the network at all things and ENJOY THE BEER !!!!">
+                        <img src="static/img/OpenAccess_OFF_lw.png" width="64" class="center-block" alt="party mode disabled" title="enable the network at all things and ENJOY THE BEER !!!!">
                     </a>
                     {% endif %}
                 </div>
