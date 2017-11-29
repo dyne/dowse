@@ -116,18 +116,36 @@ def modify_things():
     thing_name = request.form['name']
     thing_name = thing_name.replace(' ', '_')
 
-    if not thing_mac or not thing_name:
+    act = request.form.get('action')
+    if not act:
         return '<h1>400 - Bad Request</h1>\n'
 
-    if RDYNA.get('dns-lease-%s' % thing_name):
-        return '<h1>This name already exists. Choose another one.</h1>\n'
+    if act == 'update':
+        if not thing_mac or not thing_name:
+            return '<h1>400 - Bad Request</h1>\n'
 
-    # set it in redis-storage
-    RSTOR.hset('thing_%s' % thing_mac, 'name', thing_name)
+        if RDYNA.get('dns-lease-%s' % thing_name):
+            return '<h1>This name already exists. Choose another one.</h1>\n'
 
-    # set it in redis-dynamic, for reverse dns
-    thing_ip = RSTOR.hget('thing_%s' % thing_mac, 'ip4')
-    RDYNA.set('dns-lease-%s' % thing_name, '%s' % thing_ip)
+        # set it in redis-storage
+        RSTOR.hset('thing_%s' % thing_mac, 'name', thing_name)
+
+        # set it in redis-dynamic, for reverse dns
+        thing_ip = RSTOR.hget('thing_%s' % thing_mac, 'ip4')
+        RDYNA.set('dns-lease-%s' % thing_name, '%s' % thing_ip)
+    elif act == 'delete':
+        if not thing_mac:
+            return '<h1>400 - Bad Request</h1>\n'
+
+        thing_name = RSTOR.hget('thing_%s' % thing_mac, 'name')
+
+        # del it from redis-storage
+        RSTOR.delete('thing_%s' % thing_mac)
+
+        # del it from redis-dynamic, to free reverse dns
+        RDYNA.delete('dns-lease-%s' % thing_name)
+    else:
+        return '<h1>400 - Bad Request</h1>\n'
 
     return redirect(request.form['url_from'], code=302)
 
