@@ -22,9 +22,6 @@
 
 blend_name="dowse"
 
-## array of dependencies
-eval "$(curl -s https://raw.githubusercontent.com/dyne/dowse/master/ops/dowse_install.sh | grep '^blend_packages')"
-
 blend_preinst() {
 	fn blend_preinst
 	req=(strapdir blend)
@@ -38,6 +35,8 @@ blend_preinst() {
 	sudo git submodule update --init
 	popd
 	sudo chown -R 1000:1000 "$strapdir/home/dowse"
+
+	blend_packages=($(grep ^zsh $strapdir/home/dowse/dowse-src/README.md))
 
 	cat <<EOF | sudo tee ${strapdir}/${blend_name}-preinst
 #!/bin/sh
@@ -57,8 +56,6 @@ make install
 printf "source /usr/local/dowse/zshrc\n" > /home/dowse/.zshrc
 apt-get clean
 
-mkdir -p /var/lib/mysql-files
-chown -v dowse:dowse /var/lib/mysql-files
 EOF
 	chroot-script -d ${blend_name}-preinst || zerr
 }
