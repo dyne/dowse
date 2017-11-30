@@ -29,7 +29,7 @@ from flask import (Flask, request, redirect, render_template,
 
 from config import (RDYNA, RSTOR)
 from helpers import (parsetime, sort_things, get_caller_info,
-                     fill_default_thing, fill_http_headers)
+                     fill_default_thing, fill_http_headers, ip2mac)
 
 
 APP = Flask(__name__)
@@ -124,8 +124,9 @@ def modify_things():
         if not thing_mac or not thing_name:
             return '<h1>400 - Bad Request</h1>\n'
 
-        if RDYNA.get('dns-lease-%s' % thing_name):
-            return '<h1>This name already exists. Choose another one.</h1>\n'
+        _ip = RDYNA.get('dns-lease-%s' % thing_name)
+        if _ip and ip2mac(_ip) != thing_mac:
+            return '<h1>This name already exists and is not yours. Choose another one.</h1>\n'
 
         # set it in redis-storage
         RSTOR.hset('thing_%s' % thing_mac, 'name', thing_name)
