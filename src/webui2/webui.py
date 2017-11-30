@@ -314,6 +314,7 @@ def page_not_found(e):
 
     return redirect('http://dowse.it/captive_portal', code=302)
 
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-p', '--pidfile')
