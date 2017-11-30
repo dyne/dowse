@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
-#include <b64/cencode.h>
+/* #include <b64/cencode.h> */
 #include "dowse.h"
 
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -23,7 +23,7 @@
 redisContext *log_redis  = NULL;//connect_redis("127.0.0.1", 6379, 0);
 int logredis_retry_to_connect=1;
 
-base64_encodestate b64_state;
+/* base64_encodestate b64_state; */
 redisReply *cmd_redis(redisContext *redis, const char *format, ...) ;
 redisContext *connect_redis(int db);
 
