@@ -108,14 +108,14 @@ execrules=(
     ip            root
     iptables      root
     xtables-multi root
-    ebtables      root
+    # ebtables      root
     # TODO: sup list of authorized /proc and /sys paths to write
     sysctl        root
     # TODO: sup list of authorized modules to load (using libkmod)
     modprobe      root
     # TODO: sup list of authorized signals to emit (using killall)
     kill          root
-    pgld          root
+    # pgld          root
 )
 zkv.save execrules $S/build/db/execrules.zkv
 
@@ -144,12 +144,12 @@ execmap=(
 
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi
-    ebtables      /sbin/ebtables
+    # ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
     arp           /usr/sbin/arp
     # TODO: sup list of authorized modules (using libkmod)
     modprobe      $PREFIX/bin/modprobe
-    pgld          $PREFIX/bin/pgld
+    # pgld          $PREFIX/bin/pgld
     libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so
     nmap          /usr/bin/nmap
 )

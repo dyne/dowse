@@ -28,7 +28,7 @@ libs:
 
 .PHONY: dnscrypt-proxy libwebsockets modprobe netdata seccrond hiredis-lock mosquitto pgld sup
 
-base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so pgld netdata dhcpd libwebsockets mosquitto seccrond
+base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so netdata dhcpd libwebsockets mosquitto seccrond
 	@echo "Compiled base"
 
 dnscrypt-proxy:

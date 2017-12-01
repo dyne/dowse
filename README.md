@@ -80,7 +80,7 @@ cd dowse-src && git submodule update --init
    similar for other package managers.
 
 ```
-zsh iptables ebtables build-essential autoconf automake libhiredis-dev libkmod-dev libjemalloc-dev pkg-config libtool libltdl-dev libsodium-dev libldns-dev libnetfilter-queue-dev uuid-dev zlib1g-dev cmake liblo-dev nmap python3-flask python3-redis xmlstarlet
+zsh iptables build-essential autoconf automake libhiredis-dev libkmod-dev libjemalloc-dev pkg-config libtool libltdl-dev libsodium-dev libldns-dev libnetfilter-queue-dev uuid-dev zlib1g-dev cmake liblo-dev nmap python3-flask python3-redis xmlstarlet
 ```
 
 3. Choose which user should be running dowse: your own is fine, or
@@ -194,9 +194,6 @@ source /usr/local/dowse/zshrc
 
     # stop the dhcp server
     stop dhcpd
-
-    # remove the layer 2 firewall rules
-    ebtables-stop
 
     # remove the layer 3 firewall rules
     iptables-snat-off

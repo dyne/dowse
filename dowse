@@ -111,7 +111,7 @@ zmodload zsh/net/tcp
 source $R/zlibs/modules
 source $R/zlibs/processes
 source $R/zlibs/iptables
-source $R/zlibs/ebtables
+# source $R/zlibs/ebtables
 source $R/zlibs/confstore
 source $R/zlibs/redis
 source $R/zlibs/redis
@@ -126,7 +126,7 @@ source $R/daemons/dhcpd
 source $R/daemons/mosquitto
 source $R/daemons/dnscrypt-proxy
 source $R/daemons/netdata
-source $R/daemons/pgld
+# source $R/daemons/pgld
 source $R/daemons/redis
 source $R/daemons/redis-volatile
 source $R/daemons/seccrond
@@ -267,7 +267,7 @@ dowse-start() {
 
     [[ "$firewall" = "yes" ]] && {
 
-        ebtables-stop
+        # ebtables-stop
         iptables-stop
 
         loopback-on
@@ -318,9 +318,9 @@ EOF
     # start the dns encrypted tunneling
     start dnscrypt-proxy
 
-    [[ "$firewall" = "yes" ]] &&
+    # [[ "$firewall" = "yes" ]] &&
         # start peerguardian (must be at end, after any other iptables setting)
-        start pgld
+        # start pgld
 
 	# start the mqtt/websocket hub
 	start mosquitto
@@ -369,10 +369,10 @@ dowse-stop() {
     stop dhcpd
 
     # stop the firewall peerguardian
-    stop pgld
+    # stop pgld
 
     # remove the layer 2 firewall rules
-    ebtables-stop
+    # ebtables-stop
 
     # remove the layer 3 firewall rules
     iptables-snat-off
