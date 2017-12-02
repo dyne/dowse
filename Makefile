@@ -16,7 +16,7 @@ all: config sources
 	@echo
 
 config:
-	@echo "configuring environment for the calling user: ${USER} and home: ${DOWSE_HOME}"
+	@echo "configuring environment for the calling user: ${DOWSE_USER} and home: ${DOWSE_HOME}"
 	@mkdir -p build/bin
 	@mkdir -p build/db
 
