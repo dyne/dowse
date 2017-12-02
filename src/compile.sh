@@ -27,6 +27,15 @@ notice "Compiling $1 using ${THREADS} threads"
 
 
 case $1 in
+	redis)
+		[[ -r $R/src/redis/src/redis-server ]] && return 0
+		pushd $R/src/redis
+		CFLAGS="$CFLAGS" \
+			  LDFLAGS="$LDFLAGS" \
+			  make -j${THREADS}
+		popd
+		;;
+
 	log)
 		[[ -r $R/src/log/liblog.a ]] && return 0
 		pushd $R/src/log

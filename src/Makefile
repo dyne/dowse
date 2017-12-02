@@ -3,13 +3,13 @@ PREFIX ?= /usr/local/dowse
 THREADS ?= 1
 
 CC = gcc
-CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I.
-LIBS = -lhiredis -Llibdowse -l:libdowse.a
+CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I. -Iredis/deps/hiredis -Iredis/deps/jemalloc
+LIBS = -L src/redis/deps/hiredis -l:libhiredis.a -Llibdowse -l:libdowse.a
 
 all: base springs
-	./import.sh redis-server
-	./import.sh redis-cli
 	./import.sh nmap-macs
+	install -s -p redis/src/redis-server ../build/bin
+	install -s -p redis/src/redis-cli ../build/bin
 	install -s -p modprobe        ../build/bin
 	install -s -p dowse-to-gource ../build/bin
 	install -s -p dowse-to-osc    ../build/bin
@@ -26,10 +26,13 @@ node-red:
 libs:
 	make -C libdowse
 
-.PHONY: dnscrypt-proxy libwebsockets modprobe netdata seccrond hiredis-lock mosquitto pgld sup
+.PHONY: redis dnscrypt-proxy libwebsockets modprobe netdata seccrond hiredis-lock mosquitto pgld sup
 
-base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so netdata dhcpd libwebsockets mosquitto seccrond
+base: config libs redis modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so netdata dhcpd libwebsockets mosquitto seccrond
 	@echo "Compiled base"
+
+redis:
+	@./compile.sh redis ${THREADS}
 
 dnscrypt-proxy:
 	@./compile.sh dnscrypt-proxy ${THREADS}
