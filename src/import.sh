@@ -63,7 +63,7 @@ pkg-download() {
     if [[ "$bckfile" = "" ]]; then
 	# pacman needs root: https://bugs.archlinux.org/task/33369
 	#pacman -Swdd --noconfirm --cachedir $S/debs ${pkg}
-	cd $S/debs && wget $(pacman -Spdd ${pkg}) && cd -
+	wget $(pacman -Spdd ${pkg}) -P $S/debs
         [[ $? = 0 ]] || {
             error "error downloading $pkg"
             return 1 }
@@ -97,6 +97,9 @@ pkg-download() {
 	local nmap_macs="https://svn.nmap.org/nmap/nmap-mac-prefixes"
 	notice "importing latest nmap MAC database"
 	wget -O "$S/build/nmap-mac" "$nmap_macs"
+	[[ $? = 0 ]] || {
+        	error "cannot download latest nmap MAC database"
+        	exit 1 }
 	exit 0
 }
 
