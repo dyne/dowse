@@ -50,6 +50,7 @@ install: install-zlibs
 	install    -p -m 644 build/db/*.zkv   ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/db/*.idx   ${DESTDIR}${PREFIX}/db
 	install -p -m 755 build/bin/*      ${DESTDIR}${PREFIX}/bin
+	install -d ${DESTDIR}/usr/share/nmap
 	install    -p -m 644 build/nmap-mac   ${DESTDIR}/usr/share/nmap/nmap-mac-prefixes
 	./set_privileges.sh                     ${DESTDIR}${PREFIX}
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
