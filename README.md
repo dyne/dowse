@@ -80,7 +80,7 @@ cd dowse-src && git submodule update --init
    similar for other package managers.
 
 ```
-zsh iptables build-essential autoconf automake libhiredis-dev libkmod-dev libjemalloc-dev pkg-config libtool libltdl-dev libsodium-dev libldns-dev libnetfilter-queue-dev uuid-dev zlib1g-dev cmake liblo-dev nmap python3-flask python3-redis xmlstarlet
+zsh iptables build-essential autoconf automake libhiredis-dev libkmod-dev libjemalloc-dev pkg-config libtool libltdl-dev libsodium-dev libldns-dev libnetfilter-queue-dev uuid-dev zlib1g-dev cmake liblo-dev nmap python3-flask python3-redis xmlstarlet wget
 ```
 
 3. Choose which user should be running dowse: your own is fine, or
