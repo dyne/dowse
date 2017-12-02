@@ -40,7 +40,7 @@ cat <<EOF > $R/src/sup/config.h
 static struct rule_t rules[] = {
 EOF
 
-notice "Computing checksums to lock superuser privileges for user `id -un`"
+notice "Computing checksums to lock superuser privileges for user $1"
 
 execsums=()
 
