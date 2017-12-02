@@ -42,12 +42,12 @@ install: install-zlibs
 	make -C src install
 	install -d ${DESTDIR}${PREFIX}/webui2
 	cp -ra src/webui2/* ${DESTDIR}${PREFIX}/webui2/
-	install -d ${CONFDIR}
-	install -d ${CONFDIR}/blocklists
-	install -p -m 644 conf/settings.dist     ${CONFDIR}/settings.dist
-	install -p -m 644 conf/network.dist      ${CONFDIR}/network.dist
-	install -p -m 644 conf/blocklists/*      ${CONFDIR}/blocklists
-	@modules/install.sh ${CONFDIR}
+	install -d ${DESTDIR}${CONFDIR}
+	install -d ${DESTDIR}${CONFDIR}/blocklists
+	install -p -m 644 conf/settings.dist     ${DESTDIR}${CONFDIR}/settings.dist
+	install -p -m 644 conf/network.dist      ${DESTDIR}${CONFDIR}/network.dist
+	install -p -m 644 conf/blocklists/*      ${DESTDIR}${CONFDIR}/blocklists
+	@modules/install.sh ${DESTDIR}${CONFDIR}
 	install -d ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/db/*.zkv   ${DESTDIR}${PREFIX}/db
 	install    -p -m 644 build/db/*.idx   ${DESTDIR}${PREFIX}/db
