@@ -1,4 +1,4 @@
-# These variables will be filled up upon calling `make`
+# These variables are filled using the caller's environment.
 
-DOWSE_USER =
-DOWSE_HOME =
+DOWSE_USER = $(USER)
+DOWSE_HOME = $(HOME)

@@ -16,9 +16,7 @@ all: config sources
 	@echo
 
 config:
-	@echo "configuring environment for the calling user: ${USER} ${DOWSE_HOME}"
-	@sed -i -e "s:DOWSE_USER .*:DOWSE_USER = ${USER}:" config.mk
-	@sed -i -e "s:DOWSE_HOME .*:DOWSE_HOME = ${HOME}:" config.mk
+	@echo "configuring environment for the calling user: ${USER} and home: ${DOWSE_HOME}"
 	@mkdir -p build/bin
 	@mkdir -p build/db
 
