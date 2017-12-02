@@ -17,7 +17,7 @@ all: base springs
 	install -s -p hiredis-lock    ../build/bin
 	install -s -p dowse-cmd-fifo  ../build/bin
 	cp -f parse-ip-neigh.py  ../build/bin
-	./checksum.sh
+	./checksum.sh $(DOWSE_USER)
 	./compile.sh sup
 
 node-red:

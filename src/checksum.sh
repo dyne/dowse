@@ -17,8 +17,8 @@ zkv.load $R/build/db/execrules.zkv
 
 act "generating execution rules"
 
-builduid=`id -u`
-buildgid=`id -g`
+builduid=`id -u $1`
+buildgid=`id -g $1`
 # generate configuration for sup
 cat <<EOF > $R/src/sup/config.h
 
