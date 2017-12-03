@@ -29,7 +29,7 @@ dowse_release_date="5/Apr/2016"
 
 # export DOWSE_PREFIX and DOWSE_HOME to override
 R=${DOWSE_PREFIX:-/usr/local/dowse}
-H=${DOWSE_HOME:-$HOME/.dowse}
+H=${DOWSE_HOME:-$HOME}
 E=${DOWSE_CONF:-/etc/dowse}
 
 #####################
