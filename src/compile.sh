@@ -11,7 +11,7 @@ source $R/zuper/zuper
 source $R/zuper/zuper.init
 
 PREFIX=${PREFIX:-/usr/local/dowse}
-DOWSE_HOME=${DOWSE_HOME:-$HOME}
+DOWSE_HOME=${DOWSE_HOME:-$HOME/.dowse}
 CFLAGS="-Wall -fPIC -fPIE -O3"
 LDFLAGS="-fPIC -fPIE -pie"
 
@@ -98,7 +98,7 @@ case $1 in
               ./configure --prefix=${PREFIX}/netdata \
               --datarootdir=${PREFIX}/netdata \
               --with-webdir=${PREFIX}/netdata \
-              --localstatedir=${DOWSE_HOME}/.dowse \
+              --localstatedir=${DOWSE_HOME} \
               --sysconfdir=/etc/dowse &&
             make -j${THREADS} &&
             install -s -p src/netdata $R/build/bin
