@@ -7,8 +7,9 @@ rm -f debug/*.o
 for s in $sources; do
 	o=${s%%.*}.o
 	gcc -c -ggdb -Wall -Wextra -pedantic -std=gnu99 -I. -fPIC -DPIC \
-		-DDEBUG=1 -I../dnscrypt-proxy/src/include -I.. -I../redis/deps/hiredis \
-	 $s -o debug/$o
+		-DDEBUG=1 -I../dnscrypt-proxy/src/include -I.. -I../redis/deps \
+		-I../redis/deps/hiredis \
+		$s -o debug/$o
 	objs+=(debug/$o)
 done
 

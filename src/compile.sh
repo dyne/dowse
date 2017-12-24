@@ -30,9 +30,8 @@ case $1 in
 	redis)
 		[[ -r $R/src/redis/src/redis-server ]] && return 0
 		pushd $R/src/redis
-		CFLAGS="$CFLAGS" \
-			  LDFLAGS="$LDFLAGS" \
-			  make -j${THREADS}
+		patch -NEp1 < $R/src/patches/redis_nodebug.patch
+		make -j${THREADS} V=1
 		popd
 		;;
 
@@ -100,7 +99,7 @@ case $1 in
     netdata)
         pushd $R/src/netdata
 		git checkout -- web
-		patch -p1 < $R/src/patches/netdata-dowse-integration.patch
+		patch -NEp1 < $R/src/patches/netdata-dowse-integration.patch
         ./autogen.sh
         CFLAGS="$CFLAGS" \
               ./configure --prefix=${PREFIX}/netdata \
@@ -131,7 +130,7 @@ case $1 in
         pushd $R/src/dnscrypt-proxy
 	## least bloated solution
 		git checkout -- src/proxy &&
-			patch -p1 < $R/src/patches/dnscrypt-noreuseableport.patch &&
+			patch -NEp1 < $R/src/patches/dnscrypt-noreuseableport.patch &&
 			./autogen.sh &&
 			./configure --without-systemd --enable-plugins --prefix=${PREFIX} &&
 			make -j${THREADS} &&
@@ -139,10 +138,10 @@ case $1 in
         popd
         ;;
 
-    dnscrypt_dowse.so)
+    dnscrypt_dowse.so|dnscrypt-plugin)
         pushd $R/src/dnscrypt-plugin
-		autoreconf -i &&
-			./configure &&
+		[[ -r configure ]] || autoreconf -i
+		./configure &&
 			make -j${THREADS} &&
             install -s -p .libs/dnscrypt_dowse.so $R/build/bin
         popd
