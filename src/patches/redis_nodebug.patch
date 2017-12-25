@@ -1,0 +1,13 @@
+diff --git a/src/Makefile b/src/Makefile
+index b896b126..a11e8f48 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -66,7 +66,7 @@ endif
+ FINAL_CFLAGS=$(STD) $(WARN) $(OPT) $(DEBUG) $(CFLAGS) $(REDIS_CFLAGS)
+ FINAL_LDFLAGS=$(LDFLAGS) $(REDIS_LDFLAGS) $(DEBUG)
+ FINAL_LIBS=-lm
+-DEBUG=-g -ggdb
++DEBUG=
+ 
+ ifeq ($(uname_S),SunOS)
+ 	# SunOS

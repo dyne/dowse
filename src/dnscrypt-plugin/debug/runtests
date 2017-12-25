@@ -12,10 +12,13 @@ notice "Test session on Dowse DNSCrypt plugin"
 act "`date`"
 
 start redis-server
+start redis-volatile
 
 act "hostname: $hostname"
 act "address: $address"
 act "wan: $wan"
+
+sleep 1
 
 cat <<EOF | redis dynamic
 SET dns-lease-testlease1 10.0.0.101
@@ -27,30 +30,32 @@ SET dns-reverse-${address}. ${hostname}
 EOF
 # SET dns-reverse-${wan}. gateway
 
-DOWSE_DOMAINLIST=`pwd`/../domain-list/data 
-DOWSE_LAN_ADDRESS_IP4=$address 
-DOWSE_LAN_NETMASK_IP4=$netmask 
-hostname=$hostname 
-interface=$interface
-domain=$lan	
-valgrind --leak-check=full \--track-origins=yes \
-	 ../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
-	 -a $address:54540 \
-	 -l debug/runtests.log \
-	 -L ../dnscrypt-proxy/dnscrypt-resolvers.csv \
-	 -R "ipredator" \
-	 -X `pwd`/debug/dnscrypt_dowse.so,debug \
-	 -m 7 -d
+DOWSE_DOMAINLIST=`pwd`/../domain-list/data \
+				DOWSE_LAN_ADDRESS_IP4=$address \
+				DOWSE_LAN_NETMASK_IP4=$netmask \
+				hostname=$hostname \
+				interface=$interface \
+				domain=$lan	\
+				valgrind --leak-check=full \--track-origins=yes \
+				../dnscrypt-proxy/src/proxy/dnscrypt-proxy \
+				-a $address:54540 \
+				-l debug/runtests.log \
+				-L ../dnscrypt-proxy/dnscrypt-resolvers.csv \
+				-R "ipredator" \
+				-X `pwd`/debug/dnscrypt_dowse.so,debug \
+				-m 7 -d
 # log level informational (7 for debug)
 
 
 sleep 3
 
 notice own_hostname
-dig @$address -p 54540 $hostname || return 1
+act "dig @$address -p 54540 $hostname"
+dig @$address -p 54540 $hostname
 
 notice own_address_reverse
-dig @$address -p 54540 -x $address || return 1
+act "dig @$address -p 54540 -x $address"
+dig @$address -p 54540 -x $address
 
 # run tests offline
 
@@ -61,19 +66,24 @@ dig @$address -p 54540 -x $address || return 1
 # dig @$address -p 54540 sigok.verteiltesysteme.net || return 1
 
 notice 10.0.0.101
-dig @$address -p 54540 -x 10.0.0.101 || return 1
+act "dig @$address -p 54540 -x 10.0.0.101"
+dig @$address -p 54540 -x 10.0.0.101
 
 notice 10.0.0.102
-dig @$address -p 54540 -x 10.0.0.102 || return 1
+act "dig @$address -p 54540 -x 10.0.0.102"
+dig @$address -p 54540 -x 10.0.0.102
 
 notice testlease1
-dig @$address -p 54540 testlease1 || return 1
+act "dig @$address -p 54540 testlease1"
+dig @$address -p 54540 testlease1
 
 notice testlease2
-dig @$address -p 54540 testlease2.dowse.it || return 1
+act "dig @$address -p 54540 testlease2.dowse.it"
+dig @$address -p 54540 testlease2.dowse.it
 
 notice gateway
-dig @$address -p 54540 gateway || return 1
+act "dig @$address -p 54540 gateway"
+dig @$address -p 54540 gateway
 
 
 notice "dnscrypt-plugin - all tests OK"

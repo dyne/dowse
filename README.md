@@ -41,8 +41,8 @@ its simplicity and usefulness. Here a recent backstage video:
 
   Dowse takes control of a LAN by becoming its DHCP server and thereby
   assigning itself as main gateway and DNS server for all clients. It
-  keeps tracks of assigned leases by MAC Address. DNSMasq is the DHCP
-  and DNS daemon.
+  keeps tracks of assigned leases by MAC Address. ISC DHCP
+  and DNSCRYPT-PROXY are used as daemons.
 
   All network traffic is passed through NAT rules for masquerading.
   HTTP traffic (TCP port 80) can be filtered through a transparent
@@ -51,19 +51,12 @@ its simplicity and usefulness. Here a recent backstage video:
   All IP traffic is filtered using configurable blocklists to keep out
   malware, spyware and known bad peers, using Peerguardian2 and Iptables.
 
-  All DNS traffic (UDP port 53) is filtered through Dnscap and
-  analysed to render a graphical representation of traffic. It is also
-  possible to tunnel it via DNSCrypt-proxy, encrypting all traffic
-  (AES/SHA256) before sending it to DNSCrypt.eu or other configurable
-  servers supporting this protocol.
+  All DNS traffic (UDP port 53) is filtered through a DNSCRYPT-PROXY
+  plugin encrypting all traffic (AES/SHA256) and analysed using
+  domain-list to render a graphical representation of traffic.
 
-  In the future, traffic of all kinds may be transparently proxied for
-  monitoring, filtering, and transformation by other applications
-  loaded on the Dowse device.
-
-  All daemons are running as a unique non-privileged UID. The future
-  plan is to separate them using a different UID for each daemon.
-
+  Privilege escalation is managed using https://sup.dyne.org
+  
 # Installation
 
 Installation and activation takes a few steps, only `make install` needs root:
@@ -72,7 +65,7 @@ Installation and activation takes a few steps, only `make install` needs root:
 
 ```
 git clone https://github.com/dyne/dowse dowse-src
-cd dowse-src && git submodule update --init
+cd dowse-src && git submodule update --init --recursive
 ```
 
 2. Install all requirements, here below the list of packages. To avoid installing
