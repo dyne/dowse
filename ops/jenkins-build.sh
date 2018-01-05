@@ -6,6 +6,7 @@ set -x
 cd /home/dowse/dowse-src
 
 git clean -xdf && \
+cd src/redis && git clean -xdf && cd - \
 sudo -u dowse git pull origin master && \
 sudo -u dowse git submodule update --init --checkout && \
 sudo -u dowse make && \
