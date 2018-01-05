@@ -1,6 +1,8 @@
 #!/bin/sh
 # This is executed as root when jenkins chroots
 
+set -x
+
 cd /home/dowse/dowse-src
 
 sudo -u dowse git clean -xdf && \
