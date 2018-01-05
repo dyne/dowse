@@ -31,6 +31,7 @@ case $1 in
 	redis)
 		[[ -r $R/src/redis/src/redis-server ]] && return 0
 		pushd $R/src/redis
+		git checkout -- . && \
 		patch -NEp1 < $R/src/patches/redis_nodebug.patch
 		make -j${THREADS} V=1
 		popd
