@@ -7,4 +7,7 @@ sudo -u dowse git clean -xdf && \
 sudo -u dowse git pull origin master && \
 sudo -u dowse make && \
 mkdir -p destbuild && \
-make DESTDIR=/home/dowse/dowse-src/destbuild install
+make DESTDIR=/home/dowse/dowse-src/destbuild install || exit 1
+
+cd destbuild
+tar czf /home/dowse/dowse-src/dowse-armhf-"$(date +%Y%m%d)".tar.gz . || exit 1
