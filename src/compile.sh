@@ -33,6 +33,7 @@ case $1 in
 		pushd $R/src/redis
 		git checkout -- . && \
 		patch -NEp1 < $R/src/patches/redis_nodebug.patch
+		echo "MALLOC=jemalloc" > src/.make-settings
 		make -j${THREADS} V=1
 		popd
 		;;
