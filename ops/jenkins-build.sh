@@ -43,4 +43,4 @@ mkdir -p destbuild
 make DESTDIR=/home/dowse/dowse-src/destbuild install || exit 1
 
 cd destbuild
-tar czf "$DOWSESOUCE"/dowse-armhf-"$(date +%Y%m%d)".tar.gz . || exit 1
+tar czf "$DOWSESOURCE"/dowse-armhf-"$(date +%Y%m%d)".tar.gz . || exit 1
