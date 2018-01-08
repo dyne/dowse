@@ -21,6 +21,8 @@
 ## libdevuansdk build script for Dowse
 
 blend_name="dowse"
+deplist="https://raw.githubusercontent.com/dyne/dowse/master/README.md"
+dowsebin="https://sdk.dyne.org/dowse/dowse-armhf-latest.tar.gz"
 
 blend_preinst() {
 	fn blend_preinst
@@ -29,33 +31,21 @@ blend_preinst() {
 
 	notice "executing $blend_name preinst"
 
-	sudo mkdir -p "$strapdir/home/dowse"
-	sudo git clone https://github.com/dyne/dowse.git "$strapdir/home/dowse/dowse-src"
-	pushd "$strapdir/home/dowse/dowse-src"
-	sudo git submodule update --init
-	popd
-	sudo chown -R 1000:1000 "$strapdir/home/dowse"
-
-	blend_packages=($(grep ^zsh $strapdir/home/dowse/dowse-src/README.md))
+	blend_packages=($(curl -Ls $deplist | grep ^zsh))
 
 	cat <<EOF | sudo tee ${strapdir}/${blend_name}-preinst
 #!/bin/sh
 useradd -m dowse
 echo "dowse:dowse" | chpasswd
 chsh -s /bin/zsh dowse
-
 apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes --no-install-recommends install ${blend_packages}
-
-#sudo -u dowse git clone https://github.com/dyne/dowse.git /home/dowse/dowse-src
-cd /home/dowse/dowse-src
-#sudo -u dowse git submodule update --init
-sudo -u dowse make
-make install
-
-printf "source /usr/local/dowse/zshrc\n" > /home/dowse/.zshrc
 apt-get clean
 
+cd /
+wget ${dowsebin} || exit 1
+tar xvf dowse-armhf-latest.tar.gz
+chown -R dowse:dowse /home/dowse/.dowse
 EOF
 	chroot-script -d ${blend_name}-preinst || zerr
 }
