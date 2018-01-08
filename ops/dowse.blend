@@ -35,12 +35,13 @@ blend_preinst() {
 
 	cat <<EOF | sudo tee ${strapdir}/${blend_name}-preinst
 #!/bin/sh
-useradd -m dowse
-echo "dowse:dowse" | chpasswd
-chsh -s /bin/zsh dowse
 apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes --no-install-recommends install ${blend_packages}
 apt-get clean
+
+useradd -m dowse
+echo "dowse:dowse" | chpasswd
+chsh -s /bin/zsh dowse
 
 cd /
 wget ${dowsebin} || exit 1
