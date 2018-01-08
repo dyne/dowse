@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <actions/>
+  <description>Compiles armhf dowse binaries, packed into a tarball for further use</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty plugin="gitlab-plugin@1.5.2">
+      <gitLabConnection/>
+    </com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>@weekly</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>CHROOTDIR="/var/lib/jenkins/chroots/dowse-ascii"
+DOWSESRC="/home/dowse/dowse-src"
+
+sudo mount --rbind /dev "$CHROOTDIR"/dev
+sudo mount --rbind /sys "$CHROOTDIR"/sys
+sudo mount -t proc /proc "$CHROOTDIR"/proc
+
+sudo chroot "$CHROOTDIR" "$DOWSESRC"/ops/jenkins-build.sh || failed=1
+
+sudo umount -R "$CHROOTDIR"/sys
+sudo umount -R "$CHROOTDIR"/proc
+sudo umount -R "$CHROOTDIR"/dev
+
+[ -n "$failed" ] &amp;&amp; exit 1
+sudo mv -v "$CHROOTDIR/$DOWSESRC"/*.tar.gz "$WORKSPACE" || exit 1</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>*.tar.gz</artifacts>
+      <allowEmptyArchive>false</allowEmptyArchive>
+      <onlyIfSuccessful>true</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>true</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+    </hudson.tasks.ArtifactArchiver>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.34">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter/>
+      <externalDelete/>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>
