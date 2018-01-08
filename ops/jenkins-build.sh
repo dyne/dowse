@@ -29,6 +29,11 @@ cd "$DOWSESOURCE"
 git clean -xdf
 cd src/redis && git clean -xdf && cd -
 
+cat <<EOF > config.mk
+DOWSE_USER = dowse
+DOWSE_HOME = /home/dowse
+EOF
+
 cat <<EOF > build-dowse.sh
 #!/bin/sh
 set -xe
