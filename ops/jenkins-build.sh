@@ -37,7 +37,7 @@ git submodule update --init --checkout
 make
 EOF
 
-sh build-dowse.sh || exit 1
+sudo -u dowse sh build-dowse.sh || exit 1
 
 mkdir -p destbuild
 make DESTDIR=/home/dowse/dowse-src/destbuild install || exit 1
