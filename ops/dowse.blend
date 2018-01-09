@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2017 Dyne.org Foundation
+# Copyright (c) 2016-2018 Dyne.org Foundation
 #
 # dowse.blend is maintained by Ivan J. <parazyd@dyne.org>
 #
@@ -23,6 +23,8 @@
 blend_name="dowse"
 deplist="https://raw.githubusercontent.com/dyne/dowse/master/README.md"
 dowsebin="https://sdk.dyne.org/dowse/dowse-armhf-latest.tar.gz"
+
+image_name="${blend_name}_${os}_${arch}"
 
 blend_preinst() {
 	fn blend_preinst
