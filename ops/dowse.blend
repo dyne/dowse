@@ -24,7 +24,7 @@ blend_name="dowse"
 deplist="https://raw.githubusercontent.com/dyne/dowse/master/README.md"
 dowsebin="https://sdk.dyne.org/dowse/dowse-armhf-latest.tar.gz"
 
-image_name="${blend_name}_${os}_${arch}"
+image_name="${blend_name}_${os}_${arch}_raspi2"
 
 blend_preinst() {
 	fn blend_preinst
