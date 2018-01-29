@@ -62,7 +62,7 @@ blend_postinst() {
 
 	cat <<EOF | sudo tee ${strapdir}/etc/rc.local >/dev/null
 #!/bin/sh
-[ -f ssh_host_rsa_key.pub ] || dpkg-reconfigure openssh-server
+[ -f ssh_host_rsa_key.pub ] || ssh-keygen -A
 
 sudo -u dowse zsh -f -c "/bin/rm -f /home/dowse/.dowse/run/*.pid"
 sudo -u dowse zsh -f -c "source /usr/local/dowse/zshrc && dowse-start" &
