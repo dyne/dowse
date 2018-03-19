@@ -124,8 +124,8 @@ node-red-addmod() {
 [[ "$1" = "node-red" ]] && {
 	node_dist=""
 	case $target in
-		x64)   node_dist="node-v6.10.3-linux-x64" ;;
-		armv7) node_dist="node-v6.10.3-linux-armv7l" ;;
+		x64)   node_dist="node-v8.10.0-linux-x64" ;;
+		armv7) node_dist="node-v8.10.0-linux-armv7l" ;;
 		*) error "Unknown machine architecture for nodejs"
 		   return 1
 		   ;;
@@ -136,7 +136,7 @@ node-red-addmod() {
     pushd $S/build/nodejs
     [[ -r ${node_dist}.tar.xz ]] ||
         wget -O ${node_dist}.tar.xz \
-			https://nodejs.org/dist/v6.10.3/${node_dist}.tar.xz
+			https://nodejs.org/dist/v8.10.0/${node_dist}.tar.xz
     [[ -d ${node_dist} ]] || {
         tar xf ${node_dist}.tar.xz
         rm -rf node_dir
