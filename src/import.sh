@@ -95,12 +95,14 @@ pkg-download() {
 
 [[ "$1" = "nmap-macs" ]] && {
 	local nmap_macs="https://svn.nmap.org/nmap/nmap-mac-prefixes"
-	notice "importing latest nmap MAC database"
-	wget -O "$S/build/nmap-mac" "$nmap_macs"
-	[[ $? = 0 ]] || {
+	[[ -r "$S/build/nmap-mac" ]] || {
+		notice "importing latest nmap MAC database"
+		wget -O "$S/build/nmap-mac" "$nmap_macs"
+		[[ $? = 0 ]] || {
         	error "cannot download latest nmap MAC database"
         	exit 1 }
-	exit 0
+		exit 0
+	}
 }
 
 # Check CPU architecture

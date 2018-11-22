@@ -1,6 +1,6 @@
 /*  Dowse - DNSCrypt proxy plugin for DNS management
  *
- *  (c) Copyright 2016 Dyne.org foundation, Amsterdam
+ *  (c) Copyright 2016-2018 Dyne.org foundation, Amsterdam
  *  Written by Denis Roio aka jaromil <jaromil@dyne.org>
  *
  * This source code is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
 #define CACHE_EXPIRY 5
 
 #ifndef DEBUG
-#define DEBUG 0
+#define DEBUG 1
 #endif
 
 DCPLUGIN_MAIN(__FILE__);
@@ -425,11 +425,14 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	    if ( ip4_derive_mac(data) != 0) {
 
 		    warn("can't resolv mac address of IP: %s", data->ip4);
-		    func("redirect on captive portal due to ip2mac() internal error");
-		    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->ownip4);
-		    freeReplyObject(data->reply);
+		    warn("redirect on captive portal due to ip2mac() internal error");
+		    if(data->query && data->ownip4)
+			    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->ownip4);
+		    // double free?!
+		    // if(data->reply)
+			//     freeReplyObject(data->reply);
 
-		    // return a wire packet immediately
+		    func("return a wire packet immediately");
 		    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
 		    if (!outbuf) {
 			    ldns_pkt_free(packet);

@@ -80,7 +80,7 @@ dnscrypt-proxy-exec() {
 	# something very delicate that is overwritten on every
 	# dnscrypt-proxy execution. likely to cause problems. old comment:
 	# "definire la variabile d'ambiente interface"
-	ulimit -c unlimited
+	# ulimit -c unlimited
 
 	# why a new log on each run? this is likely to use up all i/o
 	# TMP=`date +%Y%m%d_%H%M%S`
@@ -96,6 +96,7 @@ dnscrypt-proxy-exec() {
 						-l $H/log/dnscrypt.log \
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
+						-I \
 						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
 						-m 7 -u $dowse_uid
 		# log level informational (7 for debug)
