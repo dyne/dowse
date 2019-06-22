@@ -28,6 +28,8 @@ dhcpd-conf() {
 	[[ "$netzero" = "" ]] && netzero=${address%.*}.0
 	range_start=${dowse_guests[(ws:,:)1]}
 	range_stop=${dowse_guests[(ws:,:)2]}
+	func "dhcpd address:     $address"
+	func "dhcpd guest range: $range_start - $range_stop"
 cat <<EOF
 option routers $address;
 option domain-name "dowse.it";
@@ -67,8 +69,8 @@ dhcpd-exec() {
 	# launch dhcpd -4 -pf $pid -user $dowse_uid -group $dowse_gid \
 	# 	   -chroot $H -lf $leases -cf $conf
 
-	launch dhcpd -pf $pid -user $dowse_uid -group $dowse_gid \
-		   -lf $leases -cf $conf
+	launch dhcpd -pf $pid -user root \
+		   -lf $leases -cf $conf $interface
 
 	savepid dhcpd $pid
 
