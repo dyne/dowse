@@ -35,9 +35,6 @@ dnscrypt_dowse.so:
 pgld:
 	@./compile.sh pgld ${THREADS}
 
-dhcpd:
-	@./compile.sh dhcpd ${THREADS}
-
 seccrond:
 	@./compile.sh seccrond ${THREADS}
 

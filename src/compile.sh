@@ -37,23 +37,6 @@ case $1 in
 		popd
 		;;
 
-	dhcpd)
-		pushd $R/src/dhcp
-		act "please wait while preparing the build environment"
-		act "also prepare to wait more for the BIND export libs"
-		act "when you see ISC_LOG_ROLLINFINITE then is almost there"
-		autoreconf -i
-		# dhcpd fails building with multiple threads (still?)
-		CFLAGS="-Wall -Os" LDFLAGS="" \
-		./configure --enable-paranoia --enable-execute \
-			--disable-dhcpv6 &&
-		    make && {
-			install -s -p server/dhcpd    $R/build/bin &&
-			    install -s -p dhcpctl/omshell $R/build/bin
-		    }
-		popd
-		;;
-
     seccrond)
         pushd $R/src/seccrond
         CFLAGS="$CFLAGS" make -j${THREADS} &&
