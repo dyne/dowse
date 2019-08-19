@@ -142,9 +142,6 @@ source /usr/local/dowse/zshrc
     # netdata dashboard for the technical status
     start netdata
 
-	# nodejs/node-red
-	start node-red
-
 	# start the cronjob handler (with resolution to seconds)
 	start seccrond
 
@@ -176,16 +173,10 @@ source /usr/local/dowse/zshrc
 
 	stop mosquitto
 
-	# stop nodejs/node-red
-	stop node-red
-
-    # stop the dashboard
     stop netdata
 
-    # stop the dns crypto tunnel
     stop dnscrypt-proxy
 
-    # stop the dhcp server
     stop dhcpd
 
     # remove the layer 3 firewall rules

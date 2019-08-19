@@ -58,12 +58,6 @@ install: install-zlibs
 	install -s -p -m 644 src/dnscrypt-plugin/.libs/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
 	chown -R ${DOWSE_USER}:${DOWSE_USER} ${DESTDIR}${DOWSE_HOME}/.dowse
 
-install-node-red:
-	install -d ${DESTDIR}${PREFIX}/node-red
-	cp -ra build/node-red/* ${DESTDIR}${PREFIX}/node-red
-	install -d ${DESTDIR}${PREFIX}/nodejs
-	cp -ra build/nodejs/* ${DESTDIR}${PREFIX}/nodejs
-
 
 # here sup is installed with suid bit. sup is a secure application we
 # use for privilege escalation when needed. sup executes only certain

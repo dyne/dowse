@@ -20,9 +20,6 @@ all: base springs
 	./checksum.sh $(DOWSE_USER)
 	./compile.sh sup
 
-node-red:
-	./import.sh node-red
-
 libs:
 	make -C libdowse
 
