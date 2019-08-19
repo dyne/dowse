@@ -71,22 +71,6 @@ case $1 in
         popd
         ;;
 
-    netdata)
-        pushd $R/src/netdata
-		git checkout -- web
-		patch -NEp1 < $R/src/patches/netdata-dowse-integration.patch
-        ./autogen.sh
-        CFLAGS="$CFLAGS" \
-              ./configure --prefix=${PREFIX}/netdata \
-              --datarootdir=${PREFIX}/netdata \
-              --with-webdir=${PREFIX}/netdata \
-              --localstatedir=${DOWSE_HOME}/.dowse \
-              --sysconfdir=/etc/dowse &&
-            make -j${THREADS} &&
-            install -s -p src/netdata $R/build/bin
-        popd
-        ;;
-
 	netdata-plugins)
 		pushd $R/src/netdata
 		make -j${THREADS}

@@ -23,9 +23,9 @@ all: base springs
 libs:
 	make -C libdowse
 
-.PHONY: redis dnscrypt-proxy modprobe netdata seccrond hiredis-lock pgld sup
+.PHONY: redis dnscrypt-proxy modprobe seccrond hiredis-lock pgld sup
 
-base: config libs redis modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so netdata dhcpd seccrond
+base: config libs redis modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so dhcpd seccrond
 	@echo "Compiled base"
 
 redis:
@@ -39,11 +39,6 @@ dnscrypt_dowse.so:
 
 pgld:
 	@./compile.sh pgld ${THREADS}
-
-netdata:
-	@rm -f netdata/web/version.txt
-	@./compile.sh netdata ${THREADS}
-	@./compile.sh netdata-plugins ${THREADS}
 
 dhcpd:
 	@./compile.sh dhcpd ${THREADS}
@@ -88,7 +83,6 @@ install:
 	install -p -m 644 domain-list/data/* ${DESTDIR}${PREFIX}/domain-list/data
 	install -d ${DESTDIR}${PREFIX}/share
 	install dnscrypt-proxy/dnscrypt-resolvers.csv ${DESTDIR}${PREFIX}/share/
-	make -C netdata install
 	make -C netdata-plugins install
 #	@./compile.sh install
 
@@ -99,14 +93,12 @@ clean:
 	rm -f database.h execrules.h
 	rm -f modprobe dowse-to-osc dowse-to-gource dowse-to-mqtt
 	rm -f hiredis-lock
-	rm -f netdata/web/version.txt
 	make -C redis				 clean
 	make -C dhcp                 clean
 	make -C sup                  clean
 	make -C dnscrypt-proxy       clean
 	make -C dnscrypt-plugin      clean
 	make -C pgld                 clean
-	make -C netdata              clean
 	make -C netdata-plugins      clean
 	make -C seccrond			 clean
 	make -C libdowse			 clean
