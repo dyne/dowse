@@ -1,4 +1,4 @@
-CFLAGS ?= -O2 -Wall  -fPIE -fPIC -pie -Ihiredis
+CFLAGS ?= -O2 -Wall  -fPIE -fPIC -pie
 #-DDEBUG=1
 
 CC = gcc

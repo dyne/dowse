@@ -21,7 +21,7 @@
 #ifndef __LIBDOWSE_H__
 #define __LIBDOWSE_H__
 
-#include <hiredis.h>
+#include <hiredis/hiredis.h>
 #include <database.h>
 
 // logging channel singleton in libdowse
