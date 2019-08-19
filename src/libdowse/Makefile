@@ -1,4 +1,4 @@
-CFLAGS ?= -O2 -Wall  -fPIE -fPIC -pie -I ../redis/deps/hiredis
+CFLAGS ?= -O2 -Wall  -fPIE -fPIC -pie -Ihiredis
 #-DDEBUG=1
 
 CC = gcc

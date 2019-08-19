@@ -3,7 +3,7 @@ PREFIX ?= /usr/local/dowse
 THREADS ?= 1
 
 CC = gcc
-CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I. -Lhiredis
+CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I. -Ihiredis
 LIBS = -L src/redis/deps/hiredis -l:libhiredis.a -Llibdowse -l:libdowse.a
 
 all: base springs
