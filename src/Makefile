@@ -3,7 +3,7 @@ PREFIX ?= /usr/local/dowse
 THREADS ?= 1
 
 CC = gcc
-CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I.
+CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I. -Lhiredis
 LIBS = -L src/redis/deps/hiredis -l:libhiredis.a -Llibdowse -l:libdowse.a
 
 all: base springs
@@ -23,7 +23,7 @@ libs:
 
 .PHONY: dnscrypt-proxy modprobe seccrond hiredis-lock pgld sup
 
-base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so dhcpd seccrond
+base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so seccrond
 	@echo "Compiled base"
 
 dnscrypt-proxy:
@@ -76,6 +76,7 @@ install:
 	install -d ${DESTDIR}${PREFIX}/share
 	install dnscrypt-proxy/dnscrypt-resolvers.csv ${DESTDIR}${PREFIX}/share/
 	make -C netdata-plugins install
+
 #	@./compile.sh install
 
 clean:
