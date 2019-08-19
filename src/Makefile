@@ -3,13 +3,11 @@ PREFIX ?= /usr/local/dowse
 THREADS ?= 1
 
 CC = gcc
-CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I. -Iredis/deps/hiredis -Iredis/deps/jemalloc
+CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I.
 LIBS = -L src/redis/deps/hiredis -l:libhiredis.a -Llibdowse -l:libdowse.a
 
 all: base springs
 	./import.sh nmap-macs
-	install -s -p redis/src/redis-server ../build/bin
-	install -s -p redis/src/redis-cli ../build/bin
 	install -s -p modprobe        ../build/bin
 	install -s -p dowse-to-gource ../build/bin
 	install -s -p dowse-to-osc    ../build/bin
@@ -23,13 +21,10 @@ all: base springs
 libs:
 	make -C libdowse
 
-.PHONY: redis dnscrypt-proxy modprobe seccrond hiredis-lock pgld sup
+.PHONY: dnscrypt-proxy modprobe seccrond hiredis-lock pgld sup
 
-base: config libs redis modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so dhcpd seccrond
+base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so dhcpd seccrond
 	@echo "Compiled base"
-
-redis:
-	@./compile.sh redis ${THREADS}
 
 dnscrypt-proxy:
 	@./compile.sh dnscrypt-proxy ${THREADS}
@@ -93,7 +88,6 @@ clean:
 	rm -f database.h execrules.h
 	rm -f modprobe dowse-to-osc dowse-to-gource dowse-to-mqtt
 	rm -f hiredis-lock
-	make -C redis				 clean
 	make -C dhcp                 clean
 	make -C sup                  clean
 	make -C dnscrypt-proxy       clean

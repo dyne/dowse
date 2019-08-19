@@ -28,16 +28,6 @@ notice "Compiling $1 using ${THREADS} threads"
 
 
 case $1 in
-	redis)
-		[[ -r $R/src/redis/src/redis-server ]] && return 0
-		pushd $R/src/redis
-		git checkout -- . && \
-		patch -NEp1 < $R/src/patches/redis_nodebug.patch
-		echo "MALLOC=jemalloc" > src/.make-settings
-		make -j${THREADS} V=1
-		popd
-		;;
-
 	log)
 		[[ -r $R/src/log/liblog.a ]] && return 0
 		pushd $R/src/log
