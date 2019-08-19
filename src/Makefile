@@ -23,9 +23,9 @@ all: base springs
 libs:
 	make -C libdowse
 
-.PHONY: redis dnscrypt-proxy libwebsockets modprobe netdata seccrond hiredis-lock mosquitto pgld sup
+.PHONY: redis dnscrypt-proxy modprobe netdata seccrond hiredis-lock pgld sup
 
-base: config libs redis modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so netdata dhcpd libwebsockets mosquitto seccrond
+base: config libs redis modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so netdata dhcpd seccrond
 	@echo "Compiled base"
 
 redis:
@@ -47,12 +47,6 @@ netdata:
 
 dhcpd:
 	@./compile.sh dhcpd ${THREADS}
-
-libwebsockets:
-	@./compile.sh libwebsockets ${THREADS}
-
-mosquitto: libwebsockets
-	@./compile.sh mosquitto ${THREADS}
 
 seccrond:
 	@./compile.sh seccrond ${THREADS}
@@ -84,8 +78,8 @@ dowse-to-gource: dowse-to-gource.o
 dowse-to-osc: dowse-to-osc.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -llo
 
-dowse-to-mqtt: mosquitto dowse-to-mqtt.o
-	$(CC) $(CFLAGS) -o $@ dowse-to-mqtt.o $(LIBS) -L./mosquitto/lib/ -lmosquitto    -lpthread
+dowse-to-mqtt: dowse-to-mqtt.o
+	$(CC) $(CFLAGS) -o $@ dowse-to-mqtt.o $(LIBS) -lmosquitto -lpthread
 
 
 install:
@@ -114,7 +108,5 @@ clean:
 	make -C pgld                 clean
 	make -C netdata              clean
 	make -C netdata-plugins      clean
-	make -C libwebsockets	     clean
-	make -C mosquitto            clean
 	make -C seccrond			 clean
 	make -C libdowse			 clean

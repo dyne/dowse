@@ -47,34 +47,6 @@ case $1 in
 		popd
 		;;
 
-	libwebsockets)
-		[[ -r $R/src/libwebsockets/lib/libwebsockets.a ]] && return 0
-		pushd $R/src/libwebsockets
-		# fix for broken path detection
-		cmakeflags=""
-		case `uname -m` in
-			arm*) cmakeflags+="-DZLIB_LIBRARY:FILEPATH=/usr/lib/arm-linux-gnueabih" ;;
-		esac
-		CFLAGS="$CFLAGS" \
-			  LDFLAGS="$LDFLAGS" \
-			  cmake -DLWS_WITH_SSL=OFF -DLWS_WITH_SHARED=OFF \
-			  -DLWS_WITHOUT_TESTAPPS=ON -DLWS_STATIC_PIC=ON $cmakeflags . &&
-			make -j${THREADS}
-		popd
-		;;
-
-	mosquitto)
-		pushd $R/src/mosquitto
-		make -C lib -j${THREADS} &&
-		CFLAGS="$CFLAGS" \
-			  LDFLAGS="$LDFLAGS" \
-			  make -j${THREADS} &&
-			install -s -p src/mosquitto $R/build/bin
-		# make WITH_BRIDGE=no WITH_TLS=no WITH_WEBSOCKETS=yes WITH_DOCS=no \
-		# LWS_LIBRARY_VERSION_NUMBER=2.0 &&
-		popd
-		;;
-
 	dhcpd)
 		pushd $R/src/dhcp
 		act "please wait while preparing the build environment"

@@ -1,3 +1,0 @@
-{
-	mosquitto_log_printf;
-};
