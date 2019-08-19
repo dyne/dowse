@@ -29,7 +29,7 @@
 #include <sys/types.h>
 
 // libmosquitto
-#include "mosquitto/lib/mosquitto.h"
+#include <mosquitto.h>
 
 #include <libdowse/dowse.h>
 
