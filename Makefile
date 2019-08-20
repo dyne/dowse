@@ -54,7 +54,8 @@ install: install-zlibs
 	install    -p -m 644 build/nmap-mac   ${DESTDIR}/usr/share/nmap/nmap-mac-prefixes
 	./set_privileges.sh                     ${DESTDIR}${PREFIX}
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
-	install -s -p -m 644 src/dnscrypt-plugin/.libs/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib/dnscrypt-proxy
+	mkdir -p ${DESTDIR}${PREFIX}/lib
+	install -s -p -m 644 src/dnscrypt-plugin/.libs/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib
 	chown -R ${DOWSE_USER}:${DOWSE_USER} ${DESTDIR}${DOWSE_HOME}/.dowse
 
 

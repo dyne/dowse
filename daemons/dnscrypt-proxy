@@ -97,7 +97,7 @@ dnscrypt-proxy-exec() {
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
 						-I \
-						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args},debug \
+						-X $R/lib/dnscrypt_dowse.so${args},debug \
 						-m 7 -u $dowse_uid
 		# log level informational (7 for debug)
 		return $?
@@ -113,7 +113,7 @@ dnscrypt-proxy-exec() {
 						-l $H/log/dnscrypt.log \
 						-L $R/share/dnscrypt-resolvers.csv \
 						-R "$dnscrypt_name" \
-						-X $R/lib/dnscrypt-proxy/dnscrypt_dowse.so${args} \
+						-X $R/lib/dnscrypt_dowse.so${args} \
 						-d -m 7 -u $dowse_uid
 		# log only warning conditions
 
