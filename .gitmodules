@@ -1,9 +1,6 @@
 [submodule "zuper"]
 	path = zuper
 	url = https://github.com/dyne/zuper
-[submodule "src/dnscrypt-proxy"]
-	path = src/dnscrypt-proxy
-	url = https://github.com/dyne/dnscrypt-proxy
 [submodule "src/domain-list"]
 	path = src/domain-list
 	url = https://github.com/dyne/domain-list
