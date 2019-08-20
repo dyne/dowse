@@ -21,13 +21,10 @@ all: base springs
 libs:
 	make -C libdowse
 
-.PHONY: dnscrypt-proxy modprobe seccrond hiredis-lock pgld sup
+.PHONY: modprobe seccrond hiredis-lock pgld sup
 
-base: config libs modprobe sup hiredis-lock dnscrypt-proxy dnscrypt_dowse.so seccrond
+base: config libs modprobe sup hiredis-lock dnscrypt_dowse.so seccrond
 	@echo "Compiled base"
-
-dnscrypt-proxy:
-	@./compile.sh dnscrypt-proxy ${THREADS}
 
 dnscrypt_dowse.so:
 	@./compile.sh dnscrypt_dowse.so ${THREADS}
@@ -87,7 +84,6 @@ clean:
 	rm -f modprobe dowse-to-osc dowse-to-gource dowse-to-mqtt
 	rm -f hiredis-lock
 	make -C sup                  clean
-	make -C dnscrypt-proxy       clean
 	make -C dnscrypt-plugin      clean
 	make -C pgld                 clean
 	make -C netdata-plugins      clean

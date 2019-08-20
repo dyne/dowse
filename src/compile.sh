@@ -58,17 +58,17 @@ case $1 in
         popd
         ;;
 
-    dnscrypt-proxy)
-        pushd $R/src/dnscrypt-proxy
-	## least bloated solution
-		git checkout -- src/proxy &&
-			patch -NEp1 < $R/src/patches/dnscrypt-noreuseableport.patch &&
-			./autogen.sh &&
-			./configure --without-systemd --enable-plugins --prefix=${PREFIX} &&
-			make -j${THREADS} &&
-			install -s -p src/proxy/dnscrypt-proxy $R/build/bin
-        popd
-        ;;
+    # dnscrypt-proxy)
+    #     pushd $R/src/dnscrypt-proxy
+	# ## least bloated solution
+	# 	git checkout -- src/proxy &&
+	# 		patch -NEp1 < $R/src/patches/dnscrypt-noreuseableport.patch &&
+	# 		./autogen.sh &&
+	# 		./configure --without-systemd --enable-plugins --prefix=${PREFIX} &&
+	# 		make -j${THREADS} &&
+	# 		install -s -p src/proxy/dnscrypt-proxy $R/build/bin
+    #     popd
+    #     ;;
 
     dnscrypt_dowse.so|dnscrypt-plugin)
         pushd $R/src/dnscrypt-plugin
