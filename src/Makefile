@@ -71,7 +71,6 @@ install:
 	install -d ${DESTDIR}${PREFIX}/domain-list/data
 	install -p -m 644 domain-list/data/* ${DESTDIR}${PREFIX}/domain-list/data
 	install -d ${DESTDIR}${PREFIX}/share
-	install dnscrypt-proxy/dnscrypt-resolvers.csv ${DESTDIR}${PREFIX}/share/
 	make -C netdata-plugins install
 
 #	@./compile.sh install
