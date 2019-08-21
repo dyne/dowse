@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <dnscrypt-version.h>
+#include <dnscrypt/version.h>
 
 #ifdef __cplusplus
 extern "C" {

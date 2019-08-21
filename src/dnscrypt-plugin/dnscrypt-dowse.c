@@ -35,7 +35,7 @@
 #include <inttypes.h>
 #include <netdb.h>
 
-#include <dnscrypt-plugin.h>
+#include <dnscrypt/plugin.h>
 #include <ldns/ldns.h>
 
 #include <hiredis/hiredis.h>

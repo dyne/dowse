@@ -26,8 +26,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include <dnscrypt-private.h>
-#include <dnscrypt-version.h>
+#include <dnscrypt/private.h>
+#include <dnscrypt/version.h>
 
 #ifdef __cplusplus
 extern "C" {

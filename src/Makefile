@@ -27,7 +27,7 @@ base: config libs modprobe sup hiredis-lock dnscrypt_dowse.so seccrond
 	@echo "Compiled base"
 
 dnscrypt_dowse.so:
-	@./compile.sh dnscrypt_dowse.so ${THREADS}
+	make -C dnscrypt-plugin
 
 pgld:
 	@./compile.sh pgld ${THREADS}
@@ -71,6 +71,7 @@ install:
 	install -d ${DESTDIR}${PREFIX}/domain-list/data
 	install -p -m 644 domain-list/data/* ${DESTDIR}${PREFIX}/domain-list/data
 	install -d ${DESTDIR}${PREFIX}/share
+	mkdir -p /usr/lib/netdata/plugins.d
 	make -C netdata-plugins install
 
 #	@./compile.sh install
