@@ -50,14 +50,6 @@ case $1 in
 		popd
 		;;
 
-    sup)
-        pushd $R/src/sup
-        # make sure latest config.h is compiled in
-        rm -f $R/src/sup/sup.o
-        make -j${THREADS} && install -s -p $R/src/sup/sup $R/build
-        popd
-        ;;
-
     # dnscrypt-proxy)
     #     pushd $R/src/dnscrypt-proxy
 	# ## least bloated solution

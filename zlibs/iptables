@@ -26,10 +26,10 @@ iptables() {
 
     if [[ "$execmap[xtables-multi]" = "/sbin/xtables-multi" ]]; then
         # func "iptables using xtables-multi"
-        launch xtables-multi iptables $*
+        xtables-multi iptables $*
         return $?
     else
-        launch iptables $*
+        iptables $*
         return $?
     fi
 }
@@ -213,18 +213,12 @@ loopback-on() {
 
 }
 
-_sysctl() {
-    fn sysctl $*
-    $R/bin/sup ${execmap[sysctl]} $* | sysread sysctl_log
-    func $sysctl_log
-}
-
 sysctl-setup() {
     fn sysctl-setup
     freq=(${execmap[sysctl]})
     ckreq || return 1
 
-    cat <<EOF | _sysctl -p -
+    cat <<EOF | sysctl -p -
 net.ipv4.tcp_syncookies = 1
 net.ipv4.icmp_echo_ignore_broadcasts = 1
 net.ipv4.conf.all.accept_redirects = 0
@@ -251,17 +245,17 @@ iptables-snat-on() {
     sysctl-setup
 
     notice "Setting up masquerading (NAT)"
-    launch modprobe nf_conntrack_ipv4
-    _sysctl net.netfilter.nf_conntrack_acct=1
+    modprobe nf_conntrack_ipv4
+    sysctl net.netfilter.nf_conntrack_acct=1
     # strenghten and optimize a bit the system for networking
 
     func "enable ip forwarding"
-    _sysctl net.ipv4.ip_forward=1
+    sysctl net.ipv4.ip_forward=1
 
     func "bugfix for routing table weirdness in Linux >3.1"
     # see https://lkml.org/lkml/2011/11/18/191
     # and http://www.spinics.net/lists/netdev/msg179687.html
-    _sysctl net.ipv4.conf.$interface.accept_redirects=0
+    sysctl net.ipv4.conf.$interface.accept_redirects=0
 
     # func "setup route towards wired network"
     # iptables --table nat --append POSTROUTING \

@@ -8,10 +8,10 @@ redis() {
 
     case "$db" in
 		runtime|dynamic)
-			launch redis-cli -h 127.0.0.1 -p 6378 --raw
+			redis-cli -h 127.0.0.1 -p 6378 --raw
 			;;
 		storage)
-			launch redis-cli -h 127.0.0.1 -p 6379 --raw
+			redis-cli -h 127.0.0.1 -p 6379 --raw
 			;;
 	esac
 

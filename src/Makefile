@@ -15,14 +15,13 @@ all: base springs
 	install -s -p dowse-cmd-fifo  ../build/bin
 	cp -f parse-ip-neigh.py  ../build/bin
 	./checksum.sh $(DOWSE_USER)
-	./compile.sh sup
 
 libs:
 	make -C libdowse
 
-.PHONY: modprobe seccrond pgld sup
+.PHONY: modprobe seccrond pgld
 
-base: config libs modprobe sup dnscrypt_dowse.so seccrond
+base: config libs modprobe dnscrypt_dowse.so seccrond
 	@echo "Compiled base"
 
 dnscrypt_dowse.so:
@@ -78,7 +77,6 @@ clean:
 	rm -f *.zkv
 	rm -f database.h execrules.h
 	rm -f modprobe dowse-to-osc dowse-to-gource dowse-to-mqtt
-	make -C sup                  clean
 	make -C dnscrypt-plugin      clean
 	make -C pgld                 clean
 	make -C netdata-plugins      clean

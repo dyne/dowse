@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-ebtables() { launch ebtables $* }
+ebtables() { ebtables $* }
 
 ebtables-start() {
 

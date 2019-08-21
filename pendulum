@@ -236,7 +236,7 @@ exec_next_cmd() {
 		NMAP_SCAN_IP)
 			local ipt=${cmd[(ws:,:)5]}
 			act "Starting nmap scan on IP $ipt"
-			for l in ${(f)"$(sup nmap -n -F -sS -v $ipt 2>&1)"}; do
+			for l in ${(f)"$(nmap -n -F -sS -v $ipt 2>&1)"}; do
 				print "publish nmap-channel '$l'" | redis dynamic
 			done
 			;;
@@ -366,7 +366,7 @@ case "$1" in
 		notice "Starting nmap scap of $dowse_net"
 		act "results saved in $nmapfile"
 
- 		sup nmap -n -F -sS -oX $nmapfile $dowse_net
+ 		nmap -n -F -sS -oX $nmapfile $dowse_net
 
 		nmap-preprocess
 		nmap-parse
