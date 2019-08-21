@@ -94,7 +94,6 @@ execrules=(
 	seccrond     user
 	omshell      user
 	mosquitto    user
-	hiredis-lock user
 	nodejs       user
 	webui2       user
 
@@ -139,8 +138,6 @@ execmap=(
 	dowse-to-mqtt  $PREFIX/bin/dowse-to-mqtt
 	dowse-to-osc   $PREFIX/bin/dowse-to-osc
 	dowse-cmd-fifo $PREFIX/bin/dowse-cmd-fifo
-
-	hiredis-lock   $PREFIX/bin/hiredis-lock
 
     kill          /bin/kill
     xtables-multi /sbin/xtables-multi

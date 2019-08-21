@@ -211,33 +211,3 @@ waitpid() {
     return 0
 }
 
-# prints a unique identifier of the lock used to unlock in case of success
-# else returns nonzero in case of failure (lock timeout)
-lock() {
-	fn lock $*
-	_lid="$1"
-	timeout=${2:-10}
-	req=(_lid)
-	ckreq || return $?
-
-	local lkey
-	lkey=`launch hiredis-lock on ${_lid} "${timeout}000"`
-	print "$lkey"
-	if [[ "$lkey" = "0" ]]; then
-		return 1
-	else
-		return 0
-	fi
-}
-
-unlock() {
-	fn unlock $*
-	_lid="$1"
-	rand="$2"
-	req=(_lid rand)
-	ckreq || return $?
-
-	launch hiredis-lock off ${_lid} ${rand}
-	return $?
-}
-
