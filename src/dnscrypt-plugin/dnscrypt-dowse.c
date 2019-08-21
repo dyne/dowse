@@ -119,7 +119,7 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 			warn("own IP4 on LAN not known, variable DOWSE_LAN_ADDRESS_IP4 not set");
 			data->ownip4[0] = 0x0;
 		} else {
-			strncpy(data->ownip4, stmp, NI_MAXHOST);
+			strncpy(data->ownip4, stmp, NI_MAXHOST-1);
 			act("Own IPv4 address on LAN: %s", data->ownip4);
 		}
 	}
@@ -131,7 +131,7 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 			warn("IP4 netmask not known, variable DOWSE_LAN_NETMASK_IP4 not set");
 			data->netmask_ip4[0] = 0x0;
 		} else {
-			strncpy(data->netmask_ip4, stmp, NI_MAXHOST);
+			strncpy(data->netmask_ip4, stmp, NI_MAXHOST-1);
 			act("Own IPv4 netmask for LAN: %s", data->netmask_ip4);
 		}
 		// // cheap trick to verify if ip4
@@ -210,7 +210,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	size_t answer_size = 0;
 	uint8_t *outbuf = NULL;
 
-	char rr_to_redirect[1024];
+	char rr_to_redirect[2048];
 	int party_mode=0;
 	int enable_to_browse = 0;
 
@@ -337,12 +337,12 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			                        reverse_str);
 			if(data->reply)
 				if(data->reply->len) { // it exists, return that
-					char tmprr[1024];
+					char tmprr[2048];
 
 					if(data->debug)
 						func("found local reverse: %s", data->reply->str);
 
-					snprintf(tmprr, 1024, "%s 0 IN PTR %s",
+					snprintf(tmprr, 2048, "%s 0 IN PTR %s",
 					         question_str, data->reply->str);
 					freeReplyObject(data->reply);
 					// render the packet into wire format (outbuf is saved with a memcpy)
@@ -427,7 +427,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		    warn("can't resolv mac address of IP: %s", data->ip4);
 		    warn("redirect on captive portal due to ip2mac() internal error");
 		    if(data->query && data->ownip4)
-			    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->ownip4);
+			    snprintf(rr_to_redirect, 2048, "%s 0 IN A %s", data->query, data->ownip4);
 		    // double free?!
 		    // if(data->reply)
 			//     freeReplyObject(data->reply);
@@ -468,7 +468,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		    if(!enable_to_browse) {
 			    // redirect to dowse if it is not authorized
 			    func("redirect on captive portal for ip %s mac %s", data->ip4, data->mac);
-			    snprintf(rr_to_redirect, 1024, "%s 0 IN A %s", data->query, data->ownip4);
+			    snprintf(rr_to_redirect, 2048, "%s 0 IN A %s", data->query, data->ownip4);
 
 			    // return a wire packet immediately
 			    outbuf = answer_to_question(packet_id, question_rr, rr_to_redirect, &answer_size);
@@ -494,12 +494,12 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		if(data->reply->len) { // it exists, return that
 			size_t answer_size = 0;
 			uint8_t *outbuf = NULL;
-			char tmprr[1024];
+			char tmprr[2048];
 
 			if(data->debug)
 				func("local lease found: %s", data->reply->str);
 
-			snprintf(tmprr, 1024, "%s 0 IN A %s", data->query, data->reply->str);
+			snprintf(tmprr, 2048, "%s 0 IN A %s", data->query, data->reply->str);
 			freeReplyObject(data->reply);
 
 			outbuf = answer_to_question(packet_id, question_rr,
@@ -552,17 +552,18 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	if(data->offline) {
 		size_t answer_size = 0;
 		uint8_t *outbuf = NULL;
-		char tmprr[1024];
+		char tmprr[2048];
 		if(data->reverse)
-			snprintf(tmprr, 1024, "%s 0 IN PTR localhost", question_str);
+			snprintf(tmprr, 2048, "%s 0 IN PTR localhost", question_str);
 		else
-			snprintf(tmprr, 1024, "%s 0 IN A 127.0.0.1", data->query);
+			snprintf(tmprr, 2048, "%s 0 IN A 127.0.0.1", data->query);
 
 		outbuf = answer_to_question(packet_id, question_rr,
 		                            tmprr, &answer_size);
-		if(!outbuf)
+		if(!outbuf) {
 			ldns_pkt_free(packet);
 			return DCP_SYNC_FILTER_RESULT_KILL;
+		}
 
 		dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
 
@@ -728,6 +729,8 @@ void print_data_redis( redisContext *redis,char*prefix) {
 }
 
 
+#define MAX_PUBLISH 2048
+
 int publish_query(plugin_data_t *data) {
 	char *extracted;
 	int val = 1;
@@ -735,7 +738,7 @@ int publish_query(plugin_data_t *data) {
 	char *sval;
 
 	time_t epoch_t;
-	char outnew[MAX_OUTPUT];
+	char outnew[MAX_PUBLISH];
 
 	// domain hit count
 	extracted = extract_domain(data);
@@ -756,12 +759,12 @@ int publish_query(plugin_data_t *data) {
 	if(data->reply) {
 		if(data->reply->str) { // we have the name
 			// compose the path of the detected query
-			snprintf(outnew, MAX_OUTPUT,
+			snprintf(outnew, MAX_PUBLISH,
 			         "DNS,%s,%d,%lu,%s,%s",
 			         data->reply->str, val,
 			         epoch_t, extracted, data->tld);
 		} else {
-			snprintf(outnew, MAX_OUTPUT,
+			snprintf(outnew, MAX_PUBLISH,
 			         "DNS,%s,%d,%lu,%s,%s",
 			         data->from, val,
 			         epoch_t, extracted, data->tld);
@@ -774,7 +777,7 @@ int publish_query(plugin_data_t *data) {
 		res = hashmap_get(data->domainlist, extracted, (void**)(&sval));
 		if(res==MAP_OK) {// add domain group
 			strncat(outnew,",",2);
-			strncat(outnew,sval,MAX_OUTPUT-128);
+			strncat(outnew,sval,MAX_PUBLISH-128);
 			//snprintf(outnew,MAX_OUTPUT,"%s,%s",outnew,sval);
 		}
 	}

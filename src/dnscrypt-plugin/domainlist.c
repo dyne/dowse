@@ -138,7 +138,7 @@ char *extract_domain(plugin_data_t *data) {
 			dots++;
 			// take the tld as first dot hits
 			if(first) {
-				strncpy(data->tld,last,MAX_TLD);
+				strncpy(data->tld,last,MAX_TLD-1);
 				first=0; }
 		}
 		if(dots>=positions) {
