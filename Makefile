@@ -55,7 +55,7 @@ install: install-zlibs
 	./set_privileges.sh                     ${DESTDIR}${PREFIX}
 	install -s -p -m 6755 build/sup         ${DESTDIR}${PREFIX}/bin
 	mkdir -p ${DESTDIR}${PREFIX}/lib
-	install -s -p -m 644 src/dnscrypt-plugin/.libs/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib
+	install -s -p -m 644 src/dnscrypt-plugin/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib
 	chown -R ${DOWSE_USER}:${DOWSE_USER} ${DESTDIR}${DOWSE_HOME}/.dowse
 
 
