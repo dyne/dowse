@@ -35,6 +35,7 @@ install-zlibs:
 install: install-zlibs
 	install -d ${DESTDIR}${PREFIX}
 	install -d ${DESTDIR}${PREFIX}/bin
+	install -p -m 644 env ${DESTDIR}${PREFIX}/env
 	install -p -m 644 dowse ${DESTDIR}${PREFIX}/zshrc
 	install -p -m 755 pendulum ${DESTDIR}${PREFIX}/bin/pendulum
 	make -C src install
@@ -55,6 +56,7 @@ install: install-zlibs
 	./set_privileges.sh                     ${DESTDIR}${PREFIX}
 	mkdir -p ${DESTDIR}${PREFIX}/lib
 	install -s -p -m 644 src/dnscrypt-plugin/dnscrypt_dowse.so ${DESTDIR}${PREFIX}/lib
+	mkdir -p ${DESTDIR}${DOWSE_HOME}/.dowse
 	chown -R ${DOWSE_USER}:${DOWSE_USER} ${DESTDIR}${DOWSE_HOME}/.dowse
 
 

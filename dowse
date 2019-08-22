@@ -21,104 +21,10 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
+export R=${DOWSE_PREFIX:-/usr/local/dowse}
+source ${R}/env
 
-# {{{ GLOBALS
-
-dowse_version=1.0b
-dowse_release_date="5/Apr/2016"
-
-# export DOWSE_PREFIX and DOWSE_HOME to override
-R=${DOWSE_PREFIX:-/usr/local/dowse}
-H=${DOWSE_HOME:-$HOME/.dowse}
-E=${DOWSE_CONF:-/etc/dowse}
-
-#####################
-source /usr/share/zuper/zuper
-
-[[ -r $R ]] || {
-    error "Dowse is not installed in: $R"
-    error "export DOWSE_PREFIX if installed on a different path"
-    return 1
-}
-
-# add all other dowse binaries to the path
-path+=($R/bin)
-rehash
-
-mkdir -p $H
-
-# For gettext
-TEXTDOMAIN=dowse
-
-# path and debugging
-vars+=(R H E debug quiet script fun network)
-vars+=(last_notice last_act last_func)
-vars+=(root sql)
-arrs+=(mods)
-
-# network configuration
-
-vars+=(settings address interface hostname wan lan firewall)
-vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
-
-# export DOWSE to env with path to the installation
-# else start it from inside the dir with source dowse
-DEBUG=${DEBUG:-0}
-QUIET=${QUIET:-0}
-LOG=${LOG:-""}
-
-# pendulum
-vars+=(now sqlquery)
-maps+=(obj pidmap)
-
-# index of fields in the things database
-vars+=(thingidx)
-# index of fields in the things database about event related table
-vars+=(eventidx)
-# configuration parameter table
-vars+=(parameteridx)
-
-# dnscrypt-proxy server settings
-vars+=(dnscrypt_ipaddr dnscrypt_key dnscrypt_name)
-
-# globals filled by lease parser
-arrs+=(host mac ip)
-
-
-# consul's configuration map
-# maps+=(consul_conf consul_watch)
-
-# redis database indexes
-maps+=(db)
-
-# dataset indexes
-arrs+=(mod)
-
-# daemons exec paths (OS dependent)
-maps+=(execmap execrules)
-vars+=(execpath)
-
-# default daemons conf and pids
-vars+=(pid conf)
-
-zmodload zsh/system
-zmodload zsh/mapfile
-zmodload zsh/regex
-zmodload zsh/sched
-zmodload zsh/system
-zmodload zsh/net/tcp
-
-source $R/zlibs/modules
-source $R/zlibs/processes
-source $R/zlibs/iptables
-# source $R/zlibs/ebtables
-source $R/zlibs/confstore
-source $R/zlibs/redis
-source $R/zlibs/redis
-source $R/zlibs/nmap
-# source $R/zlibs/sql
-
-# source $R/daemons/consul
+source $R/daemons/consul
 source $R/daemons/dhcpd
 # source $R/daemons/squid3
 # source $R/daemons/privoxy
@@ -134,10 +40,6 @@ source $R/daemons/webui2
 # source $R/daemons/tinyproxy
 # source $R/daemons/tor
 # source $R/daemons/node-red
-
-
-# conclude initialization
-source /usr/share/zuper/zuper.init
 
 func "load dataset indexes"
 db=()

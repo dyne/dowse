@@ -51,7 +51,7 @@ dowse-module-load() {
     #  dowse_mod_version
 
     # read all the module, instantiate functions
-    source $core_script
+    #source $core_script
     # save the id which is the directory name with underscores
     dowse_mod[id]=`basename "$1"`
     dowse_mod[id]="${dowse_mod[id]//-/_}"
