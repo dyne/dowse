@@ -1,57 +1,57 @@
 #!/usr/bin/env zsh
 
+source $R/env
+
 vars+=(dnscrypt_ipaddr dnscrypt_name dnscrypt_key)
 
-dnscrypt-proxy-conf() {
-	rconf=""
+rconf=""
 
-	[[ -r $H/run/leases ]] && {
-		# load dhcp leases in redis
-		for i in ${(f)"$(cat $H/run/leases)"}; do
-			rconf+="SET dns-lease-${i[(w)4]} ${i[(w)3]}\n"
-			rconf+="SET dns-lease-${i[(w)4]}.dowse.it ${i[(w)3]}\n"
+[[ -r $H/run/leases ]] && {
+	# load dhcp leases in redis
+	for i in ${(f)"$(cat $H/run/leases)"}; do
+		rconf+="SET dns-lease-${i[(w)4]} ${i[(w)3]}\n"
+		rconf+="SET dns-lease-${i[(w)4]}.dowse.it ${i[(w)3]}\n"
 
-			# and the hosts reverses
-			rconf+="SET dns-reverse-${i[(w)3]}. ${i[(w)4]}\n"
+		# and the hosts reverses
+		rconf+="SET dns-reverse-${i[(w)3]}. ${i[(w)4]}\n"
 
-		done
-	}
-
-	[[ -r /etc/dowse/network ]] && {
-		for i in ${(f)"$(cat /etc/dowse/network)"}; do
-
-			print "$i" | grep '^#' > /dev/null
-			[[ $? = 0 ]] && continue
-
-			# first word may be a mac address
-			print "${i[(w)1]}" | grep '^..:..:..:..:..:..' > /dev/null
-			if [[ $? = 0 ]]; then
-				mac="${i[(w)1]}"
-				hostname="${i[(w)2]}"
-				ip4="${i[(w)3]}"
-			else
-				mac=""
-				hostname="${i[(w)1]}"
-				ip4="${i[(w)2]}"
-			fi
-			rconf+="SET dns-lease-${hostname} ${ip4}\n"
-			rconf+="SET dns-lease-${hostname}.dowse.it ${ip4}\n"
-			func "+/etc/network: $mac $hostname $ip4"
-		done
-	}
-
-	# load the local hosts known
-	rconf+="SET dns-lease-${hostname}          ${address}\n"
-	rconf+="SET dns-lease-${hostname}.dowse.it ${address}\n"
-	rconf+="SET dns-lease-www.dowse.it         ${address}\n"
-	rconf+="SET dns-lease-dowse.it             ${address}\n"
-	rconf+="SET dns-lease-gateway    ${wan}\n"
-	# load the local hosts reverses
-	rconf+="SET dns-reverse-${address}. ${hostname}.dowse.it\n"
-	[[ "$address" = "$gateway" ]] ||
-		rconf+="SET dns-reverse-${wan}. gateway\n"
-	print $rconf | redis dynamic
+	done
 }
+
+[[ -r /etc/dowse/network ]] && {
+	for i in ${(f)"$(cat /etc/dowse/network)"}; do
+
+		print "$i" | grep '^#' > /dev/null
+		[[ $? = 0 ]] && continue
+
+		# first word may be a mac address
+		print "${i[(w)1]}" | grep '^..:..:..:..:..:..' > /dev/null
+		if [[ $? = 0 ]]; then
+			mac="${i[(w)1]}"
+			hostname="${i[(w)2]}"
+			ip4="${i[(w)3]}"
+		else
+			mac=""
+			hostname="${i[(w)1]}"
+			ip4="${i[(w)2]}"
+		fi
+		rconf+="SET dns-lease-${hostname} ${ip4}\n"
+		rconf+="SET dns-lease-${hostname}.dowse.it ${ip4}\n"
+		func "+/etc/network: $mac $hostname $ip4"
+	done
+}
+
+# load the local hosts known
+rconf+="SET dns-lease-${hostname}          ${address}\n"
+rconf+="SET dns-lease-${hostname}.dowse.it ${address}\n"
+rconf+="SET dns-lease-www.dowse.it         ${address}\n"
+rconf+="SET dns-lease-dowse.it             ${address}\n"
+rconf+="SET dns-lease-gateway    ${wan}\n"
+# load the local hosts reverses
+rconf+="SET dns-reverse-${address}. ${hostname}.dowse.it\n"
+[[ "$address" = "$gateway" ]] ||
+	rconf+="SET dns-reverse-${wan}. gateway\n"
+print $rconf | redis dynamic
 
 #
 # The startup of dnscrypt server is no more required, because it's responsibilty of the "pendulum > check_and_select_dns" function
@@ -60,66 +60,53 @@ dnscrypt-proxy-conf() {
 #  2) when a new endpoint is found it's  stop + start the DNS server.
 #
 
-dnscrypt-proxy-exec() {
-	args=""
-	[[ $* =~ debug ]] && args+=",debug"
-	[[ $* =~ offline ]] && args+=",offline"
+# grab the last used server
+#dns_selected=$(print "GET dns-server-selected" | redis dynamic)
+#dns_selected=${dns_selected/\(nil\)/}
 
-	# grab the last used server
-	#dns_selected=$(print "GET dns-server-selected" | redis dynamic)
-	#dns_selected=${dns_selected/\(nil\)/}
-	
-	# if undefined, eg at the first startup, it takes a default value
-	#dnscrypt_name=${dns_selected:-dnscrypt.eu-nl}
-	dnscrypt_name=${1:-"ipredator"}
+# if undefined, eg at the first startup, it takes a default value
+#dnscrypt_name=${dns_selected:-dnscrypt.eu-nl}
+dnscrypt_name=${1:-"ipredator"}
 
-	func "Launching dnscrypt-proxy to listen on port 53"
-	act "dnscrypt proxy server: $dnscrypt_name"
-	
-	# TODO: why this ?! and why here?? this is a global setting for
-	# something very delicate that is overwritten on every
-	# dnscrypt-proxy execution. likely to cause problems. old comment:
-	# "definire la variabile d'ambiente interface"
-	# ulimit -c unlimited
+func "Launching dnscrypt-proxy to listen on port 53"
+act "dnscrypt proxy server: $dnscrypt_name"
 
-	# why a new log on each run? this is likely to use up all i/o
-	# TMP=`date +%Y%m%d_%H%M%S`
+# TODO: why this ?! and why here?? this is a global setting for
+# something very delicate that is overwritten on every
+# dnscrypt-proxy execution. likely to cause problems. old comment:
+# "definire la variabile d'ambiente interface"
+# ulimit -c unlimited
 
-	if [[ $DEBUG = 1 ]]; then
-		DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
-						DOWSE_LAN_ADDRESS_IP4=$address \
-						DOWSE_LAN_NETMASK_IP4=$netmask \
-						interface=$interface \
-						hostname=$hostname \
-						domain=$lan \
-						launch dnscrypt-proxy -a $address:53 \
-						-l $H/log/dnscrypt.log \
-						-L $R/share/dnscrypt-resolvers.csv \
-						-R "$dnscrypt_name" \
-						-I \
-						-X $R/lib/dnscrypt_dowse.so${args},debug \
-						-m 7 -u $dowse_uid
-		# log level informational (7 for debug)
-		return $?
-    else
-		pid=$H/run/dnscrypt-proxy.pid
-		DOWSE_DOMAINLIST=$R/domain-list/data \
-						DOWSE_LAN_ADDRESS_IP4=$address \
-						DOWSE_LAN_NETMASK_IP4=$netmask \
-						hostname=$hostname \
-						domain=$lan \
-						interface=$interface \
-						launch dnscrypt-proxy -a $address:53 \
-						-l $H/log/dnscrypt.log \
-						-L $R/share/dnscrypt-resolvers.csv \
-						-R "$dnscrypt_name" \
-						-X $R/lib/dnscrypt_dowse.so${args} \
-						-d -m 7 -u $dowse_uid
-		# log only warning conditions
+# why a new log on each run? this is likely to use up all i/o
+# TMP=`date +%Y%m%d_%H%M%S`
 
-    fi
-    pidof dnscrypt-proxy > $pid
-    savepid dnscrypt-proxy $pid
-}
-
+if [[ $DEBUG = 1 ]]; then
+	DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
+			DOWSE_LAN_ADDRESS_IP4=$address \
+			DOWSE_LAN_NETMASK_IP4=$netmask \
+			interface=$interface \
+			hostname=$hostname \
+			domain=$lan \
+			exec dnscrypt-proxy -a $address:53 \
+			-l $H/log/dnscrypt.log \
+			-L $R/share/dnscrypt-resolvers.csv \
+			-R "$dnscrypt_name" \
+			-I \
+			-X $R/lib/dnscrypt_dowse.so${args},debug \
+			-m 7 -u $dowse_uid
+else
+	pid=$H/run/dnscrypt-proxy.pid
+	DOWSE_DOMAINLIST=$R/domain-list/data \
+			DOWSE_LAN_ADDRESS_IP4=$address \
+			DOWSE_LAN_NETMASK_IP4=$netmask \
+			hostname=$hostname \
+			domain=$lan \
+			interface=$interface \
+			exec dnscrypt-proxy -a $address:53 \
+			-l $H/log/dnscrypt.log \
+			-L $R/share/dnscrypt-resolvers.csv \
+			-R "$dnscrypt_name" \
+			-X $R/lib/dnscrypt_dowse.so${args} \
+			-m 7 -u $dowse_uid
+fi
 

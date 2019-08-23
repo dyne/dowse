@@ -1,10 +1,8 @@
 #!/usr/bin/env zsh
 
-redis-server-conf() {
-    fn redis-server-conf
+source $R/env
 
-    cat <<EOF
-daemonize yes
+cat <<EOF > $H/run/conf/redis.conf
 pidfile $H/run/redis-server.pid
 logfile $H/log/redis-server.log
 port 6379
@@ -83,33 +81,18 @@ hz 10
 
 aof-rewrite-incremental-fsync yes
 EOF
-}
 
-redis-server-exec() {
-    fn redis-server-exec $*
-    exe=${1:-${execmap[redis-server]}}
-    req=(conf exe)
-    freq=($conf $exe)
-    ckreq || return 1
+func "redis"
 
-    [[ "$1" = "" ]] || shift 1
-
-    pidfile=`awk '/pidfile/ { print $2 }' $conf`
-    func "redis $conf $* (pidfile: $pidfile)"
-
-    launch redis-server $conf $*
+exec redis-server $H/run/conf/redis.conf
 
 	# we consider these to tell us if it's the initial startup of redis
 	# yes, redis returns 1 if a key is found
-	print "exists state_all_things" | redis storage && {
-		print "set state_all_things on" | redis storage
-	}
+	# print "exists state_all_things" | redis storage && {
+	# 	print "set state_all_things on" | redis storage
+	# }
 
-	print "exists party_mode" | redis storage && {
-		print "set party_mode off" | redis storage
-	}
+	# print "exists party_mode" | redis storage && {
+	# 	print "set party_mode off" | redis storage
+	# }
 
-    savepid redis-server $pidfile
-
-    return $?
-}

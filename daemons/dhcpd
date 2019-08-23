@@ -21,16 +21,17 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
-dhcpd-conf() {
-	netzero=${dowse_net[(ws:/:)1]}
-	# if no base network specified, use class C
-	# TODO: better deduction based on netmask if known
-	[[ "$netzero" = "" ]] && netzero=${address%.*}.0
-	range_start=${dowse_guests[(ws:,:)1]}
-	range_stop=${dowse_guests[(ws:,:)2]}
-	func "dhcpd address:     $address"
-	func "dhcpd guest range: $range_start - $range_stop"
-cat <<EOF
+source $R/env
+
+netzero=${dowse_net[(ws:/:)1]}
+# if no base network specified, use class C
+# TODO: better deduction based on netmask if known
+[[ "$netzero" = "" ]] && netzero=${address%.*}.0
+range_start=${dowse_guests[(ws:,:)1]}
+range_stop=${dowse_guests[(ws:,:)2]}
+func "dhcpd address:     $address"
+func "dhcpd guest range: $range_start - $range_stop"
+cat <<EOF > $H/run/conf/dhcpd.conf
 option routers $address;
 option domain-name "dowse.it";
 option domain-name-servers $address;
@@ -52,26 +53,10 @@ subnet ${netzero} netmask ${netmask} {
   }
 }
 EOF
-}
 
-dhcpd-exec() {
-	fn dhcpd-exec $*
-	req=(conf)
-    exe=${1:-${execmap[dhcpd]}}
-    freq=($exe $conf)
-	ckreq || return $?
+leases=$H/run/isc.leases
+touch $leases
+pid=$H/run/dhcpd.pid
 
-	leases=$H/run/isc.leases
-	touch $leases
-	pid=$H/run/dhcpd.pid
-
-	# chroot needs /proc/net/dev
-	# launch dhcpd -4 -pf $pid -user $dowse_uid -group $dowse_gid \
-	# 	   -chroot $H -lf $leases -cf $conf
-
-	launch dhcpd -pf $pid -user root \
-		   -lf $leases -cf $conf $interface
-
-	savepid dhcpd $pid
-
-}
+exec dhcpd -pf $pid -user root -d \
+		-lf $leases -cf $H/run/conf/dhcpd.conf $interface

@@ -24,3 +24,21 @@ redis() {
 	return 1
 
 }
+
+redis-storage-setup() {
+	# Wait until redis has started
+	until [[ `print ping | redis storage 2>/dev/null` == "PONG" ]] {
+		sleep 1
+	}
+
+	log=$H/log/redis-storage-setup.log
+	# we consider these to tell us if it's the initial startup of redis
+	# yes, redis returns 1 if a key is found
+	print "exists state_all_things" | redis storage &>$log && {
+		print "set state_all_things on" | redis storage &>>$log
+	}
+
+	print "exists party_mode" | redis storage &>>$log && {
+		print "set party_mode off" | redis storage &>>$log
+	}
+}

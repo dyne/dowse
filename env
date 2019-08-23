@@ -119,3 +119,29 @@ source $R/zlibs/nmap
 # conclude initialization
 source /usr/share/zuper/zuper.init
 
+func "load dataset indexes"
+db=()
+zkv.load $R/db/database.zkv
+
+func "load paths and execmaps"
+execmap=()
+source $R/db/execmap.zkv
+execrules=()
+source $R/db/execrules.zkv
+
+# module fields
+mod=(
+    name
+    desc
+    tags
+    ports
+    webgui
+    daemons
+    authors
+    version
+)
+
+# global file path to settings
+settings=${1:-$E/settings}
+
+conf-load

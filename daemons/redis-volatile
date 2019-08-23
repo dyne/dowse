@@ -1,10 +1,8 @@
 #!/usr/bin/env zsh
 
-redis-volatile-conf() {
-    fn redis-volatile-conf
+source $R/env
 
-    cat <<EOF
-daemonize yes
+cat <<EOF > $H/run/conf/redis-volatile.conf
 pidfile $H/run/redis-volatile.pid
 logfile $H/log/redis-volatile.log
 port 6378
@@ -78,23 +76,8 @@ client-output-buffer-limit pubsub 32mb 8mb 60
 # 100 only in environments where very low latency is required.
 hz 20
 EOF
-}
 
-redis-volatile-exec() {
-    fn redis-volatile-exec $*
-    exe=${1:-${execmap[redis-server]}}
-    req=(conf exe)
-    freq=($conf $exe)
-    ckreq || return 1
+func "redis-volatile"
+mkdir -p $H/run/redis-volatile
+exec redis-server $H/run/conf/redis-volatile.conf
 
-    [[ "$1" = "" ]] || shift 1
-
-    pidfile=`awk '/pidfile/ { print $2 }' $conf`
-    func "redis $conf $* (pidfile: $pidfile)"
-	mkdir -p $H/run/redis-volatile
-    launch redis-server $conf $*
-
-    savepid redis-volatile $pidfile
-
-    return $?
-}

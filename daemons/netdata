@@ -1,7 +1,8 @@
 #!/usr/bin/zsh
 
-netdata-conf() {
-    cat <<EOF
+source $R/env
+
+cat <<EOF > $H/run/conf/netdata.conf
 [global]
     # special port for dowse
     port = 29999
@@ -45,21 +46,11 @@ netdata-conf() {
         system swap = no
 
 EOF
-}
 
-netdata-exec() {
-    fn netdata-start $*
-    req=(conf)
-    freq=($conf)
-    ckreq || return $?
+# check if required dirs exist
+mkdir -p $H/lib/netdata/registry
+mkdir -p $H/cache/netdata
 
-	# check if required dirs exist
-	mkdir -p $H/lib/netdata/registry
-	mkdir -p $H/cache/netdata
+pid=$H/run/netdata.pid
+exec netdata -D -P $pid -c $H/run/conf/netdata.conf -p 29999
 
-    pid=$H/run/netdata.pid
-    launch netdata -P $pid -c $conf -p 29999
-    savepid netdata $pid
-
-    return $?
-}

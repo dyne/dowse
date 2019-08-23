@@ -1,13 +1,12 @@
 #!/usr/bin/env zsh
 
+source $R/env
+
 # also see:
 # $R/run/pgl/lib/pgl/pglcmd.defaults
 # $R/run/pgl/lib/pgl/pglcmd.main
 
-pglcmd-conf() {
-    fn pgl-conf
-
-    cat <<EOF
+cat <<EOF > $H/run/conf/pglcmd.conf
 LOCAL_BLOCKLIST_DIR="$H/conf/blocklists"
 BLOCKLISTS_LIST=""
 ALLOW_IN="$H/conf/whitelist.p2p"
@@ -17,14 +16,5 @@ DAEMON_LOG="\${LOGDIR}/pgld.log"
 WD="0"
 EOF
 
-}
+$R/bin/pglcmd start
 
-pglcmd-exec() {
-    fn pglcmd-start $*
-    $R/bin/sup $R/bin/pglcmd start
-}
-
-pglcmd-kill() {
-    fn pglcmd-stop
-    $R/bin/sup $R/bin/pglcmd stop
-}

@@ -24,46 +24,6 @@
 export R=${DOWSE_PREFIX:-/usr/local/dowse}
 source ${R}/env
 
-source $R/daemons/consul
-source $R/daemons/dhcpd
-# source $R/daemons/squid3
-# source $R/daemons/privoxy
-# source $R/daemons/polipo
-source $R/daemons/mosquitto
-source $R/daemons/dnscrypt-proxy
-source $R/daemons/netdata
-# source $R/daemons/pgld
-source $R/daemons/redis
-source $R/daemons/redis-volatile
-source $R/daemons/seccrond
-source $R/daemons/webui2
-# source $R/daemons/tinyproxy
-# source $R/daemons/tor
-# source $R/daemons/node-red
-
-func "load dataset indexes"
-db=()
-zkv.load $R/db/database.zkv
-
-func "load paths and execmaps"
-execmap=()
-source $R/db/execmap.zkv
-execrules=()
-source $R/db/execrules.zkv
-
-# module fields
-mod=(
-    name
-    desc
-    tags
-    ports
-    webgui
-    daemons
-    authors
-    version
-)
-
-
 if [[ $dowse_loaded = 1 ]]; then
     act "Dowse CLI reloaded ::1::" $dowse_version
     RPROMPT=Dowse
@@ -83,10 +43,6 @@ fi
 EOF
 }
 
-# global file path to settings
-settings=${1:-$E/settings}
-
-conf-load
 # TODO: using first argument here breaks ~/.zshrc auto-load
 
 act "checking requirements to run dowse..."
@@ -100,6 +56,7 @@ act "checking requirements to run dowse..."
 mkdir -p $H/log
 mkdir -p $H/log/netdata
 mkdir -p $H/run
+mkdir -p $H/run/conf
 mkdir -p $H/data
 
 _verbose "Dowse command: ::1 commands::" "$*"
@@ -162,11 +119,6 @@ dowse-start() {
     }
     notice "Starting Dowse"
 
-    # start the redis daemons (core k/v service)
-    start redis-server
-
-	start redis-volatile
-
     [[ "$firewall" = "yes" ]] && {
 
         # ebtables-stop
@@ -184,14 +136,14 @@ dowse-start() {
             loopback-isolate
 
 			act "flushing arp cache"
-			launch ip -s -s neigh flush all
+			ip -s -s neigh flush all
             act "set up $interface interface with ip $address"
-			launch ip addr add ${address}/${dowse_net[(ws:/:)2]} dev $interface
-			launch ip link set $interface up
+			ip addr add ${address}/${dowse_net[(ws:/:)2]} dev $interface
+			ip link set $interface up
 
             [[ "$wan" = "" ]] || {
                 act "set $wan as default gateway"
-				launch ip route add default via $wan
+				ip route add default via $wan
             }
 
             act "setup snat trasversal"
@@ -214,28 +166,9 @@ EOF
 
 	notice "Starting all daemons in Dowse"
 
-    # launch the dhcp daemon
-    start dhcpd
+    supervisord
 
-    # start the dns encrypted tunneling
-    start dnscrypt-proxy
-
-    # [[ "$firewall" = "yes" ]] &&
-        # start peerguardian (must be at end, after any other iptables setting)
-        # start pgld
-
-	# start the mqtt/websocket hub
-	start mosquitto
-
-    # netdata dashboard for the technical status
-    start netdata
-
-	# nodejs/node-red
-	# start node-red
-
-	start seccrond
-
-	start webui2
+	redis-storage-setup
 
     notice "Dowse succesfully started" # , web interface up on:"
     # act "http://${address}:8500/"
@@ -247,31 +180,12 @@ dowse-stop() {
 
 	notice "Stopping all daemons in Dowse"
 
-	stop webui2
-
-	stop seccrond
-
-	stop mosquitto
+    supervisorctl stop all
 
     # for m in `dowse-module-list`; do
     #     dowse-module-load $m || continue
     #     dowse-module-stop
     # done
-
-	# stop nodejs/node-red
-	# stop node-red
-
-    # stop the dashboard
-    stop netdata
-
-    # stop the dns crypto tunnel
-    stop dnscrypt-proxy
-
-    # stop the dhcp server
-    stop dhcpd
-
-    # stop the firewall peerguardian
-    # stop pgld
 
     # remove the layer 2 firewall rules
     # ebtables-stop
@@ -284,10 +198,6 @@ dowse-stop() {
     # [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
     #     mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
     # }
-
-	stop redis-volatile
-
-    stop redis-server
 
     notice "Dowse has stopped running."
 
