@@ -340,9 +340,6 @@ iptables-start() {
     iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A INPUT   -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-	# Restore tables for all things enabled or disabled in redis storage
-	iptables-restore-things
-
 }
 
 iptables-stop() {

@@ -166,7 +166,15 @@ EOF
 
 	notice "Starting all daemons in Dowse"
 
-    supervisord
+	supervisord
+
+	# iptables-restore-things need redis to be running
+	sleep 1
+	until [[ `supervisorctl status redis | tr -s " " | cut -d" " -f 2` == "RUNNING" ]] {
+		sleep 1
+	}
+	# Restore tables for all things enabled or disabled in redis storage
+	iptables-restore-things
 
 	redis-storage-setup
 
