@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+source $R/env
+
+timefile="$H/run/pendulum_nmap_timefile"
+# Execute nmap after one minute has passed since the last run
+snooze -S"*" "-M*" "-H*" -t $timefile -T 1m \
+		sh -c "$R/bin/pendulum nmap; touch $timefile"
+
