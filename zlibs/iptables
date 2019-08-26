@@ -24,9 +24,9 @@
 iptables() {
     # fn iptables $*
 
-    if [[ "$execmap[xtables-multi]" = "/sbin/xtables-multi" ]]; then
+    if [[ "$execmap[xtables-multi]" = "/sbin/xtables-legacy-multi" ]]; then
         # func "iptables using xtables-multi"
-        xtables-multi iptables $*
+        xtables-legacy-multi iptables $*
         return $?
     else
         iptables $*

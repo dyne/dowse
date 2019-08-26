@@ -140,7 +140,7 @@ execmap=(
 	dowse-cmd-fifo $PREFIX/bin/dowse-cmd-fifo
 
     kill          /bin/kill
-    xtables-multi /sbin/xtables-multi
+    xtables-multi /sbin/xtables-legacy-multi
     # ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
     arp           /usr/sbin/arp
