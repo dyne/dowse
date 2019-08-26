@@ -91,7 +91,6 @@ execrules=(
     arp          user
     ip           user
     netdata      user
-	seccrond     user
 	omshell      user
 	mosquitto    user
 	nodejs       user
@@ -128,7 +127,6 @@ execmap=(
     redis-server  $PREFIX/bin/redis-server
 	tinyproxy     $PREFIX/bin/tinyproxy
     netdata       $PREFIX/bin/netdata
-	seccrond      $PREFIX/bin/seccrond
 	mosquitto     $PREFIX/bin/mosquitto
 	dhcpd         $PREFIX/bin/dhcpd
 	omshell       $PREFIX/bin/omshell

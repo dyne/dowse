@@ -37,13 +37,6 @@ case $1 in
 		popd
 		;;
 
-    seccrond)
-        pushd $R/src/seccrond
-        CFLAGS="$CFLAGS" make -j${THREADS} &&
-			install -s -p seccrond $R/build/bin
-        popd
-        ;;
-
 	netdata-plugins)
 		pushd $R/src/netdata
 		make -j${THREADS}

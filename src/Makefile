@@ -19,9 +19,9 @@ all: base springs
 libs:
 	make -C libdowse
 
-.PHONY: modprobe seccrond pgld
+.PHONY: modprobe pgld
 
-base: config libs modprobe dnscrypt_dowse.so seccrond
+base: config libs modprobe dnscrypt_dowse.so
 	@echo "Compiled base"
 
 dnscrypt_dowse.so:
@@ -29,9 +29,6 @@ dnscrypt_dowse.so:
 
 pgld:
 	@./compile.sh pgld ${THREADS}
-
-seccrond:
-	@./compile.sh seccrond ${THREADS}
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
@@ -80,5 +77,4 @@ clean:
 	make -C dnscrypt-plugin      clean
 	make -C pgld                 clean
 	make -C netdata-plugins      clean
-	make -C seccrond			 clean
 	make -C libdowse			 clean
