@@ -37,26 +37,11 @@ case $1 in
 		popd
 		;;
 
-    seccrond)
-        pushd $R/src/seccrond
-        CFLAGS="$CFLAGS" make -j${THREADS} &&
-			install -s -p seccrond $R/build/bin
-        popd
-        ;;
-
 	netdata-plugins)
 		pushd $R/src/netdata
 		make -j${THREADS}
 		popd
 		;;
-
-    sup)
-        pushd $R/src/sup
-        # make sure latest config.h is compiled in
-        rm -f $R/src/sup/sup.o
-        make -j${THREADS} && install -s -p $R/src/sup/sup $R/build
-        popd
-        ;;
 
     # dnscrypt-proxy)
     #     pushd $R/src/dnscrypt-proxy

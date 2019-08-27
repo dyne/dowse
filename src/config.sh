@@ -91,10 +91,8 @@ execrules=(
     arp          user
     ip           user
     netdata      user
-	seccrond     user
 	omshell      user
 	mosquitto    user
-	hiredis-lock user
 	nodejs       user
 	webui2       user
 
@@ -129,7 +127,6 @@ execmap=(
     redis-server  $PREFIX/bin/redis-server
 	tinyproxy     $PREFIX/bin/tinyproxy
     netdata       $PREFIX/bin/netdata
-	seccrond      $PREFIX/bin/seccrond
 	mosquitto     $PREFIX/bin/mosquitto
 	dhcpd         $PREFIX/bin/dhcpd
 	omshell       $PREFIX/bin/omshell
@@ -140,10 +137,8 @@ execmap=(
 	dowse-to-osc   $PREFIX/bin/dowse-to-osc
 	dowse-cmd-fifo $PREFIX/bin/dowse-cmd-fifo
 
-	hiredis-lock   $PREFIX/bin/hiredis-lock
-
     kill          /bin/kill
-    xtables-multi /sbin/xtables-multi
+    xtables-multi /sbin/xtables-legacy-multi
     # ebtables      /sbin/ebtables
     sysctl        /sbin/sysctl
     arp           /usr/sbin/arp

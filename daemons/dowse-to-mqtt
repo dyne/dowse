@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+source $R/env
+
+act "opening spring: dowse-to-mqtt"
+exec dowse-to-mqtt -p $H/run/dowse-to-mqtt.pid localhost -c log-queue

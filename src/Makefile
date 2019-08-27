@@ -12,18 +12,16 @@ all: base springs
 	install -s -p dowse-to-gource ../build/bin
 	install -s -p dowse-to-osc    ../build/bin
 	install -s -p dowse-to-mqtt   ../build/bin
-	install -s -p hiredis-lock    ../build/bin
 	install -s -p dowse-cmd-fifo  ../build/bin
 	cp -f parse-ip-neigh.py  ../build/bin
 	./checksum.sh $(DOWSE_USER)
-	./compile.sh sup
 
 libs:
 	make -C libdowse
 
-.PHONY: modprobe seccrond hiredis-lock pgld sup
+.PHONY: modprobe pgld
 
-base: config libs modprobe sup hiredis-lock dnscrypt_dowse.so seccrond
+base: config libs modprobe dnscrypt_dowse.so
 	@echo "Compiled base"
 
 dnscrypt_dowse.so:
@@ -31,9 +29,6 @@ dnscrypt_dowse.so:
 
 pgld:
 	@./compile.sh pgld ${THREADS}
-
-seccrond:
-	@./compile.sh seccrond ${THREADS}
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
@@ -48,9 +43,6 @@ dowse-log: dowse-log.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 dowse-cmd-fifo: dowse-cmd-fifo.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
-
-hiredis-lock: hiredis-lock.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 modprobe: modprobe.o kmod_log.o
@@ -82,10 +74,7 @@ clean:
 	rm -f *.zkv
 	rm -f database.h execrules.h
 	rm -f modprobe dowse-to-osc dowse-to-gource dowse-to-mqtt
-	rm -f hiredis-lock
-	make -C sup                  clean
 	make -C dnscrypt-plugin      clean
 	make -C pgld                 clean
 	make -C netdata-plugins      clean
-	make -C seccrond			 clean
 	make -C libdowse			 clean

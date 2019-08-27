@@ -21,8 +21,9 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
-mosquitto-conf() {
-cat <<EOF
+source $R/env
+
+cat <<EOF > $H/run/conf/mosquitto.conf
 pid_file $H/run/mosquitto.pid
 user $dowse_uid
 # bind_address $address
@@ -38,33 +39,10 @@ log_dest file $H/log/mosquitto.log
 # connection_messages true
 allow_anonymous true
 EOF
-}
 
-mosquitto-exec() {
-	fn mosquitto-exec $*
-	req=(conf)
-    exe=${1:-${execmap[dhcpd]}}
-    freq=($exe $conf)
-	ckreq || return $?
+if [[ $DEBUG = 1 ]]; then
+	exec mosquitto -c $H/run/conf/mosquitto.conf -v
+else
+	exec mosquitto -c $H/run/conf/mosquitto.conf
+fi
 
-	if [[ $DEBUG = 1 ]]; then
-
-		launch mosquitto -c $conf -v
-
-	else
-
-		launch mosquitto -c $conf -d
-
-	fi
-
-	savepid mosquitto $H/run/mosquitto.pid
-
-	sleep 1
-
-	act "opening spring: dowse-to-mqtt"
-	launch  dowse-to-mqtt -p $H/run/dowse-to-mqtt.pid localhost -c log-queue &!
-
-	savepid dowse-to-mqtt $H/run/dowse-to-mqtt.pid
-
-	
-}

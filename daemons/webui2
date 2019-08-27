@@ -1,26 +1,21 @@
 #!/usr/bin/zsh
 
-webui2-conf() {}
+source $R/env
 
-webui2-exec() {
-    fn webui2-exec $*
-    
-    func "launching webui2 on $hostname.$lan"
+func "launching webui2 on $hostname.$lan"
 
-	args="$*"
-
-    if [[ $DEBUG = 2 ]]; then
-		hostname=$hostname \
-				domain=$lan \
-				address=$address \
-				interface=$interface \
-				launch webui2 $args
-    else
-		hostname=$hostname \
-				domain=$lan \
-				address=$address \
-				interface=$interface \
-				launch webui2 -p $H/run/webui2.pid $args 1>/dev/null 2>/dev/null &!
-    fi
-}
+if [[ $DEBUG = 2 ]]; then
+	hostname=$hostname \
+			domain=$lan \
+			address=$address \
+			interface=$interface \
+			exec python3 $R/webui2/webui.py
+else
+	hostname=$hostname \
+			domain=$lan \
+			address=$address \
+			interface=$interface \
+			exec python3 $R/webui2/webui.py \
+			-p $H/run/webui2.pid 1>/dev/null 2>/dev/null
+fi
 

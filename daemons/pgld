@@ -1,57 +1,46 @@
 #!/usr/bin/env zsh
 
-pgld-conf() {
-    # required
-    # [[ -f /proc/net/ip_tables_targets ]] && \
-    #     grep -q NFQUEUE /proc/net/ip_tables_targets || {
-    launch modprobe -q xt_NFQUEUE
-    launch modprobe -q ipt_NFQUEUE
+source $R/env
 
-    # below is all optional
-    # [[ -f /proc/net/ip_tables_matches ]] && \
-    #     grep -q mark /proc/net/ip_tables_matches || {
-    # modprobe -q xt_mark
-    # modprobe -q ipt_mark
+# required
+# [[ -f /proc/net/ip_tables_targets ]] && \
+#     grep -q NFQUEUE /proc/net/ip_tables_targets || {
+modprobe -q xt_NFQUEUE
+modprobe -q ipt_NFQUEUE
 
-    # [ -f /proc/net/ip_tables_targets ] && grep -q REJECT /proc/net/ip_tables_targets || {
-    # modprobe -q xt_REJECT
-    # modprobe -q ipt_REJECT
+# below is all optional
+# [[ -f /proc/net/ip_tables_matches ]] && \
+#     grep -q mark /proc/net/ip_tables_matches || {
+# modprobe -q xt_mark
+# modprobe -q ipt_mark
 
-    # [ -f /proc/net/ip_tables_matches ] && grep -q conntrack /proc/net/ip_tables_matches || {
-    # modprobe -q xt_conntrack
-    # modprobe -q ipt_conntrack
+# [ -f /proc/net/ip_tables_targets ] && grep -q REJECT /proc/net/ip_tables_targets || {
+# modprobe -q xt_REJECT
+# modprobe -q ipt_REJECT
 
-    # [ -f /proc/net/ip_tables_matches ] && grep -q iprange /proc/net/ip_tables_matches || {
-    # modprobe -q xt_iprange
-    # modprobe -q ipt_iprange
+# [ -f /proc/net/ip_tables_matches ] && grep -q conntrack /proc/net/ip_tables_matches || {
+# modprobe -q xt_conntrack
+# modprobe -q ipt_conntrack
 
-    # Cat together all single blocklists
-    cat --squeeze-blank $E/blocklists/* |
-        # Ignore comment lines
-        grep -Ev "^[[:space:]]*#" |
-        # Replace repeated whitespace with a single occurence
-        tr -s '[:space:]' |
-        # Delete everything complimentary to the following characters/regex
-        # alphanumeric
-        # space
-        # :\*.-,[]
-        # newline (return gets removed, so CR+LF gets LF)
-        tr -cd '[:alnum:][:space:]:\\\*\.\-,[]\n' |
-        # Only keep the last occurence of :
-        sed 's/.*:/&|/' | tr -d : | tr "\|" ":"
+# [ -f /proc/net/ip_tables_matches ] && grep -q iprange /proc/net/ip_tables_matches || {
+# modprobe -q xt_iprange
+# modprobe -q ipt_iprange
 
-}
+# Cat together all single blocklists
+cat --squeeze-blank $E/blocklists/* |
+    # Ignore comment lines
+    grep -Ev "^[[:space:]]*#" |
+    # Replace repeated whitespace with a single occurence
+    tr -s '[:space:]' |
+    # Delete everything complimentary to the following characters/regex
+    # alphanumeric
+    # space
+    # :\*.-,[]
+    # newline (return gets removed, so CR+LF gets LF)
+    tr -cd '[:alnum:][:space:]:\\\*\.\-,[]\n' |
+    # Only keep the last occurence of :
+    sed 's/.*:/&|/' | tr -d : | tr "\|" ":"
 
-pgld-exec() {
-    fn pgld-start $*
-    req=(conf)
-    freq=($conf)
-    ckreq || return 1
+pid=$H/run/pgld.pid
+exec pgld -p $pid -r dowse_reject -a dowse_accept
 
-    pid=$H/run/pgld.pid
-    launch pgld -p $pid -r dowse_reject -a dowse_accept $conf
-    savepid pgld $pid
-
-    return $?
-
-}

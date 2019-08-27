@@ -19,27 +19,6 @@ act "generating execution rules"
 
 builduid=`id -u $1`
 buildgid=`id -g $1`
-# generate configuration for sup
-cat <<EOF > $R/src/sup/config.h
-
-#define DAEMON 1
-
-#define HASH 1
-
-#ifndef FLAGSONLY
-
-#define USER $builduid
-#define GROUP $buildgid
-
-#define SETUID 0
-#define SETGID 0
-
-#define CHROOT ""
-#define CHRDIR ""
-
-static struct rule_t rules[] = {
-EOF
-
 notice "Computing checksums to lock superuser privileges for user $1"
 
 execsums=()
@@ -60,17 +39,8 @@ for x in ${(k)execmap}; do
             continue }
         execsums+=($x $cksum)
         act "$cksum $x"
-        cat <<EOF >> $R/src/sup/config.h
-{ USER, GROUP, "$x", "*", "$cksum" },
-EOF
     }
 done
 zkv.save execsums $R/build/db/execsums.zkv
-
-cat <<EOF >> $R/src/sup/config.h
-{ 0 },
-};
-#endif
-EOF
 
 notice "Dowse build complete on `hostname` (`date`)"
