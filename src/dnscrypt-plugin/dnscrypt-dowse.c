@@ -418,8 +418,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
     // publish info to redis channel
     publish_query(data);
 
-    // skip checks if query comes from localhost
-    if(strcmp(data->ip4, "127.0.0.1") != 0) {
+    // skip checks if query comes from localhost or from same device
+    if(strcmp(data->ip4, "127.0.0.1") != 0 &&
+	        strcmp(data->ip4, data->ownip4) != 0) {
 
 	    // retrieve mac_address of client and writes it into data->mac
 	    if ( ip4_derive_mac(data) != 0) {
@@ -485,7 +486,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 		    }
 	    }
-    } // check if not localhost
+    } // check if not localhost and not same device
 
 	// DIRECT ENDPOINT
 	// resolve locally leased hostnames with a O(1) operation on redis
