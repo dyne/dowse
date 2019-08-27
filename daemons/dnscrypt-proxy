@@ -51,6 +51,12 @@ rconf+="SET dns-lease-gateway    ${wan}\n"
 rconf+="SET dns-reverse-${address}. ${hostname}.dowse.it\n"
 [[ "$address" = "$gateway" ]] ||
 	rconf+="SET dns-reverse-${wan}. gateway\n"
+
+# Wait until redis-volatile is ready
+until [[ `echo ping | redis dynamic 2>/dev/null` == "PONG" ]] {
+	sleep 1
+}
+
 print $rconf | redis dynamic
 
 #
