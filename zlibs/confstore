@@ -3,6 +3,13 @@
 conf-load() {
 	fn conf-load
 
+	# Read configuration conf/settings override all
+	func "\$settings=$settings address=$address"
+	[[ -r $settings ]] && {
+		act "loading configuration from $settings"
+		source $settings
+	}
+
 	# cover defaults
 	hostname=${hostname:-`hostname`}
 	dns=${dns:-default}
@@ -73,12 +80,6 @@ conf-load() {
 		break
 	done
 
-	# conf/settings override all
-	func "\$settings=$settings address=$address"
-	[[ -r $settings ]] && {
-		act "loading configuration from $settings"
-		source $settings
-	}
 	if [[ "$interface" == "" ]]; then
 		if [[ "$interface_from_settings" == "yes" ]]; then
 			error "$interface (requested in $settings) is not connected to internet"
