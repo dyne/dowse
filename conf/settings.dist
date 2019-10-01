@@ -11,22 +11,16 @@
 address=127.0.0.1
 
 # which interface is connected to the Dowse network
-interface=lo
+# by default, an ethernet interface connected to the internet will be used
+# override this value by uncommenint the line below (WARNING: the interface
+# need to be connected to the internet, otherwise dowse won't start)
+#wan_interface=eth0
+
+# the time of address leasing for the network attached to the $wan_interface
+wan_lease_time=48h
 
 # hostname by which dowse will be known to the network
 hostname=$(hostname)
-
-# TODO: Check this test case (if we are after a DHCP do we need this IP address?
-# what connects us to the internet (i.e. adsl router)
-# make sure dhcp is deactivated there, we will give it!
-wan=127.0.0.1
-
-# which interface is connected to the internet network
-#internet_interface=eth0
-
-# upstream DNS to query for unknown hostnames
-# by default this is the same as the wan gateway
-dns=$wan
 
 # what is the domain name of the internal network
 lan=dowse.it
@@ -43,12 +37,3 @@ firewall=yes # yes, no or flush (blank open)
 # default is current user
 # dowse_uid=proxy
 # dowse_gid=proxy
-
-# what network range we choose for our LAN (class C)
-dowse_net=10.0.0.0/24
-
-# which netmask to be applied (default is class C)
-netmask=255.255.255.0
-
-# ip range reserved for guests (first,last,leasetime)
-dowse_guests=10.0.0.101,10.0.0.199,48h
