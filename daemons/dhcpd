@@ -54,9 +54,40 @@ subnet ${netzero} netmask ${netmask} {
 }
 EOF
 
+additional_interfaces=""
+if [[ "$access_point" == "yes" ]]; then
+	if [[ ${#ssid} -le 1 ]]; then
+		additional_interfaces="dowse_wifi"
+	else
+		additional_interfaces="$(get_ap_virtual_interfaces)"
+	fi
+fi
+for (( i = 1; i <= $#ssid; i++ )) do
+	if [[ "" == "$ssid[$i]" ]]; then
+		continue
+	fi
+	
+	dhcp_network="$address[$i]"
+	if [[ "" == "$dhcp_network" ]]; then
+		dhcp_network=192.168.$i.0
+	fi
+	cat <<EOF >> $H/run/conf/dhcpd.conf
+subnet ${dhcp_network} netmask 255.255.255.0 {
+  on commit {
+    set clip = binary-to-ascii(10, 8, ".", leased-address);
+    set clhw  = binary-to-ascii(16, 8, ":", substring(hardware, 1, 6));
+    execute("$R/bin/pendulum", "lease", clip, clhw, host-decl-name);
+  }
+}
+EOF
+done
+
+func "access points interfaces: $additional_interfaces[@]"
+
 leases=$H/run/isc.leases
 touch $leases
 pid=$H/run/dhcpd.pid
 
 exec dhcpd -pf $pid -user root -d \
-		-lf $leases -cf $H/run/conf/dhcpd.conf $interface
+		-lf $leases -cf $H/run/conf/dhcpd.conf \
+		$interface $additional_interfaces
