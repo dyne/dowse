@@ -1,0 +1,84 @@
+#!/usr/bin/zsh
+
+source $R/env
+
+if [[ "$access_point" != "no" ]]; then
+	act "Access point disabled"
+	while : ; do
+		sleep 3600
+	done
+fi
+
+# No device card with AP capabilities has been found
+if [[ "$ap_interface" == "" ]] ; then
+	act "No network card with Access Point capability found"
+	while : ; do
+		sleep 3600
+	done
+fi
+
+# Base config for the daemon
+cat <<EOF > $H/run/conf/hostapd.conf
+# Reference configuration
+# http://w1.fi/cgit/hostap/plain/hostapd/hostapd.conf
+logger_syslog=-1
+logger_syslog_level=2
+logger_stdout=-1
+logger_stdout_level=3 # Log notification messages
+
+interface=$ap_interface
+
+ctrl_interface=$H/run/hostapd # Change folder for control socket
+ctrl_interface_group=dowse    # Give access permission to dowse group
+
+auth_algs=0           # Do not use WPA/WEP
+channel=0             # the channel to use, 0 means the AP will search for the channel with the least interferences
+wmm_enabled=1         # QoS support
+
+utf8_ssid=1           # Use utf8 for SSID
+EOF
+
+# Check how many network should be created
+# 1: Create a bridge with the WAN network (assume there is only one LAN network
+# that is connected to internet, using $interface)
+if [[ ${#ssid} -le 1 ]]; then
+	cat <<EOF >> $H/run/conf/hostapd.conf
+bridge=$bridge        # Use a bridge
+bbs=dowse_wifi
+ssid="${ssid-Dowse Access Point}"
+EOF
+	if [[ ${#passphrase} -ge 1 && "${passphrase[1]}" != "" ]]; then
+		cat <<EOF >> $H/run/conf/hostapd.conf
+auth_algs=1           # 1=wpa, 2=wep, 3=both
+wpa=2                 # WPA2 only
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+wpa_passphrase=${passphrase[1]}
+EOF
+	fi
+# 2+: Create as many network as requested in /etc/dowse/settings, with different
+# SSID and passphrase (if any), use NAT to allow connection
+else
+	for (( i = 1; i <= $#ssid; i++ )) do
+		# Skip empty ssid
+		if [[ "" == "$ssid[$i]" ]]; then
+			continue
+		fi
+		cat <<EOF >> $H/run/conf/hostapd.conf
+bbs=dowse_wifi$i
+ssid="${ssid[$i]}"
+EOF
+		if [[ "${passphrase[$i]}" != "" ]]; then
+			cat <<EOF >> $H/run/conf/hostapd.conf
+auth_algs=1           # 1=wpa, 2=wep, 3=both
+wpa=2                 # WPA2 only
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+wpa_passphrase=${passphrase[1]}
+EOF
+		fi
+	done
+fi
+
+hostapd $H/run/conf/hostapd.conf
+

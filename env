@@ -56,7 +56,7 @@ arrs+=(mods)
 
 # network configuration
 
-vars+=(settings address interface hostname wan lan firewall)
+vars+=(settings address interface hostname wan lan firewall bridge)
 vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
 
 # export DOWSE to env with path to the installation

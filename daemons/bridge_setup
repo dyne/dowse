@@ -1,0 +1,27 @@
+#!/usr/bin/zsh
+
+source $R/env
+
+cleanup() {
+	if [[ -d /sys/class/net/$bridge ]]; then
+		ip link set $interface nomaster
+		ip delete $bridge
+	fi
+}
+
+if [[ "$access_point" == "yes" ]]; then
+	exit 0
+fi
+
+# No need to create a bridge
+if [[ ${#ssid} -le 1 ]]; then
+	exit 0
+fi
+
+ip link add dowse_br type bridge || cleanup && error "Failed to create bridge"
+ip link set dowse_br up || cleanup 88 error "Failed to bring bridge up"
+
+ip link set $interface master $bridge || cleanup && error "Failed to link $interface with $bridge"
+
+# TODO: Should iptable/ebtables added for routing/NAT ?
+

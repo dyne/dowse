@@ -130,6 +130,7 @@ conf-load() {
 		fi
 	fi
 
+	bridge="dowse_bridge"
 	ap_interface=$(get_ap_real_interface)
 
 	func "interface: $interface"
@@ -143,6 +144,7 @@ conf-load() {
 	func "netmask: $netmark"
 	func "dhcp: $dowse_guests"
 	func "firewall: $firewall"
+	func "bridge $bridge"
 	if [[ "$ap_interface" != "" ]]; then
 		func "ap_interface: $ap_interface"
 	fi
