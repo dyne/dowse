@@ -75,8 +75,41 @@ conf-load() {
 			error "There has been a error parsing the interface $interface"
 		fi
 
-		dowse_guests=$x.${y-0}.${z-0}.1,$x.${y-255}.${z-255}.254,$wan_lease_time
+		# Use all available addresses for $range
+		if [[ "$wan_devices" == "" ]]; then
+			dowse_guests=$x.${y-0}.${z-0}.1,$x.${y-255}.${z-255}.254,$wan_lease_time
+			break
+		fi
 
+		if [[ $wan_devices -gt $max_wan_devices || $wan_devices -le 0 ]]; then
+			error "The devices allowed on the wan network is incorrect"
+		fi
+
+		y=${y-255}
+		z=${z-255}
+		k=254
+		dowse_guests=$x.$y.$z.$k,$wan_lease_time
+		count=$wan_devices
+		while [[ $count != 0 ]]; do
+			if [[ $k -ge $count ]]; then
+				k=$(($k-$count+1))
+				count=0
+			else
+				# minus 1 because we include the address ending in 0
+				count=$(($count-$k-1))
+				if [[ $count == 0 ]]; then
+					continue
+				fi
+				k=255
+				if [[ $z == 0 ]]; then
+					z=255
+					y=$(($y-1))
+				else
+					z=$(($z-1))
+				fi
+			fi
+		done
+		dowse_guests=$x.$y.$z.$k,$dowse_guests
 		break
 	done
 

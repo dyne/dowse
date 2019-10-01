@@ -16,6 +16,16 @@ address=127.0.0.1
 # need to be connected to the internet, otherwise dowse won't start)
 #wan_interface=eth0
 
+# how many devices will dowse allow on the wan_interface
+# by default it will use all the entire range, eg. for a C class network,
+# all available addresses will be used, from x.y.z.1 to x.y.z.254
+# override this value by uncommenting the line below, so the last
+# $wan_devices will be used. (eg. : 54 devices for a C class, will allow range
+# x.y.z.201 to x.y.z.254)
+# (WARNING: this value must be compatible with the class of the network attached
+# at $wan_interface
+#wan_devices=
+
 # the time of address leasing for the network attached to the $wan_interface
 wan_lease_time=48h
 
