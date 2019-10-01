@@ -23,8 +23,11 @@ conf-load() {
 
 	net_devices=()
 	net.scan_devices
+	
 	net_ip4_addr=()
 	net.scan_addresses
+
+	wifi_interfaces=$(get_wifi_interfaces)
 
 	possible_wan_interfaces=()
 	interface_from_settings="no"
@@ -33,6 +36,12 @@ conf-load() {
 		interface_from_settings="yes"
 	else
 		possible_wan_interfaces=($net_devices)
+
+		# Do not scan addresses for wireless devices
+		# because they will be used as access points
+		for wifi_dev in $wifi_interfaces ; do
+			possible_wan_interfaces-=($wifi_dev)
+		done
 	fi
 
 	interface=()
@@ -121,6 +130,8 @@ conf-load() {
 		fi
 	fi
 
+	ap_interface=$(get_ap_real_interface)
+
 	func "interface: $interface"
 	func "hostname: $hostname"
 	func "address: $address"
@@ -132,4 +143,7 @@ conf-load() {
 	func "netmask: $netmark"
 	func "dhcp: $dowse_guests"
 	func "firewall: $firewall"
+	if [[ "$ap_interface" != "" ]]; then
+		func "ap_interface: $ap_interface"
+	fi
 }

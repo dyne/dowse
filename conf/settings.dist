@@ -38,6 +38,9 @@ lan=dowse.it
 # should we setup a firewall, flush it or don't touch?
 firewall=yes # yes, no or flush (blank open)
 
+# Act as an access point, creating at least one wifi network
+access_point=yes # yes or no
+
 #########################
 # SAFE TO LEAVE UNCHANGED
 # in most cases, if you don't know what you are doing

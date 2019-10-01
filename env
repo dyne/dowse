@@ -110,6 +110,8 @@ source $R/zlibs/modules
 source $R/zlibs/processes
 source $R/zlibs/iptables
 # source $R/zlibs/ebtables
+# hostap script shall be sourced before confstore
+source $R/zlibs/hostap
 source $R/zlibs/confstore
 source $R/zlibs/redis
 #source $R/zlibs/redis
