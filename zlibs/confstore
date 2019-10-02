@@ -39,10 +39,12 @@ conf-load() {
 
 		# Do not scan addresses for wireless devices
 		# because they will be used as access points
-		for wifi_dev in $wifi_interfaces ; do
-			possible_wan_interfaces-=($wifi_dev)
+		for wifi_dev in "${wifi_interfaces[@]}" ; do
+			# https://stackoverflow.com/questions/3435355/remove-entry-from-array
+			possible_wan_interfaces=("${(@)possible_wan_interfaces:#$wifi_dev}")
 		done
 	fi
+	echo $possible_wan_interfaces
 
 	interface=()
 	netmask=()
