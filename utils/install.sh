@@ -17,6 +17,7 @@ export DOWSE_PREFIX=${DOWSE_PREFIX-/usr/local/dowse}
 export DOWSE_DNSCRYPT=${DOWSE_DNSCRYPT-$DOWSE_HOME/dnscrypt_proxy}
 
 mkdir -p /var/log/dowse
+chown root:dowse /var/log/dowse
 
 ./utils/install_dependencies.sh
 ./utils/install_dnscrypt.sh
