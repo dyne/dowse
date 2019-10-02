@@ -10,9 +10,11 @@ fi
 
 set -e
 
-U=${DOWSE_USER-dowse}
-H=${DOWSE_HOME-`pwd`}
-R=${DOWSE_PREFIX-/usr/local/dowse}
+# Use current user to run dowse
+export DOWSE_USER=${DOWSE_USER-`id -nu`}
+export DOWSE_HOME=${DOWSE_HOME-`pwd`}
+export DOWSE_PREFIX=${DOWSE_PREFIX-/usr/local/dowse}
+export DOWSE_DNSCRYPT=${DOWSE_DNSCRYPT-$DOWSE_HOME/dnscrypt_proxy}
 
 mkdir -p /var/log/dowse
 
@@ -21,5 +23,5 @@ mkdir -p /var/log/dowse
 
 make && make install
 
-echo "source $R/dowse/zshrc" > $H/.zshrc
+echo "source $DOWSE_PREFIX/dowse/zshrc" > $DOWSE_HOME/.zshrc
 
