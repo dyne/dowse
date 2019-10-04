@@ -43,7 +43,7 @@ install: install-zlibs
 	cp -ra src/webui2/* ${DESTDIR}${PREFIX}/webui2/
 	install -d ${DESTDIR}${CONFDIR}
 	install -d ${DESTDIR}${CONFDIR}/blocklists
-	install -p -m 644 conf/settings.dist     ${DESTDIR}${CONFDIR}/settings.dist
+	install -p -m 644 conf/settings.dist     ${DESTDIR}${CONFDIR}/settings
 	install -p -m 644 conf/network.dist      ${DESTDIR}${CONFDIR}/network.dist
 	install -p -m 644 conf/blocklists/*      ${DESTDIR}${CONFDIR}/blocklists
 	@modules/install.sh ${DESTDIR}${CONFDIR}
