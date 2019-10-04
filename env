@@ -26,9 +26,7 @@
 dowse_version=1.0b
 dowse_release_date="5/Apr/2016"
 
-# export DOWSE_PREFIX and DOWSE_HOME to override
-H=${DOWSE_HOME:-$HOME/.dowse}
-E=${DOWSE_CONF:-/etc/dowse}
+export E=${DOWSE_CONF:-/etc/dowse}
 
 #####################
 source /usr/share/zuper/zuper
@@ -39,17 +37,11 @@ source /usr/share/zuper/zuper
     return 1
 }
 
-# add all other dowse binaries to the path
-path+=($R/bin)
-rehash
-
-mkdir -p $H
-
 # For gettext
 TEXTDOMAIN=dowse
 
 # path and debugging
-vars+=(R H E debug quiet script fun network)
+vars+=(R E debug quiet script fun network)
 vars+=(last_notice last_act last_func)
 vars+=(root sql)
 arrs+=(mods)
@@ -57,7 +49,7 @@ arrs+=(mods)
 # network configuration
 
 vars+=(settings address interface hostname wan lan firewall bridge)
-vars+=(dowse_uid dowse_gid dowse_net netmask dowse_guests)
+vars+=(dowse_net netmask dowse_guests)
 
 # export DOWSE to env with path to the installation
 # else start it from inside the dir with source dowse
@@ -124,12 +116,6 @@ source /usr/share/zuper/zuper.init
 func "load dataset indexes"
 db=()
 zkv.load $R/db/database.zkv
-
-func "load paths and execmaps"
-execmap=()
-source $R/db/execmap.zkv
-execrules=()
-source $R/db/execrules.zkv
 
 # module fields
 mod=(

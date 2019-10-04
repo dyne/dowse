@@ -21,7 +21,8 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
-export R=${DOWSE_PREFIX:-/usr/local/dowse}
+source /etc/dowse/dir
+export R=${DOWSE_DIR:-/opt/dowse}
 source ${R}/env
 
 if [[ $dowse_loaded = 1 ]]; then
@@ -53,32 +54,14 @@ act "checking requirements to run dowse..."
     return 1
 }
 
-mkdir -p $H/log
-mkdir -p $H/log/netdata
-mkdir -p $H/run
-mkdir -p $H/run/conf
-mkdir -p $H/data
+mkdir -p /run/dowse/conf
+chown -R dowse:dowse /run/dowse/
 
 _verbose "Dowse command: ::1 commands::" "$*"
 _verbose "Caller: uid[::1 uid::], gid[::2 gid::], tty[::3 tty::]." \
          $dowse_uid $dowse_gid $TTY
 
 act "daemons running as user and group $dowse_uid:$dowse_gid"
-
-# [[ -z $root ]] || {
-#     # setup dirs
-#     chmod go-rwx $H/log
-#     chown -R $dowse_uid:$dowse_gid $H/log
-
-#     chmod go-rwx $R/run
-#     chown -R $dowse_uid:$dowse_gid $R/run
-# }
-
-# func "::1 dir:: directory writable by ::2 uid::" run $dowse_uid
-# if touch $R/run/test; then rm -f $R/run/test; else return 1; fi
-
-# func "::1 dir:: directory writable by ::2 uid::" log $dowse_uid
-# if touch $H/log/test; then rm -f $H/log/test; else return 1; fi
 
 act "initialise things database"
 #dbname="${address}_${wan}_${dowse_net//\//_}"
