@@ -31,7 +31,7 @@ range_start=${dowse_guests[(ws:,:)1]}
 range_stop=${dowse_guests[(ws:,:)2]}
 func "dhcpd address:     $address"
 func "dhcpd guest range: $range_start - $range_stop"
-cat <<EOF > $H/run/conf/dhcpd.conf
+cat <<EOF > /run/dowse/conf/dhcpd.conf
 option routers $address;
 option domain-name "dowse.it";
 option domain-name-servers $address;
@@ -49,7 +49,7 @@ subnet ${netzero} netmask ${netmask} {
   on commit {
     set clip = binary-to-ascii(10, 8, ".", leased-address);
     set clhw  = binary-to-ascii(16, 8, ":", substring(hardware, 1, 6));
-    execute("$R/bin/pendulum", "lease", clip, clhw, host-decl-name);
+    execute("$R/pendulum", "lease", clip, clhw, host-decl-name);
   }
 }
 EOF
@@ -71,12 +71,12 @@ for (( i = 1; i <= $#ssid; i++ )) do
 	if [[ "" == "$dhcp_network" ]]; then
 		dhcp_network=192.168.$i.0
 	fi
-	cat <<EOF >> $H/run/conf/dhcpd.conf
+	cat <<EOF >> /run/dowse/conf/dhcpd.conf
 subnet ${dhcp_network} netmask 255.255.255.0 {
   on commit {
     set clip = binary-to-ascii(10, 8, ".", leased-address);
     set clhw  = binary-to-ascii(16, 8, ":", substring(hardware, 1, 6));
-    execute("$R/bin/pendulum", "lease", clip, clhw, host-decl-name);
+    execute("$R/pendulum", "lease", clip, clhw, host-decl-name);
   }
 }
 EOF
@@ -84,10 +84,10 @@ done
 
 func "access points interfaces: $additional_interfaces[@]"
 
-leases=$H/run/isc.leases
+leases=/run/dowse/isc.leases
 touch $leases
-pid=$H/run/dhcpd.pid
+pid=/run/dowse/dhcpd.pid
 
 exec dhcpd -pf $pid -user root -d \
-		-lf $leases -cf $H/run/conf/dhcpd.conf \
+		-lf $leases -cf /run/dowse/conf/dhcpd.conf \
 		$interface $additional_interfaces

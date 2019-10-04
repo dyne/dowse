@@ -41,6 +41,6 @@ cat --squeeze-blank $E/blocklists/* |
     # Only keep the last occurence of :
     sed 's/.*:/&|/' | tr -d : | tr "\|" ":"
 
-pid=$H/run/pgld.pid
+pid=/run/dowse/pgld.pid
 exec pgld -p $pid -r dowse_reject -a dowse_accept
 

@@ -28,7 +28,7 @@ logger_stdout_level=3 # Log notification messages
 
 interface=$ap_interface
 
-ctrl_interface=$H/run/hostapd # Change folder for control socket
+ctrl_interface=/run/dowse/hostapd # Change folder for control socket
 ctrl_interface_group=dowse    # Give access permission to dowse group
 
 auth_algs=0           # Do not use WPA/WEP

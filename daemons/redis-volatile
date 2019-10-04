@@ -2,9 +2,9 @@
 
 source $R/env
 
-cat <<EOF > $H/run/conf/redis-volatile.conf
-pidfile $H/run/redis-volatile.pid
-logfile $H/log/redis-volatile.log
+cat <<EOF > /run/dowse/conf/redis-volatile.conf
+pidfile /run/dowse/redis-volatile.pid
+logfile /var/log/dowse/redis-volatile.log
 port 6378
 
 bind 127.0.0.1
@@ -37,7 +37,7 @@ save ""
 appendonly no
 stop-writes-on-bgsave-error no
 
-dir $H/run/redis-volatile
+dir /run/dowse/redis-volatile
 
 slowlog-log-slower-than 10000
 
@@ -78,6 +78,6 @@ hz 20
 EOF
 
 func "redis-volatile"
-mkdir -p $H/run/redis-volatile
-exec redis-server $H/run/conf/redis-volatile.conf
+mkdir -p /run/dowse/redis-volatile
+exec redis-server /run/dowse/conf/redis-volatile.conf
 

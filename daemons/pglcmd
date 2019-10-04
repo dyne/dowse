@@ -6,15 +6,16 @@ source $R/env
 # $R/run/pgl/lib/pgl/pglcmd.defaults
 # $R/run/pgl/lib/pgl/pglcmd.main
 
-cat <<EOF > $H/run/conf/pglcmd.conf
-LOCAL_BLOCKLIST_DIR="$H/conf/blocklists"
+cat <<EOF > /run/dowse/conf/pglcmd.conf
+LOCAL_BLOCKLIST_DIR="$/var/lib/dowse/conf/blocklists"
 BLOCKLISTS_LIST=""
-ALLOW_IN="$H/conf/whitelist.p2p"
-ALLOW_OUT="$H/conf/whitelist.p2p"
-LOGDIR="$H/log"
+ALLOW_IN="/var/lib/dowse/conf/whitelist.p2p"
+ALLOW_OUT="/var/lib/dowse/conf/whitelist.p2p"
+LOGDIR="/var/log/dowse"
 DAEMON_LOG="\${LOGDIR}/pgld.log"
 WD="0"
 EOF
 
+# TODO: Where was this installed?
 $R/bin/pglcmd start
 

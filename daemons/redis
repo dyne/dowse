@@ -2,9 +2,9 @@
 
 source $R/env
 
-cat <<EOF > $H/run/conf/redis.conf
-pidfile $H/run/redis-server.pid
-logfile $H/log/redis-server.log
+cat <<EOF > /run/dowse/conf/redis.conf
+pidfile /run/dowse/redis-server.pid
+logfile /var/log/dowse/redis-server.log
 port 6379
 
 # tcp-backlog 511
@@ -33,7 +33,7 @@ rdbchecksum yes
 
 dbfilename dump.rdb
 
-dir $H/run
+dir /run/dowse
 
 repl-disable-tcp-nodelay no
 
@@ -84,7 +84,7 @@ EOF
 
 func "redis"
 
-exec redis-server $H/run/conf/redis.conf
+exec redis-server /run/dowse/conf/redis.conf
 
 	# we consider these to tell us if it's the initial startup of redis
 	# yes, redis returns 1 if a key is found

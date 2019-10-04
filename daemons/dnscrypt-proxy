@@ -8,7 +8,7 @@ rconf=""
 
 [[ -r $H/run/leases ]] && {
 	# load dhcp leases in redis
-	for i in ${(f)"$(cat $H/run/leases)"}; do
+	for i in ${(f)"$(cat /run/dowse/isc.leases)"}; do
 		rconf+="SET dns-lease-${i[(w)4]} ${i[(w)3]}\n"
 		rconf+="SET dns-lease-${i[(w)4]}.dowse.it ${i[(w)3]}\n"
 
@@ -86,33 +86,35 @@ act "dnscrypt proxy server: $dnscrypt_name"
 # why a new log on each run? this is likely to use up all i/o
 # TMP=`date +%Y%m%d_%H%M%S`
 
+bin=$R/src/dnscrypt-proxy/src/proxy/dnscrypt-proxy
+
 if [[ $DEBUG = 1 ]]; then
-	DOWSE_DOMAINLIST=`pwd`/src/domain-list/data \
+	DOWSE_DOMAINLIST=$R/src/domain-list/data \
 			DOWSE_LAN_ADDRESS_IP4=$address \
 			DOWSE_LAN_NETMASK_IP4=$netmask \
 			interface=$interface \
 			hostname=$hostname \
 			domain=$lan \
-			exec dnscrypt-proxy -a $address:53 \
-			-l $H/log/dnscrypt.log \
-			-L $R/share/dnscrypt-resolvers.csv \
+			exec $bin -a $address:53 \
+			-l /var/log/log/dnscrypt.log \
+			-L $R/src/dnscrypt-proxy/dnscrypt-resolvers.csv \
 			-R "$dnscrypt_name" \
 			-I \
-			-X $R/lib/dnscrypt_dowse.so${args},debug \
-			-m 7 -u $dowse_uid
+			-X $R/src/dnscrypt-plugin/dnscrypt_dowse.so${args},debug \
+			-m 7 -u dowse
 else
-	pid=$H/run/dnscrypt-proxy.pid
-	DOWSE_DOMAINLIST=$R/domain-list/data \
+	pid=/run/dowse/conf/dnscrypt-proxy.pid
+	DOWSE_DOMAINLIST=$R/src/domain-list/data \
 			DOWSE_LAN_ADDRESS_IP4=$address \
 			DOWSE_LAN_NETMASK_IP4=$netmask \
 			hostname=$hostname \
 			domain=$lan \
 			interface=$interface \
-			exec dnscrypt-proxy -a $address:53 \
-			-l $H/log/dnscrypt.log \
-			-L $R/share/dnscrypt-resolvers.csv \
+			exec $bin -a $address:53 \
+			-l /var/log/dowse/dnscrypt.log \
+			-L $R/src/dnscrypt-proxy/dnscrypt-resolvers.csv \
 			-R "$dnscrypt_name" \
-			-X $R/lib/dnscrypt_dowse.so${args} \
-			-m 7 -u $dowse_uid
+			-X $R/src/dnscrypt-plugin/dnscrypt_dowse.so${args} \
+			-m 7 -u dowse
 fi
 

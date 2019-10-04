@@ -3,4 +3,4 @@
 source $R/env
 
 act "opening spring: dowse-to-mqtt"
-exec dowse-to-mqtt -p $H/run/dowse-to-mqtt.pid localhost -c log-queue
+exec $R/src/dowse-to-mqtt -p /run/dowse/dowse-to-mqtt.pid localhost -c log-queue

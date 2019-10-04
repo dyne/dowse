@@ -23,9 +23,9 @@
 
 source $R/env
 
-cat <<EOF > $H/run/conf/mosquitto.conf
-pid_file $H/run/mosquitto.pid
-user $dowse_uid
+cat <<EOF > /run/dowse/conf/mosquitto.conf
+pid_file /run/dowse/mosquitto.pid
+user dowse
 # bind_address $address
 
 listener 1883
@@ -34,15 +34,15 @@ protocol mqtt
 listener 1888
 protocol websockets
 
-log_dest file $H/log/mosquitto.log
+log_dest file /var/log/dowse/mosquitto.log
 # websockets_log_level 0
 # connection_messages true
 allow_anonymous true
 EOF
 
 if [[ $DEBUG = 1 ]]; then
-	exec mosquitto -c $H/run/conf/mosquitto.conf -v
+	exec mosquitto -c /run/dowse/conf/mosquitto.conf -v
 else
-	exec mosquitto -c $H/run/conf/mosquitto.conf
+	exec mosquitto -c /run/dowse/conf/mosquitto.conf
 fi
 
