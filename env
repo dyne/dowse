@@ -84,10 +84,6 @@ maps+=(db)
 # dataset indexes
 arrs+=(mod)
 
-# daemons exec paths (OS dependent)
-maps+=(execmap execrules)
-vars+=(execpath)
-
 # default daemons conf and pids
 vars+=(pid conf)
 
@@ -99,7 +95,6 @@ zmodload zsh/system
 zmodload zsh/net/tcp
 
 source $R/zlibs/modules
-source $R/zlibs/processes
 source $R/zlibs/iptables
 # source $R/zlibs/ebtables
 # hostap script shall be sourced before confstore

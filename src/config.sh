@@ -15,7 +15,7 @@ S=${$(pwd)%/*}
 zkv=1
 source $S/zuper/zuper
 vars=(dbindex thingindex)
-maps=(db execmap execrules)
+maps=(db)
 source $S/zuper/zuper.init
 
 fn config $*
@@ -49,128 +49,6 @@ os       ; /nmaprun/host[\$i]/os/osmatch[1]/@name
 vendor   ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@vendor
 '
 print - "$thingindex" > $S/build/db/thing.idx
-
-# index of all database fields for an event occured in the network
-eventindex='
-id int auto_increment primary key
-recognized boolean default 0 COMMENT "'" the administrator has recognized this event? "'"
-level enum("'"danger"'","'"success"'","'"info"'","'"warning"'") not null
-age      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT "'" when is it happened ? "'"
-macaddr  varchar(18)  COMMENT "'" who ? "'"
-ip4  text  COMMENT "'" who ? "'"
-description    text   COMMENT "'" what ? "'"
-'
-
-#--- If the event it's refered to a tuple not insert in the found column
-#--- that column shall be created by a trigger
-print - "$eventindex" > $S/build/db/event.idx
-
-
-# A table to contain configuration parameter
-parameterindex='
-variable varchar(32) PRIMARY KEY
-value  varchar(32) 
-'
-
-#--- 
-print - "$parameterindex" > $S/build/db/parameter.idx
-
-
-
-#
-#print - "ALTER TABLE event ADD CONSTRAINT fk_macaddr FOREIGN KEY (macaddr) REFERENCES found(macaddr) ON DELETE CASCADE" > $S/build/db/constraint.idx
-#print - "ALTER TABLE event ADD CONSTRAINT fk_macaddr FOREIGN KEY (macaddr) REFERENCES found(macaddr) " > $S/build/db/constraint.idx
-
-print - "" > $S/build/db/constraint.idx
-
-# map of permissions
-execrules=(
-    redis-cli    user
-    redis-server user
-    nmap         user
-    arp          user
-    ip           user
-    netdata      user
-	omshell      user
-	mosquitto    user
-	nodejs       user
-	webui2       user
-
-	# springs
-	dowse-to-mqtt  user
-	dowse-cmd-fifo user
-
-	nmap          root
-	dhcpd         root
-    dnscrypt-proxy root
-    ip            root
-    iptables      root
-    xtables-multi root
-    # ebtables      root
-    # TODO: sup list of authorized /proc and /sys paths to write
-    sysctl        root
-    # TODO: sup list of authorized modules to load (using libkmod)
-    modprobe      root
-    # TODO: sup list of authorized signals to emit (using killall)
-    kill          root
-    # pgld          root
-)
-zkv.save execrules $S/build/db/execrules.zkv
-
-
-
-# paths for Devuan
-execmap=(
-    ip            /bin/ip
-    dnscrypt-proxy $PREFIX/bin/dnscrypt-proxy
-    redis-cli     $PREFIX/bin/redis-cli
-    redis-server  $PREFIX/bin/redis-server
-	tinyproxy     $PREFIX/bin/tinyproxy
-    netdata       $PREFIX/bin/netdata
-	mosquitto     $PREFIX/bin/mosquitto
-	dhcpd         $PREFIX/bin/dhcpd
-	omshell       $PREFIX/bin/omshell
-	nodejs        $PREFIX/nodejs/node_dir/bin/node
-	webui2        $PREFIX/webui2/webui.py
-
-	dowse-to-mqtt  $PREFIX/bin/dowse-to-mqtt
-	dowse-to-osc   $PREFIX/bin/dowse-to-osc
-	dowse-cmd-fifo $PREFIX/bin/dowse-cmd-fifo
-
-    kill          /bin/kill
-    xtables-multi /sbin/xtables-legacy-multi
-    # ebtables      /sbin/ebtables
-    sysctl        /sbin/sysctl
-    arp           /usr/sbin/arp
-    # TODO: sup list of authorized modules (using libkmod)
-    modprobe      $PREFIX/bin/modprobe
-    # pgld          $PREFIX/bin/pgld
-    libjemalloc   /usr/lib/x86_64-linux-gnu/libjemalloc.so
-    nmap          /usr/bin/nmap
-)
-
-# check if on Gentoo
-command -v emerge >/dev/null && {
-    execmap=(
-        dnscrypt      /usr/sbin/dnscrypt-proxy
-        redis-cli     /usr/bin/redis-cli
-        redis-server  /usr/sbin/redis-server
-        iptables      /sbin/iptables
-        ebtables      /sbin/ebtables
-        sysctl        /usr/sbin/sysctl
-        pgl           $PREFIX/bin/pgld
-        libjemalloc   /usr/lib64/libjemalloc.so.2
-    )
-}
-
-case `uname -m` in
-    arm*)
-        execmap[libjemalloc]=/usr/lib/arm-linux-gnueabihf/libjemalloc.so
-        ;;
-esac
-
-zkv.save execmap $S/build/db/execmap.zkv
-
 
 ### Database index
 

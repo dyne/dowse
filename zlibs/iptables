@@ -21,19 +21,6 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
-iptables() {
-    # fn iptables $*
-
-    if [[ "$execmap[xtables-multi]" = "/sbin/xtables-legacy-multi" ]]; then
-        # func "iptables using xtables-multi"
-        xtables-legacy-multi iptables $*
-        return $?
-    else
-        iptables $*
-        return $?
-    fi
-}
-
 iptables-set-thing() {
 	fn set_iptables_thing $*
 	local state="$1"
@@ -215,8 +202,6 @@ loopback-on() {
 
 sysctl-setup() {
     fn sysctl-setup
-    freq=(${execmap[sysctl]})
-    ckreq || return 1
 
     cat <<EOF | sysctl -p -
 net.ipv4.tcp_syncookies = 1
