@@ -6,7 +6,7 @@ CC = gcc
 CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I. -Ihiredis
 LIBS = -L src/redis/deps/hiredis -l:libhiredis.a -Llibdowse -l:libdowse.a
 
-all: base springs
+all: base springs dnscrypt-proxy
 	./import.sh nmap-macs
 	install -s -p modprobe        ../build/bin
 	install -s -p dowse-to-gource ../build/bin
@@ -19,10 +19,14 @@ all: base springs
 libs:
 	make -C libdowse
 
-.PHONY: modprobe pgld
+.PHONY: dnscrypt-proxy modprobe pgld
 
 base: config libs modprobe dnscrypt_dowse.so
 	@echo "Compiled base"
+
+dnscrypt-proxy:
+	cd dnscrypt-proxy && ./autogen.sh && \
+		./configure --enable-plugins --disable-systemd && make
 
 dnscrypt_dowse.so:
 	make -C dnscrypt-plugin
