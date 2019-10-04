@@ -14,7 +14,6 @@ all: base springs dnscrypt-proxy
 	install -s -p dowse-to-mqtt   ../build/bin
 	install -s -p dowse-cmd-fifo  ../build/bin
 	cp -f parse-ip-neigh.py  ../build/bin
-	./checksum.sh $(DOWSE_USER)
 
 libs:
 	make -C libdowse
