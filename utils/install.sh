@@ -12,9 +12,6 @@ set -e
 
 export DOWSE_DIR=${DOWSE_DIR-`pwd`}
 
-mkdir -p /var/log/dowse
-chown root:dowse /var/log/dowse
-
 ./utils/install_dependencies.sh
 
 make

@@ -1,6 +1,5 @@
 DESTDIR ?=
 PREFIX ?= /usr/local/dowse
-THREADS ?= 1
 
 CC = gcc
 CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I. -Ihiredis
@@ -31,7 +30,7 @@ dnscrypt_dowse.so:
 	make -C dnscrypt-plugin
 
 pgld:
-	@./compile.sh pgld ${THREADS}
+	@./compile.sh pgld
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
@@ -60,14 +59,6 @@ dowse-to-osc: dowse-to-osc.o
 dowse-to-mqtt: dowse-to-mqtt.o
 	$(CC) $(CFLAGS) -o $@ dowse-to-mqtt.o $(LIBS) -lmosquitto -lpthread
 
-
-install:
-	install -d ${DESTDIR}${PREFIX}
-	install -d ${DESTDIR}${PREFIX}/domain-list/data
-	install -p -m 644 domain-list/data/* ${DESTDIR}${PREFIX}/domain-list/data
-	install -d ${DESTDIR}${PREFIX}/share
-	mkdir -p /usr/lib/netdata/plugins.d
-	make -C netdata-plugins install
 
 #	@./compile.sh install
 
