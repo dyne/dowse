@@ -20,11 +20,6 @@ source $S/zuper/zuper.init
 
 fn config $*
 
-PREFIX="$1"
-req=(PREFIX)
-ckreq || return 1
-
-
 #########
 dbindex='
 0 dynamic
@@ -34,7 +29,7 @@ dbindex='
 # for the db keys namespace see doc/HACKING.md
 #########
 
-mkdir -p $S/build/db
+mkdir -p /var/lib/dowse/db
 
 # index of all database fields for a thing in the index
 # fields to the right of semicolon are for parsing the nmap xml output
@@ -48,7 +43,7 @@ hostname ; /nmaprun/host[\$i]/hostnames/hostname[0]/@name
 os       ; /nmaprun/host[\$i]/os/osmatch[1]/@name
 vendor   ; /nmaprun/host[\$i]/address[@addrtype=\"mac\"]/@vendor
 '
-print - "$thingindex" > $S/build/db/thing.idx
+print - "$thingindex" > /var/lib/dowse/db/thing.idx
 
 ### Database index
 
@@ -57,7 +52,7 @@ for i in ${(f)dbindex}; do
     # this is reverse order: names are the indexes
     db+=( ${i[(w)2]} ${i[(w)1]} )
 done
-zkv.save db $S/build/db/database.zkv
+zkv.save db /var/lib/dowse/db/database.zkv
 
 # save databases for the C code
 rm -rf $S/src/database.h

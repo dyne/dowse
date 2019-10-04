@@ -25,18 +25,12 @@
 # information on network objects, updating it in redis
 
 
-source /usr/local/dowse/zshrc
+source $R/env
 
 [[ -r $H/run/redis-server.pid ]] || {
 	error "Dowse is not running"
 	error "pid not found: $H/run/redis-server.pid"
 	return 1 }
-
-# gather_network_info fills in global maps
-net_devices=()
-net.scan_devices
-net_ip4_addr=()
-net.scan_addresses
 
 now=`date --utc +'%s'`
 

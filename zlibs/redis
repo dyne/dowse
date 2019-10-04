@@ -31,7 +31,7 @@ redis-storage-setup() {
 		sleep 1
 	}
 
-	log=$H/log/redis-storage-setup.log
+	log=/var/log/dowse/redis-storage-setup.log
 	# we consider these to tell us if it's the initial startup of redis
 	# yes, redis returns 1 if a key is found
 	print "exists state_all_things" | redis storage &>$log && {

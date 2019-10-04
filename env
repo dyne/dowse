@@ -29,7 +29,7 @@ dowse_release_date="5/Apr/2016"
 export E=${DOWSE_CONF:-/etc/dowse}
 
 #####################
-source /usr/share/zuper/zuper
+source $R/zuper/zuper
 
 [[ -r $R ]] || {
     error "Dowse is not installed in: $R"
@@ -106,11 +106,11 @@ source $R/zlibs/nmap
 # source $R/zlibs/sql
 
 # conclude initialization
-source /usr/share/zuper/zuper.init
+source $R/zuper/zuper.init
 
 func "load dataset indexes"
 db=()
-zkv.load $R/db/database.zkv
+zkv.load /var/lib/dowse/db/database.zkv
 
 # module fields
 mod=(
