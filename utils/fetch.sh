@@ -7,19 +7,18 @@ fi
 export DOWSE_USER=dowse
 export DOWSE_DIR=${DOWSE_DIR-/opt/dowse}
 
+if [ "$DOWSE_TAG" != "" ]; then
+	params="--branch $DOWSE_TAG"
+fi
+
 set -e
 
 useradd -d /var/lib/$DOWSE_USER dowse
 
-git clone https://github.com/dyne/dowse $DOWSE_DIR
+git clone https://github.com/dyne/dowse $DOWSE_DIR --recurse-submodules $params
 sudo chown $DOWSE_USER:$DOWSE_USER -R $DOWSE_DIR
 sudo chown $DOWSE_USER:$DOWSE_USER -R $DOWSE_DIR/.git
 cd $DOWSE_DIR
-if [ "$DOWSE_TAG" != "" ]; then
-	git checkout $DOWSE_TAG
-fi
-git submodule init
-git submodule update --recursive
 
 ./utils/install.sh
 
