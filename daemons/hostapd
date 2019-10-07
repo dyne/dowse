@@ -2,7 +2,7 @@
 
 source $R/env
 
-if [[ "$access_point" != "no" ]]; then
+if [[ "$access_point" == "no" ]]; then
 	act "Access point disabled"
 	while : ; do
 		sleep 3600
@@ -42,7 +42,7 @@ EOF
 # 1: Create a bridge with the WAN network (assume there is only one LAN network
 # that is connected to internet, using $interface)
 if [[ ${#ssid} -le 1 ]]; then
-	cat <<EOF >> $H/run/conf/hostapd.conf
+	cat <<EOF >> /run/dowse/conf/hostapd.conf
 bridge=$bridge        # Use a bridge
 bbs=dowse_wifi
 ssid="${ssid-Dowse Access Point}"
@@ -80,5 +80,5 @@ EOF
 	done
 fi
 
-hostapd $H/run/conf/hostapd.conf
+hostapd /run/dowse/conf/hostapd.conf
 
