@@ -13,6 +13,7 @@ useradd -d /var/lib/$DOWSE_USER dowse
 
 git clone https://github.com/dyne/dowse $DOWSE_DIR
 sudo chown $DOWSE_USER:$DOWSE_USER -R $DOWSE_DIR
+sudo chown $DOWSE_USER:$DOWSE_USER -R $DOWSE_DIR/.git
 cd $DOWSE_DIR
 if [ "$DOWSE_TAG" != "" ]; then
 	git checkout $DOWSE_TAG
