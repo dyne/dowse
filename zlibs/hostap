@@ -2,14 +2,14 @@
 
 check_ap_capabilities() {
 	interface=$1
-	for i in $(seq 5); do
+	for i in $(seq 0 5); do
 		# https://stackoverflow.com/questions/17988756/how-to-select-lines-between-two-marker-patterns-which-may-occur-multiple-times-w
 		# Get all interfaces for physical device phy#$i
 		interfaces=$(iw dev | awk "/phy#$i/{flag=1;next}/phy#$((i+1))/{flag=0}/Interface/{if(flag==1){print \$2}}")
 		for dev in "$interfaces"; do
 			# Until we have found the interface we needed
 			if [[ "$dev" == "$interface" ]]; then
-				physical_dev="phy#$i"
+				physical_dev="phy$i"
 				break
 			fi
 		done
@@ -17,10 +17,10 @@ check_ap_capabilities() {
 
 	# Then check if the phisical device has AP capabilities
 	if [[ "$(iw phy $physical_dev info | grep 'AP$')" != "" ]]; then
-		return 0
+		echo 1
 	fi
 
-	return 1
+	echo 0
 }
 
 get_wifi_interfaces() {
@@ -35,10 +35,10 @@ get_ap_real_interface() {
 	for dev in $all_interfaces ; do
 		if [[ $(check_ap_capabilities $dev) ]]; then
 			echo $dev
-			return 0
+			echo 1
 		fi
 	done
-	return 1
+	echo 0
 }
 
 get_ap_virtual_interfaces() {
