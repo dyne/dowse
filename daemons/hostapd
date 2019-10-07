@@ -29,8 +29,8 @@ logger_stdout_level=3 # Log notification messages
 interface=$ap_interface
 
 ctrl_interface=/run/dowse/hostapd # Change folder for control socket
-# Give access permission to dowse
-groupctrl_interface_group=dowse
+# Give access permission to dowse group
+ctrl_interface_group=dowse
 
 auth_algs=1           # Do not use WPA/WEP
 # the channel to use, 0 means the AP will search for the channel with the least interferences
