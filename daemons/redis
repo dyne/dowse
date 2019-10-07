@@ -3,7 +3,6 @@
 source $R/env
 
 cat <<EOF > /run/dowse/conf/redis.conf
-pidfile /run/dowse/redis-server.pid
 logfile /var/log/dowse/redis-server.log
 port 6379
 

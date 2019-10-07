@@ -3,7 +3,6 @@
 source $R/env
 
 cat <<EOF > /run/dowse/conf/redis-volatile.conf
-pidfile /run/dowse/redis-volatile.pid
 logfile /var/log/dowse/redis-volatile.log
 port 6378
 
