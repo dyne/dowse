@@ -45,7 +45,7 @@ EOF
 # 1: Create a bridge with the WAN network (assume there is only one LAN network
 # that is connected to internet, using $interface)
 if [[ ${#ssid} -le 1 ]]; then
-	cat <<EOF >> /run/dowse/conf/hostapd.config
+	cat <<EOF >> /run/dowse/conf/hostapd.conf
 # Use a bridge
 bridge=$bridge
 ssid=${ssid-Dowse Access Point}
