@@ -5,7 +5,9 @@ source $R/env
 cleanup() {
 	if [[ -d /sys/class/net/$bridge ]]; then
 		ip link set $interface nomaster
-		ip delete $bridge
+		ip link delete dev $bridge
+		ip addr add $wan_network_address dev $interface
+		ip route default via $wan_default_gateway dev $interface
 	fi
 }
 
@@ -18,10 +20,18 @@ if [[ ${#ssid} -le 1 ]]; then
 	exit 0
 fi
 
-ip link add dowse_br type bridge || cleanup && error "Failed to create bridge"
-ip link set dowse_br up || cleanup 88 error "Failed to bring bridge up"
+modprobe br_netfilter
+
+ip link add $bridge type bridge || cleanup && error "Failed to create bridge"
+ip link set $bridge up || cleanup 88 error "Failed to bring bridge up"
 
 ip link set $interface master $bridge || cleanup && error "Failed to link $interface with $bridge"
+
+ip addr del $wan_network_address dev $interface || cleanup && \
+		error "Failed to remove address $wan_network_address from $interface"
+
+ip addr add $wan_network_address dev $bridge || cleanup && \
+		error "Failed to add address $wan_network_address to $bridge"
 
 # TODO: Should iptable/ebtables added for routing/NAT ?
 
