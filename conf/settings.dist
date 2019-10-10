@@ -7,14 +7,31 @@
 # it may be changed with different values for $address and $wan
 # then Dowse will serve an entire subnet.
 
-# which addresses we take for dowse
-address=127.0.0.1
+# If this setting is set to "yes", then dowse will use the address assigned
+# to $wan_interface, if any
+# otherwise, $wan_network_address and $wan_default_gateway will be used
+use_wan_interface_address=yes
+
+# If $use_wan_interface_address is set to "yes" and this setting is set to "yes"
+# the fetched address will be saved. The next time that dowse start, this
+# saved address will be used instead
+use_saved_wan_interface=yes
+
+# Which address should dowse use for the wan interface?
+# if $use_wan_interface_address is set to "yes", this is only a fallback value
+# otherwise, this is the address used
+wan_network_address=192.168.1.2/24
+
+# Which is the default gateway dowse should route packets to?
+# if $use_wan_interface_address is set to "yes", this is only a fallback value
+# otherwise, it is the default gateway used
+wan_default_gateway=192.168.1.1/24
 
 # which interface is connected to the Dowse network
 # by default, an ethernet interface connected to the internet will be used
-# override this value by uncommenint the line below (WARNING: the interface
+# override this value by uncommenting the line below (WARNING: the interface
 # need to be connected to the internet, otherwise dowse won't start)
-#wan_interface=eth0
+wan_interface=eth0
 
 # how many devices will dowse allow on the wan_interface
 # by default it will use all the entire range, eg. for a C class network,

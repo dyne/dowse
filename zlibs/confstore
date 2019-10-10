@@ -12,117 +12,67 @@ conf-load() {
 
 	# cover defaults
 	hostname=${hostname:-`hostname`}
-	dns=${dns:-default}
-	dowse_uid=${dowse_uid:-`id -un`}
-	dowse_gid=${dowse_gid:-`id -gn`}
-	dowse_net=${dowse_net:-127.0.0.0/24}
 	wan_lease_time=${wan_lease_time:-48h}
 	lan=${lan:-dowse.it}
 
 	firewall=${firewall:-yes}
 
-	net_devices=()
-	net.scan_devices
-	
-	net_ip4_addr=()
-	net.scan_addresses
-
-	wifi_interfaces=$(get_wifi_interfaces)
-
-	possible_wan_interfaces=()
-	interface_from_settings="no"
-	if [[ "" != "$wan_interface" ]]; then
-		possible_wan_interfaces=($wan_interface)
-		interface_from_settings="yes"
-	else
-		possible_wan_interfaces=($net_devices)
-
-		# Do not scan addresses for wireless devices
-		# because they will be used as access points
-		for wifi_dev in "${wifi_interfaces[@]}" ; do
-			# https://stackoverflow.com/questions/3435355/remove-entry-from-array
-			possible_wan_interfaces=("${(@)possible_wan_interfaces:#$wifi_dev}")
-		done
-	fi
-	echo $possible_wan_interfaces
-
+	address=()
 	interface=()
 	netmask=()
 	dowse_net=()
 	dowse_guests=()
-	for d in $possible_wan_interfaces; do
-		local _addr=${net_ip4_addr[$d]}
-		range=${_addr[(ws:/:)2]}
-		_addr=${_addr[(ws:/:)1]}
-		[[ "$_addr" = "" ]] && continue
 
-		wan=`ip route show dev $d | awk '/default/ {print $3}'`
-		[[ "$wan" = "" ]] && continue
+	calculate_dowse_guests $wan_network_address
+	interface=$wan_interface
+	address=${wan_network_address[(ws:/:)1]}
 
-		act "$d $_addr $range # detected network config"
-		address=$_addr
-		interface=$d
+	# net_devices=()
+	# net.scan_devices
+	
+	# net_ip4_addr=()
+	# net.scan_addresses
 
-		# render the dowse_net
-		if [[ $range == 24 ]]; then
-			x=${wan[(ws:.:)1]}
-			y=${wan[(ws:.:)2]}
-			z=${wan[(ws:.:)3]}
-			dowse_net=$x.$y.$z.0/24
-			netmask=255.255.255.0
-			max_wan_devices=254
-		elif [[ $range == 16 ]]; then
-			x=${wan[(ws:.:)1]}
-			y=${wan[(ws:.:)2]}
-			dowse_net=$x.$y.0.0/16
-			netmask=255.255.0.0
-			max_wan_devices=65534
-		elif [[ $range == 8 ]]; then
-			x=${wan[(ws:.:)1]}	
-			dowse_net=$x.0.0.0/8
-			netmask=255.0.0.0
-			max_wan_devices=16277214
-		else
-			error "There has been a error parsing the interface $interface"
-		fi
+	# wifi_interfaces=$(get_wifi_interfaces)
 
-		# Use all available addresses for $range
-		if [[ "$wan_devices" == "" ]]; then
-			dowse_guests=$x.${y-0}.${z-0}.1,$x.${y-255}.${z-255}.254,$wan_lease_time
-			break
-		fi
+	# possible_wan_interfaces=()
+	# interface_from_settings="no"
+	# if [[ "" != "$wan_interface" ]]; then
+	# 	possible_wan_interfaces=($wan_interface)
+	# 	interface_from_settings="yes"
+	# else
+	# 	possible_wan_interfaces=($net_devices)
+	# 	possible_wan_interfaces=("${(@)possible_wan_interfaces:#$bridge}")
 
-		if [[ $wan_devices -gt $max_wan_devices || $wan_devices -le 0 ]]; then
-			error "The devices allowed on the wan network is incorrect"
-		fi
+	# 	# Do not scan addresses for wireless devices
+	# 	# because they will be used as access points
+	# 	for wifi_dev in "${wifi_interfaces[@]}" ; do
+	# 		# https://stackoverflow.com/questions/3435355/remove-entry-from-array
+	# 		possible_wan_interfaces=("${(@)possible_wan_interfaces:#$wifi_dev}")
+	# 	done
+	# fi
 
-		y=${y-255}
-		z=${z-255}
-		k=254
-		dowse_guests=$x.$y.$z.$k,$wan_lease_time
-		count=$wan_devices
-		while [[ $count != 0 ]]; do
-			if [[ $k -ge $count ]]; then
-				k=$(($k-$count+1))
-				count=0
-			else
-				# minus 1 because we include the address ending in 0
-				count=$(($count-$k-1))
-				if [[ $count == 0 ]]; then
-					continue
-				fi
-				k=255
-				if [[ $z == 0 ]]; then
-					z=255
-					y=$(($y-1))
-				else
-					z=$(($z-1))
-				fi
-			fi
-		done
-		dowse_guests=$x.$y.$z.$k,$dowse_guests
-		break
-	done
+	# interface=()
+	# netmask=()
+	# dowse_net=()
+	# dowse_guests=()
+	# for d in $possible_wan_interfaces; do
+	# 	local _addr=${net_ip4_addr[$d]}
+	# 	range=${_addr[(ws:/:)2]}
+	# 	_addr=${_addr[(ws:/:)1]}
+	# 	[[ "$_addr" = "" ]] && continue
+
+	# 	wan=`ip route show dev $d | awk '/default/ {print $3}'`
+	# 	[[ "$wan" = "" ]] && continue
+
+	# 	act "$d $_addr $range # detected network config"
+	# 	address=$_addr
+	# 	interface=$d
+
+	# 	calculate_dowse_guests $wan
+
+	# 	break
+	# done
 
 	if [[ "$interface" == "" ]]; then
 		if [[ "$interface_from_settings" == "yes" ]]; then
@@ -151,3 +101,68 @@ conf-load() {
 		func "ap_interface: $ap_interface"
 	fi
 }
+
+calculate_dowse_guests() {
+	local wan=$1
+	local range=${wan[(ws:/:)2]}
+
+	# render the dowse_net
+	if [[ $range == 24 ]]; then
+		x=${wan[(ws:.:)1]}
+		y=${wan[(ws:.:)2]}
+		z=${wan[(ws:.:)3]}
+		dowse_net=$x.$y.$z.0/24
+		netmask=255.255.255.0
+		max_wan_devices=254
+	elif [[ $range == 16 ]]; then
+		x=${wan[(ws:.:)1]}
+		y=${wan[(ws:.:)2]}
+		dowse_net=$x.$y.0.0/16
+		netmask=255.255.0.0
+		max_wan_devices=65534
+	elif [[ $range == 8 ]]; then
+		x=${wan[(ws:.:)1]}	
+		dowse_net=$x.0.0.0/8
+		netmask=255.0.0.0
+		max_wan_devices=16277214
+	else
+		error "There has been a error parsing the interface $interface"
+	fi
+
+	# Use all available addresses for $range
+	if [[ "$wan_devices" == "" ]]; then
+		dowse_guests=$x.${y-0}.${z-0}.1,$x.${y-255}.${z-255}.254,$wan_lease_time
+		return
+	fi
+
+	if [[ $wan_devices -gt $max_wan_devices || $wan_devices -le 0 ]]; then
+		error "The devices allowed on the wan network is incorrect"
+	fi
+
+	y=${y-255}
+	z=${z-255}
+	k=254
+	dowse_guests=$x.$y.$z.$k,$wan_lease_time
+	count=$wan_devices
+	while [[ $count != 0 ]]; do
+		if [[ $k -ge $count ]]; then
+			k=$(($k-$count+1))
+			count=0
+		else
+			# minus 1 because we include the address ending in 0
+			count=$(($count-$k-1))
+			if [[ $count == 0 ]]; then
+				continue
+			fi
+			k=255
+			if [[ $z == 0 ]]; then
+				z=255
+				y=$(($y-1))
+			else
+				z=$(($z-1))
+			fi
+		fi
+	done
+	dowse_guests=$x.$y.$z.$k,$dowse_guests
+}
+
