@@ -80,7 +80,7 @@ fi
 #   }
 # }
 # EOF
-done
+# done
 
 func "access points interfaces: $additional_interfaces[@]"
 
