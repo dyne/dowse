@@ -171,7 +171,7 @@ dowse-stop() {
 
 	notice "Stopping all daemons in Dowse"
 
-    supervisorctl stop all
+	supervisorctl shutdown
 
     # for m in `dowse-module-list`; do
     #     dowse-module-load $m || continue
