@@ -1,9 +1,0 @@
-#!/usr/bin/zsh
-
-source $R/env
-
-set -e
-
-ip addr add $wan_network_address dev $interface
-ip route add default via $wan_default_gateway dev $interface
-
