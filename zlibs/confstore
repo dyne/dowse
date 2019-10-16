@@ -83,7 +83,7 @@ conf-load() {
 	fi
 
 	bridge="dowse_bridge"
-	ap_interface=$(get_ap_real_interface | head -n 1)
+	ap_interface=$(get_ap_real_interface)
 
 	func "interface: $interface"
 	func "hostname: $hostname"

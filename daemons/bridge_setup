@@ -2,36 +2,24 @@
 
 source $R/env
 
-cleanup() {
-	if [[ -d /sys/class/net/$bridge ]]; then
-		ip link set $interface nomaster
-		ip link delete dev $bridge
-		ip addr add $wan_network_address dev $interface
-		ip route default via $wan_default_gateway dev $interface
-	fi
-}
+# Remove any address/route from $interface
+ip addr flush dev $interface
 
-if [[ "$access_point" == "yes" ]]; then
-	exit 0
-fi
-
-# No need to create a bridge
-if [[ ${#ssid} -le 1 ]]; then
-	exit 0
-fi
-
+# Can fail here
 modprobe br_netfilter
 
-ip link add $bridge type bridge || cleanup && error "Failed to create bridge"
-ip link set $bridge up || cleanup 88 error "Failed to bring bridge up"
+# If any fatal error happens, cleanup the bridge (it will also set an address
+# and a route to $interface, so the device can still be accessed on the network)
+ip link add $bridge type bridge || ( bridge_cleanup; error "Failed to create bridge" )
+ip link set $bridge up || ( bridge_cleanup; error "Failed to bring bridge up" )
 
-ip link set $interface master $bridge || cleanup && error "Failed to link $interface with $bridge"
+ip link set $interface master $bridge || ( bridge_cleanup; \
+		error "Failed to link $interface with $bridge" )
 
-ip addr del $wan_network_address dev $interface || cleanup && \
-		error "Failed to remove address $wan_network_address from $interface"
+ip addr add $wan_network_address dev $bridge || ( bridge_cleanup; \
+		error "Failed to add address $wan_network_address to $bridge" )
 
-ip addr add $wan_network_address dev $bridge || cleanup && \
-		error "Failed to add address $wan_network_address to $bridge"
-
-# TODO: Should iptable/ebtables added for routing/NAT ?
+ip route add default via ${wan_default_gateway[(ws:/:)1]} dev $bridge || \
+		( bridge_cleanup; \
+		error "Failed to add route to $wan_network_address for $bridge" )
 

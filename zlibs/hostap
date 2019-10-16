@@ -35,10 +35,8 @@ get_ap_real_interface() {
 	for dev in $all_interfaces ; do
 		if [[ $(check_ap_capabilities $dev) ]]; then
 			echo $dev
-			echo 1
 		fi
 	done
-	echo 0
 }
 
 get_ap_virtual_interfaces() {

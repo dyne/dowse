@@ -185,6 +185,8 @@ dowse-stop() {
     iptables-snat-off
     iptables-stop
 
+	bridge_cleanup
+
     # restore backup if present
     # [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
     #     mv /etc/resolv.conf.dowse-backup /etc/resolv.conf

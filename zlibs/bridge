@@ -1,0 +1,12 @@
+#!/usr/bin/zsh
+
+bridge_cleanup() {
+	# Delete bridge and assign an ip address/route to $interface
+	if [[ -d /sys/class/net/$bridge ]]; then
+		ip link set $interface nomaster
+		ip link delete dev $bridge
+		ip addr add $wan_network_address dev $interface
+		ip route add default via ${wan_default_gateway[(ws:/:)1]} dev $interface
+	fi
+}
+

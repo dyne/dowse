@@ -54,14 +54,6 @@ subnet ${netzero} netmask ${netmask} {
 }
 EOF
 
-interfaces=()
-if [[ "$access_point" == "yes" ]]; then
-	if [[ ${#ssid} -le 1 || "${passphrase[1]}" != "" ]]; then
-		interfaces=( $bridge )
-	else
-		interfaces=( $interface $(get_ap_virtual_interfaces) )
-	fi
-fi
 # for (( i = 1; i <= $#ssid; i++ )) do
 # 	if [[ "" == "$ssid[$i]" ]]; then
 # 		continue
@@ -89,5 +81,4 @@ touch $leases
 pid=/run/dowse/dhcpd.pid
 
 exec dhcpd -pf $pid -user root -d \
-		-lf $leases -cf /run/dowse/conf/dhcpd.conf \
-		$interface $additional_interfaces
+		-lf $leases -cf /run/dowse/conf/dhcpd.conf $bridge
