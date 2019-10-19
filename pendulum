@@ -27,11 +27,6 @@
 
 source $R/env
 
-[[ -r $H/run/redis-server.pid ]] || {
-	error "Dowse is not running"
-	error "pid not found: $H/run/redis-server.pid"
-	return 1 }
-
 now=`date --utc +'%s'`
 
 pendulum_ip_to_network() {

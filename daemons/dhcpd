@@ -49,7 +49,7 @@ subnet ${netzero} netmask ${netmask} {
   on commit {
     set clip = binary-to-ascii(10, 8, ".", leased-address);
     set clhw  = binary-to-ascii(16, 8, ":", substring(hardware, 1, 6));
-    execute("$R/pendulum", "lease", clip, clhw, host-decl-name);
+    execute("$R/pendulum", "lease", clip, clhw);
   }
 }
 EOF

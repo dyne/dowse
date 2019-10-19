@@ -126,6 +126,6 @@ mod=(
 )
 
 # global file path to settings
-settings=${1:-$E/settings}
+settings=${E-/etc/dowse}/settings
 
 conf-load
