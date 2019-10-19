@@ -203,4 +203,8 @@ case "$1" in
 		unlock rrdns $dlid
 		;;
 
+	add-thing)
+		iptables-set-thing $*
+		;;
+
 esac

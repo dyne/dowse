@@ -24,9 +24,8 @@
 iptables-set-thing() {
 	fn set_iptables_thing $*
 	local state="$1"
-	local ip="$2"
-	local mac="$3"
-	req=(state ip mac)
+	local mac="$2"
+	req=(state mac)
 	ckreq || return 1
 
 	case $state in

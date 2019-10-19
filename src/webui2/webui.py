@@ -21,8 +21,10 @@
 Main webui module
 """
 
+# For subprocess.run
+import subprocess
 from time import time, sleep
-from os import getpid
+from os import environ, getpid
 from argparse import ArgumentParser
 from flask import (Flask, request, redirect, render_template,
                    make_response)
@@ -192,6 +194,13 @@ def test_admin():
     vals = {'isadmin': 'yes', 'name': thing_name}
     RSTOR.hmset('thing_%s' % thing_mac, vals)
     RDYNA.set('dns-lease-%s' % thing_name, request.environ['REMOTE_ADDR'])
+
+    execfile('/etc/dowse/dir')
+    dowse_dir = environ['DOWSE_DIR']
+    if not dowse_dir:
+        dowse_dir = '/opt/dowse'
+    subprocess.run(dowse_dir + '/pendulum', 'add-thing', 'on', thing_mac)
+
 
     return redirect('/', code=302)
 
