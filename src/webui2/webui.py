@@ -330,4 +330,4 @@ if __name__ == '__main__':
     if args.debug:
         dbg = True
 
-    APP.run(host='0.0.0.0', port=8000, threaded=True, debug=dbg)
+    APP.run(host='0.0.0.0', port=80, threaded=True, debug=dbg)
