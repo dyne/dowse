@@ -188,9 +188,9 @@ dowse-stop() {
 	bridge_cleanup
 
     # restore backup if present
-    # [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
-    #     mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
-    # }
+    [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
+        mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
+    }
 
     notice "Dowse has stopped running."
 
