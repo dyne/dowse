@@ -21,6 +21,9 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
 # 02139, USA.
 
+# Keep sure that PATH is correct
+source /etc/profile
+
 source /etc/dowse/dir
 export R=${DOWSE_DIR:-/opt/dowse}
 source ${R}/env
