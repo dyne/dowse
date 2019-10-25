@@ -32,7 +32,7 @@ ctrl_interface=/run/dowse/hostapd # Change folder for control socket
 # Give access permission to dowse group
 ctrl_interface_group=dowse
 
-auth_algs=1           # Do not use WPA/WEP
+#auth_algs=1           # Do not use WPA/WEP
 # the channel to use, 0 means the AP will search for the channel with the least interferences
 # Raspberry PI 3 is not working with channel=0, hardcode channel 7 for now
 channel=7
@@ -52,10 +52,11 @@ ssid=${ssid-Dowse Access Point}
 EOF
 	if [[ ${#passphrase} -ge 1 && "${passphrase[1]}" != "" ]]; then
 		cat <<EOF >> /run/dowse/conf/hostapd.conf
-auth_algs=2           # 1=wpa, 2=wep, 3=both
+#auth_algs=2           # 1=wpa, 2=wep, 3=both
 wpa=2                 # WPA2 only
 wpa_key_mgmt=WPA-PSK
-rsn_pairwise=CCMP
+#wpa_pairwise=CCMP
+#rsn_pairwise=CCMP
 wpa_passphrase=${passphrase[1]}
 EOF
 	fi
