@@ -112,7 +112,7 @@ iptables-base-protection() {
 
    # Set conditions in which the table will be traversed.
    iptables -A INPUT -p tcp -j TCP
-   iptables -A FORWARD -p tcp -j TCP
+   #iptables -A FORWARD -p tcp -j TCP
 
    # Create and flush the table.
    iptables -N ICMP
@@ -318,8 +318,6 @@ iptables-start() {
 
     # Keep state of connections from local machine and private subnets
     iptables -A OUTPUT  -m state --state NEW -o ${interface} -j ACCEPT
-    iptables -A FORWARD -m state --state NEW -o ${interface} -j ACCEPT
-    iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
     iptables -A INPUT   -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 }
