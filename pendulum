@@ -204,6 +204,7 @@ case "$1" in
 		;;
 
 	add-thing)
+		shift 1
 		iptables-set-thing $*
 		;;
 
