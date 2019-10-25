@@ -47,7 +47,7 @@ def main():
         if RSTOR.hget(i, 'isadmin') == 'yes':
             admin_devices.append(RSTOR.hgetall(i))
 
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
     if caller_info.get('enable_to_browse', 'no') != 'yes' \
         and caller_info.get('isadmin', 'no') != 'yes' \
         and admin_devices:
@@ -79,7 +79,7 @@ def things():
         i['last'] = parsetime(i['last'])
         thingslist.append(i)
 
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
     isadmin = caller_info['isadmin'] == 'yes'
 
     cur_state = RSTOR.get('state_all_things')
@@ -99,7 +99,7 @@ def thing_show():
     if not mac:
         return 'Invalid MAC address\n'
 
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
     isadmin = caller_info['isadmin'] == 'yes'
 
     thinginfo = RSTOR.hgetall('thing_%s' % mac)
@@ -159,7 +159,7 @@ def modify_priv_things():
     Modifies thing privileges
     This currently handles admin/nonadmin
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
     if caller_info['isadmin'] != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
@@ -193,7 +193,7 @@ def test_admin():
 
     vals = {'isadmin': 'yes', 'name': thing_name}
     RSTOR.hmset('thing_%s' % thing_mac, vals)
-    RDYNA.set('dns-lease-%s' % thing_name, request.environ['REMOTE_ADDR'])
+    RDYNA.set('dns-lease-%s' % thing_name, request.remote_addr)
 
     execfile('/etc/dowse/dir')
     dowse_dir = environ['DOWSE_DIR']
@@ -210,7 +210,7 @@ def reset_admin():
     """
     Procedure to reset all admin devices
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
     if caller_info['isadmin'] != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
@@ -226,7 +226,7 @@ def captive_portal():
     """
     Renders the actual captive portal page
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
     resp = make_response(render_template('captive_portal.html',
                                          cur_info=caller_info))
     resp.headers = fill_http_headers(resp.headers)
@@ -238,7 +238,7 @@ def cmd():
     """
     Executes commands called from the webui
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
     if caller_info['isadmin'] != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
@@ -274,7 +274,7 @@ def helppage():
     """
     Renders the help page
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
 
     return render_template('help.html', cur_info=caller_info)
 
@@ -284,7 +284,7 @@ def websocket():
     """
     Renders the websocket example
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
 
     return render_template('websocket.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
@@ -295,7 +295,7 @@ def nmap():
     """
     Renders the nmap scan log
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
 
     return render_template('nmap.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
@@ -309,9 +309,9 @@ def page_not_found(e):
     Returns actual 404, or directs you to the captive portal, depending if you
     are enabled to browse or should be redirected.
     """
-    caller_info = get_caller_info(request.environ['REMOTE_ADDR'])
+    caller_info = get_caller_info(request.remote_addr)
     if caller_info.get('enable_to_browse', 'no') != 'yes':
-        definfo = fill_default_thing(request.environ['REMOTE_ADDR'])
+        definfo = fill_default_thing(request.remote_addr)
         RSTOR.hmset('thing_%s' % definfo['macaddr'], definfo)
         RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' %
                       (definfo['ip4'], 'THING_OFF', int(time()),
