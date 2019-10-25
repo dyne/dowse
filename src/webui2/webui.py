@@ -80,7 +80,7 @@ def things():
         thingslist.append(i)
 
     caller_info = get_caller_info(request.remote_addr)
-    isadmin = caller_info['isadmin'] == 'yes'
+    isadmin = caller_info.get('isadmin', 'no')  == 'yes'
 
     cur_state = RSTOR.get('state_all_things')
     party_mode = RSTOR.get('party_mode')
@@ -100,7 +100,7 @@ def thing_show():
         return 'Invalid MAC address\n'
 
     caller_info = get_caller_info(request.remote_addr)
-    isadmin = caller_info['isadmin'] == 'yes'
+    isadmin = caller_info.get('isadmin', 'no')  == 'yes'
 
     thinginfo = RSTOR.hgetall('thing_%s' % mac)
     return render_template('thing_show.html', thing=thinginfo,
@@ -160,7 +160,7 @@ def modify_priv_things():
     This currently handles admin/nonadmin
     """
     caller_info = get_caller_info(request.remote_addr)
-    if caller_info['isadmin'] != 'yes':
+    if caller_info.get('isadmin', 'no') != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
     thing_mac = request.form['macaddr']
@@ -215,7 +215,7 @@ def reset_admin():
     Procedure to reset all admin devices
     """
     caller_info = get_caller_info(request.remote_addr)
-    if caller_info['isadmin'] != 'yes':
+    if caller_info.get('isadmin', 'no') != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
     for i in RSTOR.keys('thing_*'):
@@ -243,7 +243,7 @@ def cmd():
     Executes commands called from the webui
     """
     caller_info = get_caller_info(request.remote_addr)
-    if caller_info['isadmin'] != 'yes':
+    if caller_info.get('isadmin', 'no') != 'yes':
         return 'You are unauthorized to perform this action.\n'
 
     ipb = ''
@@ -257,7 +257,10 @@ def cmd():
         if not ip4:
             return 'Missing IP address in request.\n'
     elif oper == 'ALL_THINGS_OFF' or oper == 'ALL_THINGS_ON':
-        macaddr = caller_info['macaddr']
+        if caller_info:
+            macaddr = caller_info['macaddr']
+        else:
+            macaddr = request.args.get('macaddr')
     elif oper == 'PARTY_MODE_OFF' or oper == 'PARTY_MODE_ON':
         RSTOR.set('party_mode', oper.split('_')[2].lower())
         sleep(2)
