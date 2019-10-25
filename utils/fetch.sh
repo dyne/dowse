@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Keep sure that we are using the correct PATH
+source /etc/profile
+
 if [ $(id -u) != 0 ]; then
 	echo "Please call this script with root privileges" && exit 1
 fi
