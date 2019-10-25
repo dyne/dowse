@@ -276,13 +276,7 @@ iptables-restore-things() {
 		req=(mac state ip)
 		ckreq || continue
 		if [[ "$state" = "yes" ]]; then
-			iptables -D FORWARD -i $interface -m mac --mac-source $mac -j DROP          || true
-			iptables -A FORWARD -i $interface -s $ip -m mac --mac-source $mac -j ACCEPT || true
-		elif [[ "$state" = "no" ]]; then
-			iptables -D FORWARD -i $interface -s $ip -m mac --mac-source $mac -j ACCEPT || true
-			iptables -A FORWARD -i $interface -m mac --mac-source $mac -j DROP          || true
-		else
-			warning "unknown state for $t / enable_to_browse: $state"
+			iptables -A FORWARD -i $bridge -m mac --mac-source $mac -j ACCEPT || true
 		fi
 	done
 }
