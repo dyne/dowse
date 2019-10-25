@@ -195,11 +195,13 @@ def test_admin():
     RSTOR.hmset('thing_%s' % thing_mac, vals)
     RDYNA.set('dns-lease-%s' % thing_name, request.remote_addr)
 
-    execfile('/etc/dowse/dir')
-    dowse_dir = environ['DOWSE_DIR']
-    if not dowse_dir:
-        dowse_dir = '/opt/dowse'
-    subprocess.run(dowse_dir + '/pendulum', 'add-thing', 'on', thing_mac)
+    exec(open('/etc/dowse/dir').read(), locals())
+    dir = ''
+    if 'DOWSE_DIR' in locals():
+        dir = DOWSE_DIR
+    else:
+        dir = '/opt/dowse'
+    subprocess.run(dir + '/pendulum', 'add-thing', 'on', thing_mac)
 
 
     return redirect('/', code=302)
