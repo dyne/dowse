@@ -14,7 +14,7 @@ export DOWSE_DIR=${DOWSE_DIR-`pwd`}
 
 ./utils/install_dependencies.sh
 
-make
+make && make install
 
 echo "source $DOWSE_DIR/dowse" > /var/lib/dowse/.zshrc
 echo "DOWSE_DIR=$DOWSE_DIR" > /etc/dowse/dir
