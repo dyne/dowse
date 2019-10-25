@@ -50,38 +50,41 @@ if [[ ${#ssid} -le 1 ]]; then
 bridge=$bridge
 ssid=${ssid-Dowse Access Point}
 EOF
-	if [[ ${#passphrase} -ge 1 && "${passphrase[1]}" != "" ]]; then
+	if [[ ${#passphrase} -ge 1 ]]; then
+		if [[ ${#passphrase} -lt 8 || ${#passphrase} -gt 64 ]]; then
+			error "Passphrase must have from 8 to 64 characters"
+		fi
 		cat <<EOF >> /run/dowse/conf/hostapd.conf
 #auth_algs=2           # 1=wpa, 2=wep, 3=both
 wpa=2                 # WPA2 only
 wpa_key_mgmt=WPA-PSK
 #wpa_pairwise=CCMP
 #rsn_pairwise=CCMP
-wpa_passphrase=${passphrase[1]}
+wpa_passphrase=${passphrase}
 EOF
 	fi
 # 2+: Create as many network as requested in /etc/dowse/settings, with different
 # SSID and passphrase (if any), use NAT to allow connection
-else
-	for (( i = 1; i <= $#ssid; i++ )) do
-		# Skip empty ssid
-		if [[ "" == "$ssid[$i]" ]]; then
-			continue
-		fi
-		cat <<EOF >> /run/dowse/conf/hostapd.conf
-bss=dowse_wifi$i
-ssid=${ssid[$i]}
-EOF
-		if [[ "${passphrase[$i]}" != "" ]]; then
-			cat <<EOF >> $H/run/conf/hostapd.conf
-auth_algs=2           # 1=wpa, 2=wep, 3=both
-wpa=2                 # WPA2 only
-wpa_key_mgmt=WPA-PSK
-rsn_pairwise=CCMP
-wpa_passphrase=${passphrase[1]}
-EOF
-		fi
-	done
+#else
+#	for (( i = 1; i <= $#ssid; i++ )) do
+#		# Skip empty ssid
+#		if [[ "" == "$ssid[$i]" ]]; then
+#			continue
+#		fi
+#		cat <<EOF >> /run/dowse/conf/hostapd.conf
+#bss=dowse_wifi$i
+#ssid=${ssid[$i]}
+#EOF
+#		if [[ "${passphrase[$i]}" != "" ]]; then
+#			cat <<EOF >> $H/run/conf/hostapd.conf
+#auth_algs=2           # 1=wpa, 2=wep, 3=both
+#wpa=2                 # WPA2 only
+#wpa_key_mgmt=WPA-PSK
+#rsn_pairwise=CCMP
+#wpa_passphrase=${passphrase[1]}
+#EOF
+#		fi
+#	done
 fi
 
 exec hostapd /run/dowse/conf/hostapd.conf
