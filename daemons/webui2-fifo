@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+source $R/env
+
+exec $R/src/webui2/fifo.py
+

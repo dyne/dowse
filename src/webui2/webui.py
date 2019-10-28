@@ -195,16 +195,8 @@ def test_admin():
     RSTOR.hmset('thing_%s' % thing_mac, vals)
     RDYNA.set('dns-lease-%s' % thing_name, request.remote_addr)
 
-    # TODO(danyspin97): exec cannot add variables to local scope
-    # but only to global scope, fix this to read the value in 
-    # /etc/dowse/dir
-    #exec(open('/etc/dowse/dir').read(), locals())
-    #if 'DOWSE_DIR' in locals():
-    #    dir = DOWSE_DIR
-    #else:
-    dir = '/opt/dowse'
-    subprocess.run([dir + '/pendulum', 'add-thing', 'on', thing_mac])
-
+    RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s' %
+                  (request.remote_addr, 'SET_ADMIN', int(time()), thing_mac))
 
     return redirect('/', code=302)
 
