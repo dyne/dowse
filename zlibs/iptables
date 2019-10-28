@@ -312,8 +312,8 @@ iptables-start() {
 	iptables -A INPUT -p tcp --dport 1888 -j ACCEPT
 
 	# forward port 80 to webui's 8000
-	iptables -A PREROUTING -t nat -i ${bridge} -p tcp --dport 80 \
-		-j REDIRECT --to-port 8000 --destination ${address}
+	#iptables -A PREROUTING -t nat -i ${bridge} -p tcp --dport 80 \
+	#	-j REDIRECT --to-port 8000 --destination ${address}
 
     # Keep state of connections from local machine and private subnets
     iptables -A OUTPUT  -m state --state NEW -o ${bridge} -j ACCEPT
