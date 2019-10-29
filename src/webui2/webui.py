@@ -222,7 +222,7 @@ def captive_portal():
     Renders the actual captive portal page
     """
     caller_info = get_caller_info(request.remote_addr)
-    if not bool(caller_info):
+    if not bool(caller_info) or caller_info.get('macaddr', '') == '':
         definfo = fill_default_thing(request.remote_addr)
         RSTOR.hmset('thing_%s' % definfo['macaddr'], definfo)
         RSTOR.hset('thing_%s' % definfo['macaddr'], 'enable_to_browse', 'no')
