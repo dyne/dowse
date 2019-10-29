@@ -23,7 +23,7 @@ Main webui module
 
 # For subprocess.run
 import subprocess
-from time import time
+from time import time, sleep
 from os import environ, getpid
 from argparse import ArgumentParser
 from flask import (Flask, request, redirect, render_template,
@@ -271,6 +271,8 @@ def cmd():
                   (caller_info['ip4'], oper, int(time()), macaddr, ipb))
     # print('CMD,%s,%s,%d,%s' % (caller_info['ip4'], oper, int(time()), macaddr))
 
+    # Add minimum delay so the page shows correct values
+    sleep(0.2)
     return redirect('/things', code=302)
 
 
