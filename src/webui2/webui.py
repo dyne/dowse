@@ -117,6 +117,7 @@ def modify_things():
     thing_mac = request.form['macaddr']
     thing_name = request.form['name']
     thing_name = thing_name.replace(' ', '_')
+    thing_ip = RSTOR.hget('thing_%s' % thing_mac, 'ip4')
 
     act = request.form.get('action')
     if not act:
@@ -134,7 +135,6 @@ def modify_things():
         RSTOR.hset('thing_%s' % thing_mac, 'name', thing_name)
 
         # set it in redis-dynamic, for reverse dns
-        thing_ip = RSTOR.hget('thing_%s' % thing_mac, 'ip4')
         RDYNA.set('dns-lease-%s' % thing_name, '%s' % thing_ip)
     elif act == 'delete':
         if not thing_mac:
@@ -147,6 +147,9 @@ def modify_things():
 
         # del it from redis-dynamic, to free reverse dns
         RDYNA.delete('dns-lease-%s' % thing_name)
+
+        RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s' %
+                (thing_ip, 'THING_OFF', int(time()), thing_mac))
     else:
         return '<h1>400 - Bad Request</h1>\n'
 
