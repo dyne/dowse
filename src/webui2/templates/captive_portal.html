@@ -91,7 +91,11 @@
         {% if admin_button %}
         <h3>Your administrator device is not configured.</h3>
         <form action="/test_admin" method="post">
-            <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
+            {% if not cur_info['name'] %}
+                <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
+            {% else %}
+                <input type="hidden" id="name" name="name" value="{{ cur_info['name'] }}">
+            {% endif %}
             <div class="col-xs-6 col-md-3">
 </div>
             <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">

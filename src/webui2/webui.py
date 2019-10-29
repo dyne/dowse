@@ -45,8 +45,9 @@ def main():
     admin_devices = get_admin_devices()
 
     caller_info = get_caller_info(request.remote_addr)
-    if caller_info.get('enable_to_browse', 'no') != 'yes' \
-        and caller_info.get('isadmin', 'no') != 'yes':
+    if (caller_info.get('enable_to_browse', 'no') != 'yes' \
+        and caller_info.get('isadmin', 'no') != 'yes') \
+        or not bool(admin_devices):
         return redirect('http://dowse.it/captive_portal', code=302)
 
 
