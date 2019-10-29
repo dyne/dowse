@@ -242,6 +242,7 @@ def cmd():
         return 'You are unauthorized to perform this action.\n'
 
     ipb = ''
+    macaddr = ''
     oper = request.args.get('op')
     if oper == 'THING_OFF' or oper == 'THING_ON':
         macaddr = request.args.get('macaddr')
