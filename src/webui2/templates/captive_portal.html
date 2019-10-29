@@ -120,7 +120,9 @@
             <div>
                 <h2>Your Device Info:</h2>
                 <p>
-                  <strong>Name:</strong> {{ cur_info['name'] }}<br>
+                  {% if cur_info['name'] %}
+                      <strong>Name:</strong> {{ cur_info['name'] }}<br>
+                  {% endif %}
                   <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br>
                   <strong>IP:</strong> {{ cur_info['ip4'] }}<br>
                 </p>
