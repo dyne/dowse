@@ -137,17 +137,6 @@
         <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">
         <button class="btn btn-danger"> Reset admin devices </button>
     </form>
-    {% else %}
-    <div class="jumbotron">
-        <h3>Your administrator device is not configured.</h3>
-        <form action="/test_admin" method="post">
-            <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
-            <div class="col-xs-6 col-md-3">
-</div>
-            <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">
-            <button type="submit" value="update" name="action" class="btn btn-primary"> Use this device as the administrator </button>
-        </form>
-    </div>
     {% endif %}
 </div>
 <!-- /container -->

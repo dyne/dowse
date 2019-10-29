@@ -46,8 +46,7 @@ def main():
 
     caller_info = get_caller_info(request.remote_addr)
     if caller_info.get('enable_to_browse', 'no') != 'yes' \
-        and caller_info.get('isadmin', 'no') != 'yes' \
-        and admin_devices:
+        and caller_info.get('isadmin', 'no') != 'yes':
         return redirect('http://dowse.it/captive_portal', code=302)
 
 
@@ -222,8 +221,16 @@ def captive_portal():
     Renders the actual captive portal page
     """
     caller_info = get_caller_info(request.remote_addr)
+    if not bool(caller_info):
+        definfo = fill_default_thing(request.remote_addr)
+        RSTOR.hmset('thing_%s' % definfo['macaddr'], definfo)
+        RSTOR.hset('thing_%s' % definfo['macaddr'], 'enable_to_browse', 'no')
+        caller_info = definfo
+
+    admin_button = not bool(get_admin_devices())
     resp = make_response(render_template('captive_portal.html',
-                                         cur_info=caller_info))
+                                         cur_info=caller_info,
+                                         admin_button=admin_button))
     resp.headers = fill_http_headers(resp.headers)
     return resp
 
@@ -307,14 +314,6 @@ def page_not_found(e):
     are enabled to browse or should be redirected.
     """
     caller_info = get_caller_info(request.remote_addr)
-    if caller_info.get('enable_to_browse', 'no') != 'yes':
-        definfo = fill_default_thing(request.remote_addr)
-        RSTOR.hmset('thing_%s' % definfo['macaddr'], definfo)
-        RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' %
-                      (definfo['ip4'], 'THING_OFF', int(time()),
-                       definfo['macaddr'], definfo['ip4']))
-        RSTOR.hset('thing_%s' % definfo['macaddr'], 'enable_to_browse', 'no')
-
     if caller_info.get('enable_to_browse', 'no') == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404
 

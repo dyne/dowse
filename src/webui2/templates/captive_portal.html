@@ -88,6 +88,16 @@
     </nav>
     <!-- Main component for a primary marketing message or call to action -->
     <div class="jumbotron">
+        {% if admin_button %}
+        <h3>Your administrator device is not configured.</h3>
+        <form action="/test_admin" method="post">
+            <input type="text" class="form-control" id="name" name="name" placeholder="your device name" required autofocus>
+            <div class="col-xs-6 col-md-3">
+</div>
+            <input type="hidden" id="curmac" name="curmac" value="{{ cur_info['macaddr'] }}">
+            <button type="submit" value="update" name="action" class="btn btn-primary"> Use this device as the administrator </button>
+        </form>
+        {% else %}
         <div class"col-xs-4" "col-md-3">
             {% if cur_info['name'] %}
             <h3>Hi {{ cur_info['name'] }}. Please wait until you are authorized.</h3>
@@ -102,6 +112,7 @@
                 <button type="submit" value="update" name="action" class="btn"> Ask me if you can use this LAN </button>
             </form>
             {% endif %}
+        {% endif %}
             <div>
                 <h2>Your Device Info:</h2>
                 <p>
@@ -109,15 +120,17 @@
                   <strong>MAC:</strong> {{ cur_info['macaddr'] }}<br>
                   <strong>IP:</strong> {{ cur_info['ip4'] }}<br>
                 </p>
-                <h1>Welcome to my home pal!</h1>
-                <p>If you ask me politely I _might_ give you access to the web, or
-                   use of the toilet (or both) and even prepare a cup of tea, according
-                   to how nice your devices behave.
-                </p>
-                <p>This network is aware to what you and your devices do through
-                   DOWSE.&nbsp;
-                </p>
-                <p>For more info go to <a href="http://www.dowse.eu">www.dowse.eu</a></p>
+                {% if not admin_button %}
+                    <h1>Welcome to my home pal!</h1>
+                    <p>If you ask me politely I _might_ give you access to the web, or
+                       use of the toilet (or both) and even prepare a cup of tea, according
+                       to how nice your devices behave.
+                    </p>
+                    <p>This network is aware to what you and your devices do through
+                       DOWSE.&nbsp;
+                    </p>
+                    <p>For more info go to <a href="http://www.dowse.eu">www.dowse.eu</a></p>
+                {% endif %}
             </div>
         </div>
     </div>
