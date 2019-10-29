@@ -24,7 +24,8 @@
 # This standalone program runs every N seconds and gathers current
 # information on network objects, updating it in redis
 
-
+source /etc/dowse/dir
+export R=${DOWSE_DIR:-/opt/dowse}
 source $R/env
 
 now=`date --utc +'%s'`
@@ -203,7 +204,7 @@ case "$1" in
 		unlock rrdns $dlid
 		;;
 
-	add-thing)
+	set-thing)
 		shift 1
 		iptables-set-thing $*
 		;;
