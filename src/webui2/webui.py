@@ -30,7 +30,7 @@ from flask import (Flask, request, redirect, render_template,
                    make_response)
 
 from config import (RDYNA, RSTOR)
-from helpers import (parsetime, sort_things, get_caller_info,
+from helpers import (parsetime, sort_things, get_admin_devices, get_caller_info,
                      fill_default_thing, fill_http_headers, ip2mac)
 
 
@@ -42,10 +42,7 @@ def main():
     """
     Main routine
     """
-    admin_devices = []
-    for i in RSTOR.keys('thing_*'):
-        if RSTOR.hget(i, 'isadmin') == 'yes':
-            admin_devices.append(RSTOR.hgetall(i))
+    admin_devices = get_admin_devices()
 
     caller_info = get_caller_info(request.remote_addr)
     if caller_info.get('enable_to_browse', 'no') != 'yes' \

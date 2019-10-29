@@ -118,3 +118,12 @@ def fill_default_thing(ip):
         'last': int(time()),
     }
     return thing_defaults
+
+def get_admin_devices():
+    admin_devices = []
+    for i in RSTOR.keys('thing_*'):
+        if RSTOR.hget(i, 'isadmin') == 'yes':
+            admin_devices.append(RSTOR.hgetall(i))
+
+    return admin_devices
+
