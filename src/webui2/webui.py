@@ -23,7 +23,7 @@ Main webui module
 
 # For subprocess.run
 import subprocess
-from time import time, sleep
+from time import time
 from os import environ, getpid
 from argparse import ArgumentParser
 from flask import (Flask, request, redirect, render_template,
@@ -216,7 +216,6 @@ def reset_admin():
     for i in RSTOR.keys('thing_*'):
         RSTOR.hmset(i, {'isadmin': 'no'})
 
-    sleep(5)
     return redirect('/', code=302)
 
 
@@ -259,7 +258,6 @@ def cmd():
             macaddr = request.args.get('macaddr')
     elif oper == 'PARTY_MODE_OFF' or oper == 'PARTY_MODE_ON':
         RSTOR.set('party_mode', oper.split('_')[2].lower())
-        sleep(2)
         return redirect('/things', code=302)
     else:
         return 'Invalid request.\n'
@@ -267,7 +265,6 @@ def cmd():
     RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s,%s' %
                   (caller_info['ip4'], oper, int(time()), macaddr, ipb))
     # print('CMD,%s,%s,%d,%s' % (caller_info['ip4'], oper, int(time()), macaddr))
-    sleep(2)
 
     return redirect('/things', code=302)
 
@@ -320,7 +317,6 @@ def page_not_found(e):
                       (definfo['ip4'], 'THING_OFF', int(time()),
                        definfo['macaddr'], definfo['ip4']))
         RSTOR.hset('thing_%s' % definfo['macaddr'], 'enable_to_browse', 'no')
-        sleep(3)
 
     if caller_info.get('enable_to_browse', 'no') == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404
