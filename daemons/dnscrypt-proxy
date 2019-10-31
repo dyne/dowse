@@ -92,7 +92,7 @@ if [[ $DEBUG = 1 ]]; then
 	DOWSE_DOMAINLIST=$R/src/domain-list/data \
 			DOWSE_LAN_ADDRESS_IP4=$address \
 			DOWSE_LAN_NETMASK_IP4=$netmask \
-			interface=$interface \
+			interface=$bridge \
 			hostname=$hostname \
 			domain=$lan \
 			exec $bin -a $address:53 \
@@ -109,7 +109,7 @@ else
 			DOWSE_LAN_NETMASK_IP4=$netmask \
 			hostname=$hostname \
 			domain=$lan \
-			interface=$interface \
+			interface=$bridge \
 			exec $bin -a $address:53 \
 			-l /var/log/dowse/dnscrypt.log \
 			-L $R/src/dnscrypt-proxy/dnscrypt-resolvers.csv \
