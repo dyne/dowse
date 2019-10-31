@@ -240,8 +240,8 @@ iptables-snat-on() {
     # and http://www.spinics.net/lists/netdev/msg179687.html
     sysctl net.ipv4.conf.$interface.accept_redirects=0
     sysctl net.ipv4.conf.$bridge.accept_redirects=0
-    if [[ "$access_point" == "yes" && "$(get_ap_real_inteface)" != "" ]]; then
-        sysctl net.ipv4.conf.$(get_ap_real_inteface).accept_redirects=0
+    if [[ "$access_point" == "yes" && "$(get_ap_real_interface)" != "" ]]; then
+        sysctl net.ipv4.conf.$(get_ap_real_interface).accept_redirects=0
     fi
 
     # func "setup route towards wired network"
