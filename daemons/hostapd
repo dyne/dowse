@@ -17,6 +17,9 @@ if [[ "$ap_interface" == "" ]] ; then
 	done
 fi
 
+# Be sure thah the interface is free
+rfkill unblock wlan
+
 # Base config for the daemon
 cat <<EOF > /run/dowse/conf/hostapd.conf
 # Reference configuration
