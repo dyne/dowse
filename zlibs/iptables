@@ -272,9 +272,11 @@ iptables-restore-things() {
 		state=`print "hget $t enable_to_browse" | redis storage`
 		ip=`print "hget $t ip4" | redis storage`
 		# check all needed information is there
-		req=(mac state ip)
+		req=(state)
 		ckreq || continue
 		if [[ "$state" = "yes" ]]; then
+			req=(mac ip)
+			ckreq || continue
 			iptables -A FORWARD -i $bridge -m mac --mac-source $mac -j ACCEPT || true
 		fi
 	done
