@@ -1,0 +1,36 @@
+#!/usr/bin/env zsh
+
+check_conflicts() {
+	programs_to_check=(
+		connmand
+		dhclient
+		dhcpd
+		NetworkManager
+	)
+
+	pids=()
+	conflicting_programs=()
+	for program in $programs_to_check; do
+		current_pid=$(is_program_running $program)
+		if [[ $current_pid != -1 ]]; then
+			conflicting_programs+=($program)
+			pids+=($current_pid)
+		fi
+	done
+}
+
+is_program_running() {
+	fn is_program_running $*
+	local program="$1"
+	req=(program)
+	ckreq || return 1
+
+	# Get pid of $program, if any
+	pid=$(ps cax | grep $program | grep -o '^[ ]*[0-9]*' | tr -d '[:space:]')
+
+	if [[ "$pid" == "" ]]; then
+		echo -1
+	else
+		echo $pid
+	fi
+}

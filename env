@@ -105,6 +105,7 @@ source $R/zlibs/redis
 source $R/zlibs/nmap
 # source $R/zlibs/sql
 source $R/zlibs/bridge
+source $R/zlibs/conflicts
 
 # conclude initialization
 source $R/zuper/zuper.init

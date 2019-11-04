@@ -108,6 +108,14 @@ dowse-start() {
 			return 1
 		fi
 	fi
+
+	check_conflicts
+	if [[ "$pids" != "" ]]; then
+		warn "The following conflicting_programs are running:\
+$conflicting_programs
+Please close these programs before running Dowse."
+		return 1
+	fi
     notice "Starting Dowse"
 
     [[ "$firewall" = "yes" ]] && {
