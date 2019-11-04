@@ -10,8 +10,8 @@ cat <<EOF > /run/dowse/conf/netdata.conf
     bind socket to ip = 127.0.0.1
 
     run as user = dowse
-    web files owner = dowse
-    web files group = dowse
+    web files owner = root
+    web files group = root
 
     lib directory = /var/lib/dowse/netdata
 
