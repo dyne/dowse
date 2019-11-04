@@ -173,8 +173,8 @@ E.g.: DOWSE_KILL_CONFLICTS=1 ./start.sh"
 
             cat <<EOF > /etc/resolv.conf
 nameserver $address
-domain dowse.it
-search dowse.it
+domain $lan
+search $lan
 EOF
         fi
     }
