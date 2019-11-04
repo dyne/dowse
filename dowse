@@ -179,6 +179,8 @@ EOF
         fi
     }
 
+	echo "$address $lan" >> /etc/hosts
+
 	notice "Starting all daemons in Dowse"
 
 	supervisord
@@ -229,6 +231,8 @@ dowse-stop() {
     [[ -r /etc/resolv.conf.dowse-backup ]] &&  {
         mv /etc/resolv.conf.dowse-backup /etc/resolv.conf
     }
+
+	sed -i "/$address $lan/d" /etc/hosts
 
     notice "Dowse has stopped running."
 
