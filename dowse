@@ -111,10 +111,26 @@ dowse-start() {
 
 	check_conflicts
 	if [[ "$pids" != "" ]]; then
-		warn "The following conflicting_programs are running:\
+		if [[ "$DOWSE_KILL_CONFLICTS" == "1" ]]; then
+			kill -9 $pids
+			sleep 0.5
+			check_conflicts
+			if [[ "$pids" != "" ]]; then
+				warn "The following programs could not be stopped: \
 $conflicting_programs
-Please close these programs before running Dowse."
-		return 1
+Please manually stop them, as they're probably running under a supervisord"
+				return 1
+			else
+				notice "Conflicting programs have been stopped"
+			fi
+		else
+			warn "The following conflicting_programs are running: \
+$conflicting_programs
+Please close these programs before running Dowse or
+set environment variable DOWSE_KILL_CONFLICTS to 1.
+E.g.: DOWSE_KILL_CONFLICTS=1 ./start.sh"
+			return 1
+		fi
 	fi
     notice "Starting Dowse"
 
