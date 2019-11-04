@@ -99,10 +99,15 @@ dowse-start() {
     # freq=($R/conf/settings $R/conf/network)
     # ckreq || return $?
 
-    [[ "`getpid redis-server`" = "" ]] || {
-        warn "Dowse is already running"
-        return 0
-    }
+	pid_path="/run/dowse/supervisord.pid"
+	if [[ -f $pid_path ]]; then
+		PID=$(cat $pid_path)
+		# Check if dowse has already been started
+		if [[ -d /proc/$PID ]]; then
+			warn "Dowse is already running"
+			return 1
+		fi
+	fi
     notice "Starting Dowse"
 
     [[ "$firewall" = "yes" ]] && {
