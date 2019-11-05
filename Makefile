@@ -30,6 +30,7 @@ install:
 	install -d -o dowse -g dowse ${DESTDIR}/var/lib/dowse
 	install -d -o dowse -g dowse ${DESTDIR}/var/log/dowse
 	install -d -o dowse -g dowse ${DESTDIR}/var/log/dowse/supervisor
+	touch ${DESTDIR}/etc/netdata/.opt-out-from-anonymous-statistics
 
 uninstall:
 	rm -rf ${DESTDIR}${CONFDIR}
