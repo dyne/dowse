@@ -69,15 +69,14 @@ def things():
             continue  # perhaps log; this means an incomplete thing
         thingslist.append(sinthing)
 
-    thingslist_sorted = sort_things(thingslist)
-
-    thingslist = []
-    for i in thingslist_sorted:
-        i['last'] = parsetime(i['last'])
-        thingslist.append(i)
-
     caller_info = get_caller_info(request.remote_addr)
     isadmin = caller_info.get('isadmin', 'no')  == 'yes'
+
+    for i in thingslist:
+        i['last'] = parsetime(i['last'])
+        i.setdefault('ask_permission', 'no')
+
+    sort_things(thingslist, isadmin)
 
     cur_state = RSTOR.get('state_all_things')
     party_mode = RSTOR.get('party_mode')
@@ -229,6 +228,10 @@ def captive_portal():
         caller_info = definfo
 
     admin_button = not bool(get_admin_devices())
+    # If this thing is asking for permission
+    if not admin_button and caller_info.get('enable_to_browse', 'no') == 'no' \
+        and caller_info.get('name', '') != '':
+        RSTOR.hset('thing_%s' % caller_info.get('macaddr'), 'ask_permission', 'yes')
     resp = make_response(render_template('captive_portal.html',
                                          cur_info=caller_info,
                                          admin_button=admin_button))
@@ -256,6 +259,7 @@ def cmd():
             return 'Missing MAC address in request.\n'
         if not ip4:
             return 'Missing IP address in request.\n'
+        RSTOR.hdel('thing_%s' % macaddr, 'ask_permission')
     elif oper == 'ALL_THINGS_OFF' or oper == 'ALL_THINGS_ON':
         if caller_info:
             macaddr = caller_info['macaddr']

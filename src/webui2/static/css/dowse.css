@@ -158,6 +158,13 @@ tr.self
     background-color: #f6f6dd;
 }
 
+
+tr.ask_permission
+{
+    background-color:#e0b3b3;
+}
+
+
 tr
 {
 background-color: #DDDDC5;

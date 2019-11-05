@@ -133,6 +133,8 @@
                             {% for thing in things %}
                             {% if thing['ip4'] == cur_info['ip4'] %}
                             <tr class="self">
+                                {% elif thing['ask_permission'] == 'yes' %}
+                                <tr class="ask_permission">
                                 {% else %}
                                 <tr>
                                     {% endif %}

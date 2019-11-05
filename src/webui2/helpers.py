@@ -21,6 +21,7 @@
 webui helper module
 """
 
+from operator import itemgetter
 from time import time
 from werkzeug.datastructures import Headers as werkzeugHeaders
 
@@ -56,11 +57,16 @@ def ip2mac(ipaddr):
     return pairs.get(ipaddr, 'n/a')
 
 
-def sort_things(unsorted_things):
+def sort_things(unsorted_things, isadmin):
     """
-    Function to sort things by epoch
+    Function to sort things by epoch and
     """
-    return sorted(unsorted_things, key=lambda k: k['last'], reverse=True)
+    sort_rules = []
+    if isadmin:
+        sort_rules = itemgetter('ask_permission', 'last')
+    else:
+        sort_rules = itemgetter('last')
+    unsorted_things.sort(key=sort_rules, reverse=True)
 
 
 def parsetime(then):
