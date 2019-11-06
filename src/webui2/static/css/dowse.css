@@ -19,8 +19,8 @@ body
     color: #000000;
     background-color: #ffffff;
     /* Oval: */
-    background-image: radial-gradient(50% 100%, #DBE2D0 0%, #ACB0A7 100%);
-    border: 1px solid #979797;
+    background-image: radial-gradient(50% 100%, #ffffff 0%, #dbe5f5 100%);
+    /* border: 1px solid #0000ff; */
 }
 
 footer
@@ -90,12 +90,19 @@ footer
 
 }.btn-dowse
 {
-    background: #767B7C;
+    background: #bcc6d7;
     border-radius: 5px;
     font-family: DINCondensed-Bold;
     font-size: 16px;
     color: #53606B;
 }
+
+
+.jumbotron
+{
+    background-color: #f8f8f8;
+}
+
 
 .btn-dowse_sml
 {
@@ -115,14 +122,15 @@ footer
 
 .dowseIsAdmin
 {
-    background-color: #059BA8;
-    border: 1px solid #979797;
+    background-color: #3a92de;
+    color: #bcc6d7;
+    /* border: 1px solid #bcc6d7; */
 }
 
 
 .dowseIsNotAdmin
 {
-    background: #767B7C;
+    background: #bcc6d7;
     border: 1px solid #979797;
 }
 
@@ -155,19 +163,19 @@ footer
 
 tr.self
 {
-    background-color: #f6f6dd;
+    background-color: #dbe5f5;
 }
 
 
 tr.ask_permission
 {
-    background-color:#e0b3b3;
+    background-color:#f4f4ce;
 }
 
 
 tr
 {
-background-color: #DDDDC5;
+    background-color: #f8f8f8;
 }
 
 
