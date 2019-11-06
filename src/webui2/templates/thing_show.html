@@ -17,68 +17,7 @@
         <link rel="stylesheet" href="static/css/font-awesome/css/font-awesome.css">
     </head>
     <body>
-        <!-- Static navbar -->
-        <nav class="navbar navbar-default">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a href="/">
-                        <img src="static/img/dowseLogo.png" width="40%" class="img-responsive visible-sm visible-md visible-lg visible-xs-inline-block" />
-                    </a>
-                </div>
-                <div id="navbar" class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        <li>
-                            <a href="/things">Things</a>
-                        </li>
-                        <li>
-                            <a href="http://dowse.it:29999/#menu_Dowse">Netdata</a>
-                        </li>
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Documentation <span class="caret"></span></a>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a href="/help">Help</a>
-                                </li>
-                                <li>
-                                    <a href="http://dowse.eu">Dowse-eu Website</a>
-                                </li>
-                                <li>
-                                    <a href="https://github.com/dyne/dowse/wiki">Wiki</a>
-                                </li>
-                                <li role="separator" class="divider"></li>
-                                <li>
-                                    <a href="https://www.github.com/dyne/dowse">GitHub</a>
-                                </li>
-                                <li>
-                                    <a href="https://mailinglists.dyne.org/cgi-bin/mailman/listinfo/dowsers">mailing list</a>
-                                    <li>
-                                        <a href="https://irc.dyne.org">irc-channel: #dowsers</a>
-                                    </li>
-                                    <li role="separator" class="divider"></li>
-                                    <li class="dropdown-header">Hacking</li>
-                                    <li>
-                                        <a href="/websocket">Websockets</a>
-                                    </li>
-                                    <li>
-                                        <a href="/nmap">Nmap</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">MQTT</a>
-                                    </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-                <!--/.nav-collapse -->
-            </div>
-            <!--/.container-fluid -->
-        </nav>
+        {% include 'navbar.html' %}
         <div class="container" style="margin-left: 0px;">
             <img src="/static/img/dowseLogo.png" width="200">
             <div class="row">
