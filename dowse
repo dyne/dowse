@@ -26,6 +26,13 @@ source /etc/profile
 
 source /etc/dowse/dir
 export R=${DOWSE_DIR:-/opt/dowse}
+
+[[ -r $R ]] || {
+    error "Dowse is not installed in: $R"
+    error "export DOWSE_DIR if installed on a different path"
+    return 1
+}
+
 source ${R}/env
 
 if [[ $dowse_loaded = 1 ]]; then

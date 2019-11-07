@@ -31,12 +31,6 @@ export E=${DOWSE_CONF:-/etc/dowse}
 #####################
 source $R/zuper/zuper
 
-[[ -r $R ]] || {
-    error "Dowse is not installed in: $R"
-    error "export DOWSE_PREFIX if installed on a different path"
-    return 1
-}
-
 # For gettext
 TEXTDOMAIN=dowse
 
