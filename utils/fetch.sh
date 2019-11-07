@@ -19,8 +19,8 @@ set -e
 useradd -d /var/lib/$DOWSE_USER dowse
 
 git clone https://github.com/dyne/dowse $DOWSE_DIR --recurse-submodules $params
-sudo chown $DOWSE_USER:$DOWSE_USER -R $DOWSE_DIR
-sudo chown $DOWSE_USER:$DOWSE_USER -R $DOWSE_DIR/.git
+chown $DOWSE_USER:$DOWSE_USER -R $DOWSE_DIR
+chown $DOWSE_USER:$DOWSE_USER -R $DOWSE_DIR/.git
 cd $DOWSE_DIR
 
 ./utils/install.sh
