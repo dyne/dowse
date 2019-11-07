@@ -1,3 +1,5 @@
 #!/usr/bin/env zsh
 
-source dowse && dowse-stop
+source /etc/dowse/dir
+export R=${DOWSE_DIR:-/opt/dowse}
+source $R/dowse && dowse-stop
