@@ -1,6 +1,8 @@
 DESTDIR?=
 CONFDIR?=/etc/dowse
 
+DOWSE_DIR?=/opt/dowse
+
 include config.mk
 
 all: config sources
@@ -31,6 +33,8 @@ install:
 	install -d -o dowse -g dowse ${DESTDIR}/var/log/dowse
 	install -d -o dowse -g dowse ${DESTDIR}/var/log/dowse/supervisor
 	touch ${DESTDIR}/etc/netdata/.opt-out-from-anonymous-statistics
+	install -p -m 755 dowse.initd $(DESTDIR)/etc/init.d/dowse
+	sed -i "s;DOWSE_DIR;$(DOWSE_DIR);" $(DESTDIR)/etc/init.d/dowse
 
 uninstall:
 	rm -rf ${DESTDIR}${CONFDIR}
