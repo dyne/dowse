@@ -183,11 +183,11 @@ EOF
 
 	notice "Starting all daemons in Dowse"
 
-	supervisord
+	supervisord -c $R/supervisord.conf
 
 	# iptables-restore-things need redis to be running
-	sleep 1
-	until [[ `supervisorctl status redis | tr -s " " | cut -d" " -f 2` == "RUNNING" ]] {
+	until [[ `supervisorctl -c $R/supervisord.conf status redis \
+		| tr -s " " | cut -d" " -f 2` == "RUNNING" ]] {
 		sleep 1
 	}
 	# Restore tables for all things enabled or disabled in redis storage
@@ -205,7 +205,7 @@ dowse-stop() {
 
 	notice "Stopping all daemons in Dowse"
 
-	supervisorctl shutdown
+	supervisorctl -c $R/supervisord.conf shutdown
 
 	PID=$(cat /run/dowse/supervisord.pid)
 	# Wait until supervisord has stopped all processes
