@@ -100,8 +100,9 @@ def thing_show():
         return '<h1>400 - Bad Request</h1>\n'
 
     thinginfo = RSTOR.hgetall('thing_%s' % mac)
+    things_list = [ thinginfo ]
     return render_template('thing_show.html', thing=thinginfo,
-                           cur_info=caller_info, isadmin=isadmin)
+                           cur_info=caller_info, things=things_list)
 
 
 @APP.route('/modify_things', methods=['POST'])

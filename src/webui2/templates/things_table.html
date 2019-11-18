@@ -1,0 +1,126 @@
+<div class="row">
+    <div class="col-md-12 col-lg-12 col-xs-12 col-sm-12">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Device Name</th>
+                    <th class="hidden-xs">Last Seen</th>
+                    <th class="hidden-xs">Vendor</th>
+                    <th class="hidden-xs">IP / MAC</th>
+                    <th>On/Off</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for thing in things %}
+                {% if thing['ip4'] == cur_info['ip4'] %}
+                <tr class="self">
+                    {% elif thing['ask_permission'] == 'yes' %}
+                    <tr class="ask_permission">
+                    {% else %}
+                    <tr>
+                        {% endif %}
+                        <td></td>
+                        <td>
+                            <form class="form-inline" action="/modify_things" method="post">
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <input type="hidden" name="url_from" value="/things">
+                                        <input type="hidden" name="macaddr" value="{{ thing['macaddr'] }}">
+                                        <input type="text" class="form-control" id="name" name="name" pattern="[a-zA-Z0-9]{1,32}" placeholder="{{ thing['name'] }}">
+                                    </div>
+                                    <button type="submit" value="update" name="action" class="btn-dowse" style="display:inline">
+                                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="submit" value="delete" name="action" class="btn-dowse" style="display:inline">
+                                        <i class="fa fa-trash" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                        <td class="hidden-xs">{{ thing['last'] }}</td>
+                        <td class="hidden-xs">{{ thing['vendor'] }}</td>
+                        <td class="hidden-xs">{{ thing['ip4'] }}
+                            <br>
+                            <a href="/thing_show?mac={{ thing['macaddr'] }}">{{ thing['macaddr'] }}</a>
+                        </td>
+                        {% if isadmin %}
+                        {% if thing['enable_to_browse'] == 'yes' %}
+                        <td>
+                            <a href="/cmd?op=THING_OFF&macaddr={{ thing['macaddr'] }}&ip4={{ thing['ip4'] }}">
+                                <img src="static/img/button_ON.png" width="28" alt="network access enabled" title="disable network access">
+                            </a>
+                        </td>
+                        {% else %}
+                        <td>
+                            <a href="/cmd?op=THING_ON&macaddr={{ thing['macaddr'] }}&ip4={{ thing['ip4'] }}">
+                                <img src="static/img/button_OFF.png" width="28" alt="network access disabled" title="enable network access">
+                            </a>
+                        </td>
+                        {% endif %}
+                        <td>
+                            {% if thing['isadmin'] == 'yes' %}
+                            <form class="form-inline" action="/modify_priv_things" method="post">
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <input type="hidden" name="url_from" value="/things">
+                                        <input type="hidden" name="macaddr" value="{{ thing['macaddr'] }}">
+                                        <input type="hidden" name="column" value="admin">
+                                        <input type="hidden" name="value" value="no">
+                                    </div>
+                                    <button class="btn-dowse dowseIsAdmin">
+                                        <i class="fa fa-user-plus" aria-hidden="true"></i>
+                                        <!--img src="/static/img/button_ON.png" width="28" alt="admin privileges enabled" title="disable admin privileges"-->
+                                    </button>
+                                </div>
+                            </form>
+                            {% else %}
+                            <form class="form-inline" action="/modify_priv_things" method="post">
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <input type="hidden" name="url_from" value="/things">
+                                        <input type="hidden" name="macaddr" value="{{ thing['macaddr'] }}">
+                                        <input type="hidden" name="column" value="admin">
+                                        <input type="hidden" name="value" value="yes">
+                                    </div>
+                                    <button class="btn-dowse dowseIsNotAdmin">
+                                        <i class="fa fa-user" aria-hidden="true"></i>
+                                        <!--img src="/static/img/button_OFF.png" width="28" alt="admin privileges disabled" title="enable admin privileges"-->
+                                    </button>
+                                </div>
+                            </form>
+                            {% endif %}
+                        </td>
+                        {% else %}
+                        <!-- if isadmin -->
+                        {% if thing['enable_to_browse'] == 'no' %}
+                        <td>
+                            <img src="static/img/button_OFF.png" width="28" alt="network access disabled">
+                        </td>
+                        {% elif thing['enable_to_browse'] == 'yes' %}
+                        <td>
+                            <img src="static/img/button_ON.png" width="28" alt="network access enabled">
+                        </td>
+                        {% else %}
+                        <td>
+                            <img src="static/na_state-16x16.png" alt="network state unavailable">
+                        </td>
+                        {% endif %}
+                        <td>
+                            {% if thing['isadmin'] == 'yes' %}
+                            <i class="fa fa-user-plus" aria-hidden="true"></i>
+                            <!-- <img src="/static/img/button_ON.png" width="28" alt="admin privileges enabled" title="admin privileges enabled"> -->
+                            {% else %}
+                            <i class="fa fa-user" aria-hidden="true"></i>
+                            <!-- <img src="/static/img/button_OFF.png" width="28" alt="admin privileges disabled" title="admin privileges disabled"> -->
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        <!-- if isadmin -->
+                    </tr>
+                    {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
