@@ -521,6 +521,67 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 		freeReplyObject(data->reply);
 	}
 
+
+	// Skip blocked domain per machine based
+	int dots = 0;
+	for(int i = 0; i != data->query_len; i++) {
+		if(data->query[i] == '.') {
+			dots++;
+		}
+	}
+	// Transform the domain to level 3
+	char *fixed_query = data->query;
+	if(dots > 2) {
+		for(int i = dots - 2; i != 0; i--) {
+			fixed_query = strchr(data->query, '.') + 1;
+		}
+	}
+	// Check if query is blocked by checking level 3 domains and level 2 domains
+	// in order
+	for(int i = 0; i != 2; i++) {
+		// First cycle and the domain is a level 2 domain
+		if(dots == 1 && i == 0) {
+			continue;
+		}
+		data->reply =
+				cmd_redis(data->redis_stor, "LRANGE blocked_%d_%s 0 -1", dots + 1,
+				data->mac);
+		if(data->reply->type != REDIS_REPLY_ARRAY) {
+			// Incorrect response
+			continue;
+		}
+		for(int k = 0; k != data->reply->elements; k++) {
+			if(strcmp(fixed_query, data->reply->element[k]->str) != 0) {
+				continue;
+			}
+
+			// uint8_t  *wire;
+			// size_t    wire_size;
+			// ldns_rdf *edns_data;
+			// ldns_wire2pkt(&packet,
+			// 		dcplugin_get_wire_data(dcp_packet),
+			// 		dcplugin_get_wire_data_len(dcp_packet));
+
+			// edns_data = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_STR,
+			// 		buf);
+			// ldns_pkt_set_edns_data(packet, edns_data);
+
+			// ldns_pkt2wire(&wire, packet, &wire_size);
+			// dcplugin_set_wire_data(dcp_packet, wire, wire_size);
+
+			// The domain is blocked
+			freeReplyObject(data->reply);
+			ldns_pkt_free(packet);
+			return DCP_SYNC_FILTER_RESULT_KILL;
+		}
+		if(dots != 1) {
+			dots--;
+			fixed_query = strchr(data->query, '.') + 1;
+		}
+	}
+	freeReplyObject(data->reply);
+
+
 	if(data->cache) {
 		// check if the answer is cached (the key is the domain string)
 		data->reply = cmd_redis(data->cache, "GET dns-cache-%s", data->query);
