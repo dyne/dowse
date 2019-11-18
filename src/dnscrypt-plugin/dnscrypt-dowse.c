@@ -570,6 +570,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			// dcplugin_set_wire_data(dcp_packet, wire, wire_size);
 
 			// The domain is blocked
+			// Log the query
+			cmd_redis(data->redis_stor, "HINCRBY blocked_stats_%s %s 1",
+					data->mac, data->query);
 			freeReplyObject(data->reply);
 			ldns_pkt_free(packet);
 			return DCP_SYNC_FILTER_RESULT_KILL;
@@ -581,6 +584,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 	}
 	freeReplyObject(data->reply);
 
+	// Store statistics
+	cmd_redis(data->redis_stor, "HINCRBY stats_%s %s 1", data->mac,
+			data->query);
 
 	if(data->cache) {
 		// check if the answer is cached (the key is the domain string)
