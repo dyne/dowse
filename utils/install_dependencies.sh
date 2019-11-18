@@ -31,6 +31,7 @@ apt-get -y -q --no-install-recommends install \
 		pkg-config \
 		python3-flask \
 		python3-redis \
+		python3-tldextract \
 		redis \
 		snooze \
 		supervisor \

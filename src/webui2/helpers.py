@@ -24,6 +24,7 @@ webui helper module
 from operator import itemgetter
 from time import time
 from werkzeug.datastructures import Headers as werkzeugHeaders
+from tldextract import extract
 
 from config import (RDYNA, RSTOR)
 
@@ -132,4 +133,27 @@ def get_admin_devices():
             admin_devices.append(RSTOR.hgetall(i))
 
     return admin_devices
+
+
+def group_stats(stats):
+    grouped_stats = {}
+    access_stats = {}
+    domain_names = {}
+    for domain, count in stats.items():
+        tld = extract(domain)
+        key = tld.registered_domain.replace('.', '')
+        if not key in domain_names:
+            domain_names[key] = tld.registered_domain
+            grouped_stats[key] = {}
+            access_stats[key] = 0
+
+        grouped_stats[key][domain] = count
+        access_stats[key] += int(count)
+
+    access_stats = sorted(access_stats.items(), key=itemgetter(1), reverse=True)
+    sorted_groups = {}
+    for domain, group in grouped_stats.items():
+        sorted_groups[domain] = sorted(group.items(), key=itemgetter(1), reverse=True)
+
+    return domain_names, sorted_groups, access_stats
 

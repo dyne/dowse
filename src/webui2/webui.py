@@ -31,7 +31,7 @@ from flask import (Flask, request, redirect, render_template,
 
 from config import (RDYNA, RSTOR)
 from helpers import (parsetime, sort_things, get_admin_devices, get_caller_info,
-                     fill_default_thing, fill_http_headers, ip2mac)
+                     group_stats, fill_default_thing, fill_http_headers, ip2mac)
 
 
 APP = Flask(__name__)
@@ -101,8 +101,13 @@ def thing_show():
 
     thinginfo = RSTOR.hgetall('thing_%s' % mac)
     things_list = [ thinginfo ]
+
+    stats = RSTOR.hgetall('stats_%s' % mac)
+    domain_names, grouped_stats, access_stats = group_stats(stats)
+
     return render_template('thing_show.html', thing=thinginfo,
-                           cur_info=caller_info, things=things_list)
+                           cur_info=caller_info, things=things_list,
+                           domains=domain_names,domain_stats=grouped_stats, access_stats=access_stats)
 
 
 @APP.route('/modify_things', methods=['POST'])

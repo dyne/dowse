@@ -1,0 +1,51 @@
+<div class="row">
+    <div class="col-md-12 col-lg-12 col-xs-12 col-sm-12">
+        <table class="table">
+            <thead>
+                <tr data-toggle="collapse" data-target=".domains">
+                    <th></th>
+                    <th class="hidden-xs">Domain</th>
+                    <th class="hidden-xs">Count</th>
+                    <th>Block</th>
+                </tr>
+            </thead>
+            <tbody class="collapse domains">
+                {% for key, count in access_stats %}
+                <tr data-toggle="collapse" data-target=".{{key}}">
+                   <td>
+                       <div id="collapseThree" class="collapse in">
+                           <i class="fa fa-arrow-down" aria-hidden="true"></i>
+                       </div>
+                   </td>
+                   <td class="hidden-xs">{{domains[key]}}</td>
+                   <td class="hidden-xs">{{count}}</td>
+                   <td></td>
+                </tr>
+                {% for subdomain, subdomain_count in domain_stats[key] %}
+                <tr class="collapse {{key}}">
+                   <td></td>
+                   <td class="hidden-xs">{{subdomain}}</td>
+                   <td class="hidden-xs">{{subdomain_count}}</td>
+                   <td></td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+$('.collapse').on('show.bs.collapse', function () {
+  var groupId = $('#expander').attr('data-group-id');
+  if (groupId) {
+    $('#grandparentIcon').html('v');
+  }
+});
+
+$('.collapse').on('hide.bs.collapse', function () {
+  var groupId = $('#expander').attr('data-group-id');
+  if (groupId) {
+    $('#' + groupId + 'Icon').html('>');
+  }
+});
+</script>
