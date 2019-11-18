@@ -34,6 +34,40 @@
                 {% endfor %}
             </tbody>
         </table>
+        <table class="table">
+            <thead>
+                <tr data-toggle="collapse" data-target=".blocked_domains">
+                    <th></th>
+                    <th class="hidden-xs">Blocked Domain</th>
+                    <th class="hidden-xs">Accesses blocked</th>
+                    <th>Unblock</th>
+                </tr>
+            </thead>
+            <tbody class="collapse blocked_domains">
+                {% for key, count in blocked_access_stats %}
+                <tr data-toggle="collapse" data-target=".blocked_{{key}}">
+                    {% if blocked_domain_stats[key] != []  %}
+                   <td id="{{key}}Icon">
+                           ▼
+                   </td>
+                   {% else %}
+                   <td></td>
+                   {% endif %}
+                   <td class="hidden-xs">{{blocked_domains[key]}}</td>
+                   <td class="hidden-xs">{{count}}</td>
+                   <td></td>
+                </tr>
+                {% for subdomain, subdomain_count in blocked_domain_stats[key] %}
+                <tr class="collapse blocked_{{key}}">
+                   <td></td>
+                   <td class="hidden-xs">{{subdomain}}</td>
+                   <td class="hidden-xs">{{subdomain_count}}</td>
+                   <td></td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 <script>

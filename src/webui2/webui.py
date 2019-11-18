@@ -104,10 +104,17 @@ def thing_show():
 
     stats = RSTOR.hgetall('stats_%s' % mac)
     domain_names, grouped_stats, access_stats = group_stats(stats)
+    blocked_stats = RSTOR.hgetall('blocked_stats_%s' % mac)
+    blocked_domain_names, blocked_grouped_stats, blocked_access_stats = \
+            group_stats(blocked_stats)
 
     return render_template('thing_show.html', thing=thinginfo,
                            cur_info=caller_info, things=things_list,
-                           domains=domain_names,domain_stats=grouped_stats, access_stats=access_stats)
+                           domains=domain_names,domain_stats=grouped_stats,
+                           access_stats=access_stats,
+                           blocked_domains=blocked_domain_names,
+                           blocked_domain_stats=blocked_grouped_stats,
+                           blocked_access_stats=blocked_access_stats)
 
 
 @APP.route('/modify_things', methods=['POST'])
