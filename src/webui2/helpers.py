@@ -147,7 +147,7 @@ def group_stats(stats):
             grouped_stats[key] = {}
             access_stats[key] = 0
 
-        grouped_stats[key][domain] = count
+        grouped_stats[key][domain] = int(count)
         access_stats[key] += int(count)
 
     access_stats = sorted(access_stats.items(), key=itemgetter(1), reverse=True)
