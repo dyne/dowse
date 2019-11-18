@@ -5,7 +5,11 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE-edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        {% if thing['macaddr'] == cur_info['macaddr'] %}
+        <title>MyThing | Dowse</title>
+        {% else %}
         <title>Information Panel | Dowse</title>
+        {% endif %}
         <link rel="stylesheet" href="static/css/bootstrap.min.css">
         <link rel="stylesheet" href="static/css/starter-template.css">
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->

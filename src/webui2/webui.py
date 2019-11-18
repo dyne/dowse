@@ -92,11 +92,12 @@ def thing_show():
     Shows information about a specific thing
     """
     mac = request.args.get('mac')
-    if not mac:
-        return 'Invalid MAC address\n'
-
     caller_info = get_caller_info(request.remote_addr)
     isadmin = caller_info.get('isadmin', 'no')  == 'yes'
+    if not mac:
+        mac = caller_info.get('mac')
+    elif not isadmin:
+        return '<h1>400 - Bad Request</h1>\n'
 
     thinginfo = RSTOR.hgetall('thing_%s' % mac)
     return render_template('thing_show.html', thing=thinginfo,
