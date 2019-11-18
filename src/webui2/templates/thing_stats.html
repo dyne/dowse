@@ -11,12 +11,14 @@
             </thead>
             <tbody class="collapse domains">
                 {% for key, count in access_stats %}
-                <tr data-toggle="collapse" data-target=".{{key}}">
-                   <td>
-                       <div id="collapseThree" class="collapse in">
-                           <i class="fa fa-arrow-down" aria-hidden="true"></i>
-                       </div>
+                <tr id="expander" data-toggle="collapse" data-target=".{{key}}" data-group-id="{{key}}">
+                   {% if domain_stats[key] != [] %}
+                   <td id="{{key}}Icon">
+                           ▼
                    </td>
+                   {% else %}
+                   <td></td>
+                   {% endif %}
                    <td class="hidden-xs">{{domains[key]}}</td>
                    <td class="hidden-xs">{{count}}</td>
                    <td></td>
@@ -38,14 +40,14 @@
 $('.collapse').on('show.bs.collapse', function () {
   var groupId = $('#expander').attr('data-group-id');
   if (groupId) {
-    $('#grandparentIcon').html('v');
+    $('#' + groupId + 'Icon').html('▼');
   }
 });
 
 $('.collapse').on('hide.bs.collapse', function () {
   var groupId = $('#expander').attr('data-group-id');
   if (groupId) {
-    $('#' + groupId + 'Icon').html('>');
+    $('#' + groupId + 'Icon').html('▶');
   }
 });
 </script>
