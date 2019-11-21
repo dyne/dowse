@@ -36,6 +36,35 @@
         </table>
         <table class="table">
             <thead>
+                <tr>
+                    <th></th>
+                    <th class="hidden-xs">Blocked Domain</th>
+                    <th class="hidden-xs">Add</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td></td>
+                    <form action="/blacklist" method="post">
+                        <div class="form-group">
+                            <td>
+                                <div class="input-group">
+                                    <input type="hidden" name="macaddr" value="{{ thing['macaddr'] }}">
+                                    <input type="text" class="form-control" id="domain" name="domain" placeholder="example.com">
+                                </div>
+                            </td>
+                            <td>
+                                <button type="submit" value="add" name="action" class="btn-dowse" style="display:inline">
+                                    <i class="fa fa-plus" aria-hidden="true"></i>
+                                </button>
+                            </td>
+                        </div>
+                    </form>
+                </tr>
+            </tbody>
+        </table>
+        <table class="table">
+            <thead>
                 <tr data-toggle="collapse" data-target=".blocked_domains">
                     <th></th>
                     <th class="hidden-xs">Blocked Domain</th>
