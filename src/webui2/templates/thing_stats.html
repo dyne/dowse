@@ -2,8 +2,9 @@
     <div class="col-md-12 col-lg-12 col-xs-12 col-sm-12">
         <table class="table">
             <thead>
-                <tr data-toggle="collapse" data-target=".domains">
-                    <th></th>
+                <tr data-toggle="collapse" data-target=".domains"
+                        class="header-row">
+                    <th>+</th>
                     <th class="hidden-xs">Domain</th>
                     <th class="hidden-xs">Count</th>
                     <th>Block</th>
@@ -19,12 +20,12 @@
                    {% else %}
                    <td></td>
                    {% endif %}
-                   <td class="hidden-xs">{{domains[key]}}</td>
+                   <td class="hidden-xs"><b>{{domains[key]}}</b></td>
                    <td class="hidden-xs">{{count}}</td>
                    <td></td>
                 </tr>
                 {% for subdomain, subdomain_count in domain_stats[key] %}
-                <tr class="collapse {{key}}">
+                <tr class="collapse {{key}} sub-row">
                    <td></td>
                    <td class="hidden-xs">{{subdomain}}</td>
                    <td class="hidden-xs">{{subdomain_count}}</td>
@@ -36,7 +37,7 @@
         </table>
         <table class="table">
             <thead>
-                <tr>
+                <tr class="header-row">
                     <th></th>
                     <th class="hidden-xs">Blocked Domain</th>
                     <th class="hidden-xs">Add</th>
@@ -65,8 +66,9 @@
         </table>
         <table class="table">
             <thead>
-                <tr data-toggle="collapse" data-target=".blocked_domains">
-                    <th></th>
+                <tr data-toggle="collapse" data-target=".blocked_domains"
+                        class="header-row">
+                    <th>+</th>
                     <th class="hidden-xs">Blocked Domain</th>
                     <th class="hidden-xs">Accesses blocked</th>
                     <th>Unblock</th>
@@ -82,12 +84,12 @@
                    {% else %}
                    <td></td>
                    {% endif %}
-                   <td class="hidden-xs">{{blocked_domains[key]}}</td>
+                   <td class="hidden-xs"><b>{{blocked_domains[key]}}</b></td>
                    <td class="hidden-xs">{{count}}</td>
                    <td></td>
                 </tr>
                 {% for subdomain, subdomain_count in blocked_domain_stats[key] %}
-                <tr class="collapse blocked_{{key}}">
+                <tr class="collapse blocked_{{key}} sub-row">
                    <td></td>
                    <td class="hidden-xs">{{subdomain}}</td>
                    <td class="hidden-xs">{{subdomain_count}}</td>
