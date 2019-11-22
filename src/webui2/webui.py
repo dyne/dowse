@@ -329,6 +329,32 @@ def nmap():
     return render_template('nmap.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
 
+@APP.route('/blacklist', methods=['POST'])
+def blacklist():
+    """
+    Modify domain blacklisted for things through POST requests
+    """
+    # XXX: do validation
+    thing_mac = request.form['macaddr']
+    form_domain = request.form['domain']
+
+    act = request.form.get('action')
+    if not act:
+        return '<h1>400 - Bad Request</h1>\n'
+        
+    if not thing_mac or not form_domain:
+        return '<h1>400 - Bad Request</h1>\n'
+
+    if act == 'add':
+        msg = 'BLACKLIST'
+    elif act == 'remove'
+        msg = 'UNBLACKLIST'
+
+    RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s' %
+                (thing_mac, msg, int(time()), form_domain))
+
+    return redirect(request.form['url_from'], code=302)
+
 
 @APP.errorhandler(404)
 def page_not_found(e):
