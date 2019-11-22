@@ -21,17 +21,19 @@
 Main webui module
 """
 
-# For subprocess.run
-import subprocess
+from operator import itemgetter
 from time import time, sleep
 from os import environ, getpid
 from argparse import ArgumentParser
 from flask import (Flask, request, redirect, render_template,
                    make_response)
+from tldextract import extract
+
 
 from config import (RDYNA, RSTOR)
 from helpers import (parsetime, sort_things, get_admin_devices, get_caller_info,
-                     group_stats, fill_default_thing, fill_http_headers, ip2mac)
+                     group_stats, group_blocked_stats, fill_default_thing,
+                     fill_http_headers, ip2mac)
 
 
 APP = Flask(__name__)
@@ -335,6 +337,9 @@ def page_not_found(e):
     are enabled to browse or should be redirected.
     """
     caller_info = get_caller_info(request.remote_addr)
+
+    thing_mac = request.form['macaddr']
+    thing_name = request.form['name']
     if caller_info.get('enable_to_browse', 'no') == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404
 

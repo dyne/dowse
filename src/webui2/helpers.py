@@ -150,14 +150,14 @@ def group_stats(stats):
         grouped_stats[key][domain] = int(count)
         access_stats[key] += int(count)
 
-    access_stats = sorted(access_stats.items(), key=itemgetter(1), reverse=True)
+    access_stats = dict(sorted(access_stats.items(), key=itemgetter(1), reverse=True))
     sorted_groups = {}
     for domain, group in grouped_stats.items():
         if len(group) == 1:
-            sorted_groups[domain] = []
+            sorted_groups[domain] = {}
             continue
 
-        sorted_groups[domain] = sorted(group.items(), key=itemgetter(1), reverse=True)
+        sorted_groups[domain] = dict(sorted(group.items(), key=itemgetter(1), reverse=True))
 
     return domain_names, sorted_groups, access_stats
 

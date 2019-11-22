@@ -6,14 +6,15 @@
                         class="header-row">
                     <th>+</th>
                     <th class="hidden-xs">Domain</th>
-                    <th class="hidden-xs">Count</th>
+                    <th class="hidden-xs">Accesses</th>
                     <th>Block</th>
                 </tr>
             </thead>
             <tbody class="collapse domains">
-                {% for key, count in access_stats %}
+                {% for key, count in access_stats.items() %}
+                {% if count != 0 %}
                 <tr id="expander" data-toggle="collapse" data-target=".{{key}}" data-group-id="{{key}}">
-                   {% if domain_stats[key] != [] %}
+                   {% if domain_stats[key] != {} %}
                    <td id="{{key}}Icon">
                            ▼
                    </td>
@@ -24,14 +25,17 @@
                    <td class="hidden-xs">{{count}}</td>
                    <td></td>
                 </tr>
-                {% for subdomain, subdomain_count in domain_stats[key] %}
+                {% for subdomain, subdomain_count in domain_stats[key].items() %}
+                {% if subdomain_count != 0 %}
                 <tr class="collapse {{key}} sub-row">
                    <td></td>
                    <td class="hidden-xs">{{subdomain}}</td>
                    <td class="hidden-xs">{{subdomain_count}}</td>
                    <td></td>
                 </tr>
+                {% endif %}
                 {% endfor %}
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
@@ -39,8 +43,8 @@
             <thead>
                 <tr class="header-row">
                     <th></th>
-                    <th class="hidden-xs">Blocked Domain</th>
-                    <th class="hidden-xs">Add</th>
+                    <th class="hidden-xs">Domain</th>
+                    <th class="hidden-xs">Block</th>
                 </tr>
             </thead>
             <tbody>
@@ -50,6 +54,7 @@
                         <div class="form-group">
                             <td>
                                 <div class="input-group">
+                                    <input type="hidden" name="url_from" value="/thing_show?mac={{thing['macaddr']}}">
                                     <input type="hidden" name="macaddr" value="{{ thing['macaddr'] }}">
                                     <input type="text" class="form-control" id="domain" name="domain" placeholder="example.com">
                                 </div>
@@ -71,28 +76,31 @@
                     <th>+</th>
                     <th class="hidden-xs">Blocked Domain</th>
                     <th class="hidden-xs">Accesses blocked</th>
+                    <th class="hidden-xs">Accesses</th>
                     <th>Unblock</th>
                 </tr>
             </thead>
             <tbody class="collapse blocked_domains">
-                {% for key, count in blocked_access_stats %}
+                {% for key, count in blocked_access_stats.items() %}
                 <tr data-toggle="collapse" data-target=".blocked_{{key}}">
-                    {% if blocked_domain_stats[key] != []  %}
-                   <td id="{{key}}Icon">
+                    {% if blocked_domain_stats[key] != {}  %}
+                    <td id="{{key}}Icon">
                            ▼
-                   </td>
-                   {% else %}
-                   <td></td>
-                   {% endif %}
-                   <td class="hidden-xs"><b>{{blocked_domains[key]}}</b></td>
-                   <td class="hidden-xs">{{count}}</td>
-                   <td></td>
+                    </td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                    <td class="hidden-xs"><b>{{blocked_domains[key]}}</b></td>
+                    <td class="hidden-xs">{{count}}</td>
+                    <td class="hidden-xs">{{access_stats[key]}}</td>
+                    <td></td>
                 </tr>
-                {% for subdomain, subdomain_count in blocked_domain_stats[key] %}
+                {% for subdomain, subdomain_count in blocked_domain_stats[key].items() %}
                 <tr class="collapse blocked_{{key}} sub-row">
                    <td></td>
                    <td class="hidden-xs">{{subdomain}}</td>
                    <td class="hidden-xs">{{subdomain_count}}</td>
+                   <td class="hidden-xs">{{domain_stats[key][subdomain]}}</td>
                    <td></td>
                 </tr>
                 {% endfor %}
