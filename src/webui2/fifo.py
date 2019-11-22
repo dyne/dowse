@@ -18,6 +18,7 @@
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
 from subprocess import run
+from tldextract import extract
 
 from config import (RDYNA, RSTOR)
 from helpers import (get_caller_info)
@@ -48,6 +49,40 @@ def set_admin(data):
         return
     accept_thing(data)
 
+def blacklist(action, mac, domain):
+    tld = extract(domain)
+    blocked_domain = tld.registered_domain
+    level = 2
+
+    subdomain = tld.subdomain
+    if subdomain:
+        while '.' in subdomain:
+            subdomain = subdomain[subdomain.find('.') + 1:]
+
+        blocked_domain = subdomain + '.' + blocked_domain
+
+        level = 3
+
+    list_name = 'blocked_%d_%s' % (level, mac)
+    blocked = RSTOR.lrange(list_name, 0, -1)
+    if action == 'add':
+        if blocked_domain in blocked:
+            return
+
+        blocked.append(blocked_domain)
+        blocked.sort()
+        # Keep sure there are no duplicates
+        blocked = list(dict.fromkeys(blocked))
+        RSTOR.delete(list_name)
+        RSTOR.rpush(list_name, *blocked)
+
+        if not RSTOR.hexists("stats_%s" % mac, blocked_domain):
+            RSTOR.hset("stats_%s" % mac, blocked_domain, 0)
+
+        if not RSTOR.hexists("blocked_stats_%s" % mac, blocked_domain):
+            RSTOR.hset("blocked_stats_%s" % mac, blocked_domain, 0)
+
+
 def exec_cmd(message):
     if str(message).isnumeric():
         return
@@ -63,6 +98,8 @@ def exec_cmd(message):
         accept_thing(data)
     elif data[2] == 'THING_OFF':
         drop_thing(data)
+    elif data[2] == 'BLACKLIST':
+        blacklist('add', data[1], data[4])
     else:
         print("Requested command is not supported")
 
