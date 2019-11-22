@@ -81,6 +81,13 @@ def blacklist(action, mac, domain):
 
         if not RSTOR.hexists("blocked_stats_%s" % mac, blocked_domain):
             RSTOR.hset("blocked_stats_%s" % mac, blocked_domain, 0)
+    elif action == 'remove':
+        if not blocked_domain in blocked:
+            return
+
+        blocked.remove(blocked_domain)
+        RSTOR.delete(list_name)
+        RSTOR.rpush(list_name, *blocked)
 
 
 def exec_cmd(message):
@@ -100,6 +107,8 @@ def exec_cmd(message):
         drop_thing(data)
     elif data[2] == 'BLACKLIST':
         blacklist('add', data[1], data[4])
+    elif data[2] == 'UNBLACKLIST':
+        blacklist('remove', data[1], data[4])
     else:
         print("Requested command is not supported")
 
