@@ -22,6 +22,7 @@ apt-get -y -q --no-install-recommends install \
 		libltdl-dev \
 		libmosquitto-dev \
 		libnetfilter-queue-dev \
+		libpsl-dev \
 		libsodium-dev \
 		libtool \
 		libwebsockets8 \
