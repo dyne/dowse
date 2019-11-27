@@ -95,12 +95,15 @@ def thing_show():
     mac = request.args.get('mac')
     caller_info = get_caller_info(request.remote_addr)
     isadmin = caller_info.get('isadmin', 'no')  == 'yes'
-    if not mac:
-        mac = caller_info.get('mac')
-    elif not isadmin:
+    thinginfo = None
+    if mac is None or mac == '':
+        mac = caller_info.get('macaddr')
+        thinginfo = caller_info
+    elif mac != caller_info.get('macaddr') and not isadmin:
         return '<h1>400 - Bad Request</h1>\n'
+    else:
+        thinginfo = RSTOR.hgetall('thing_%s' % mac)
 
-    thinginfo = RSTOR.hgetall('thing_%s' % mac)
     things_list = [ thinginfo ]
 
     stats = RSTOR.hgetall('stats_%s' % mac)
