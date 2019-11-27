@@ -27,7 +27,6 @@ from os import environ, getpid
 from argparse import ArgumentParser
 from flask import (Flask, request, redirect, render_template,
                    make_response)
-from tldextract import extract
 
 
 from config import (RDYNA, RSTOR)
