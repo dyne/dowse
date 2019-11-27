@@ -41,6 +41,8 @@
 #include <hiredis/hiredis.h>
 #include <jemalloc/jemalloc.h>
 
+#include <libpsl.h>
+
 #include <epoch.h>
 
 #include <dnscrypt-dowse.h>
@@ -159,6 +161,9 @@ int dcplugin_init(DCPlugin * const dcplugin, int argc, char *argv[]) {
 	data->redis_stor = connect_redis(db_storage);
 	if(!data->redis_stor) return 1;
 
+	data->psl = psl_load_file("/opt/dowse/src/dnscrypt-plugin/public_suffix_list.dat");
+	if (!data->psl) return 1;
+
 	// data->cache = connect_redis(REDIS_HOST, REDIS_PORT, db_runtime);
 	// if(!data->cache) return 1;
 
@@ -179,6 +184,7 @@ int dcplugin_destroy(DCPlugin * const dcplugin) {
 	}
 
 	free_domainlist(data);
+	psl_free(data->psl);
 	redisFree(data->redis);
 	redisFree(data->redis_stor);
 	if(data->cache) redisFree(data->cache);

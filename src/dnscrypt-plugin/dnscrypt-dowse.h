@@ -80,6 +80,8 @@ typedef struct {
 
 	int debug;
 	int offline;
+
+	const psl_ctx_t *psl;
 }  plugin_data_t;
 
 

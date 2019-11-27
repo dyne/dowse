@@ -1,6 +1,6 @@
 CC := gcc
 CFLAGS := -O3 -fstack-protector-all -DPLUGINS=1 -D_FORTIFY_SOURCE=2 -fno-strict-overflow -Wall -Wextra -I.. -I.
-LDADD := -lhiredis -L../libdowse -l:libdowse.a -lldns -lsodium -ldl -lm -Wl,-soname -Wl,dnscrypt_dowse.so
+LDADD := -lhiredis -L../libdowse -l:libdowse.a -lldns -lsodium -ldl -lm -lpsl -Wl,-soname -Wl,dnscrypt_dowse.so
 SOURCES := dnscrypt-dowse.o domainlist.o ip2mac.o
 LDFLAGS := -shared  -fPIC -DPIC
 
