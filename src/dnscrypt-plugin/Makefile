@@ -4,11 +4,15 @@ LDADD := -lhiredis -L../libdowse -l:libdowse.a -lldns -lsodium -ldl -lm -lpsl -W
 SOURCES := dnscrypt-dowse.o domainlist.o ip2mac.o
 LDFLAGS := -shared  -fPIC -DPIC
 
+PSL_LIST=https://publicsuffix.org/list/public_suffix_list.dat
+
 .c.o:
 	$(CC) $(CFLAGS) -c $< -fPIC -DPIC -o $@
 
 all: ${SOURCES}
 	${CC} ${LDFLAGS} ${SOURCES} ${LDADD} -o dnscrypt_dowse.so
+	wget ${PSL_LIST}
+
 
 main: main.o
 	${CC} main.o -o test -ldl -ggdb -Og
