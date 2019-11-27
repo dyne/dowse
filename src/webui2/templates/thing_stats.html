@@ -23,7 +23,11 @@
                    {% endif %}
                    <td><b>{{domains[key]}}</b></td>
                    <td>{{count}}</td>
-                   <td></td>
+                   <td>
+                        <a href="/blacklist?action=add&macaddr={{ thing['macaddr'] }}&domain={{ domains[key] }}">
+                            <img src="static/img/button_ON.png" width="28" alt="access permitted">
+                        </a>
+                   </td>
                 </tr>
                 {% for subdomain, subdomain_count in domain_stats[key].items() %}
                 {% if subdomain_count != 0 %}
@@ -31,7 +35,11 @@
                    <td></td>
                    <td>{{subdomain}}</td>
                    <td>{{subdomain_count}}</td>
-                   <td></td>
+                   <td>
+                        <a href="/blacklist?action=add&macaddr={{ thing['macaddr'] }}&domain={{ subdomain }}">
+                            <img src="static/img/button_ON.png" width="28" alt="access permitted">
+                        </a>
+                   </td>
                 </tr>
                 {% endif %}
                 {% endfor %}
@@ -87,7 +95,11 @@
                     <td><b>{{domain}}</b></td>
                     <td>{{count}}</td>
                     <td class="hidden-xs">{{baccess_stats[domain]}}</td>
-                    <td></td>
+                    <td>
+                        <a href="/blacklist?action=remove&macaddr={{ thing['macaddr'] }}&domain={{ domain }}">
+                                <img src="static/img/button_OFF.png" width="28" alt="access blocked" title="unblock domain">
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
