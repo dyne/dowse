@@ -345,7 +345,7 @@ def blacklist():
 
     if act == 'add':
         msg = 'BLACKLIST'
-    elif act == 'remove'
+    elif act == 'remove':
         msg = 'UNBLACKLIST'
 
     RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s' %
