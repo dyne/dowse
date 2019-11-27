@@ -339,11 +339,17 @@ def blacklist():
     thing_mac = request.form['macaddr']
     form_domain = request.form['domain']
 
+    caller_info = get_caller_info(request.remote_addr)
+    isadmin = caller_info.get('isadmin', 'no')  == 'yes'
+
     act = request.form.get('action')
     if not act:
         return '<h1>400 - Bad Request</h1>\n'
         
     if not thing_mac or not form_domain:
+        return '<h1>400 - Bad Request</h1>\n'
+
+    if thing_mac != caller_info.get('macaddr', '') and not isadmin:
         return '<h1>400 - Bad Request</h1>\n'
 
     if act == 'add':
