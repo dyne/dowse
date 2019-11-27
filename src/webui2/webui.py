@@ -109,15 +109,14 @@ def thing_show():
     blocked_stats = RSTOR.hgetall('blocked_stats_%s' % mac)
     level2_domains = RSTOR.lrange('blocked_2_%s' % mac, 0, -1)
     level3_domains = RSTOR.lrange('blocked_3_%s' % mac, 0, -1)
-    blocked_domain_names, blocked_grouped_stats, blocked_access_stats = \
-            group_blocked_stats(blocked_stats, level2_domains, level3_domains)
+    baccess_stats, blocked_access_stats = group_blocked_stats(stats,
+            blocked_stats, level2_domains, level3_domains)
 
     return render_template('thing_show.html', thing=thinginfo,
                            cur_info=caller_info, things=things_list,
                            domains=domain_names,domain_stats=grouped_stats,
                            access_stats=access_stats,
-                           blocked_domains=blocked_domain_names,
-                           blocked_domain_stats=blocked_grouped_stats,
+                           baccess_stats=baccess_stats,
                            blocked_access_stats=blocked_access_stats)
 
 

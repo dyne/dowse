@@ -162,29 +162,14 @@ def group_stats(stats):
     return domain_names, sorted_groups, access_stats
 
 
-def group_blocked_stats(stats, level2_domains, level3_domains):
-    grouped_stats = {}
+def group_blocked_stats(stats, blocked_stats, level2_domains, level3_domains):
     access_stats = {}
-    domain_names = {}
-    for domain  in level2_domains + level3_domains:
-        tld = extract(domain)
-        key = tld.registered_domain.replace('.', '')
-        if not key in domain_names:
-            domain_names[key] = tld.registered_domain
-            grouped_stats[key] = {}
-            access_stats[key] = 0
+    blocked_access_stats = {}
+    for domain in level2_domains + level3_domains:
+        access_stats[domain] = int(stats.get(domain, 0))
+        blocked_access_stats[domain] = int(blocked_stats.get(domain, 0))
 
-        grouped_stats[key][domain] = int(stats.get(domain, 0))
-        access_stats[key] += int(stats.get(domain, 0))
+    blocked_access_stats = dict(sorted(blocked_access_stats.items(), key=itemgetter(1), reverse=True))
 
-    access_stats = dict(sorted(access_stats.items(), key=itemgetter(1), reverse=True))
-    sorted_groups = {}
-    for domain, group in grouped_stats.items():
-        if len(group) == 1:
-            sorted_groups[domain] = {}
-            continue
-
-        sorted_groups[domain] = dict(sorted(group.items(), key=itemgetter(1), reverse=True))
-
-    return domain_names, sorted_groups, access_stats
+    return access_stats, blocked_access_stats
 
