@@ -529,28 +529,56 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 
 
 	// Skip blocked domain per machine based
+
+	// Separate the domain from the suffix
+	char query_buffer[256];
+	char query_copy[256];
+	char* fixed_query;
+	char* tmp;
+	char* current; 
+	char* suffix;
+
+	strcpy(query_copy, data->query);
+	current = strtok(query_copy, ".");
+	suffix = strchr(data->query, '.') + 1;
+	query_buffer[0] = '\0';
+	strcat(query_buffer, current);
+	strcat(query_buffer, "\0");
+	int stop = 0;
+	while(!psl_is_public_suffix(data->psl, suffix)) {
+		suffix = strchr(suffix, '.') + 1;
+		current = strtok(NULL, ".");
+		strcat(query_buffer, ".");
+		strcat(query_buffer, current);
+		strcat(query_buffer, "\0");
+	}
+
 	int dots = 0;
-	for(int i = 0; i != data->query_len; i++) {
-		if(data->query[i] == '.') {
+	for(int i = 0; query_buffer[i] != '\0'; i++) {
+		if(query_buffer[i] == '.') {
 			dots++;
 		}
 	}
-	// Transform the domain to level 3
-	char *fixed_query = data->query;
-	if(dots > 2) {
-		for(int i = dots - 2; i != 0; i--) {
-			fixed_query = strchr(data->query, '.') + 1;
+	fixed_query = query_buffer;
+	if(dots > 1) {
+		for(int i = dots - 1; i != 0; i--) {
+			fixed_query = strchr(query_buffer, '.') + 1;
 		}
+		dots = 1;
 	}
+	// Append suffix to the extracted domain
+	strcat(query_buffer, ".");
+	strcat(query_buffer, suffix);
+	strcat(query_buffer, "\0");
 	// Check if query is blocked by checking level 3 domains and level 2 domains
 	// in order
 	for(int i = 0; i != 2; i++) {
 		// First cycle and the domain is a level 2 domain
-		if(dots == 1 && i == 0) {
+		if(dots == 0 && i == 0) {
 			continue;
 		}
 		data->reply =
-				cmd_redis(data->redis_stor, "LRANGE blocked_%d_%s 0 -1", dots + 1,
+				cmd_redis(data->redis_stor, "LRANGE blocked_%d_%s 0 -1", dots + 2,
 				data->mac);
 		if(data->reply->type != REDIS_REPLY_ARRAY) {
 			// Incorrect response
@@ -560,6 +588,7 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			if(strcmp(fixed_query, data->reply->element[k]->str) != 0) {
 				continue;
 			}
+    		act("%s %s", data->reply->element[k]->str, fixed_query);
 
 			// uint8_t  *wire;
 			// size_t    wire_size;
@@ -583,9 +612,9 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			ldns_pkt_free(packet);
 			return DCP_SYNC_FILTER_RESULT_KILL;
 		}
-		if(dots != 1) {
+		if(dots != 0) {
 			dots--;
-			fixed_query = strchr(data->query, '.') + 1;
+			fixed_query = strchr(fixed_query, '.') + 1;
 		}
 	}
 	freeReplyObject(data->reply);
