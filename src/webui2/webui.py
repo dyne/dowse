@@ -335,23 +335,30 @@ def nmap():
     return render_template('nmap.html', cur_info=caller_info,
                            srv=request.host.split(':')[0])
 
-@APP.route('/blacklist', methods=['POST'])
+@APP.route('/blacklist', methods=['GET', 'POST'])
 def blacklist():
     """
     Modify domain blacklisted for things through POST requests
     """
     # XXX: do validation
-    thing_mac = request.form['macaddr']
-    form_domain = request.form['domain']
+    data = None
+    if request.method == "POST":
+        data = request.form
+    else:
+        data = request.args
+
+    thing_mac = data.get('macaddr')
+    domain = data.get('domain')
+    act = data.get('action')
+    url_from = data.get('url_from')
 
     caller_info = get_caller_info(request.remote_addr)
     isadmin = caller_info.get('isadmin', 'no')  == 'yes'
 
-    act = request.form.get('action')
-    if not act:
+    if not act or act == '':
         return '<h1>400 - Bad Request</h1>\n'
         
-    if not thing_mac or not form_domain:
+    if not thing_mac or not domain:
         return '<h1>400 - Bad Request</h1>\n'
 
     if thing_mac != caller_info.get('macaddr', '') and not isadmin:
@@ -363,9 +370,9 @@ def blacklist():
         msg = 'UNBLACKLIST'
 
     RDYNA.publish('command-fifo-pipe', 'CMD,%s,%s,%d,%s' %
-                (thing_mac, msg, int(time()), form_domain))
+                (thing_mac, msg, int(time()), domain))
 
-    return redirect(request.form['url_from'], code=302)
+    return redirect(url_from, code=302)
 
 
 @APP.errorhandler(404)
