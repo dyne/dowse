@@ -21,7 +21,7 @@
 Main webui module
 """
 
-from operator import itemgetter
+from operator import attrgetter
 from time import time, sleep
 from os import environ, getpid
 from argparse import ArgumentParser
@@ -31,7 +31,7 @@ from flask import (Flask, request, redirect, render_template,
 
 from config import (RDYNA, RSTOR)
 from helpers import (parsetime, sort_things, get_admin_devices, get_caller_info,
-                     group_stats, group_blocked_stats, fill_default_thing,
+                     group_stats, sort_domains, fill_default_thing,
                      fill_http_headers, ip2mac)
 
 
@@ -107,19 +107,24 @@ def thing_show():
     things_list = [ thinginfo ]
 
     stats = RSTOR.hgetall('stats_%s' % mac)
-    domain_names, grouped_stats, access_stats = group_stats(stats)
     blocked_stats = RSTOR.hgetall('blocked_stats_%s' % mac)
     level2_domains = RSTOR.lrange('blocked_2_%s' % mac, 0, -1)
     level3_domains = RSTOR.lrange('blocked_3_%s' % mac, 0, -1)
-    baccess_stats, blocked_access_stats = group_blocked_stats(stats,
-            blocked_stats, level2_domains, level3_domains)
+    blocked_domains = level2_domains + level3_domains
+    domains = group_stats(stats, blocked_stats, blocked_domains)
+    domains = sort_domains(domains)
+
+    blacklisted_domains = []
+    for domain_name, domain_stat in domains.items():
+        for subdomain in domain_stat.subdomains:
+            if subdomain.is_blocked():
+                blacklisted_domains.append(subdomain)
+
+    blacklisted_domains.sort(key=attrgetter('blocked_accesses'), reverse=True)
 
     return render_template('thing_show.html', thing=thinginfo,
                            cur_info=caller_info, things=things_list,
-                           domains=domain_names,domain_stats=grouped_stats,
-                           access_stats=access_stats,
-                           baccess_stats=baccess_stats,
-                           blocked_access_stats=blocked_access_stats)
+                           domains=domains, bdomains=blacklisted_domains)
 
 
 @APP.route('/modify_things', methods=['POST'])

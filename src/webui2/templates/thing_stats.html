@@ -11,32 +11,32 @@
                 </tr>
             </thead>
             <tbody class="collapse domains">
-                {% for key, count in access_stats.items() %}
-                {% if count != 0 %}
-                <tr id="expander" data-toggle="collapse" data-target=".{{key}}" data-group-id="{{key}}">
-                   {% if domain_stats[key] != {} %}
-                   <td id="{{key}}Icon">
+                {% for domain_name, domain in domains.items() %}
+                {% if domain.total_accesses != 0 and not domain.is_blocked() %}
+                <tr id="expander" data-toggle="collapse" data-target=".{{domain.key}}" data-group-id="{{domain.key}}">
+                   {% if domain.subdomains != [] %}
+                   <td id="{{domain.key}}Icon">
                            ▼
                    </td>
                    {% else %}
                    <td></td>
                    {% endif %}
-                   <td><b>{{domains[key]}}</b></td>
-                   <td>{{count}}</td>
+                   <td><b>{{domain.name}}</b></td>
+                   <td>{{domain.total_accesses}}</td>
                    <td>
-                        <a href="/blacklist?action=add&macaddr={{ thing['macaddr'] }}&domain={{ domains[key] }}">
+                        <a href="/blacklist?action=add&macaddr={{ thing['macaddr'] }}&domain={{ domain.name }}&url_from=/thing_show?mac={{thing['macaddr']}}">
                             <img src="static/img/button_ON.png" width="28" alt="access permitted">
                         </a>
                    </td>
                 </tr>
-                {% for subdomain, subdomain_count in domain_stats[key].items() %}
-                {% if subdomain_count != 0 %}
-                <tr class="collapse {{key}} sub-row">
+                {% for subdomain in domain.subdomains %}
+                {% if subdomain.accesses != 0 and not subdomain.is_blocked() %}
+                <tr class="collapse {{subdomain.key}} sub-row">
                    <td></td>
-                   <td>{{subdomain}}</td>
-                   <td>{{subdomain_count}}</td>
+                   <td>{{subdomain.name}}</td>
+                   <td>{{subdomain.accesses}}</td>
                    <td>
-                        <a href="/blacklist?action=add&macaddr={{ thing['macaddr'] }}&domain={{ subdomain }}">
+                        <a href="/blacklist?action=add&macaddr={{ thing['macaddr'] }}&domain={{ subdomain.name }}&url_from=/thing_show?mac={{thing['macaddr']}}">
                             <img src="static/img/button_ON.png" width="28" alt="access permitted">
                         </a>
                    </td>
@@ -89,14 +89,14 @@
                 </tr>
             </thead>
             <tbody class="collapse blocked_domains">
-                {% for domain, count in blocked_access_stats.items() %}
+                {% for domain in bdomains %}
                 <tr>
                     <td></td>
-                    <td><b>{{domain}}</b></td>
-                    <td>{{count}}</td>
-                    <td class="hidden-xs">{{baccess_stats[domain]}}</td>
+                    <td>{{domain.name}}</td>
+                    <td>{{domain.blocked_accesses}}</td>
+                    <td class="hidden-xs">{{domain.total_accesses}}</td>
                     <td>
-                        <a href="/blacklist?action=remove&macaddr={{ thing['macaddr'] }}&domain={{ domain }}">
+                        <a href="/blacklist?action=remove&macaddr={{ thing['macaddr'] }}&domain={{ domain.name }}&url_from=/thing_show?mac={{thing['macaddr']}}">
                                 <img src="static/img/button_OFF.png" width="28" alt="access blocked" title="unblock domain">
                         </a>
                     </td>

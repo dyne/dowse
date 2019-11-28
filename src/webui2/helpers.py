@@ -21,10 +21,11 @@
 webui helper module
 """
 
-from operator import itemgetter
+from operator import itemgetter, attrgetter
 from time import time
 from werkzeug.datastructures import Headers as werkzeugHeaders
 from tldextract import extract
+from domain_stat import DomainStat
 
 from config import (RDYNA, RSTOR)
 
@@ -135,41 +136,41 @@ def get_admin_devices():
     return admin_devices
 
 
-def group_stats(stats):
-    grouped_stats = {}
-    access_stats = {}
-    domain_names = {}
-    for domain, count in stats.items():
-        tld = extract(domain)
+def group_stats(stats, blocked_stats, blocked_domains):
+    domains = {}
+    for domain_name, count in stats.items():
+        tld = extract(domain_name)
         key = tld.registered_domain.replace('.', '')
-        if not key in domain_names:
-            domain_names[key] = tld.registered_domain
-            grouped_stats[key] = {}
-            access_stats[key] = 0
+        if not key in domains:
+            domains[key] = DomainStat(tld.registered_domain, key)
+            domains[key].subdomains.append(domains[key])
 
-        grouped_stats[key][domain] = int(count)
-        access_stats[key] += int(count)
-
-    access_stats = dict(sorted(access_stats.items(), key=itemgetter(1), reverse=True))
-    sorted_groups = {}
-    for domain, group in grouped_stats.items():
-        if len(group) == 1:
-            sorted_groups[domain] = {}
+        blocked_accesses = int(blocked_stats.get(domain_name, 0))
+        if domains[key].name == domain_name:
+            domains[key].set_accesses(int(count), blocked_accesses)
             continue
 
-        sorted_groups[domain] = dict(sorted(group.items(), key=itemgetter(1), reverse=True))
+        domains[key].add_subdomain(domain_name, int(count), blocked_accesses)
 
-    return domain_names, sorted_groups, access_stats
+    for domain_name, domain_stat in domains.items():
+        if domain_name in blocked_domains:
+            domain_stat.block()
+
+        for subdomain in domain_stat.subdomains:
+            if subdomain.name in blocked_domains:
+                subdomain.block()
+
+        if len(domain_stat.subdomains) == 1:
+            # No other subdomains, do not show subrows
+            domain_stat.subdomains = []
+
+    return domains
 
 
-def group_blocked_stats(stats, blocked_stats, level2_domains, level3_domains):
-    access_stats = {}
-    blocked_access_stats = {}
-    for domain in level2_domains + level3_domains:
-        access_stats[domain] = int(stats.get(domain, 0))
-        blocked_access_stats[domain] = int(blocked_stats.get(domain, 0))
+def sort_domains(domains):
+    for domain_name, domain_stat in domains.items():
+        domain_stat.subdomains.sort(reverse=True)
 
-    blocked_access_stats = dict(sorted(blocked_access_stats.items(), key=itemgetter(1), reverse=True))
+    return dict(sorted(domains.items(), key=itemgetter(1), reverse=True))
 
-    return access_stats, blocked_access_stats
 
