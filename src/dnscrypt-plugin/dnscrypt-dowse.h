@@ -25,6 +25,8 @@
 
 // just for NI_MAXHOST
 #include <netdb.h>
+// for psl_ctx_t
+#include <libpsl.h>
 #include <libdowse/dowse.h>
 
 // expiration in seconds for the domain hit counter

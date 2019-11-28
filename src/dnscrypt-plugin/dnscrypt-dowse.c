@@ -41,8 +41,6 @@
 #include <hiredis/hiredis.h>
 #include <jemalloc/jemalloc.h>
 
-#include <libpsl.h>
-
 #include <epoch.h>
 
 #include <dnscrypt-dowse.h>
