@@ -588,27 +588,30 @@ DCPluginSyncFilterResult dcplugin_sync_pre_filter(DCPlugin *dcplugin, DCPluginDN
 			}
     		act("%s %s", data->reply->element[k]->str, fixed_query);
 
-			// uint8_t  *wire;
-			// size_t    wire_size;
-			// ldns_rdf *edns_data;
-			// ldns_wire2pkt(&packet,
-			// 		dcplugin_get_wire_data(dcp_packet),
-			// 		dcplugin_get_wire_data_len(dcp_packet));
-
-			// edns_data = ldns_rdf_new_frm_str(LDNS_RDF_TYPE_STR,
-			// 		buf);
-			// ldns_pkt_set_edns_data(packet, edns_data);
-
-			// ldns_pkt2wire(&wire, packet, &wire_size);
-			// dcplugin_set_wire_data(dcp_packet, wire, wire_size);
-
 			// The domain is blocked
 			// Log the query
 			cmd_redis(data->redis_stor, "HINCRBY blocked_stats_%s %s 1",
 					data->mac, data->query);
+
+			size_t answer_size = 0;
+			uint8_t *outbuf = NULL;
+			char tmprr[2048];
+			snprintf(tmprr, 2048, "%s 0 IN A 127.0.0.1", data->query);
+
+			outbuf = answer_to_question(packet_id, question_rr,
+			                            tmprr, &answer_size);
+
 			freeReplyObject(data->reply);
+			if(!outbuf) {
+				ldns_pkt_free(packet);
+				return DCP_SYNC_FILTER_RESULT_KILL;
+			}
+
+			dcplugin_set_wire_data(dcp_packet, outbuf, answer_size);
+
+			if(outbuf) LDNS_FREE(outbuf);
 			ldns_pkt_free(packet);
-			return DCP_SYNC_FILTER_RESULT_KILL;
+			return DCP_SYNC_FILTER_RESULT_DIRECT;
 		}
 		if(dots != 0) {
 			dots--;
