@@ -150,14 +150,23 @@ def group_stats(stats, blocked_stats, blocked_domains):
             domains[key].set_accesses(int(count), blocked_accesses)
             continue
 
-        domains[key].add_subdomain(domain_name, int(count), blocked_accesses)
+        subdomain = tld.subdomain
+        if not subdomain:
+            # Should never go here
+            continue
+
+        while '.' in subdomain:
+            subdomain = subdomain[subdomain.find('.') + 1:]
+
+        normalized_name = '%s.%s' % (subdomain, tld.registered_domain)
+        domains[key].add_subdomain(domain_name, normalized_name, int(count), blocked_accesses)
 
     for domain_name, domain_stat in domains.items():
         if domain_name in blocked_domains:
             domain_stat.block()
 
         for subdomain in domain_stat.subdomains:
-            if subdomain.name in blocked_domains:
+            if subdomain.normalized_name != '' and subdomain.normalized_name in blocked_domains:
                 subdomain.block()
 
         if len(domain_stat.subdomains) == 1:

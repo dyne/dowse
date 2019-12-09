@@ -4,6 +4,8 @@ class DomainStat():
         self.name = name
         self.key = key
 
+        self.normalized_name = ''
+
         self.accesses = 0
         self.total_accesses = 0
         self.blocked_accesses = 0
@@ -26,8 +28,12 @@ class DomainStat():
     def set_parent(self, parent):
         self.parent = parent
 
-    def add_subdomain(self, name, accesses, blocked_accesses):
+    def set_normalized_name(self, name):
+        self.normalized_name = name
+
+    def add_subdomain(self, name, normalized_name, accesses, blocked_accesses):
         subdomain = DomainStat(name, self.key)
+        subdomain.set_normalized_name(normalized_name)
         subdomain.set_accesses(accesses, blocked_accesses)
         subdomain.set_parent(self)
         self.subdomains.append(subdomain)
