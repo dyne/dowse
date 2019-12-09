@@ -11,7 +11,7 @@ PSL_LIST=https://publicsuffix.org/list/public_suffix_list.dat
 
 all: ${SOURCES}
 	${CC} ${LDFLAGS} ${SOURCES} ${LDADD} -o dnscrypt_dowse.so
-	wget ${PSL_LIST}
+	wget -nc ${PSL_LIST}
 
 
 main: main.o

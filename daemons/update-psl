@@ -1,0 +1,10 @@
+#!/usr/bin/env zsh
+
+source $R/env
+
+psl_list="https://publicsuffix.org/list/public_suffix_list.dat"
+file="$R/src/dnscrypt-plugin/public_suffix_list.dat"
+
+timefile="/run/dowse/update_psl_timefile"
+snooze -S"*" -M"*" -H"*" -t $timefile -T 1d \
+	sh -c "wget $psl_list -O $file; touch $timefile"
