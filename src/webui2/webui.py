@@ -399,8 +399,6 @@ def page_not_found(e):
     """
     caller_info = get_caller_info(request.remote_addr)
 
-    thing_mac = request.form['macaddr']
-    thing_name = request.form['name']
     if caller_info.get('enable_to_browse', 'no') == 'yes':
         return render_template('404.html', cur_info=caller_info, msg=e), 404
 
