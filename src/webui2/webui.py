@@ -122,6 +122,20 @@ def thing_show():
 
     blacklisted_domains.sort(key=attrgetter('blocked_accesses'), reverse=True)
 
+    domains_to_del = []
+    # Remove domains which have only blacklisted subdomains
+    for domain_name, domain_stat in domains.items():
+        domain_blocked = 0
+        for subdomain in domain_stat.subdomains:
+            if subdomain.is_blocked():
+                domain_blocked += 1
+
+        if domain_blocked == len(domain_stat.subdomains) - 1:
+            domains_to_del.append(domain_name)
+
+    for name in domains_to_del:
+        del domains[name]
+
     return render_template('thing_show.html', thing=thinginfo,
                            cur_info=caller_info, things=things_list,
                            domains=domains, bdomains=blacklisted_domains)
