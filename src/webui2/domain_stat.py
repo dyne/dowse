@@ -31,14 +31,17 @@ class DomainStat():
     def set_normalized_name(self, name):
         self.normalized_name = name
 
-    def add_subdomain(self, name, normalized_name, accesses, blocked_accesses):
+    def add_subdomain(self, name, normalized_name, accesses, blocked_accesses, blocked):
         subdomain = DomainStat(name, self.key)
         subdomain.set_normalized_name(normalized_name)
         subdomain.set_accesses(accesses, blocked_accesses)
         subdomain.set_parent(self)
         self.subdomains.append(subdomain)
-        self.total_accesses += subdomain.accesses
-        self.blocked_accesses += blocked_accesses
+        if not blocked:
+            self.total_accesses += subdomain.accesses
+        else:
+            subdomain.block()
+            self.blocked_accesses += blocked_accesses
 
     def block(self):
         self.blacklisted = True

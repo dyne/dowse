@@ -30,7 +30,7 @@ from flask import (Flask, request, redirect, render_template,
 
 
 from config import (RDYNA, RSTOR)
-from helpers import (parsetime, sort_things, get_admin_devices, get_caller_info,
+from helpers import (parsetime, sort_things, get_admin_devices, get_caller_info, get_blocked_domains,
                      group_stats, sort_domains, fill_default_thing,
                      fill_http_headers, ip2mac)
 
@@ -112,14 +112,8 @@ def thing_show():
     level3_domains = RSTOR.lrange('blocked_3_%s' % mac, 0, -1)
     blocked_domains = level2_domains + level3_domains
     domains = group_stats(stats, blocked_stats, blocked_domains)
-    domains = sort_domains(domains)
 
-    blacklisted_domains = []
-    for domain_name, domain_stat in domains.items():
-        for subdomain in domain_stat.subdomains:
-            if subdomain.is_blocked():
-                blacklisted_domains.append(subdomain)
-
+    blacklisted_domains = get_blocked_domains(domains)
     blacklisted_domains.sort(key=attrgetter('blocked_accesses'), reverse=True)
 
     domains_to_del = []
@@ -131,10 +125,13 @@ def thing_show():
                 domain_blocked += 1
 
         if domain_blocked == len(domain_stat.subdomains) - 1:
-            domains_to_del.append(domain_name)
+            if domain_stat.accesses == domain_stat.subdomains[0].accesses:
+                domains_to_del.append(domain_name)
 
     for name in domains_to_del:
         del domains[name]
+
+    domains = sort_domains(domains)
 
     return render_template('thing_show.html', thing=thinginfo,
                            cur_info=caller_info, things=things_list,

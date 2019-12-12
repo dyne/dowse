@@ -148,6 +148,9 @@ def group_stats(stats, blocked_stats, blocked_domains):
         blocked_accesses = int(blocked_stats.get(domain_name, 0))
         if domains[key].name == domain_name:
             domains[key].set_accesses(int(count), blocked_accesses)
+            domains[key].normalized_name = domain_name
+            if domain_name in blocked_domains:
+                domains[key].block()
             continue
 
         subdomain = tld.subdomain
@@ -159,21 +162,35 @@ def group_stats(stats, blocked_stats, blocked_domains):
             subdomain = subdomain[subdomain.find('.') + 1:]
 
         normalized_name = '%s.%s' % (subdomain, tld.registered_domain)
-        domains[key].add_subdomain(domain_name, normalized_name, int(count), blocked_accesses)
+        blocked = False
+        if normalized_name in blocked_domains:
+            blocked = True
+        domains[key].add_subdomain(domain_name, normalized_name, int(count), blocked_accesses, blocked)
 
     for domain_name, domain_stat in domains.items():
-        if domain_name in blocked_domains:
-            domain_stat.block()
-
-        for subdomain in domain_stat.subdomains:
-            if subdomain.normalized_name != '' and subdomain.normalized_name in blocked_domains:
-                subdomain.block()
-
         if len(domain_stat.subdomains) == 1:
             # No other subdomains, do not show subrows
             domain_stat.subdomains = []
 
     return domains
+
+
+def get_blocked_domains(domains):
+    blacklisted_domains = []
+    domain_map = {}
+    for domain_name, domain_stat in domains.items():
+        for subdomain in domain_stat.subdomains:
+            if subdomain.is_blocked():
+                if subdomain.normalized_name == subdomain.name:
+                    blacklisted_domains.append(subdomain)
+
+                domain_map.setdefault(subdomain.normalized_name, 0)
+                domain_map[subdomain.normalized_name] += subdomain.blocked_accesses
+
+    for domain in blacklisted_domains:
+        domain.blocked_accesses = domain_map[domain.normalized_name]
+
+    return blacklisted_domains
 
 
 def sort_domains(domains):
