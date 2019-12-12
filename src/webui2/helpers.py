@@ -98,7 +98,7 @@ def parsetime(then):
     elif dm < (24 * 60 * 31):
         return '%d week%s ago' % (int(dm / (60*24*7)), f(dm/(60*24*7)))
     elif dm < (24 * 60 * 365.25):
-        return '%d month%s ago' % (int(dm / (60*24*30), f(dm/60*24*30)))
+        return '%d month%s ago' % (int(dm / (60*24*30)), f(dm/(60*24*30)))
     return '%d year%s ago' % (int(dm / (60*24*365)), f(dm/(60*24*365)))
 
 
