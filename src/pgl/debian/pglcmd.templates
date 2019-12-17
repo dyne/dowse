@@ -1,0 +1,24 @@
+Template: pglcmd/INIT
+Type: boolean
+Default: true
+_Description: Turn on automatic start? This may block the complete network access!
+ Configuration variable: INIT
+ .
+ pgl blocks traffic to and from all IPs that are listed in your
+ blocklists. This may block much more than what you want - including your own
+ LAN, gateway and DNS server, many webpages, services like eMail, instant
+ messaging or the "weather applet" and even remote access to this machine.
+ .
+ To prevent this, you can change the blocklist selection, and you can allow
+ certain traffic (whitelisting). So first configure pgl correctly, before you
+ turn the automatic start on!
+
+Template: pglcmd/CRON
+Type: boolean
+Default: true
+_Description: Turn on automatic blocklist update?
+ Configuration variable: CRON
+ .
+ This sets if the daily cron job updates the blocklists. With the default
+ settings this causes up to 10 MB traffic per day. You can configure which
+ blocklists are used in /etc/pgl/blocklists.list.

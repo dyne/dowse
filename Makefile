@@ -33,6 +33,7 @@ install:
 	touch $(DESTDIR)/etc/netdata/.opt-out-from-anonymous-statistics
 	install -p -m 755 dowse.initd $(DESTDIR)/etc/init.d/dowse
 	sed -i "s;DOWSE_DIR;$(DOWSE_DIR);" $(DESTDIR)/etc/init.d/dowse
+	make -C src install
 
 uninstall:
 	rm -rf ${DESTDIR}${CONFDIR}

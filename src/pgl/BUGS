@@ -1,0 +1,47 @@
+BUGS of pgl:
+
+Minor bugs may be listed in docs/TODO.
+
+- pgld crashes with ENOBUFS recv error under heavy load on slow machines,
+  especially after updating the blocklists.
+  There are some workarounds to prevent this, or at least reduce the frequency
+  of these crashes. Use a combination of them:
+  1. Increase buffers:
+     Set NFQUEUE_MAXLEN to a higher value, e.g. 4096 or 8192
+  2. Increase pgld's priority:
+     Set the variable NICE to a lower value, e.g. -10 (max. -20)
+  3. Increase the default receive/send window:
+     Add this to your system's config (you may use /etc/pgl/insert.sh
+     if you don't know a better file)
+       sysctl -w net.core.rmem_default=8388608
+       sysctl -w net.core.wmem_default=8388608
+
+- pglgui shows the number of IPs and IP ranges that it is blocking. Due to the
+  technical implementation this number keeps unchanged if you whitelist IPs,
+  although you should think that it gets smaller. So this is just a "visibility"
+  problem, but doesn't mean that anything doesn't work.
+  Technical explanation: the number of IPs that get blocked relates to the
+  blocklist that pgld uses. But the whitelisting is done with iptables rules
+  (target RETURN) that prevent that the whitelisted traffic ever reaches pgld.
+  --
+  2011-08-11, jre <jre-phoenix@users.sourceforge.net>
+
+
+- "update" doesn't work with OpenDNS
+  see e.g. here:
+  http://forums.phoenixlabs.org/showpost.php?p=127410&postcount=7
+  http://forums.phoenixlabs.org/showthread.php?t=18045
+  http://ubuntuforums.org/showthread.php?t=1189320
+
+
+- pglcmd only monitors if pgld starts successfully until pgld forks
+  (daemonizes). Everything that happens after the fork doesn't get catched.
+  - Therefore move as much as possible of the pgld start code before the fork.
+    Note that e.g. the pidfile generation has to be done afterwards, because a
+    forked process has a new pid. [ DONE ]
+  - A possible solution would be for pglcmd to wait some seconds, and then check
+    again, but this makes starting slow, so this is not applied.
+  - pglcmd.wd partly solves this by doing a restart and notifying the user per
+    email and in the logfile.
+  --
+  2009-11-15, jre <jre-phoenix@users.sourceforge.net>

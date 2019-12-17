@@ -1,0 +1,192 @@
+#!/bin/sh
+# pglcmd.wd - watchdog to monitor pgl
+#
+# Copyright (C) 2009 - 2015 jre <jre-phoenix@users.sourceforge.net>
+#
+# This file is part of pgl.
+#
+# pgl is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pgl is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with pgl.  If not, see <http://www.gnu.org/licenses/>.
+
+
+set -e
+
+################################################################################
+# The following code is common between pglcmd, pglcmd.wd,
+# cron.daily, init and debian/pglcmd.postinst.
+
+# if-up is similar, but exits successfully if CONTROL_MAIN is not there, yet.
+# This can happen in early boot stages before local file systems are mounted.
+
+# CONTROL_MAIN has to be set correctly in all just mentioned files.
+# Except for debian/pglcmd.postinst, this is done automatically on "make" based
+# on the "configure" options.
+CONTROL_MAIN="/usr/lib/pgl/pglcmd.main"
+
+# Configure pglcmd and load functions.
+if [ -f "$CONTROL_MAIN" ] ; then
+    . $CONTROL_MAIN || { echo "$(basename $0) Error: Failed to source $CONTROL_MAIN although this file exists."; exit 1; }
+else
+    echo "$(basename $0) Error 7: Missing file $CONTROL_MAIN."
+    exit 7
+fi
+
+# End of the common code between pglcmd, pglcmd.wd,
+# cron.daily, (if-up), init and debian/postinst.
+################################################################################
+
+# All output gets redirected to the logfile.
+{
+test_root
+
+# Check if watchdog is already running.
+[ ! -f "$WD_PID" ] || { log_success_msg "$WD_PID already exists, not starting $(basename $0) again" ; exit 0 ; }
+
+RETVAL=0
+CHECK_IPTABLES=1
+
+# The iptables setup has to be done completely by pglcmd
+[ "$IPTABLES_SETTINGS" -gt 0 ] || {
+    log_warning_msg "$0: IPTABLES_SETTINGS has to be greater 0, not checking iptables!"
+    CHECK_IPTABLES=0
+    }
+
+[ "$IPTABLES_ACTIVATION" -gt 0 ] || {
+    log_warning_msg "$0: IPTABLES_ACTIVATION has to be greater 0, not checking iptables!"
+    CHECK_IPTABLES=0
+    }
+
+[ "$WD_SLEEP" -gt 0 ] || {
+    log_failure_msg "Error $E_CONFIG: WD_SLEEP has to be greater 0."
+    log_failure_msg "Not starting $(basename $WD_PATHNAME)."
+    exit $E_CONFIG
+    }
+
+# Define an exit function for trapped signals
+onexit () {
+        RETVAL="$?"
+        rm -f "$WD_PID"
+        exit $RETVAL
+}
+
+# Trap specified signals, and remove pidfile & exit on them.
+# Not sure which signals to specify. "KILL" can´t be trapped!
+# Not HUP.
+trap onexit INT SEGV QUIT TERM EXIT
+
+# Create pidfile.
+echo $$ > $WD_PID
+
+while true ; do
+    sleep $WD_SLEEP
+    # First check if the daemon is running.
+    status_of_proc $DAEMON $NAME > /dev/null 2>&1 || {
+        echo "$(basename $0): $NAME is not running!"
+        echo "The watchdog detected that the daemon is not running."
+        echo "To disable the watchdog set WATCHDOG=\"0\" in $CMD_CONF."
+        echo "Now doing a restart:"
+        $CMD_PATHNAME restart_not_wd || { RETVAL=$? ; break ; }
+        if [ $WD_MAILTO ] && test_sendmail ; then
+            cat<<EOF | $SENDMAIL -t
+To: $WD_MAILTO
+Subject: $(basename $0) restarted $NAME
+
+$NAME was not running! Therefore $(basename $0) restarted $NAME!
+
+To disable the watchdog set WD="0" in $CMD_CONF.
+EOF
+        fi
+        sleep $WD_SLEEP
+        }
+
+    # (Basic) check of the iptables setup (if automatic iptables management is configured)
+    if [ "$CHECK_IPTABLES" -ne 0 ] ; then
+    {
+        PASSED=1
+        # If CHAINS is empty/not set, then set it to "all". Replace all with the single names.
+        CHAINS=${CHAINS:-all}
+        [ "$CHAINS" != all ] || CHAINS="INPUT OUTPUT FORWARD"
+        for CHAIN in $CHAINS ; do
+            case $CHAIN in
+            INPUT)
+                PGL_CHAIN="$IPTABLES_IN"
+                ;;
+            OUTPUT)
+                PGL_CHAIN="$IPTABLES_OUT"
+                ;;
+            FORWARD)
+                PGL_CHAIN="$IPTABLES_FWD"
+                ;;
+            *)
+                echo "Unknown CHAIN $CHAIN specified."
+                exit 1
+                ;;
+            esac
+            # Check if traffic "might" be sent to the daemon.
+            # This does neither verify all pgl iptables rules, nore their exact setting.
+            # Further it doesn't care about non-pgl iptables rules
+            iptables -L $CHAIN -n | grep -q "$PGL_CHAIN" &&
+            iptables -L $PGL_CHAIN -n | grep -q "$IPTABLES_TARGET" ||
+            PASSED=0
+        done
+        [ "$PASSED" = 1 ]
+        # Not using "test" here, because ping fails if network is down,
+        # other iptables rules might block the test packet before it reaches
+        # pglcmd or the test packet might be whitelisted.
+    } || {
+        echo "$(basename $0): iptables setup broken!"
+        echo "In most cases the reason for this problem is that another firewall application"
+        echo "messed up the iptables rules. To avoid this remember to do a \"${CMD_NAME} restart\""
+        echo "whenever you start, stop or change the configuration of your other firewall"
+        echo "applications."
+        echo "To disable the watchdog set WATCHDOG=\"0\" in $CMD_CONF."
+        echo "Now doing a restart:"
+        $CMD_PATHNAME restart_not_wd || { RETVAL=$? ; break ; }
+        if [ $WD_MAILTO ] && test_sendmail ; then
+            cat<<EOF | $SENDMAIL -t
+To: $WD_MAILTO
+Subject: $(basename $0) restarted $NAME
+
+The iptables setup was broken! Therefore $(basename $0) restarted $NAME!
+
+In most cases the reason for this problem is that another firewall application
+messed up the iptables rules. To avoid this remember to do a "${CMD_NAME} restart"
+whenever you start, stop or change the configuration of your other firewall
+applications.
+
+To disable the watchdog set WD="0" in $CMD_CONF.
+EOF
+        fi
+        sleep $WD_SLEEP
+    }
+    fi
+done
+
+# We only end up here, if restart fails!
+if [ $WD_MAILTO ] && test_sendmail ; then
+    cat<<EOF | $SENDMAIL -t
+To: $WD_MAILTO
+Subject: $(basename $0) failed to restart $NAME
+
+$NAME did not block! And $(basename $0) failed to restart $NAME!
+"$CMD_PATHNAME restart_not_wd" exited with code $RETVAL.
+
+To disable the watchdog set WD="0" in $CMD_CONF.
+EOF
+fi
+log_failure_msg "\"$CMD_PATHNAME restart_not_wd\" failed (Error $RETVAL)."
+echo "Stopping $(basename $WD_PATHNAME) now!"
+exit $RETVAL
+
+# All output gets redirected to the logfile
+} >> $CMD_LOG 2>&1

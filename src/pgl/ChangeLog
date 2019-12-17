@@ -1,0 +1,547 @@
+; -*- mode: debian-changelog;-*-
+
+ChangeLog PeerGuardian Linux (pgl)
+
+
+pgl 2.3.1
+
+  [jre]
+  * Project Maintenance:
+    - Reorganize git repository at SourceForge.
+    - GPG sign all git tags and the release file, using my
+      moblock-deb maintainer GPG key
+      2048R/0xBAECD1F7D541FD544C2C37A1EAF9B4E3C0145138.
+    - Refactor copyright notice in every file.
+      Sum up in AUTHORS and debian/copyright.
+      pgl is licensed GPL-3+.
+  * Documentation updates.
+  * Drop build dependency on polkit (currently unneeded).
+  * BUILD: Add init/pgl.gentoo to CLEANFILES.
+  * pglcmd:
+    - Some code streamlining.
+    - iptables removal script emergency build: add test if file exists.
+    - old iptables removal script: improve logging.
+    - iptables removal script building: build script before inserting rule.
+      Closes: https://sourceforge.net/p/peerguardian/bugs/331/
+    - Drop old transition code and now obsolete files.
+    - Move the builtin LSB init-functions to a separate file.
+  * pgld:
+    - dbus: Reformat and drop commented code.
+    - dbus: Drop extra policy at_console.
+  * pglgui:
+    - Enhance desktop file.
+    - Use some unmodified Crystal Project Icons.
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Tue, 17 Nov 2015 03:12:52 +0100
+
+
+pgl 2.3.0
+
+  [jre]
+  * blocklists:
+    - Removed atma_atma, discontinued upstream
+    - Removed TBG blocklists, TBG's blocklists haven't been updated by
+      iblocklist.com since 2014-10-20. But AFAIK TBG still maintains them, so
+      search the web if you want to continue to use them.
+    - New default set by Bluetack, probably less paranoid then in the
+    past. Comments welcome:
+      ads-trackers-and-bad-pr0n
+      bad-peers
+      level-1
+      range-test
+      spyware
+  * removed the (non-default) feature to directly DROP and ACCEPT packets
+    (as in MoBlock 0.8), instead of using the (default) MARKing feature.
+    Dropped the configuration variables ACCEPT and REJECT.
+    Reason:
+    ACCEPTing/DROPing packets directly was only needed for kernel/netfilter
+    not supporting MARKing. Probably it was also a bit more efficient than
+    MARKing.
+    But ACCEPTing packets directly breaks other iptables setups - this has
+    always been documented, but wasn't known to all users. So in order to
+    avoid misconfigurations I decided to drop this feature.
+    DROPing directly should not yield any drawbacks, but I decided to also
+    remove it in order to make the code simpler.
+  * documentation updates
+  * dropped backup code and checks for transitions (2010-08-11)
+      REJECT_FW -> REJECT_FWD
+      WHITE_TCP_FORWARD -> WHITE_TCP_FWD
+      WHITE_UDP_FORWARD -> WHITE_UDP_FWD
+      WHITE_IP_FORWARD -> WHITE_IP_FWD
+  * dropped code for transition 2011-05-28: remove old master blocklists
+  * improved the test for kernel REJECT support
+  * pglcmd status: add test for iptables
+  * pglcmd test_net: Create BLOCKLISTS_DIR if missing
+    Closes: https://sourceforge.net/p/peerguardian/bugs/328/
+  * pglcmd: Set kernel queue maximum length with pglcmd variable
+    NFQUEUE_MAXLEN to trigger pgld -Q option
+  * pglcmd build_blocklist: merge 2 grep commands
+  * systemd/cron: added systemd service for blocklists update by Pierre Buard
+    (Gilrain). Closes: https://sourceforge.net/p/peerguardian/patches/3/
+    This only gets installed if pgl is compiled with --with-systemd.
+
+  [cader]
+  * Update nfq_set_verdict_mark calls to nfq_set_verdict2, requires
+    libnetfilter-queue >= 1.0. A version without this commit is maintained
+    in the git branch pgl_backport.
+  * Change declaration of "payload" to match what NFQ expects
+  * pgld: added option -Q to set kernel queue maximum length. See
+    http://sourceforge.net/p/peerguardian/discussion/446997/thread/0df72ba6/
+    Therefore increased kernel version requirement from >= 2.6.13 for NFQUEUE
+    support to >= 2.6.20 (If you don't use the new option older kernel still
+    work.)
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sat, 24 Jan 2015 14:25:28 +0000
+
+
+pgl 2.2.4
+
+  [freemind]
+  * Fixed bug when reading /etc/services file in OpenSUSE.
+  * Added addNames method and improved addProtocols method.
+
+  [jre]
+  * init: removed hint how to reenable automatic start.
+  * documentation updates
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sun, 26 Jan 2014 23:50:14 +0100
+
+
+pgl 2.2.3
+
+  [jre]
+  * use conntrack instead of state netfilter module
+  * check all traffic that is not related/established (instead of all new
+    traffic)
+  * added systemd file by Pierre Buard, tested for months by the Arch Linux
+    guinea pigs. Thanks!
+    Closes: https://sourceforge.net/p/peerguardian/patches/2/
+    Note: pglgui still needs to be adapted.
+  * fix: (re-)enable MARKing for incoming matched packets.
+    Thanks Jason Hill,
+    https://sourceforge.net/p/peerguardian/discussion/446996/thread/ed9a443f
+  * added support for packed (zip, gz, 7z) local blocklists in pglcmd, the
+    same way it is already supported for remote blocklists
+    NOTE: pgld already had builtin support for gz packed lists, if it was
+    compiled with zlib support.
+  * use sed instead of echo to add newline at end of blocklist
+  * cd / after downloading blocklists (instead of only cd'ing into the
+    directory, but not leaving again)
+  * init: added firewalld and moved $syslog to Should-Start|Stop
+  * BUILD: added AUTOMAKE_OPTIONS = subdir-objects
+
+  [hasufell]
+  * MAKE: do not recreate already existent dirs (Closes: SF bug #325)
+  * BUILD: do not expand path variables in configure.ac
+  * BUILD: small cleanup to systemd bits
+
+  [freemind]
+  * major refactoring of the pglgui code
+  * fixed issues with local blocklists
+  * Added port aliases (if any) when adding new whitelist items.
+  * Fixed bug when removing an added item.
+  * Fixed warning icon not disapearing from option after applying changes.
+  * Improved validation of ports/ips.
+  * Added call to cleanData to remove possible empty config variables in
+    pglcmd.conf.
+  * Added reload command to execute script instead of reloading pgl after.
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Thu, 31 Oct 2013 18:28:50 +0100
+
+
+pgl 2.2.2
+
+  [jre]
+  * changed default to not log to syslog (LOG_SYSLOG="0")
+  * fixed pending ";" in IP_REMOVE results in empty blocklist
+  * added "env" to the example WGET_OPTS for proxies. Closes: SF bug #3581707
+  * fixed reading ipfilter.dat lines which contain a : in the decription
+  * updated documentation
+
+  [hasufell]
+  * added gentoo init script, accessible via --with-gentoo-init
+  * cleaned up configure.ac (AM_CFLAGS)
+
+  [freemind]
+  * fixed bug that prevented apply button from getting enabled.
+  * modified iptables related functions to use always port numbers and not
+    names (fix)
+  * fixed pglgui crashes if you try to whitelist permanently, while pgl is not
+    running.
+  * code refactoring
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Mon, 25 Jun 2012 16:09:21 +0200
+
+
+pgl 2.2.1
+
+  [jre]
+  * Disabled dbus closing and reopening on reload. Fixes bug "pgld binaries
+    built under Ubuntu Oneiric, Precise and Mint 12 crash on reload" (Closes:
+    SF Bug #3495654)
+  * fixed Makefile clean target
+
+  [freemind]
+  * Fixed log viewer dialog to not close on key press.
+  * Added whois action.
+  * Minor tweaks.
+  * Fixed (random) unapplied changes at start-up bug.
+  * Added sortable columns in whitelist view.
+  * Added automatic saving and restoring of window's state.
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Mon, 25 Jun 2012 01:01:50 +0200
+
+
+pgl 2.2.0 The autotools release
+
+  [hasufell]
+  * added autotools support
+
+  [freemind]
+  * overall code refactor to the gui
+  * fixed issues with finding graphical su
+  * added 2 new actions for viewing pgld and pglcmd log files.
+    - added new widget to allow viewing and filtering information on files.
+  * added error dialog
+
+  [jre]
+  * fixed: don't send stats on shutdown. Added "pglcmd stop_quick"
+  * cleaned up some sendmail tests
+  * buildsystem:
+    - don't change PATH in pglcmd.default on "make"
+    - fixed "dist", "clean" and readded "lowmem"
+  * renamed blockcontrol2pglcmd.sh to blockcontrol2pglcmd
+
+-- jre <jre-phoenix@users.sourceforge.net>  Tue, 12 Jun 2012 23:17:49 +0200
+
+
+pgl 2.1.3
+
+  [jre]
+  * added "+" to default nice values (+0 for pgld). Fixes problems with Redhat's
+    init functions.
+  * Makefile fixes:
+    - keep default setting "use builtin LSB init functions".
+    - replaced pkg-config with CFLAGS (containing the previous) in dbus.so
+    - reordered recipes to build with option "as-needed".
+      Fixes building in Ubuntu oneiric.
+  * impoved output of show_config to show the version of the LSB init functions.
+
+  [freemind]
+  * fixed pgl-gui crash due to missing braces in if clause.
+
+-- jre <jre-phoenix@users.sourceforge.net>  Sat, 17 Sep 2011 15:44:54 +0200
+
+
+pgl 2.1.2
+
+  [jre]
+  * pgld/Makefile: moved LDFLAGS to end of rule. This should solve some
+    issues with newer gcc versions
+  * pgl-gui: swapped the restart and reload icons
+  * documentation updates
+
+  [freemind]
+  pgl-gui:
+  * fixed blank blocklist items, if blocklist is not from iblocklist.com
+  * fixed temporary allowing with right-click in the log window
+    kdesudo only accepts one command as argument, so execute all commands
+    through the tmp script.
+  * allow to specify the maximum log size (default 512 lines)
+  * reduced window's minimum width and height.
+  * removed unused mobloquer code
+  * minor fixes
+
+-- jre <jre-phoenix@users.sourceforge.net>  Tue, 23 Aug 2011 21:56:02 +0200
+
+
+pgl 2.1.1
+
+  [freemind]
+  * pgl-gui:
+    - maximum log size 512 lines
+    - check if an whitelist item is already in pglcmd.conf
+
+-- jre <jre-phoenix@users.sourceforge.net>  Sat, 13 Aug 2011 02:45:41 +0200
+
+
+pgl 2.1.0 The GUI release!
+
+  [ jimtb ]
+  * fixed dbus implementation in pgld
+
+  [freemind]
+  * added new GUI: pgl-gui (C++, Qt)
+    partly based on old mobloquer
+
+  [ jre ]
+  * LICENSE CHANGE: relicensed pgld and pglcmd to GPL v3 (or later)
+  * IMPORTANT CHANGES:
+    - removed default whitelisting of ports 80 (http) and 443 (https)
+    - added atma/atma list to default blocklists, following recommendations on
+      http://tbg.iblocklist.com/pages/faq.html
+    - place local blocklists in LOCAL_BLOCKLIST_DIR (/etc/pgl/blocklists.local)
+      instead of MASTER_BLOCKLIST_DIR
+  * fixed: install pgld logrotate
+  * if-up: use NetworkManager instead of Debian specific /etc/network/if-up.d
+    install if-up to /etc/NetworkManager/dispatcher.d/20pglcmd
+    Debian packaging stays unchanged with /etc/network/if-up.d/pglcmd
+    Do some NM specific checks
+  * pglcmd:
+    - returned to using single port whitelisting (--dport), instead of using
+      netfilter multiport module.
+      Reason: Allow pgl-gui to *instantly* add/remove single ports to the
+      whitelisting.
+    - [dump|reset]_stats:
+      - only execute as root
+      - fork sleep and grep commands to the background
+    - email_stats: start sendmail in the background
+      speeds up stop/restart
+    - removed hardcoded pathname of start-stop-daemon
+    - added configuration variable for SENDMAIL and TRACEROUTE (new default is
+      tcptraceroute)
+    - rewrote "wc -l" calls for a little more efficiency
+    - renamed VERBOSITY variable to VERBOSE
+    - use http://www.iblocklist.com/lists.xml to determine the user friendly
+      blocklist names for iblocklist.com URLs instead of hardcoding them.
+    - fixed bug on whitelisting LAN with subnetmask 255.255.255.255
+  * pglcmd cron and pgld logrotate: suppress STDOUT
+  * added blockcontrol2pglcmd.sh configuration transition script
+  * removed nexus23/ipfilterx, this list is only available on a subscription
+    basis from iblocklist.com
+  * pgl-gui/Makefile: use general moc and uic commands instead of special -qt4
+    ones
+  * pgld:
+    - fixed logging of dbus error messages
+    - enabled charset selection also in LOWMEM
+
+-- jre <jre-phoenix@users.sourceforge.net>  Fri, 12 Aug 2011 19:36:58 +0200
+
+
+pgl 2.0.4
+
+  [ jre ]
+  * internal LSB init-functions:
+    - updated based on Debian's 3.2-27
+    - use start-stop-daemon if available
+    - removed obsolete check for -p --> -p guarding p2p
+  * Makefile:
+    - removed "clean" from "dist" target - unnecessary
+    - only add GUI code to dist, if MAKE_PGLGUI is yes
+    - use generic RELEASEFILE name, depending on MAKE_PGLGUI
+  * fixed automatic whitelisting of local FORWARD traffic. Now really Closes SF
+    Bug #3057107. Thx athanasius!
+  * extended kernel module loading
+  * iptables handling:
+    - fixed: check for already whitelisted LAN now copes with all subnetmasks
+    - improved logging
+    - be more verbose on iptables insertion
+    - minor bugfixes
+    - execute old iptables remove script on start in case it still exists (it
+      shouldn't!)
+  * blocklist management:
+    - also merge the local blocklists in MASTER_BLOCKLIST (next to the
+      automatically handled remote blocklists). pgld only loads this list.
+      - fixes handling of removed/added/changed local blocklists
+      - quicker "reload", but excess usage of harddisk space
+      - simplified code and output of test_ipblocking
+    - local blocklists mustn't have space in their names any more!
+    - added option force-restart, that forces to rebuild master blocklist. Added
+      documentation for force-reload and force-update.
+  * fixed use of pglcmd option #1 ($1) in pglcmd.lib
+  * code cleanups:
+    - use a separate variable for the IPv4 regular expression
+    - moved LIST_NAME2LIST_URL from pglcmd.lib to debian/postinst
+    - replaced ( ... ) command grouping with { ... ; } or omitted it completely
+      for efficieny issues
+  * pgl-gui:
+    - started work on a new GUI (C++, Gtk, glade, dbus), no code in this release
+      yet!
+    - moved old unfinished Qt GUI to pgl-gui.qt
+
+-- jre <jre-phoenix@users.sourceforge.net>  Sun, 23 Jan 2011 15:50:44 +0100
+
+
+pgl 2.0.3
+
+  [ jre ]
+  * remember inserted iptables for later removal
+  * fixed iptables whitelisting of IP ranges in the FORWARD chain (incorrect IFS
+    setting). Closes SF Bug #3057107
+  * fixed iptables chain activation for specified interfaces in the FORWARD
+    chain. Closes SF Bug #3057110
+  * reenabled pgld's loading zip compressed blocklists
+
+-- jre <jre-phoenix@users.sourceforge.net>  Fri, 10 Sep 2010 17:46:54 +0200
+
+
+pgl 2.0.2
+
+  [ jre ]
+  * email stats on every stop/restart (except when the system is halted). Reset
+    stats in email_stats instead of just dumping them.
+  * default to use builtin LSB init-functions instead of systemwide functions
+  * added option to activate the iptables setup only for specified interfaces.
+  * added option to check only specific iptables chains
+  * added pgl-gui to common GNU Makefile buildsystem, removed cmake relicts
+  * Makefile: removed "-" from variable names, because this sometimes causes
+    problems.
+  * Renamed ..._FORWARD/_FW variables to ..._FWD. For a transition period use
+    value of old var, if the old name is used, but the new one not yet.
+  * pglcmd.lib, kernel module loading: check if kernel support is available or
+    try to load kernel modules in any case. If this fails, but the kernel
+    support is needed for a given configuration, exit. Fixed check for kernel
+    support.
+  * added traceroute to "pglcmd test".
+  * watchdog: separated running daemon process check and iptables check.
+  * on stop do a "kill -9" if normal kill fails.
+  * allow to run "pglcmd status" as normal user (without iptables output)
+
+-- jre <jre-phoenix@users.sourceforge.net>  Fri, 13 Aug 2010 13:37:24 +0200
+
+
+pgl 2.0.1
+
+  [ jre ]
+  * use "-m multiport --ports" for port whitelisting
+  * added delete_iptables if inserting iptables fails
+  * added direct support for all currently available iblocklist URLs in the
+    format http://list.iblocklist.com/lists/<author>/<list>. They are recognized
+    to be the same as the cryptic iblocklist URLs, and if available the original
+    upstream URLs. Simplified code.
+  * updated documentation and 2.0.0 ChangeLog
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Wed, 16 Jun 2010 14:33:52 +0200
+
+
+pgl 2.0.0
+
+  * initial release, based on moblock/nfblock and blockcontrol
+
+  [ jre ]
+  * common Gnu make buildsystem for pgld and pglcmd
+  * updated documentation
+
+  [ Cade Robinson ]
+  * common cmake buildsystem for pgld, pglcmd and pgl-gui (superseded by
+    Gnu make buildsystem, but still needed for pgl-gui)
+
+  [ Dimitris Palyvos-Giannas ]
+  * work on pgl-gui has started, but is not in a working state, yet
+
+
+  * CHANGES NFBLOCK - PGLD
+
+    [ jre ]
+    - transition to pglcmd at peerguardian.sourceforge.net
+      - removed cron* and init.d. This is covered by pglcmd.
+      - removed dl-blocklistpro.pl: blocklistpro is for manual download only. Of
+        course we honour the decisions of the blocklist providers. The
+        underlying single lists of ipfilter.dat can be downloaded with pglcmd.
+    - updated output when pgld is called without option
+    - change logrotate to work without pglcmd being installed
+
+    [ Cade Robinson ]
+    - Changed logging
+      - added logging to log file
+      - do logging to logfile, syslog and dbus with one function. dbus logging
+        is broken now!
+      - removed "--no-syslog" and rather use "-s" to enable syslogging
+      - Changed hit lines to use "||" since descriptions in block file had "|"
+        in them.
+      - Tag the lines logged with INFO: ERROR: STATS: or WARN:.
+      - Log the number of IPs that fall in the loaded ranges.
+      - Log IP, port and proto
+      - Don't log merging ranges
+    - Added -m option to load, merge, dump lists.
+      - Dump in p2p format, if in LOWMEM just dump the range
+    - Cleaner blocklist handling
+      - Major change to in memory blocklist.
+        - remove subentries
+        - fix merging and shrinking of array
+        - don't pass blocklist pointer around - don't really need to
+        - take out subranges, don't trim, simpler design
+      - Change parser.c to only need an ASCII parser and a binary parser
+        function
+      - allow just a range line in blocklists for LOWMEM mode
+      - Allow blocklist lines to be 350 chars (up from 255)
+      - Allow the range name / label on the line to be 300 chars (up from 199)
+      - Concat the range names together on merged ranges
+      - Truncate all labels to be 64 chars in memory only
+      - Change blocklist_trim to blocklist_merge for clarity
+      - handle variable argument list separately for every log destination
+      - Make sure lable truncate is in the name array
+      - Allow blocklist to be read from STDIN
+      - Remove -f (blocklist to load)
+      - fix parsing ipfilter.dat line to follow the standard found at:
+        http://wiki.phoenixlabs.org/wiki/DAT_Format
+      - Fix parsing ipfilter.dat lines (Change the %199c to %199s)
+    - Reordered functions in pgld:
+      - Change the startup functions order to guarantee it started correctly
+        before returning from pgld command.
+      - moved closelog (for syslogging) to just before the program exit so we
+        can log up to the end of running
+    - removed "--no-dbus" and rather use -d to enable dbus
+    - Added nfq_unbind_pf before the nfq_bind_pf in start up to make sure the
+      queue is closed.
+    - Make local functions static and move order to make static work.
+    - Comment out libdl from Makefile when built with dbus (do we need it?
+      building .deb complains about being useless)
+    - Fix up code formats, remove extra blanks, remove useless commented code
+    - always run pgld as daemon, removed -D option
+    - Change to use unsigned int for positive values (hits, count, etc)
+    - Change GETIPINFO from an included cpp "function" to an actual function.
+    - Change queue_num to 16bit int to conform with libnetfilter_queue
+    - Fix printing of IPs in big-endian (int2ip function)
+    - Change name of assemble_ip to ip2int to match int2ip
+    - Change a lot of int's to unsigned 32-bit int's
+    - Fix issues if a range ends at 255.255.255.255.
+    - Fix issues if a range is 0.0.0.0-255.255.255.255
+    - Added listing the name of the file loading in the num entries loaded line.
+    - Make some error messages more clear.
+    - Don't assume to use stdin if filename fails to open.
+    - Check if there is filename first, if not open stdin instead.
+    - Add quotes around file name to make the name easier to read if there is
+      spaces in the file name
+
+
+  * CHANGES BLOCKCONTROL - PGLCMD
+
+    [ jre ]
+    - transition to pglcmd at peerguardian.sourceforge.net
+      - removed automatic daemon name detection
+      - removed tests for obsolete blockcontrol variables
+      - removed CUSTOM_DAEMON_OPTS, all pgld options are (and have to) be
+        supported by pglcmd directly
+    - blocklist handling:
+      - premerge single blocklists (pgld -m)
+      - allow several master blocklists: all blocklists in MASTER_BLOCKLIST_DIR,
+        except those which end in "~", are used. This allows to combine
+        pglcmd's automatic blocklist management with manual placed
+        blocklists ("local lists") without any configuration hassle.
+      - removed "notimestamp" and "locallist" option from blocklists.list
+      - force to build master blocklist with "force-update". Otherwise only
+        build, if the relevant configuration changed.
+      - removed all code for blocklist format specification
+      - allow spaces in master blocklist names.
+      - remove "used" directory for single blocklists
+      - move test_BLOCKLISTS_DIR to get_blocklist
+    - fixed watchdog logging
+    - Email if watchdog detects a problem, added option WD_MAILTO.
+    - Added simplification that is necessary on Synology, but reverted pidof
+      command simplification because otherwise the watchdog status is shown as
+      not running
+    - remove iptables rules again, if starting the daemon fails
+    - on "test" wait a second to give the daemon time to log the current block
+    - init: added Should-Start/Stop dbus
+    - removed shebang from pglcmd.main
+
+    [ Cade Robinson ]
+    - Added "email_stat" function to email stats.
+    - Change pgld logrotate to email stats, rotate, then reopen
+    - hide .files in MASTER_BLOCKLISTS
+    - build_blocklist: added cleanup in the "cat --squeeze-blank"
+    - added configuration option enable/disable compression of blocklist
+      (COMPRESS). Not implemented yet.
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Tue, 18 May 2010 18:39:39 +0200

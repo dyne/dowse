@@ -1,0 +1,66 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# debian/rules that uses debhelper
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@ --with autoreconf
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		--with-lsb=/lib/lsb/init-functions
+
+override_dh_auto_build:
+	dh_auto_build
+	# Link some files to debian/ directory until debhelper can handle such
+	# cases better. See http://bugs.debian.org/499486
+	# Just act if pglcmd package is built:
+ifneq (,$(findstring pglcmd, $(shell dh_listpackages)))
+	ln -f pglcmd/cron.daily/pglcmd debian/pglcmd.cron.daily
+	ln -f pglcmd/networkmanager/20pglcmd debian/pglcmd.if-up
+	ln -f pglcmd/init/pgl debian/pglcmd.pgl.init
+	ln -f pglcmd/logrotate/pglcmd debian/pglcmd.logrotate
+	sed 's/@DEB_HOST_MULTIARCH@/$(DEB_HOST_MULTIARCH)/g' debian/pglcmd.postinst.in > debian/pglcmd.postinst
+endif
+	# Just act if pgld package is built:
+ifneq (,$(findstring pgld, $(shell dh_listpackages)))
+	ln -f pgld/logrotate/pgld debian/pgld.logrotate
+endif
+
+override_dh_clean:
+	# Just act if pglcmd package is built:
+ifneq (, $(findstring pglcmd, $(shell dh_listpackages)))
+	# This will guarantee that PO files are always synced with templates.
+	# This should be run on the "clean" target.
+	debconf-updatepo --msgid-bugs-address=peerguardian-devel@lists.sourceforge.net
+	# Remove the hardlinks from debian/ directory again. See above.
+	# Also remove the created pglcmd.postinst
+	rm -f debian/pglcmd.cron.daily \
+	debian/pglcmd.if-up \
+	debian/pglcmd.pgl.init \
+	debian/pglcmd.logrotate \
+	debian/pglcmd.postinst
+endif
+	# Just act if pgld package is built:
+ifneq (,$(findstring pgld, $(shell dh_listpackages)))
+	rm -f debian/pgld.logrotate
+endif
+	dh_clean
+
+override_dh_installdocs:
+	dh_installdocs --link-doc=pgld
+
+override_dh_installinit:
+	dh_installinit -p pglcmd --name=pgl -- start 60 2 3 4 5 . stop 20 0 1 6 .
+
+override_dh_strip:
+	# Just act if pgld package is built:
+ifneq (,$(findstring pgld, $(shell dh_listpackages)))
+	dh_strip -p pgld --dbg-package=pgld-dbg
+endif
+	# Just act if pglgui package is built:
+ifneq (,$(findstring pglgui, $(shell dh_listpackages)))
+	dh_strip -p pglgui --dbg-package=pglgui-dbg
+endif

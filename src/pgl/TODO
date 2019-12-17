@@ -1,0 +1,275 @@
+TODO
+
+pgld:
+
+  - implement "long run whitelisting concept" (see "All components" below").
+    This has to be done first in pgld, then in pglcmd and then in pglgui.
+
+  - add option to search for a specified IP in a blocklist:
+    pgld -f IP BLOCKLIST
+    if IP is found in the BLOCKLIST: return 0 and output the matching range(s).
+    if IP is not found: return 1
+    when implemented, adapt "pglcmd search"
+
+  - replace NIPQUAD (removed from kernel 2.6.36) (Note: still works on 3.10)
+
+  - improve logging: object org/netfilter/pgl/IpMatch consisting of separate
+    items (srcip, srcport, destip, destport, proto, description) instead of a
+    plain string. Use this with dbus, adapt pglgui when implemented.
+
+  - make length of range description configurable (with LOWMEM:=range=0)
+
+  - send total of blocked connections over dbus (then show it in pglgui)
+
+  - probably integrate listtools (libp2p/mergep2p) from
+    peerguardian.sourceforge.com ported by David Walluck
+
+  - check if --queue-balance option in NFQUEUE target for multi-threaded apps 
+    (requires Linux kernel >= 2.6.31) helps to prevent ENOBUFS recv errors.
+
+  - prevent pgld from crashing on ENOBUFS recv errors.
+
+
+===========================================================================
+
+
+pglcmd:
+
+
+  - (Sometime in the future) use "wget --content-disposition" to download
+    http://www.example.com/download.cgi?file=foobar.txt as foobar.txt instead
+    of download.cgi?file=foobar.txt. Note: currently not recommended since
+    not efficient and a bit buggy according to wget's man page..
+
+  - update dependency, cf. to apt:
+// Send email to this address for problems or packages upgrades
+// If empty or unset then no email is sent, make sure that you
+// have a working mail setup on your system. A package that provides
+// 'mailx' must be installed.
+//Unattended-Upgrade::Mail "root@localhost";
+//Unattended-Upgrade::MailOnlyOnError "true";
+
+  - implement "long run whitelisting concept" (see "All components" below").
+    This has to be done first in pgld, then in pglcmd and then in pglgui.
+
+  - search function:
+    requires search function in pgld, see above.
+    Use this function instead of grep'ping for REGEX.
+
+  - adapt test function for peerguardian .p2b v2 binary format blocklist
+    formats.
+
+  - FIX: on stop (and probably other commands), only dump/reset stats once
+
+  - nice: on CentOS it is required to use e.g. "+5". Find solutions suiting all
+    distros.
+
+  - use "ip addr" instead of "ifconfig":
+    see http://jengelh.medozas.de/2008/0219-ifconfig-sucks.php
+
+  - add dbus support, especially for logging.
+    pglcmd errors should be presented by pglgui!
+    - Completely rework the logging part, and check if all messages go where
+      they should.
+    - send error messages to console (STDERR 1>&2), logfile and dbus.
+      #!/bin/bash
+      some_command | tee /some/log/file
+      (tee outputs to standard output and the log file. Add the -a option to
+      append to the log file, rather than overwriting)
+    - when implemented pglgui should watch for the error messages
+
+  - add pidfiles for update and start/reload
+    (prevent 2 starts at nearly the same time, but still allow a simultaneous
+    start and update)
+
+  - on "stop" remove kernel modules that were inserted by pglcmd. (see dino's
+    synology packaging http://forums.phoenixlabs.org/showpost.php?p=128371&postc
+    ount=20). Probably disable this per default, to avoid problems.
+
+  - fix debconf to use debian/config again.
+    This stuff is currently in postinst, because otherwise debconf doesn't work
+    as expected: Debconf runs twice during installation: first it asks questions
+    and then it overwrites the answers with the not-yet modified configuration
+    files.
+    Further the debconf database is not cleared properly on purge.
+    Probably related to http://bugs.debian.org/476946?
+
+  - [DISCUSS] Block IPv6 completely because currently only IPv4 is checked?
+
+
+===========================================================================
+
+
+pglgui:
+
+  [freemind]
+
+  - adapt to systemd:
+    Start: systemctl start pgl.service
+    Restart: systemctl restart pgl.service
+    Reload: systemctl reload pgl.service
+    Stop: systemctl stop pgl.service
+    Start PeerGuardian at system boot: systemctl enable pgl.service
+    Don't start PeerGuardian at system boot is: systemctl disable pgl.service
+
+    Three possibilities to figure out whether in systemd automatic boot is
+    currently enabled (in order to show the (un)tick in pglgui correctly:
+    - commandline: 'systemctl --quiet is-enabled pgl.service' exits with 0 if
+      the service is enabled, 1 when disabled. --quiet suppresses the textual
+      outputs 'enabled' or 'disabled'.
+    - parsing: 'systemctl show --property=UnitFileState pgl.service' outputs
+      'UnitFileState=enabled', 'disabled' being its other state.
+    - dbus: http://www.freedesktop.org/wiki/Software/systemd/dbus/
+
+    dbus may also be used instead of the systemctl commands above. So that's
+    (at least in the long run) the solution to go for.
+
+    Do the same for pglcmd update (pgl-update.service).
+
+  FIX:
+
+  - don't show local blocklists (all files in /etc/pgl/blocklists.local/)
+    which end in "~".
+
+  - enable "Allow Port" on right-click only for protocols TCP and UDP.
+
+  - "Whitelist temporarily" should be explained to the user
+
+  - save some space to allow a smaller window, while "Whitelist" in the
+    Configuration Tab is still visible with one line (Jerriy, 2011-10-11,
+    http://ubuntuforums.org/showpost.php?p=11331774&postcount=554)
+
+  - update pglcmd and pgld log live when they are opened
+
+
+  NEW FEATURES:
+
+  - policykit support (instead of [gk|kde]su(do))
+    This may solve this soerious security problem:
+    pglgui creates /tmp/execute-all-pgl-commands.sh (with the rights of the
+    user running pglgui) and executes that file with root rights (gained via
+    [gk|kde]su(do).
+
+  - implement "long run whitelisting concept" (see "All components" below").
+    This has to be done first in pgld, then in pglcmd and then in pglgui.
+
+  - "Allow temporarily" on right-click in the log of blocked IPs:
+    delete the iptables rule after X minutes (as far as pglgui doesn't crash,
+    otherwise live with it and wait for the next pglcmd restart)
+
+  - "Details about blocked IP" on right-click in the log of blocked IPs:
+    - pglcmd search IP [requires search function in pgld, see above.]
+
+  - Window title "Blocking $X IP ranges ($Y IPs)":
+    Correct long term implementation: request the data from pgld via dbus.
+
+  - use ${BLOCKLISTS_DIR}/lists.xml to determine human friendly blocklist names
+    for URLs like this: http://list.iblocklist.com/?list=ewqglwibdgjttwttrinl&fi
+    leformat=p2p&archiveformat=gz
+    *** Also use lists.xml to show the list description. ***
+
+  - "Last blocklist update":
+    Implement per blocklist in "Configure - Blocklist"
+    (use "stat --format=%y $BLOCKLIST_DOWNLOADED | head -c 16").
+    [ $BLOCKLIST_DOWNLOADED requires ${BLOCKLISTS_DIR}/lists.xml (implement
+    directly in pglgui or use function LIST_URL2LIST_NAME from pglcmd.lib ]
+
+  - pop-up warning on errors from pglcmd (e.g. blocklist is not available)
+    [ Requires pglcmd dbus ]
+
+  - show total of blocked connections (requires implementation in pgld with
+    dbus)
+
+  - add menu item "View - View pglcmd status output"
+
+  - allow to configure every or at least some more pglcmd variables, e.g. IP_REMOVE
+
+
+===========================================================================
+
+
+All components:
+
+  - Check http://www.freedesktop.org/software/systemd/man/daemon.html for
+    security tasks.
+
+  - long run whitelisting concept:
+    * allow.p2p etc.:
+      implementation pgld:
+        pgld [OPTIONS] -b BLOCKLIST(S) -w WHITELIST(S)
+        pgld -m -b BLOCKLIST(S) -w WHITELIST(S) > master_blocklist.p2p
+        The IP ranges in the allowlists get removed from pgld's internally
+        loaded blocklist/the master blocklist.
+        NOTE: parser.c already has to handle lists in ipfilter.dat format. In
+        .DAT there is a value which if >=128 means that the IP range is allowed.
+        The current implementation is parser.c simply ignores these IP ranges.
+        NOTE: the following implementation doesn't work:
+        - check packets first against the allowlist, if match: do the same as
+          for non-matching against blocklist
+        - then check against blocklist (as currently)
+        --> if IP A is in a WHITELIST and IP B is in a BLOCKLIST, then traffic
+            between A and B is not blocked in FWD (checks saddr and daddr, thus
+            it matches A in any case), but blocked in IN (if B is saddr) and OUT
+            (if B is daddr).
+      implementation pglcmd:
+        - remote whitelists automatically updated (URLs in allowlists.list)
+        - local whitelists (in folder allowlists.local).
+        - remove variables ALLOW_[IN|OUT|FWD]
+    * WHITE_IP_[IN|OUT|FWD]:
+      user defined IP whitelistings on a per chain basis. May appear in a remote
+      whitelist today, but not tomorrow. Are managed through iptables.
+      (keep current implementation).
+
+  - use dbus for communication between components. Especially for logging
+    events, instead of parsing the logfiles. [partly done]
+    change naming to e.g. org/pgl/pgld/...
+
+  - use inotify (available since Linux kernel 2.6.13) to reload after
+    configuration change.
+
+  - use e.g. notification-daemon to notify about errors.
+
+  - automatic documentation, use e.g.
+    doxygen (creates doc from source)
+    doconce (markup language for several output formats).
+
+  - fix/update license headers of pglgui (including autotools/m4 files) and
+    pgld. use new debbian/copyright format.
+
+  - cppcheck --enable=all ./
+
+  - coccinelle
+    automatically analyze and rewrite C code
+    https://lwn.net/Articles/315686/
+
+
+
+
+Buildsystem:
+
+  - add check in configure.ac to prevent building the GUI while LOWMEM is
+    enabled.
+
+  - check if each component can be built separately
+
+
+
+
+Packaging:
+
+  - add LOWMEM and NODBUS flavor packages
+
+  - build for other arches with qemubuilder
+    test OpenSUSE build service
+
+  - add debtags to debian packages
+
+  - Use dpkg-buildflags to add disable_zlib to PGLD_CPPFLAGS for Ubuntu Lucid
+    (instead of disabling it in the git branch).
+
+
+
+
+Web:
+    [TODO] add information for new developers, short git intro to wiki
+    update screenshots, add them to wiki (HOWTO installation and configuration)

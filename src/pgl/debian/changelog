@@ -1,0 +1,177 @@
+pgl (2.3.1-1) unstable; urgency=medium
+
+  * Link all package's docs' directory to pgld's (part 3).
+  * Apply wrap-and-sort, sort field names.
+  * Refactor Breaks/Replaces.
+  * Add Multi-Arch fields.
+  * Drop unneeded pglgui dependency on pgld.
+  * Update Standards-Version to 3.9.6.
+  * Add gbp.conf.
+  * Update watch file and check PGP signature.
+  * New release process, separate branches for backport dists.
+    (Re-)Add support for Debian 7 Wheezy (branch dists/debian7_wheezy), and
+    Debian 9 Stretch, Ubuntu 12.04 Precise (branch dists/ubuntu1204_precise),
+    Ubuntu 15.10 Wily and Ubuntu 16.04 Xenial.
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Tue, 17 Nov 2015 03:12:52 +0100
+
+pgl (2.3.0-1) unstable; urgency=medium
+
+  * new release
+  * control: updated Vcs-Git field
+  * control: bumped Standards-Version: 3.9.5
+  * dropped support for Debian Squeeze (oldstable), Debian Wheezy (stable),
+    Ubuntu Lucid (10.04), Ubuntu Quantal (12.10), Ubuntu Raring (13.04)
+    and Ubuntu Saucy (13.10).
+    Drop the git pgl_backport branch, since it isn't needed anymore for now
+    with Wheezy and Lucid dropped. The latter two haven't reached their
+    official upstream end-of-life yet (Wheezy in 14 months if a new Debian
+    stable is released in probably 2 months, and Lucid in 3 months). If anyone
+    really relies on them, please drop me a mail.
+  * added Ubuntu Utopic (14.10) and Ubuntu Vivid (15.04)
+  * added "armhf" on Ubuntu launchpad
+  * dropped some old transition code
+  * link other package's docs' directory to pgld's instead of linking
+    single files
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sat, 24 Jan 2015 14:25:28 +0000
+
+pgl (2.2.4-1) unstable; urgency=low
+
+  * new release
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sun, 26 Jan 2014 23:50:14 +0100
+
+pgl (2.2.3-1) unstable; urgency=low
+
+  * new release
+  * added packages for Debian Jessie and Ubuntu Raring (13.04), Saucy
+    (13.10), Trusty (14.04), dropped Hardy (8.04), Natty (11.04) and
+    Oneiric (11.04)
+  * dropped the transitional packages
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Thu, 31 Oct 2013 18:28:50 +0100
+
+pgl (2.2.2-1) unstable; urgency=low
+
+  * new release
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Mon, 12 Nov 2012 00:59:57 +0100
+
+pgl (2.2.1-2) unstable; urgency=low
+
+  * added debconf note about the automatic transition from moblock etc.
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Mon, 25 Jun 2012 01:01:50 +0200
+
+pgl (2.2.1-1) unstable; urgency=low
+
+  * bump to debhelper 9: use architecture dependent paths /usr/lib/.../pgl
+    - pglcmd.postinst now gets generated from an .in file
+    - changed pglcmd from architecture all to any
+    - updated debian/*.install files
+  * rules: reverted to always use "autoreconf"
+  * rename old pgl-gui.conf files
+  * added transitional packages for moblock, blockcontrol and mobloquer
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sat, 23 Jun 2012 20:19:48 +0200
+
+pgl (2.2.0-1) unstable; urgency=low
+
+  * new upstream release
+  * drop debian/use-systemwide-LSB-init-functions.patch
+  * rules:
+    - don't use "dh $@ --with autoreconf" for lucid and natty
+  * control:
+    - dbus just recommended by pgld, not required
+    - adapted to autotools buildsystem
+    - retool automatically with dh-autoreconf
+    - bumped to Standards-Version: 3.9.3.0, no changes needed
+  * dropped lenny and maverick packages as these distributions have officially
+    reached their end of life
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Tue, 12 Jun 2012 23:17:49 +0200
+
+pgl (2.1.3-1) unstable; urgency=low
+
+  * new upstream release
+  * added "dbus" to the pgld dependency
+  * changed use-systemwide-LSB-init-functions.patch to modify Makefile
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sat, 17 Sep 2011 15:44:54 +0200
+
+pgl (2.1.2-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Tue, 23 Aug 2011 21:56:02 +0200
+
+pgl (2.1.1-1) unstable; urgency=low
+
+  * new upstream release
+  * fixed 2.1.0-1 debian/changelog entry
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sat, 13 Aug 2011 02:48:58 +0200
+
+pgl (2.1.0-1) unstable; urgency=low
+
+  * added pgl-gui and pgl-gui-dbg package
+  * fixed pglcmd.dirs (pgl instead of blockcontrol)
+  * bumped to Standards-Version 3.9.2.0, no changes needed
+  * removed most debconf questions except INIT and CRON
+  * fixed patches/use-systemwide-LSB-init-functions.patch
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Fri, 12 Aug 2011 19:09:22 +0200
+
+pgl (2.0.4-1) unstable; urgency=low
+
+  * new upstream release
+  * moved LIST_NAME2LIST_URL from pglcmd.lib to debian/postinst
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sun, 23 Jan 2011 15:50:44 +0100
+
+pgl (2.0.3-1) unstable; urgency=low
+
+  * new upstream release.
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Fri, 10 Sep 2010 17:46:54 +0200
+
+pgl (2.0.2-1) unstable; urgency=low
+
+  * debian/postinst: remove invalid characters (" or |) from $RET
+  * added debian/patches/use-systemwide-LSB-init-functions.patch
+  * debian/control:
+    - replaced Conflicts with Breaks
+    - added breaks and replaces moblock (<<2~) for pgld
+    - bumped to Standards-Version 3.9.1.0
+    - disabled dbus in Build-Depends
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Sat, 14 Aug 2010 17:17:31 +0200
+
+pgl (2.0.1-1) unstable; urgency=low
+
+  [ jre ]
+  * build-depend on debhelper (>= 7.0.50~) for debhelper overrides. Previously
+    this was set to debhelper (>= 7.3) for dh_auto_... functions, which were
+    (perhaps) needed for the now unused cmake build system.
+  * removed cmake hints from README.Debian
+  * debian/pglcmd.preinst: don't remove pgl init file on updates
+  * debian/pglcmd.postrm: don't remove user files on purge
+  * debian/pglcmd.postinst and templates: adapted to iblocklist URL change in
+    pglcmd.lib
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Wed, 16 Jun 2010 21:54:04 +0200
+
+pgl (2.0.0-1) unstable; urgency=low
+
+  [ jre ]
+  * initial release, based on moblock/nfblock and blockcontrol
+  * common Debian packaging:
+    - source format 3.0 (quilt)
+    - bumped Standards-Version to 3.8.4.0
+    - depend on debhelper version 7
+    - control: added Uploaders (jre), Bugs (mailto jre), Homepage, Vcs-Browser
+      and Vcs-Git fields.
+    - other changes
+
+ -- jre <jre-phoenix@users.sourceforge.net>  Tue, 18 May 2010 18:39:39 +0200

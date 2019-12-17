@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=PeerGuardian Linux
+Comment=Manage blocking connections to/from hosts specified in huge blocklists
+Icon=pglgui
+Exec=pglgui
+Terminal=false
+Categories=Network;
+Keywords=IP;iptables;firewall;block;blocklists;
+StartupNotify=true

@@ -6,6 +6,8 @@ CFLAGS = -Wall -fPIE -fPIC -pie -O3 -I. -Ihiredis
 LIBS = -L src/redis/deps/hiredis -l:libhiredis.a -Llibdowse -l:libdowse.a
 
 all: base springs dnscrypt-proxy
+
+install: 
 	./import.sh nmap-macs
 	install -s -p modprobe        ../build/bin
 	install -s -p dowse-to-gource ../build/bin
@@ -13,13 +15,14 @@ all: base springs dnscrypt-proxy
 	install -s -p dowse-to-mqtt   ../build/bin
 	install -s -p dowse-cmd-fifo  ../build/bin
 	cp -f parse-ip-neigh.py  ../build/bin
+	make -C pgl install
 
 libs:
 	make -C libdowse
 
-.PHONY: dnscrypt-proxy modprobe pgld
+.PHONY: dnscrypt-proxy modprobe pgl
 
-base: config libs modprobe dnscrypt_dowse.so
+base: config libs modprobe dnscrypt_dowse.so pgl
 	@echo "Compiled base"
 
 dnscrypt-proxy:
@@ -29,8 +32,8 @@ dnscrypt-proxy:
 dnscrypt_dowse.so:
 	make -C dnscrypt-plugin
 
-pgld:
-	@./compile.sh pgld
+pgl:
+	cd pgl && ./configure --prefix=/opt/dowse --disable-dbus --without-qt4 && make
 
 springs: dowse-to-gource dowse-to-osc dowse-to-mqtt dowse-cmd-fifo
 	@echo "Dowse springs compiled"
@@ -69,6 +72,6 @@ clean:
 	rm -f database.h execrules.h
 	rm -f modprobe dowse-to-osc dowse-to-gource dowse-to-mqtt
 	make -C dnscrypt-plugin      clean
-	make -C pgld                 clean
+	make -C pgl                  clean
 	make -C netdata-plugins      clean
 	make -C libdowse			 clean

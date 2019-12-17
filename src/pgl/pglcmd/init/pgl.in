@@ -1,0 +1,95 @@
+#!/bin/sh
+# init - LSB 3.1 compatible service control script for pgl.
+#
+# Copyright (C) 2005 - 2015 jre <jre-phoenix@users.sourceforge.net>
+#
+# This file is part of pgl.
+#
+# pgl is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pgl is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with pgl.  If not, see <http://www.gnu.org/licenses/>.
+
+
+### BEGIN INIT INFO
+# Provides:          pgl
+# Required-Start:    $local_fs $remote_fs
+# Required-Stop:     $local_fs $remote_fs
+# Should-Start:      dbus firehol firestarter firewalld ufw $syslog
+# Should-Stop:       dbus firehol firestarter firewalld ufw $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: PeerGuardian Linux - an IP Blocker
+# Description:       PeerGuardian Linux
+#   pgl blocks connections from and to hosts, that are listed in a very large
+#   blocklist. The blocklist can be in one of the following formats: eMule
+#   "ipfilter.dat", "peerguardian .p2p text" or "peerguardian .p2b v2 binary".
+#   pgl uses the netfilter xt_NFQUEUE kernel module.
+### END INIT INFO
+
+################################################################################
+# The following code is common between pglcmd, pglcmd.wd,
+# cron.daily, init and debian/pglcmd.postinst.
+
+# if-up is similar, but exits successfully if CONTROL_MAIN is not there, yet.
+# This can happen in early boot stages before local file systems are mounted.
+
+# CONTROL_MAIN has to be set correctly in all just mentioned files.
+# Except for debian/pglcmd.postinst, this is done automatically on "make" based
+# on the "configure" options.
+CONTROL_MAIN="/usr/lib/pgl/pglcmd.main"
+
+# Configure pglcmd and load functions.
+if [ -f "$CONTROL_MAIN" ] ; then
+    . $CONTROL_MAIN || { echo "$0 Error: Failed to source $CONTROL_MAIN although this file exists."; exit 1; }
+else
+    echo "$0: Missing file $CONTROL_MAIN. Doing nothing."
+    exit 0
+fi
+
+# End of the common code between pglcmd, pglcmd.wd,
+# cron.daily, (if-up), init and debian/postinst.
+################################################################################
+
+test_INIT
+test_VERBOSE
+test_CMD_PATHNAME
+
+case "$1" in
+    start)
+        case "$INIT" in
+            # Automatic boot is off:
+            0)
+                if [ "$VERBOSE" -eq 1 ] ; then
+                    log_warning_msg "$(basename $0) is configured not to start automatically at boot time."
+                fi
+                exit 0
+                ;;
+            # Automatic boot is on:
+            1)
+                $CMD_PATHNAME $1
+                ;;
+        esac
+        ;;
+    stop)
+        # stop_quick is normal stop, but without email_stats
+        $CMD_PATHNAME stop_quick
+        ;;
+    restart|reload|force-reload|update|status)
+        $CMD_PATHNAME $1
+        ;;
+    *)
+        log_warning_msg "Usage: $0 {start|stop|restart|reload|update|status}"
+        exit $E_BADARGS
+        ;;
+esac
+
+exit $?

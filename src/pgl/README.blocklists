@@ -1,0 +1,128 @@
+README.blocklists              Sat, 24 Jan 2015 13:47:03 +0100
+
+============================================================
+
+Table of contents:
+
+Introduction
+Note about different blocklist formats
+Lists from bluetack.co.uk
+Lists from The Blocklist Group (TBG)
+Lists from nexus23.org
+Lists from IBlocklist.com
+Lists from peerguardian.sourceforge.net
+Local (custom) blocklists
+
+============================================================
+
+Introduction:
+
+WARNING: Using too many and/or inappropriate lists may seriously degrade your
+internet service. Only use the blocklists that you need. More is not always
+better!
+
+This text is only a starting point. Neither do we recommend any blocklist
+provider, nor do we even know much about them.
+It is your decision what blocklists you want to use. There might be other (good
+or even better) blocklists that I don't know.
+
+You may use "pglcmd search PATTERN" to examine the single blocklists.
+
+Add the URLs of the blocklists that you want to use to
+"/etc/pgl/blocklists.list". Afterwards do a "pglcmd reload" to add the new
+blocklists to your master blocklist. Or just use pglgui for this.
+
+============================================================
+
+Note about different blocklist formats:
+
+pgld supports all known blocklist formats. You can use several formats at the
+same time. pgld detects the format automatically. pgld has builtin
+support for gz packed lists, if it was compiled with zlib support.
+
+pglcmd only supports lists in text format, but not in binary format. pglcmd
+unpacks gz, zip and 7z lists for pgld.
+
+The following formats are supported:
+- eMule ipfilter.dat
+- peerguardian .p2p text format (guarding.p2p)
+- LOWMEM format
+- peerguardian .p2b v2 binary format (guarding.p2b)
+
+eMule ipfilter.dat example:
+001.000.000.000 , 001.255.255.255 , 100 , Some organization
+008.000.000.000 , 008.255.255.255 , 100 , Another organization
+
+peerguardian .p2p text format (guarding.p2p):
+Some organization:1.0.0.0-1.255.255.255
+Another organization:8.0.0.0-8.255.255.255
+
+LOWMEM format was introduced in pgld to save memory usage. It is like
+peerguardian .p2p text format, but without the description:
+1.0.0.0-1.255.255.255
+8.0.0.0-8.255.255.255
+
+============================================================
+
+Lists from The Blocklist Group (TBG)
+
+TBG lists were hosted on iblocklist until 2014-10-20. As of January 2015
+iblocklist only distributes these lists in a version of this day, without
+advertising them anymore.
+
+TBG's lists are only available privately. Search the web for their contact
+information.
+
+For (outdated) information see here:
+http://tbg.iblocklist.com/pages/faq.html
+
+============================================================
+
+Lists from bluetack.co.uk
+
+For up to date information see here:
+http://www.bluetack.co.uk/forums/index.php?autocom=faq&CODE=02&qid=17
+
+Per default, pgl uses mirrored blocklists from iblocklist.com, instead of the
+original ones from bluetack.co.uk. Don't use both!
+
+============================================================
+
+Lists from nexus23.org
+
+This list was only available on a subscription basis from iblocklist.com.
+Current status unknown.
+
+============================================================
+
+Lists from IBlocklist.com
+
+"I-Blocklist is a service dedicated to the distribution of Internet Protocol
+address lists."
+
+It offers own lists and mirrors of most/many/some other blocklists, game allow
+lists, country lists and more. Some of these lists are available to subscribers
+only. If you have a valid update URL, you can use any of these blocklists in
+pgl.
+
+Some iblocklist update URLs are mapped from a 20 character random list name to
+human readable URLs in the format http://list.iblocklist.com/lists/LISTPROVIDER/
+LISTNAME. These mappings are resolved in pglcmd with http://www.iblocklist.com/
+lists.xml.
+
+============================================================
+
+Lists from peerguardian.sourceforge.net ... don't exist:
+
+Historically there were some php redirects to Bluetack lists mirrored
+elsewhere. These were used by PG (Windows).
+As of 2015-01-24 those redirects were broken and have been removed.
+
+============================================================
+
+Local (custom) blocklists:
+
+Put a file or link to a file in LOCAL_BLOCKLIST_DIR (per default
+/etc/pgl/blocklists.local/).
+
+============================================================

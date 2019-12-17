@@ -1,0 +1,8 @@
+/var/log/pgl/pglcmd.log {
+    rotate 12
+    daily
+    compress
+    delaycompress
+    missingok
+    notifempty
+}

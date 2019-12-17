@@ -1,0 +1,2021 @@
+# pglcmd.lib - shell functions for pglcmd
+#
+# Copyright (C) 2005 - 2015 jre <jre-phoenix@users.sourceforge.net>
+# Parts and ideas 2005 - 2007 by JFM, /meth/usr, lestlest (clessing), Morpheus
+# and perhaps others. More Info: http://forums.phoenixlabs.org
+#
+# This file is part of pgl.
+#
+# pgl is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pgl is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with pgl.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# Remember the pglcmd option (necessary for functions that use the original $1)
+CMD_OPTION="$1"
+
+# An regular expression for IPv4 addresses
+IPv4_REGEX="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
+
+# Function to test if an external application exists.
+# Usage: test_external basename_of_the_application
+# Returns 0 if base is installed and executable in PATH
+# Otherwise returns E_XEXTERNAL
+# NOTE 1: "which" should not be used, because it is not available on all
+#         systems, e.g. routers.
+# NOTE 2: if the application is available externally and as shell builtin,
+#         the builtin will be used. This may lead to undefined behaviour.
+test_external () {
+    IFS=":"
+    for PATH_I in $PATH ; do
+        [ -x "$PATH_I"/"$1" ] &&
+            IFS=$STDIFS &&
+            return 0
+    done
+    IFS=$STDIFS
+    return $E_XEXTERNAL
+}
+
+test_sendmail () {
+    if [ $SENDMAIL ] ; then
+        if [ -x "$SENDMAIL" ] || test_external "$SENDMAIL" ; then
+            true
+        else
+            echo "Warning: $SENDMAIL not found."
+            echo "Check the SENDMAIL setting."
+            return $E_XEXTERNAL
+        fi
+    fi
+}
+
+test_INIT () {
+    case "$INIT" in
+        '0'|'1')
+            true
+            ;;
+        *)
+            log_failure_msg "Error $E_CONFIG: Check the INIT setting."
+            exit $E_CONFIG
+            ;;
+    esac
+}
+
+test_CRON () {
+    case "$CRON" in
+        '0'|'1')
+            true
+            ;;
+        *)
+            log_failure_msg "Error $E_CONFIG: Check the CRON setting."
+            exit $E_CONFIG
+            ;;
+    esac
+}
+
+test_VERBOSE () {
+    case "$VERBOSE" in
+        '0'|'1'|'2')
+            true
+            ;;
+        *)
+            log_failure_msg "Error $E_CONFIG: Check the VERBOSE setting."
+            exit $E_CONFIG
+            ;;
+    esac
+}
+
+test_DAEMON () {
+    [ -x "$DAEMON" ] || {
+            log_failure_msg "Error $E_XBIN: $DAEMON not installed."
+            log_failure_msg "Could not detect $DESC daemon $NAME."
+            log_failure_msg "Install it in PATH ($PATH) or specify DAEMON in $CMD_CONF."
+            exit $E_XBIN
+    }
+}
+
+test_CMD_PATHNAME () {
+    [ -x "$CMD_PATHNAME" ] || {
+        log_failure_msg "$0: $CMD_PATHNAME not installed."
+        exit $E_XBIN
+    }
+}
+
+test_LOG_SYSLOG () {
+    case "$LOG_SYSLOG" in
+        '0'|'1')
+            true
+            ;;
+        *)
+            log_failure_msg "Error $E_CONFIG: Check the LOG_SYSLOG setting."
+            exit $E_CONFIG
+            ;;
+    esac
+}
+
+test_IPTABLES_TARGET () {
+    case "$IPTABLES_TARGET" in
+        'NFQUEUE')
+            [ "$NFQUEUE_NUMBER" -ge 0 ] && [ "$NFQUEUE_NUMBER" -le 65535 ] || {
+                log_failure_msg "Error $E_CONFIG: Check the NFQUEUE_NUMBER setting."
+                exit $E_CONFIG
+                }
+            ;;
+        # although QUEUE is deprecated, it is the same as NFQUEUE 0.
+        'QUEUE')
+            echo "Warning: ip_queue has been obsoleted by nfnetlink_queue."
+            echo "You should replace in pglcmd.conf IPTABLES_TARGET=QUEUE with NFQUEUE."
+            ;;
+        *)
+            log_failure_msg "Error $E_CONFIG: Check the IPTABLES_TARGET setting."
+            exit $E_CONFIG
+            ;;
+    esac
+}
+
+# TODO (remove some day): Transition 2014-01-30
+test_ACCEPT () {
+    if [ -n "$ACCEPT" ] && [ "$ACCEPT" = 0 ] ; then
+        log_failure_msg "Error $E_CONFIG: You have set ACCEPT=0. This setting isn't supported anymore. Aborting ..."
+        exit $E_CONFIG
+    fi
+}
+
+# TODO (remove some day): Transition 2014-01-30
+test_REJECT () {
+    if [ -n "$REJECT" ] && [ "$REJECT" = 0 ] ; then
+        log_failure_msg "Error $E_CONFIG: You have set REJECT=0. This setting isn't supported anymore. Aborting ..."
+        exit $E_CONFIG
+    fi
+}
+
+# No test for REJECT_MARK. Valid: decimal and hexadecimal!?
+# No test for REJECT_IN. Valid: all iptables targets
+# No test for REJECT_OUT. Valid: all iptables targets
+# No test for REJECT_FWD. Valid: all iptables targets
+
+test_BLOCKLISTS_DIR () {
+    [ -d "$BLOCKLISTS_DIR" ] || {
+        echo -n "Creating missing directory $BLOCKLISTS_DIR ..."
+        mkdir -p $BLOCKLISTS_DIR && echo "."
+    } || {
+        log_failure_msg "Error $E_XCD: Missing directory $BLOCKLISTS_DIR."
+        log_failure_msg "Check the BLOCKLISTS_DIR setting."
+        exit $E_XCD
+    }
+}
+
+test_CMD_LOG () {
+    [ -d "$(dirname $CMD_LOG)" ] || {
+        echo -n "Creating missing directory $(dirname $CMD_LOG) ..."
+        mkdir -p "$(dirname $CMD_LOG)" && echo "."
+    } || {
+        log_failure_msg "Error $E_XCD: Missing directory $(dirname $CMD_LOG)."
+        log_failure_msg "Check the CMD_LOG setting."
+        exit $E_XCD
+    }
+}
+
+test_PIDFILE () {
+    [ -d "$(dirname $PIDFILE)" ] || {
+        log_failure_msg "Error $E_XCD: Missing directory $(dirname $PIDFILE)."
+        log_failure_msg "$NAME needs a directory to write its pidfile to!"
+        log_failure_msg "Check the PIDFILE setting."
+        exit $E_XCD
+    }
+}
+
+test_WD_PID () {
+    [ -d "$(dirname $WD_PID)" ] || {
+        log_failure_msg "Error $E_XCD: Missing directory $(dirname $WD_PID)."
+        log_failure_msg "$(basename $WD_PATHNAME) needs a directory to write its pidfile to!"
+        log_failure_msg "Check the WD_PID setting."
+        exit $E_XCD
+    }
+}
+
+test_WD_PATHNAME () {
+    [ -x "$WD_PATHNAME" ] || {
+        log_failure_msg "Error $E_CONFIG: Check the WD_PATHNAME setting."
+        log_failure_msg "Not starting $(basename $WD_PATHNAME)."
+        exit $E_CONFIG
+        }
+}
+
+test_IPTABLES_VARS () {
+    case "$IPTABLES_SETTINGS" in
+        '0')
+            true
+            ;;
+        '1')
+            case "$IPTABLES_ACTIVATION" in
+                '0'|'1'|'2')
+                    true
+                    ;;
+                *)
+                    log_failure_msg "Error $E_CONFIG: Check the IPTABLES_ACTIVATION setting."
+                    exit $E_CONFIG
+                    ;;
+            esac
+            case "$WHITE_LOCAL" in
+                '0'|'1'|'2')
+                    true
+                    ;;
+                *)
+                    log_failure_msg "Error $E_CONFIG: Check the WHITE_LOCAL setting."
+                    exit $E_CONFIG
+                    ;;
+            esac
+            # No test for WHITE_TCP_IN. Valid: port number or associated service name
+            # No test for WHITE_UDP_IN.
+            # No test for WHITE_TCP_OUT.
+            # No test for WHITE_UDP_OUT.
+            # No test for WHITE_TCP_FWD.
+            # No test for WHITE_UDP_FWD.
+            # No test for WHITE_IP_IN. Valid: network name, a hostname (please note that specifying
+            #   any name to be resolved with a remote query such as DNS is a really bad idea), a
+            #   network IP address (with /mask), or a plain IP address.
+            # No test for WHITE_IP_OUT.
+            # No test for WHITE_IP_FWD.
+            # No test for INTERFACES.
+            # No test for IP_REMOVE. Valid: all regular expressions for grep
+            ;;
+        '2')
+            [ -d "$IPTABLES_CUSTOM_DIR" ] || {
+                log_failure_msg "Error $E_XCD: Could not find $IPTABLES_CUSTOM_DIR."
+                log_failure_msg "Check the IPTABLES_CUSTOM_DIR setting."
+                exit $E_XCD
+            }
+            ;;
+        *)
+            log_failure_msg "Error $E_CONFIG: Check the IPTABLES_SETTINGS setting."
+            exit $E_CONFIG
+            ;;
+    esac
+}
+
+# Test if user is root
+test_root () {
+    case "$(id -ru)" in
+        '0')
+            true
+            ;;
+        *)
+            log_failure_msg "Error $E_NOTROOT: This program must be run as root."
+            exit $E_NOTROOT
+            ;;
+    esac
+}
+
+################################################################################
+# Functions
+
+# Try to download TESTHOST before blocklist updates.
+# If this fails, pglcmd assumes that there is no network available, and thus
+# aborts the update. The default configured site is also used to determine the
+# user friendly blocklist names for iblocklist.com URLs.
+test_net () {
+    test_external wget || {
+        log_failure_msg "Error $E_XEXTERNAL: wget not installed."
+        exit $E_XEXTERNAL
+        }
+    # Create BLOCKLISTS_DIR if missing
+    [ -d "$BLOCKLISTS_DIR" ] ||
+        mkdir -p "$BLOCKLISTS_DIR" ||
+        { log_failure_msg " Error: mkdir -p exited with $?" ; exit 1 ; }
+    # Get TESTHOST (per default this is lists.xml from iblocklist,
+    # which is later on parsed to figure out human readable listnames.
+    # Save it first with a backup name.
+    $WGET_OPTS -O "${BLOCKLISTS_DIR}/lists.xml~" $TESTHOST    # Don't quote WGET_OPTS!
+    if [ "$?" -ne 0 ] ; then
+        log_failure_msg "Error $E_NETWORK_DOWN: No connection to $TESTHOST. Aborting!"
+        exit $E_NETWORK_DOWN
+    fi
+    # If file is valid rename it to original name.
+    if [ "$( wc -l < ${BLOCKLISTS_DIR}/lists.xml~ )" -gt 0 ] ; then
+        mv ${BLOCKLISTS_DIR}/lists.xml~ ${BLOCKLISTS_DIR}/lists.xml
+    fi
+}
+
+# Calculate the routing prefix and its bits length for a given IP and subnetmask
+# (convert ifconfig output to iptables output)
+# e.g. IP=192.168.178.21 and SUBNETMASK=255.255.255.0 get 192.168.178.0/24
+set_NETWORK () {
+    local NETIP1 NETIP2 NETIP3 NETIP4 MASK1 MASK2 MASK3 MASK4 BITS
+    [ $# -eq 2 ] || { echo "Internal error: Usage set_NETWORK IP SUBNETMASK, arguments were: \"${@}\"." ; exit 1 ; }
+    echo $1 | grep -Eq "$IPv4_REGEX" || { echo "Internal error: $1 is not a valid IP!" ; exit 1 ; }
+    echo $2 | grep -Eq "$IPv4_REGEX" || { echo "Internal error: $2 is not a valid SUBNETMASK!" ; exit 1 ; }
+
+    IFS=.
+    i=1
+    for OCTET in $1 ; do
+        # Don't know why eval is necessary, but it is.
+        eval NETIP${i}="${OCTET}"
+        i=$(($i+1))
+    done
+    i=1
+    for OCTET in $2 ; do
+        eval MASK${i}="${OCTET}"
+        i=$(($i+1))
+    done
+    IFS=$STDIFS
+
+    # Use bitwise ANDing for the routing prefix
+    NET1=$(( $NETIP1 & $MASK1 ))
+    NET2=$(( $NETIP2 & $MASK2 ))
+    NET3=$(( $NETIP3 & $MASK3 ))
+    NET4=$(( $NETIP4 & $MASK4 ))
+
+    # Haven't found a way to calculate this in a shell script. So using this table
+    # for the bits length
+    case $2 in
+        255.0.0.0)        BITS="/8" ;;
+        255.128.0.0)      BITS="/9" ;;
+        255.192.0.0)      BITS="/10" ;;
+        255.224.0.0)      BITS="/11" ;;
+        255.240.0.0)      BITS="/12" ;;
+        255.248.0.0)      BITS="/13" ;;
+        255.252.0.0)      BITS="/14" ;;
+        255.254.0.0)      BITS="/15" ;;
+        255.255.0.0)      BITS="/16" ;;
+        255.255.128.0)    BITS="/17" ;;
+        255.255.192.0)    BITS="/18" ;;
+        255.255.224.0)    BITS="/19" ;;
+        255.255.240.0)    BITS="/20" ;;
+        255.255.248.0)    BITS="/21" ;;
+        255.255.252.0)    BITS="/22" ;;
+        255.255.254.0)    BITS="/23" ;;
+        255.255.255.0)    BITS="/24" ;;
+        255.255.255.128)  BITS="/25" ;;
+        255.255.255.192)  BITS="/26" ;;
+        255.255.255.224)  BITS="/27" ;;
+        255.255.255.240)  BITS="/28" ;;
+        255.255.255.248)  BITS="/29" ;;
+        255.255.255.252)  BITS="/30" ;;
+        255.255.255.255)  BITS="" ;;
+        *) { echo "Internal error: Cannot calculate bits length for ${2}!" ; exit 1 ; } ;;
+    esac
+    echo ${NET1}.${NET2}.${NET3}.${NET4}${BITS}
+}
+
+white_local () {
+    # If CHAINS is empty/not set, then set it to "all". Replace all with the single names.
+    CHAINS=${CHAINS:-all}
+    [ "$CHAINS" != all ] || CHAINS="INPUT OUTPUT FORWARD"
+
+    if [ "$WHITE_LOCAL" -ne 0 ] ; then
+        # Whitelist loopback interface
+        # TODO: Only do this if checking the loopback interface is enabled
+        # (although otherwise just no traffic will ever get to the pgl_ chain were this rule is placed).
+        # Do this only once on (re)start
+        if [ "$CMD_OPTION" = start ] || [ "$CMD_OPTION" = restart ] ; then
+            echo -n "..Allowing loopback traffic:"
+            for CHAIN in $CHAINS ; do
+                case $CHAIN in
+                INPUT)
+                    PGL_CHAIN="$IPTABLES_IN"
+                    CMD_LOOP="-i lo"
+                    ;;
+                OUTPUT)
+                    PGL_CHAIN="$IPTABLES_OUT"
+                    CMD_LOOP="-o lo"
+                    ;;
+                FORWARD)
+                    continue
+                    ;;
+                *)
+                    echo " Unknown CHAIN $CHAIN specified."
+                    exit 1
+                    ;;
+                esac
+                echo -n " $CHAIN"
+                # Insert whitelisting rules for whole loopback interface
+                iptables -I $PGL_CHAIN $CMD_LOOP -j $IPTABLES_TARGET_WHITELISTING || fail_insert_iptables
+            done
+            log_end_msg 0
+        fi
+
+        # Whitelist the DNS server(s).
+        # For this /etc/resolv.conf and the output of "iptables -L -nv" is scanned for certain patterns.
+        if [ -f /etc/resolv.conf ] ; then
+            # Get the DNS server's IP
+            DNS_IPS="$( grep nameserver /etc/resolv.conf | grep -Eo "$IPv4_REGEX" )"
+
+            # Insert whitelisting rules for DNS server.
+            for CHAIN in $CHAINS ; do
+                case $CHAIN in
+                INPUT)
+                    continue
+                    ;;
+                OUTPUT)
+                    PGL_CHAIN="$IPTABLES_OUT"
+                    ;;
+                FORWARD)
+                    PGL_CHAIN="$IPTABLES_FWD"
+                    ;;
+                esac
+
+                for IP in $DNS_IPS ; do
+                    echo -n "..Allowing $CHAIN traffic to DNS server $IP"
+                    # Whitelist DNS server, if we do an inital start/restart (quick
+                    # test of $CMD_OPTION) or if the DNS server is not already whitelisted
+                    # (time-consuming test of iptables output).
+                    # With other words:
+                    # pglcmd start/restart: always whitelist DNS server
+                    # if-up: first check if DNS server is already whitelisted.
+                    if [ "$CMD_OPTION" = start ] || [ "$CMD_OPTION" = restart ] ||
+                    ! iptables -nv -L $PGL_CHAIN | grep -F "$IP " | grep $IPTABLES_TARGET_WHITELISTING > /dev/null 2>&1 ; then
+                        iptables -I $PGL_CHAIN --destination $IP -j $IPTABLES_TARGET_WHITELISTING
+                        RETVAL=$?
+                        log_end_msg $RETVAL
+                        [ "$RETVAL" = 0 ] || exit $E_IPTABLES
+                    else
+                        echo ", already done."
+                    fi
+                done
+            done
+        fi
+    fi
+
+    if [ "$WHITE_LOCAL" -eq 1 ] ; then
+        echo "..Allowing LAN traffic ..."
+        # Automatically whitelist LAN of all up interfaces
+        # TODO: Only do this if checking the corresponding interface is enabled
+        # For this the output of "ifconfig" and "iptables -L -nv" is scanned for certain patterns
+
+        # Get IPs of interfaces that are up
+        LOCAL_IPS="$(ifconfig |
+            grep -Eo "inet addr:$IPv4_REGEX" |
+            grep -Eo "$IPv4_REGEX" )"
+        for IP in $LOCAL_IPS ; do
+            case $IP in
+            127.*)
+                # IP is a loopback IP. This was already done above.
+                ;;
+            *)
+                # For all other IPs
+                # Get the corresponding subnetmask
+                # Use grep -F followed by a blank to match exactly a specific IP!
+                SUBNETMASK="$(ifconfig |
+                    grep -F "inet addr:${IP} " |
+                    grep -Eo "Mask:${IPv4_REGEX}" |
+                    grep -Eo "$IPv4_REGEX" )"
+                # Set NETWORK as it will be shown by iptables
+                NETWORK="$(set_NETWORK $IP $SUBNETMASK)"
+
+                # Insert whitelisting rules for LAN with SUBNETMASK.
+                for CHAIN in $CHAINS ; do
+                    case $CHAIN in
+                    INPUT)
+                        PGL_CHAIN="$IPTABLES_IN"
+                        CMD_WHITE_IP="--source ${IP}/${SUBNETMASK}"
+                        DIRECTION="from"
+                        ;;
+                    OUTPUT)
+                        PGL_CHAIN="$IPTABLES_OUT"
+                        CMD_WHITE_IP="--destination ${IP}/${SUBNETMASK}"
+                        DIRECTION="to"
+                        ;;
+                    FORWARD)
+                        PGL_CHAIN="$IPTABLES_FWD"
+                        # To whitelist all local FORWARD traffic add whitelisting rules from every single
+                        # interface to every other interface.
+                        for IP2 in $LOCAL_IPS ; do
+                            # Skip if interface is loopback.
+                            [ "$(echo "$IP2" | head -c 4)" = 127. ] && continue
+                            # Get the corresponding subnetmask
+                            # Use grep -F followed by a blank to match exactly a specific IP!
+                            SUBNETMASK2="$(ifconfig |
+                                grep -F "inet addr:${IP2} " |
+                                grep -Eo "Mask:$IPv4_REGEX" |
+                                grep -Eo "$IPv4_REGEX" )"
+                            # Set NETWORK2 as it will be shown by iptables
+                            NETWORK2="$(set_NETWORK $IP2 $SUBNETMASK2)"
+
+                            echo -n "....$CHAIN from $NETWORK to $NETWORK2"
+                            if [ "$CMD_OPTION" = start ] || [ "$CMD_OPTION" = restart ] ||
+                            ! iptables -nv -L $PGL_CHAIN | grep "$IPTABLES_TARGET_WHITELISTING .* $NETWORK *$NETWORK2" > /dev/null 2>&1 ; then
+                                iptables -I $PGL_CHAIN --source ${IP}/${SUBNETMASK} --destination ${IP2}/${SUBNETMASK2} -j $IPTABLES_TARGET_WHITELISTING
+                                RETVAL=$?
+                                log_end_msg $RETVAL
+                                [ "$RETVAL" = 0 ] || exit $E_IPTABLES
+                            else
+                                echo ", already done."
+                            fi
+                        done
+                        continue
+                        ;;
+                    esac
+                    echo -n "....$CHAIN $DIRECTION $NETWORK"
+                    # Whitelist LAN, if we do an inital start/restart (quick
+                    # test of $CMD_OPTION) or if the LAN is not already whitelisted
+                    # (time-consuming test of iptables output).
+                    # With other words:
+                    # pglcmd start/restart: always whitelist LAN
+                    # if-up: first check iptables output if LAN is already whitelisted.
+                    if [ "$CMD_OPTION" = start ] || [ "$CMD_OPTION" = restart ] ||
+                    ! iptables -nv -L $PGL_CHAIN | grep "$IPTABLES_TARGET_WHITELISTING .* $NETWORK" > /dev/null 2>&1 ; then
+                        iptables -I $PGL_CHAIN $CMD_WHITE_IP -j $IPTABLES_TARGET_WHITELISTING
+                        RETVAL=$?
+                        log_end_msg $RETVAL
+                        [ "$RETVAL" = 0 ] || exit $E_IPTABLES
+                    else
+                        echo ", already done."
+                    fi
+                done
+                ;;
+            esac
+        done
+    echo "..LAN traffic allowed."
+    fi
+}
+
+# Function to be executed if iptables insert command fails:
+# removes all iptables rules again and aborts
+fail_insert_iptables () {
+    log_end_msg $?
+    # Try to build the REMOVE_SCRIPT in any case
+    [ ! -e "${REMOVE_SCRIPT}" ] || cat ${REMOVE_SCRIPT} >> ${REMOVE_SCRIPT}.tmp
+    mv ${REMOVE_SCRIPT}.tmp $REMOVE_SCRIPT
+    delete_iptables
+    exit $E_IPTABLES
+}
+
+# Set REMOVE_SCRIPT needed by insert_iptables and delete_iptables
+REMOVE_SCRIPT="$MASTER_BLOCKLIST_DIR/.${CMD_NAME}.iptables.remove.sh"
+
+# Function that inserts the iptables rules
+insert_iptables () {
+    # test_IPTABLES_VARS # Already tested in do_start
+    test_external iptables || {
+        log_failure_msg "Error $E_XEXTERNAL: iptables not installed."
+        exit $E_XEXTERNAL
+        }
+    if [ -f "$REMOVE_SCRIPT" ] ; then
+        echo -n "Old iptables remove script $REMOVE_SCRIPT exists. Strange. Executing"
+        sh $REMOVE_SCRIPT
+        echo -n " and removing it"
+        rm $REMOVE_SCRIPT
+        log_end_msg $?
+    fi
+    case "$IPTABLES_SETTINGS" in
+    '0')
+        test_VERBOSE
+        if [ "$VERBOSE" -eq 1 ] ; then
+            log_warning_msg "$(basename $0) is configured not to insert iptables rules."
+        fi
+        ;;
+    # Place iptables rules in separate iptables chains (pgl_in, pgl_out and pgl_fwd).
+    '1')
+        echo "Inserting iptables ..."
+
+        # Variable tests
+        test_IPTABLES_TARGET
+        test_REJECT
+        test_ACCEPT
+
+        # Set constant variables for iptables commands
+        case "$IPTABLES_TARGET" in
+        NFQUEUE)
+            IPTABLES_TARGET_BLOCK="$IPTABLES_TARGET --queue-num $NFQUEUE_NUMBER"
+            ;;
+        QUEUE)
+            IPTABLES_TARGET_BLOCK="$IPTABLES_TARGET"
+            ;;
+        esac
+
+        # If CHAINS is empty/not set, then set it to "all". Replace all with the single names.
+        CHAINS=${CHAINS:-all}
+        [ "$CHAINS" != all ] || CHAINS="INPUT OUTPUT FORWARD"
+
+        # Prepare and issue iptables commands for every chain.
+        for CHAIN in $CHAINS ; do
+            echo "..Setting up iptables for $CHAIN:"
+            case $CHAIN in
+            INPUT)
+                PGL_CHAIN="$IPTABLES_IN"
+                WHITE_TCP="$WHITE_TCP_IN"
+                WHITE_UDP="$WHITE_UDP_IN"
+                CMD_WHITE_IP="--source"
+                WHITE_IP="$WHITE_IP_IN"
+                CMD_ALLOW="--src-range"
+                ALLOW_FILE="$ALLOW_IN"
+                REJECT_TARGET="$REJECT_IN"
+                ;;
+            OUTPUT)
+                PGL_CHAIN="$IPTABLES_OUT"
+                WHITE_TCP="$WHITE_TCP_OUT"
+                WHITE_UDP="$WHITE_UDP_OUT"
+                CMD_WHITE_IP="--destination"
+                WHITE_IP="$WHITE_IP_OUT"
+                CMD_ALLOW="--dst-range"
+                ALLOW_FILE="$ALLOW_OUT"
+                REJECT_TARGET="$REJECT_OUT"
+                ;;
+            FORWARD)
+                PGL_CHAIN="$IPTABLES_FWD"
+                WHITE_TCP="$WHITE_TCP_FWD"
+                WHITE_UDP="$WHITE_UDP_FWD"
+                CMD_WHITE_IP="--source --destination"
+                WHITE_IP="$WHITE_IP_FWD"
+                CMD_ALLOW="--src-range --dst-range"
+                ALLOW_FILE="$ALLOW_FWD"
+                REJECT_TARGET="$REJECT_FWD"
+                ;;
+            *)
+                echo " Unknown CHAIN $CHAIN specified."
+                exit 1
+                ;;
+            esac
+
+            # Create new pgl_ chain and remember iptables removal rules.
+            # Remember the removal command before actually inserting, because one of the possible reasons for
+            # the iptables command to fail is that the chain already exists (for whatever reason).
+            echo -n "....Creating chain" &&
+                echo "iptables -F $PGL_CHAIN" >> $REMOVE_SCRIPT &&
+                echo "iptables -X $PGL_CHAIN" >> $REMOVE_SCRIPT &&
+                iptables -N $PGL_CHAIN ||
+                fail_insert_iptables
+
+            # Insert NFQUEUE rule.
+            echo -n " and inserting $IPTABLES_TARGET rule" &&
+                iptables -I $PGL_CHAIN -j $IPTABLES_TARGET_BLOCK &&
+                log_end_msg "$?" ||
+                fail_insert_iptables
+
+            # Port Whitelisting
+            [ -z "$WHITE_TCP" ] && [ -z "$WHITE_UDP" ] ||
+                {
+                echo -n "....Whitelisting ports" &&
+                for PORT in $WHITE_TCP ; do
+                    iptables -I $PGL_CHAIN -p tcp --dport $PORT -j $IPTABLES_TARGET_WHITELISTING || fail_insert_iptables
+                done &&
+                for PORT in $WHITE_UDP ; do
+                    iptables -I $PGL_CHAIN -p udp --dport $PORT -j $IPTABLES_TARGET_WHITELISTING || fail_insert_iptables
+                done &&
+                log_end_msg "$?"
+                }
+
+            # IP Whitelisting
+            [ -n "$WHITE_IP" ] &&
+                echo -n "....Whitelisting IPs" &&
+                for IP in $WHITE_IP ; do
+                    # Add whitelisting rule
+                    # (add 2 rules in the FORWARD chain: once for --source, once for --destination)
+                    for CMD in $CMD_WHITE_IP ; do
+                        iptables -I $PGL_CHAIN $CMD $IP -j $IPTABLES_TARGET_WHITELISTING || fail_insert_iptables
+                    done
+                done &&
+                log_end_msg "$?"
+
+            # IP ranges whitelisting
+            if [ -f "$ALLOW_FILE" ] ; then
+                echo -n "....Whitelisting IP ranges"
+                # Read the non-comment|not-empty lines from the allow file:
+                ALLOW="$(grep -Ev "^[[:space:]]*#|^[[:space:]]*$" $ALLOW_FILE)"
+                IFS=$'
+' # Set IFS to newline only for LINE
+                for LINE in $ALLOW ; do
+                    IPRANGE_BEGIN="$(echo $LINE | grep -Eo "$IPv4_REGEX" | head -n1)"
+                    IPRANGE_END="$(echo $LINE | grep -Eo "$IPv4_REGEX" | tail -n1)"
+                    # Reset IFS for CMD
+                    IFS=$STDIFS
+                    for CMD in $CMD_ALLOW ; do
+                        # Add whitelisting rule
+                        # (add 2 rules in the FORWARD chain: once for --src-range, once for --dst-range)
+                        iptables -I $PGL_CHAIN -m iprange $CMD $IPRANGE_BEGIN-$IPRANGE_END -j $IPTABLES_TARGET_WHITELISTING || {
+                            # If iptables insertion failed assume that the line is malformed.
+                            # Comment this line out.
+                            sed -i "s|^$LINE$|# Malformed line commented out by $(basename $0): &|" $ALLOW_FILE
+                            log_failure_msg "Commented out malformed line \"$LINE\" in $ALLOW_FILE."
+                            fail_insert_iptables
+                            }
+                    done
+                    IFS=$'
+' # Set IFS to newline only again for the next LINE
+                done
+                # Reset IFS
+                IFS=$STDIFS
+                log_end_msg "$?"
+            fi
+
+            # Block "Marked block" packages: "Marked block" packages are sent back
+            # to the head of the chain again (NF_REPEAT repeats the hook function)
+            # by pgld. Block them at the head of the pglcmd_* chains.
+            # Alternatively they could be blocked at the head of the
+            # INPUT/OUTPUT/FORWARD chains, but I decided against that in order to
+            # keep those chains cleaner. It has to be made sure that the MARK of the
+            # packets is not changed by other iptables rules.
+            echo -n "....Inserting block rule"
+            iptables -I $PGL_CHAIN -m mark --mark $REJECT_MARK -j $REJECT_TARGET || fail_insert_iptables
+            # Log "Marked block" packages: The log-iptables-rules should be
+            # placed directly before the block-iptables-rules (i.e. Insert them
+            # directly after them)
+            if [ -n "$LOG_IPTABLES" ] ; then    # string is not empty
+                echo -n " and log rule"
+                iptables -I $PGL_CHAIN -m mark --mark $REJECT_MARK -j $LOG_IPTABLES || fail_insert_iptables
+            fi
+            log_end_msg "$?"
+        done
+
+        # Automatically whitelist LAN of all up interfaces, loopback interface
+        # and DNS server(s) (if configured)
+        white_local
+
+        # If custom iptables insertion scripts exist, execute them:
+        CUSTOM_INSERT_SCRIPTS="$(find $IPTABLES_CUSTOM_DIR -maxdepth 1 -type f -name "*insert.sh" -print0 | xargs -0r)"
+        [ -z "$CUSTOM_INSERT_SCRIPTS" ] || {
+            for FILE in $CUSTOM_INSERT_SCRIPTS ; do
+                echo -n "..Executing custom iptables insertion script $FILE"
+                sh $FILE
+                log_end_msg "$?"
+            done
+            }
+
+        # Chain activation
+        case "$IPTABLES_ACTIVATION" in
+        '0')
+            if [ "$VERBOSE" -eq 1 ] ; then
+                echo "..Not activating chains."
+            fi
+            ;;
+        '1'|'2')
+            echo "..Activating chains:"
+            # Don't send RELATED or ESTABLISHED packets to the pglcmd_* chains.
+            case "$IPTABLES_ACTIVATION" in
+            '1')
+                CMD_STATE="-m conntrack ! --ctstate RELATED,ESTABLISHED"
+                ;;
+            '2')
+                CMD_STATE=""
+                ;;
+            esac
+            # Don't send "marked accept" packets to the pglcmd_* chains.
+            # From there "marked" packets are sent back to the head of the chain again
+            # (NF_REPEAT repeats the hook function). Thus "marked accept" packets traverse to
+            # the rest of the iptables setup.
+            # Problem: If another rule changes the MARK the packet will loop forever.
+            CMD_MARK_ACCEPT="-m mark ! --mark $ACCEPT_MARK"
+
+            # If INTERFACES is empty/not set, then set it to "all".
+            INTERFACES=${INTERFACES:-all}
+
+            # Send traffic of the specified interfaces to the pgl chains.
+            for INTERFACE in $INTERFACES ; do
+                for CHAIN in $CHAINS ; do
+                    case $CHAIN in
+                    INPUT)
+                        PGL_CHAIN="$IPTABLES_IN"
+                        ;;
+                    OUTPUT)
+                        PGL_CHAIN="$IPTABLES_OUT"
+                        ;;
+                    FORWARD)
+                        PGL_CHAIN="$IPTABLES_FWD"
+                        ;;
+                    esac
+
+                    # Activate iptables chain and remember iptables removal command.
+                    # Remember the removal command before actually inserting, because one of the possible reasons for
+                    # the iptables command to fail is that the rule already exists (for whatever reason).
+                    if [ "$INTERFACE" = all ] ; then
+                        echo  "....$CHAIN"
+                        echo "iptables -D $CHAIN $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN" >> ${REMOVE_SCRIPT}.tmp &&
+                        iptables -I $CHAIN $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN ||
+                        fail_insert_iptables
+                    else
+                        echo  "....$CHAIN on $INTERFACE"
+                        case $CHAIN in
+                        INPUT)
+                            echo "iptables -D $CHAIN -i $INTERFACE $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN" >> ${REMOVE_SCRIPT}.tmp &&
+                            iptables -I $CHAIN -i $INTERFACE $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN ||
+                            fail_insert_iptables
+                            ;;
+                        OUTPUT)
+                            echo "iptables -D $CHAIN -o $INTERFACE $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN" >> ${REMOVE_SCRIPT}.tmp &&
+                            iptables -I $CHAIN -o $INTERFACE $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN ||
+                            fail_insert_iptables
+                            ;;
+                        FORWARD)
+                            echo "iptables -D $CHAIN -i $INTERFACE $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN" >> ${REMOVE_SCRIPT}.tmp &&
+                            iptables -I $CHAIN -i $INTERFACE $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN &&
+                            echo "iptables -D $CHAIN -o $INTERFACE $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN" >> ${REMOVE_SCRIPT}.tmp &&
+                            iptables -I $CHAIN -o $INTERFACE $CMD_STATE $CMD_MARK_ACCEPT -j $PGL_CHAIN ||
+                            fail_insert_iptables
+                            ;;
+                        # Valid CHAINs was already tested above. No test needed here.
+                        esac
+                    fi
+                done
+            done
+            echo "..Chains activated."
+            # Build the REMOVE_SCRIPT
+            # In REMOVE_SCRIPT are the flush&remove-chains commands (first inserted),
+            # in REMOVE_SCRIPT.tmp the remove-the-activation-rules commands.
+            # The way the script is built, this order is reversed:
+            cat $REMOVE_SCRIPT >> ${REMOVE_SCRIPT}.tmp &&
+                mv ${REMOVE_SCRIPT}.tmp $REMOVE_SCRIPT ||
+                { echo "Error: Could not build the iptables remove script!" ; fail_insert_iptables ; }
+            ;;
+        esac
+        echo "Iptables inserted."
+        ;;
+    '2')
+        CUSTOM_INSERT_SCRIPTS="$(find $IPTABLES_CUSTOM_DIR -maxdepth 1 -type f -name "*insert.sh" -print0 | xargs -0r)"
+        [ -z "$CUSTOM_INSERT_SCRIPTS" ] || {
+            for FILE in $CUSTOM_INSERT_SCRIPTS ; do
+                echo -n "  Executing custom iptables insertion script $FILE ..."
+                sh $FILE && log_end_msg $? || fail_insert_iptables
+                log_end_msg $?
+            done
+            }
+        ;;
+    esac
+}
+
+# Function that deletes the iptables rules
+# iptables command errors are ignored, because removing an already removed rule
+# causes an error, although this is no problem for us.
+delete_iptables () {
+    test_IPTABLES_VARS
+    test_external iptables || {
+        log_failure_msg "Error $E_XEXTERNAL: iptables not installed."
+        exit $E_XEXTERNAL
+        }
+    echo "Deleting iptables ..."
+
+    # Execute custom iptables remove scripts if configured
+    if [ "$IPTABLES_SETTINGS" -gt 0 ] ; then
+        # If custom iptables remove scripts exist, execute them:
+        CUSTOM_REMOVE_SCRIPTS="$(find $IPTABLES_CUSTOM_DIR -maxdepth 1 -type f -name "*remove.sh" -print0 | xargs -0r)"
+        [ -z "$CUSTOM_REMOVE_SCRIPTS" ] || {
+            for FILE in $CUSTOM_REMOVE_SCRIPTS ; do
+                echo -n "..Executing custom iptables remove script $FILE"
+                sh $FILE
+                log_end_msg $?
+            done
+            }
+    fi
+    if [ -f "$REMOVE_SCRIPT" ] ; then
+        # Delete previously inserted iptables rules in any case. REMOVE_SCRIPT is created in insert_iptables
+        echo -n "..Executing iptables remove script $REMOVE_SCRIPT"
+        sh $REMOVE_SCRIPT
+        log_end_msg $?
+        # Remove REMOVE_SCRIPT in any case! It's not meant to be used several times.
+        echo -n "..Removing iptables remove script $REMOVE_SCRIPT"
+        rm $REMOVE_SCRIPT
+        log_end_msg $?
+    fi
+    echo "Iptables deleted."
+}
+
+# md5sum of all relevant parts for building the MASTER_BLOCKLIST
+set_md5sum () {
+    SUM="$(
+        echo $IP_REMOVE
+        [ -f "$BLOCKLISTS_LIST" ] && md5sum $BLOCKLISTS_LIST
+        [ -f "$MASTER_BLOCKLIST" ] && md5sum $MASTER_BLOCKLIST
+        set_BLOCKLISTS_LOCAL
+        for LIST in $BLOCKLISTS_LOCAL ; do
+            [ -f "$LIST" ] && md5sum $LIST
+        done
+        )"
+    MD5SUM="$(echo $SUM | md5sum | cut -c -32)"
+}
+
+# All blocklists in the LOCAL_BLOCKLIST_DIR directory (except those in
+# subdirectories, or which end in "~" or start with ".") are merged in the
+# MASTER_BLOCKLIST and thus used by pgld.
+# Spaces in listnames are not allowed.
+set_BLOCKLISTS_LOCAL () {
+    BLOCKLISTS_LOCAL=""
+    [ -d "$LOCAL_BLOCKLIST_DIR" ] &&
+    BLOCKLISTS_LOCAL="$(find -L $LOCAL_BLOCKLIST_DIR -maxdepth 1 -type f \
+        ! -name "*~" \
+        ! -name ".*" |
+        tr "\n" " ")"
+}
+
+# Function that starts the watchdog
+do_start_wd () {
+    # Start pglcmd.wd.
+    echo -n "Starting $(basename $WD_PATHNAME)"
+    test_WD_PATHNAME
+    test_WD_PID
+
+    # Test WD_NICE setting.
+    [ "$WD_NICE" -ge -20 ] && [ "$WD_NICE" -le 19 ] || {
+        log_failure_msg " Error $E_CONFIG: Check the WD_NICE setting."
+        exit $E_CONFIG
+        }
+
+    # Start pglcmd.wd in the background. Therefore no real check possible if this succeeded.
+    if test_external start-stop-daemon ; then
+        # Use start-stop-daemon
+        # Start watchdog in the background with "-b"
+        # Note: use -N for nice level, not -n as per LSB
+        #start-stop-daemon -b -N $WD_NICE -p $WD_PID --exec $WD_PATHNAME --start --
+        # Use -x and -S to avoid problems on synology
+        start-stop-daemon -b -N $WD_NICE -p $WD_PID -x $WD_PATHNAME -S --
+    else
+        # LSB, start pglcmd.wd in the background with "&".
+        start_daemon -n $WD_NICE -p $WD_PID $WD_PATHNAME &
+    fi
+    # TODO: kill -0 "$(pidofproc $WD_PATHNAME)" > /dev/null 2>&1
+    RETVAL=$?
+    log_end_msg $RETVAL
+}
+
+# Function that stops the watchdog
+do_stop_wd () {
+    # Stop pglcmd.wd
+    echo -n "Stopping $(basename $WD_PATHNAME)"
+    # Watchdog does not react to the TERM signal, while he´s sleeping.
+    # Therefore send a KILL. The pidfile has to be removed manually then, see below!
+    PID_OPT=""
+    [ -z "$WD_PID" ] || PID_OPT="-p $WD_PID"
+    killproc "$PID_OPT" "$WD_PATHNAME" -KILL
+
+    # Verify that the watchdog is really not running.
+    kill -0 "$(pidof $WD_PATHNAME)" > /dev/null 2>&1
+    # If old process is not running, remember success and break.
+    if [ "$?" -eq 0 ] ; then
+        # Process is still running
+        RETVAL=1
+    else
+        rm -f $WD_PID
+        RETVAL=0
+    fi
+
+    log_end_msg $RETVAL
+}
+
+# Function that starts daemon and watchdog
+do_start () {
+    test_DAEMON
+    # Check if daemon is already running
+    status_of_proc $DAEMON $NAME > /dev/null 2>&1
+    RETVAL=$?
+    case "$RETVAL" in
+        0)  # Daemon is running
+            log_success_msg "$NAME is already running, doing nothing."
+            ;;
+        3)  # Daemon is not running.
+
+            # Build blocklist if necessary to make sure pglcmd's settings are taken.
+            # Force to build it, if started with force-restart.
+            [ ! "$CMD_OPTION" = force-restart ] &&
+                [ -f "$MD5SUM_FILE" ] &&
+                set_md5sum &&
+                [ "$MD5SUM" = "$(cat $MD5SUM_FILE)" ] ||
+                build_blocklist
+
+            test_IPTABLES_TARGET
+            test_REJECT
+            test_ACCEPT
+            test_IPTABLES_VARS
+            test_LOG_SYSLOG
+            test_PIDFILE
+
+            # Load kernel modules after checking if they are already loaded / were compiled in the kernel directly.
+            # Note 1: I (jre) have not seen documentation how this works. E.g. loading (modprobe) a module does
+            #         not give the specified entries in /proc/net. But once pgld was started they are there.
+            # Note 2: On a first glance some modules might be loaded conditional on some configuration. I decided
+            #         against that to allow for e.g. custom iptables rules.
+
+            # TODO: iptable_filter
+            # TODO: ip_tables
+            # TODO: nfnetlink
+            # TODO: nfnetlink_queue
+            # TODO: x_tables
+
+            # xt_NFQUEUE
+            case "$IPTABLES_TARGET" in
+                NFQUEUE)
+                    [ -f /proc/net/ip_tables_targets ] && grep -q NFQUEUE /proc/net/ip_tables_targets ||
+                        modprobe -q xt_NFQUEUE ||
+                        modprobe -q ipt_NFQUEUE || {
+                        log_failure_msg "Error $E_XEXTERNAL: Could not load kernel module xt_NFQUEUE, not starting $NAME!"
+                        exit $E_XEXTERNAL
+                        }
+                    ;;
+                QUEUE)
+                    [ -f /proc/net/ip_queue ] ||
+                        modprobe -q ip_queue || {
+                        log_failure_msg "Error $E_XEXTERNAL: Could not load kernel module ip_queue, not starting $NAME!"
+                        exit $E_XEXTERNAL
+                        }
+                    ;;
+            esac
+
+            # TODO: xt_tcpudp
+                # /proc/net/ip_tables_matches:
+                # udplite
+                # udp
+                # tcp
+
+            # xt_mark
+            [ -f /proc/net/ip_tables_matches ] && grep -q mark /proc/net/ip_tables_matches ||
+                modprobe -q xt_mark ||
+                modprobe -q ipt_mark ||
+                if [ "$REJECT" = 1 ] || [ "$ACCEPT" = 1 ] ; then
+                    log_failure_msg "Error $E_XEXTERNAL: Could not load kernel module xt_mark, not starting $NAME!"
+                    log_failure_msg "Use a kernel with netfilter MARK support."
+                    exit $E_XEXTERNAL
+                else
+                    log_warning_msg "Warning: Could not load kernel module xt_mark, continuing anyway."
+                fi
+
+            # ipt_REJECT
+            if [ "$REJECT_OUT" = REJECT ] || [ "$REJECT_FWD" = REJECT ] || [ "$REJECT_IN" = REJECT ] ; then
+                [ -f /proc/net/ip_tables_targets ] && grep -q REJECT /proc/net/ip_tables_targets ||
+                modprobe -q xt_REJECT ||
+                modprobe -q ipt_REJECT || {
+                log_failure_msg "Error $E_XEXTERNAL: Could not load kernel module ipt_REJECT, not starting ${NAME}."
+                log_failure_msg "Use a kernel with netfilter REJECT support or configure $(basename $0)"
+                log_failure_msg "to DROP instead of REJECT blocked packets."
+                exit $E_XEXTERNAL
+                }
+            fi
+
+            # xt_conntrack
+            # TODO: nf_conntrack
+            # TODO: nf_conntrack_ipv4
+            # TODO: nf_defrag_ipv4
+            [ -f /proc/net/ip_tables_matches ] && grep -q conntrack /proc/net/ip_tables_matches ||
+                modprobe -q xt_conntrack ||
+                modprobe -q ipt_conntrack ||
+                if [ "$IPTABLES_ACTIVATION" = 1 ] ; then
+                    log_failure_msg "Error $E_XEXTERNAL: Could not load kernel module xt_conntrack, not starting $NAME!"
+                    log_failure_msg "Use a kernel with netfilter CONNTRACK support or reconfigure $(basename $0)"
+                    log_failure_msg "to check all traffic (not only NEW) traffic (option IPTABLES_ACTIVATION)"
+                    log_failure_msg "(not recommended due to excess cpu usage)."
+                    exit $E_XEXTERNAL
+                else
+                    log_warning_msg "Warning: Could not load kernel module xt_conntrack, continuing anyway."
+                fi
+
+            # xt_iprange
+            # If module is missing only error out if it is really needed (= allow file with IP ranges exists),
+            # else just warn about missing module.
+            [ -f /proc/net/ip_tables_matches ] && grep -q iprange /proc/net/ip_tables_matches ||
+                modprobe -q xt_iprange ||
+                modprobe -q ipt_iprange ||
+                {
+                # If CHAINS is empty/not set, then set it to "all". Replace all with the single names.
+                CHAINS=${CHAINS:-all}
+                [ "$CHAINS" != all ] || CHAINS="INPUT OUTPUT FORWARD"
+                for CHAIN in $CHAINS ; do
+                    case $CHAIN in
+                    INPUT)
+                        ALLOW_FILE="$ALLOW_IN"
+                        ;;
+                    OUTPUT)
+                        ALLOW_FILE="$ALLOW_OUT"
+                        ;;
+                    FORWARD)
+                        ALLOW_FILE="$ALLOW_FWD"
+                        ;;
+                    *)
+                        echo "Unknown CHAIN $CHAIN specified."
+                        exit 1
+                        ;;
+                    esac
+                    if [ -n "$ALLOW_FILE" ] && [ -f "$ALLOW_FILE" ] ; then
+                        log_failure_msg "Error $E_XEXTERNAL: Could not load kernel module xt_iprange, not starting $NAME!"
+                        log_failure_msg "Use a kernel with netfilter IPRANGE support or reconfigure $(basename $0)"
+                        log_failure_msg "to not use the allow list $ALLOW_FILE."
+                        exit $E_XEXTERNAL
+                    fi
+                done
+                log_warning_msg "Warning: Could not load kernel module xt_iprange, continuing anyway."
+                }
+
+            # Execute old REMOVE_SCRIPT if it still exists for any reason, because we may run into troubles
+            # if there are still old iptables.
+            if [ -f "$REMOVE_SCRIPT" ] ; then
+                echo -n "Old iptables remove script $REMOVE_SCRIPT still exists! Executing"
+                sh $REMOVE_SCRIPT
+                echo -n " and removing it"
+                rm $REMOVE_SCRIPT
+                log_end_msg $?
+            fi
+            insert_iptables
+            echo -n "Starting $NAME"
+
+            # Set the log to syslog option
+            if [ "$LOG_SYSLOG" -eq 1 ] ; then
+                LOG_SYSLOG_OPT="-s"
+            else
+                LOG_SYSLOG_OPT=""
+            fi
+
+            # Set the log to logfile option
+            if [ "$LOG_LOGFILE" -eq 1 ] ; then
+                LOG_LOGFILE_OPT="-l $DAEMON_LOG"
+            else
+                LOG_LOGFILE_OPT=""
+            fi
+
+            # Set the kernel queue maximum length option
+            if [ ! -n "$NFQUEUE_MAXLEN" ] ; then
+                true
+            elif [ "$NFQUEUE_MAXLEN" -ge 1 ] && [ "$NFQUEUE_MAXLEN" -le 4294967295 ] ; then
+                NFQUEUE_MAXLEN_OPT="-Q $NFQUEUE_MAXLEN"
+            else
+                echo "\nWARN: NFQUEUE_MAXLEN $NFQUEUE_MAXLEN has to be in range 1 - 4294967295. Ignoring."
+            fi
+
+            # Set the options for marking matched packets
+            REJECT_OPT="-r $REJECT_MARK"
+
+            # Set the options for marking not matched packets
+            ACCEPT_OPT="-a $ACCEPT_MARK"
+
+            # Set the NFQUEUE number only if NFQUEUE and not QUEUE is used
+            case "$IPTABLES_TARGET" in
+                NFQUEUE)
+                    NFQUEUE_NUMBER_OPT="-q $NFQUEUE_NUMBER"
+                    ;;
+                QUEUE)
+                    NFQUEUE_NUMBER_OPT=""
+                    ;;
+            esac
+
+            # Set D-Bus
+            if [ "$DBUS" -eq 1 ]
+            then
+                DBUS_OPT="-d"
+            else
+                DBUS_OPT=""
+            fi
+
+            # Set the options the daemon is started with
+            DAEMON_OPTS="$LOG_SYSLOG_OPT $LOG_LOGFILE_OPT $DBUS_OPT -p $PIDFILE $NFQUEUE_NUMBER_OPT $NFQUEUE_MAXLEN_OPT $REJECT_OPT $ACCEPT_OPT $MASTER_BLOCKLIST"
+
+            # Test NICE_LEVEL setting.
+            [ "$NICE_LEVEL" -ge -20 ] && [ "$NICE_LEVEL" -le 19 ] || {
+                log_failure_msg " Error $E_CONFIG: Check the NICE_LEVEL setting."
+                exit $E_CONFIG
+                }
+
+            # Start daemon
+            start_daemon -n $NICE_LEVEL -p $PIDFILE $DAEMON $DAEMON_OPTS
+            RETVAL=$?
+            log_end_msg $RETVAL
+
+            if [ "$RETVAL" = 0 ] ; then
+                if [ "$WD" = 1 ] ; then
+                    # Start pglcmd.wd.
+                    do_start_wd
+                fi
+            else
+                # Remove iptables again, since starting failed.
+                # Save the retval (although currently delete_iptables doesn't use this variable).
+                SAVE_RETVAL=$RETVAL
+                delete_iptables
+                RETVAL=$SAVE_RETVAL
+            fi
+            ;;
+        # Problematic daemon status. Be verbose and exit!
+        *)
+            echo "Problematic daemon status: $RETVAL"
+            status_of_proc $DAEMON $NAME
+            exit $?
+            ;;
+    esac
+}
+
+do_stop_quick () {
+    STOP_QUICK=1
+    do_stop
+}
+
+# Function that stops daemon (but not watchdog)
+do_stop () {
+    # Email stats, except if we are on system shutdown.
+    [ "$STOP_QUICK" ] || email_stats
+    # Remove iptables rules/chains
+    delete_iptables
+    # As per LSB don't test if daemon is installed on stop!
+    echo -n "Stopping $NAME"
+    PID_OPT=""
+    [ -z "$PIDFILE" ] || PID_OPT="-p $PIDFILE"
+    killproc "$PID_OPT" "$DAEMON"
+
+    # Verify that the daemon is really not running. This may take some
+    # time, even after the killproc ended successfully.
+    # Normally killproc should take care of this.
+    # Otherwise restarting pgld fails, because it was restarted too early.
+    # This also fixes broken lsb init-functions (e.g. Ubuntu hardy), that give
+    # the wrong exit code.
+    COUNT=0
+    # Wait up to 20 seconds
+    while [ "$COUNT" -lt 20 ] ; do
+        # Verify that the daemon is really not running.
+        kill -0 "$(pidof $DAEMON)" > /dev/null 2>&1
+        # If old process is not running, remember success and break.
+        if [ "$?" -eq 0 ] ; then
+            # Process is still running
+            RETVAL=1
+            sleep 1
+            COUNT=$(($COUNT+1))
+        else
+            rm -f $PIDFILE
+            RETVAL=0
+            break
+        fi
+    done
+    # If pidfile still exists (stop failed), force pgld to quit.
+    [ ! -f "$PIDFILE" ] || { kill -9 "$(pidof $DAEMON)" && rm -f $PIDFILE ; }
+    RETVAL=$?
+
+    log_end_msg $RETVAL
+}
+
+# Function that restarts daemon
+do_restart () {
+    do_stop
+    do_start
+}
+
+# Function that rebuilds master blocklist and reloads daemon
+do_reload () {
+    test_DAEMON
+    # Check if daemon is running
+    status_of_proc $DAEMON $NAME > /dev/null 2>&1
+    RETVAL=$?
+    case "$RETVAL" in
+        0)  # Daemon is running
+            # Build blocklist if necessary to make sure pglcmd's settings are taken.
+            # Force to build it, if started with force-reload.
+            [ ! "$CMD_OPTION" = force-reload ] &&
+                [ -f "$MD5SUM_FILE" ] && set_md5sum && [ "$MD5SUM" = "$(cat $MD5SUM_FILE)" ] ||
+                build_blocklist
+            echo -n "Reloading $NAME"
+            kill -s HUP "$(pidofproc $DAEMON)"
+            RETVAL=$?
+            log_end_msg $RETVAL
+            ;;
+        3)  # Daemon is not running
+            echo "$NAME is not running, doing nothing."
+            RETVAL=0
+            ;;
+        # Problematic daemon status. Be verbose and exit!
+        *)
+            echo "Problematic daemon status: $RETVAL"
+            status_of_proc $DAEMON $NAME
+            exit $?
+            ;;
+    esac
+}
+
+# Read the non-comment|not-empty lines from BLOCKLISTS_LIST.
+# Ignore all entries after # (comments).
+set_LISTS_URL () {
+    if [ -f "$BLOCKLISTS_LIST" ] ; then
+        LISTS_URL="$(grep -Ev "^[[:space:]]*#|^[[:space:]]*$" $BLOCKLISTS_LIST | sed "s|#.*$||g")"
+        [ $? -eq 0 ] ||
+            { log_failure_msg "Error: set_LISTS_URL exited with $?" ; exit 1 ; }
+    else
+        LISTS_URL=""
+    fi
+}
+
+# This function depends on LIST:
+LIST_URL2LIST_NAME () {
+    # Set LIST_URL depending on LIST
+    # Since IFS now is standard IFS, separate words (not the complete lines from
+    # blocklists.list) are used for LIST.
+    # Assuming remote blocklists (supported through wget) for all blocklists in blocklists.list:
+    LIST_URL="$( echo $LIST | sed -r "s|http://||;s|https://||;s|ftp://||" )"
+
+    # Translate LIST_URL to human readable/debconf LIST_NAME.
+    # Several LIST_URL may resolve to the same LIST_NAME, if alternative URLs are known for the same list.
+    case $LIST_URL in
+    list.iblocklist.com/?list=*)
+        # Strip iblocklist.com prefix and extensions like "&fileformat=p2p&archiveformat=gz"
+        LIST_URL_TRUNK="$( echo $LIST_URL | sed "s|list.iblocklist.com/?list=||;s|\&.*||" )"
+        # Grep LIST_URL_TRUNK from lists.xml. If this file is missing, try to download it.
+        if ( [ -f ${BLOCKLISTS_DIR}/lists.xml ] ||
+        ( test_net && [ -f ${BLOCKLISTS_DIR}/lists.xml ] )
+        ) &&
+        grep -q "<list>${LIST_URL_TRUNK}</list>" ${BLOCKLISTS_DIR}/lists.xml ; then
+            LIST_AUTHOR="$( grep -A 2 "<list>${LIST_URL_TRUNK}</list>" ${BLOCKLISTS_DIR}/lists.xml | \
+                grep -o "<author>.*</author>" | \
+                sed "s|<author>\(.*\)</author>|\1|" )"
+            LIST_NAME1="$( grep -A 2 "<list>${LIST_URL_TRUNK}</list>" ${BLOCKLISTS_DIR}/lists.xml | \
+                grep -o "<name>.*</name>" | \
+                sed "s|<name>\(.*\)</name>|\1|" )"
+        else
+            LIST_AUTHOR="unknown_iblocklist"
+            LIST_NAME1="$LIST_URL_TRUNK"
+        fi
+        LIST_NAME=${LIST_AUTHOR}_${LIST_NAME1}
+        ;;
+    list.iblocklist.com/lists/*/*)
+        # Strip iblocklist.com prefix and extensions like "&fileformat=p2p&archiveformat=gz"
+        LIST_URL_TRUNK="$( echo $LIST_URL | sed "s|list.iblocklist.com/lists/||;s|\&.*||" )"
+        LIST_AUTHOR="$( echo $LIST_URL_TRUNK  | sed "s|\(.*\)/\(.*\)|\1|" )"
+        LIST_NAME1="$( echo $LIST_URL_TRUNK | sed "s|\(.*\)/\(.*\)|\2|" )"
+        LIST_NAME=${LIST_AUTHOR}_${LIST_NAME1}
+        # Fix inconsistent iblocklist names:
+        if [ "$LIST_NAME" = bluetack_level-1 ] ; then
+            LIST_NAME="bluetack_level1"
+        elif [ "$LIST_NAME" = bluetack_level-2 ] ; then
+            LIST_NAME="bluetack_level2"
+        elif [ "$LIST_NAME" = bluetack_level-3 ] ; then
+            LIST_NAME="bluetack_level3"
+        fi
+        ;;
+    *)
+        # Otherwise, use LIST_URL.
+        LIST_NAME="$LIST_URL"
+        ;;
+    esac
+    # Replace problematic letters, make everything lowercase
+    LIST_NAME="$( echo $LIST_NAME | sed "s|.*://|_|;s|/|_|g;s/?/_/g;s/ /_/g;s/\(.\)/\L\1/g" )"
+}
+
+# Get blocklist.
+get_blocklist () {
+    # Depends on LIST being set.
+    [ -n "$LIST" ] || {
+        echo "Error $E_BLOCKLIST: get_blocklist: internal error, LIST is not set or BLOCKLISTS_LIST not existant!"
+        exit $E_BLOCKLIST
+        }
+    test_BLOCKLISTS_DIR
+    # This function depends on LIST:
+    LIST_URL2LIST_NAME
+
+    # Set blocklist directory name.
+    BLOCKLIST_DIR="$BLOCKLISTS_DIR/$LIST_NAME"
+    # Gives the name of the blocklist downloaded by wget. Reset the value here
+    # and set it later in the script:
+    BLOCKLIST_DOWNLOAD=""
+    # Gives the name of successfully downloaded files:
+    BLOCKLIST_DOWNLOADED="$BLOCKLIST_DIR/downloaded/$LIST_NAME"
+    # BLOCKLIST_DOWNLOADED is extracted to this file
+    BLOCKLIST_EXTRACTED="$BLOCKLIST_DIR/extracted/$LIST_NAME"
+
+    echo -n "Updating $LIST_NAME... "
+
+    # Assuming remote blocklists (supported through wget) for all blocklists in blocklists.list:
+    # Create necessary directories if missing:
+    [ -d "$BLOCKLIST_DIR/download" ] ||
+        mkdir -p "$BLOCKLIST_DIR/download" ||
+        { log_failure_msg " Error: mkdir -p exited with $?" ; exit 1 ; }
+
+    cd "$BLOCKLIST_DIR/download" ||
+        { log_failure_msg " Error: cd exited with $?" ; exit 1 ; }
+
+    # Create necessary directories if missing:
+    [ -d "$(dirname $BLOCKLIST_DOWNLOADED)" ] ||
+        mkdir -p "$(dirname $BLOCKLIST_DOWNLOADED)" ||
+        { log_failure_msg "Error: mkdir -p exited with $?" ; exit 1 ; }
+
+    # Download blocklists with timestamping. If this fails remove
+    # the old blocklist (which might be a corrupted file)
+    # and try again without timestamping:
+    test_external wget || {
+        log_failure_msg "Error $E_XEXTERNAL: wget not installed."
+        exit $E_XEXTERNAL
+        }
+    # If 7z is not available, change user agent to pglcmd_x7z,
+    # so that iblocklist.com knows we are not capable of 7z.
+    test_external 7zr ||
+        test_external 7za ||
+        test_external 7z ||
+        test_external p7zip ||
+        WGET_OPTS="$(echo $WGET_OPTS |
+            sed "s|--user-agent=${CMD_NAME}/${VERSION}|--user-agent=${CMD_NAME}_x7z/${VERSION}|")"
+    $WGET_OPTS -N "$LIST_URL"
+    WGET_RET=$?
+    case "$WGET_RET" in
+        0)
+            ;;
+        403)
+            echo -n "... Access denied!"
+            rm -Rf $BLOCKLIST_DIR/download/* ||
+                { log_failure_msg " Error: rm exited with $?" ; exit 1 ; }
+            ;;
+        *)
+            echo -n "... failed!"
+            rm -Rf $BLOCKLIST_DIR/download/* ||
+                { log_failure_msg " Error: rm exited with $?" ; exit 1 ; }
+            echo -n " Trying without timestamping ..."
+            $WGET_OPTS "$LIST_URL"
+            WGET_RET=$?
+            ;;
+    esac
+
+    cd / ||
+        { log_failure_msg " Error: cd exited with $?" ; exit 1 ; }
+
+    # Get the name of the downloaded blocklist: BLOCKLIST_DOWNLOAD
+    # Take the newest file, in case there are several files in the folder.
+    # There may be several files from different URLs for the same LIST_NAME
+    # If the directory is empty the variable will stay empty, too.
+    ls $BLOCKLIST_DIR/download/* > /dev/null 2>&1 &&
+        BLOCKLIST_DOWNLOAD="$BLOCKLIST_DIR/download/$(ls -1t $BLOCKLIST_DIR/download/ | head -n 1)"
+
+    # Download was not successful, access forbidden
+    if [ "$WGET_RET" -eq 403 ] ; then
+        if [ -f "$BLOCKLIST_DOWNLOADED" ] ; then
+            echo " forbidden! Using old blocklist."
+            UPDATE_403="$UPDATE_403 $UPDATE_403 (last modified: $(stat --format=%y $BLOCKLIST_DOWNLOADED | head -c 16));"
+        else
+            log_failure_msg " Error $E_BLOCKLIST: $LIST_NAME access forbidden. Aborting!"
+            log_failure_msg "Check your entry $LIST_URL in $BLOCKLISTS_LIST."
+            log_failure_msg "To fix this manually download $LIST_URL and save it as $BLOCKLIST_DOWNLOADED"
+            exit $E_BLOCKLIST
+        fi
+    # Download was not successful
+    elif [ "$WGET_RET" -ne 0 ] ; then
+        if [ -f "$BLOCKLIST_DOWNLOADED" ] ; then
+            echo " failed! Using old blocklist."
+            UPDATE_FAIL="$UPDATE_FAIL $LIST_NAME (last modified: $(stat --format=%y $BLOCKLIST_DOWNLOADED | head -c 16));"
+        else
+            log_failure_msg " Error $E_BLOCKLIST: $LIST_NAME not available. Aborting!"
+            log_failure_msg "To fix this manually download $LIST_URL and save it as $BLOCKLIST_DOWNLOADED"
+            exit $E_BLOCKLIST
+        fi
+    # Download was successful ($WGET_RET = 0):
+    # This should not happen, just for debugging:
+    elif [ -z "$BLOCKLIST_DOWNLOAD" ] ; then
+        log_failure_msg " Error: $LIST_URL was downloaded successfully but BLOCKLIST_DOWNLOAD is empty! Strange, aborting!"
+        exit 1
+    # This should not happen, just for debugging:
+    elif [ ! -f "$BLOCKLIST_DOWNLOAD" ] ; then
+        log_failure_msg " Error: $LIST_URL was downloaded successfully but $BLOCKLIST_DOWNLOAD doesn't exist! Strange, aborting!"
+        exit 1
+    # Download was successful, old blocklist is not available or older than the new one:
+    elif [ ! -f "$BLOCKLIST_DOWNLOADED" ] || [ "$BLOCKLIST_DOWNLOAD" -nt "$BLOCKLIST_DOWNLOADED" ] ; then
+        cp -f --preserve=timestamps $BLOCKLIST_DOWNLOAD $BLOCKLIST_DOWNLOADED &&
+            echo "done." ||
+            { log_failure_msg " Error: cp exited with $?"; exit 1 ; }
+        [ -f "$BLOCKLIST_DOWNLOADED" ] &&
+            UPDATE_SUCCESS="$UPDATE_SUCCESS $LIST_NAME (last modified: $(stat --format=%y $BLOCKLIST_DOWNLOADED | head -c 16));" ||
+            { log_failure_msg " Error: $LIST_URL exists, but $BLOCKLIST_DOWNLOADED doesn't exist! Strange, aborting!" ; exit 1 ; }
+    # Download was successful, blocklist is not newer than the old one:
+    else
+        echo ". No update available."
+        [ -f "$BLOCKLIST_DOWNLOADED" ] &&
+            UPDATE_SUCCESS_NA="$UPDATE_SUCCESS_NA $LIST_NAME (last modified: $(stat --format=%y $BLOCKLIST_DOWNLOADED | head -c 16));" ||
+            { log_failure_msg " Error: $LIST_URL exists, but $BLOCKLIST_DOWNLOADED doesn't exist! Strange, aborting!" ; exit 1 ; }
+    fi
+
+    extract_blocklist
+}
+
+# Depends on LIST_NAME, BLOCKLIST_DOWNLOADED and BLOCKLIST_EXTRACTED
+extract_blocklist () {
+    # Unpack the lists
+    echo -n "Extracting $LIST_NAME, "
+
+    # Create necessary directories if missing:
+    [ -d "$(dirname $BLOCKLIST_EXTRACTED)" ] ||
+        mkdir -p "$(dirname $BLOCKLIST_EXTRACTED)" ||
+        { log_failure_msg " Error: mkdir -p exited with $?" ; exit 1 ; }
+
+    # This should not happen, just for debugging:
+    [ -f "$BLOCKLIST_DOWNLOADED" ] || {
+        log_failure_msg " D'oh, why does $BLOCKLIST_DOWNLOADED not exist? Strange, aborting!" ; exit 1 ; }
+
+    # General: To analyze the file header check
+    # http://mark0.net/hexdump.html and get a list of TrID file type / file
+    # extension definitions from http://mark0.net/soft-trid-deflist.html
+    #
+    # Using bytes with hexadecimal value HH:
+    # $'\xHH' is a bashism.
+    # "$(printf '\xHH')" doesn't work at least for the dash builtin printf, so
+    # use: "$(/usr/bin/printf '\xHH')"
+
+    # Read the first six (length of the 7z header) bytes of the packed
+    # blocklist:
+    case "$(head -c 6 $BLOCKLIST_DOWNLOADED)" in
+        # 7z packed file
+        "$(/usr/bin/printf '\x37\x7A\xBC\xAF\x27\x1C')")
+            echo -n "detected 7z... "
+            { test_external 7zr && EXTRACT_CMD='7zr x "$BLOCKLIST_DOWNLOADED" -so > "${BLOCKLIST_EXTRACTED}.tmp"' ; } ||
+            { test_external 7za && EXTRACT_CMD='7za x "$BLOCKLIST_DOWNLOADED" -so > "${BLOCKLIST_EXTRACTED}.tmp"' ; } ||
+            { test_external 7z && EXTRACT_CMD='7z x "$BLOCKLIST_DOWNLOADED" -so > "${BLOCKLIST_EXTRACTED}.tmp"' ; } ||
+            { test_external p7zip && EXTRACT_CMD="p7zip -d < $BLOCKLIST_DOWNLOADED > ${BLOCKLIST_EXTRACTED}.tmp" ; } ||
+                exit $E_XEXTERNAL
+            eval $EXTRACT_CMD || {
+                log_failure_msg "Error $E_BLOCKLIST: Failed to extract $LIST_NAME."
+                log_failure_msg "Removing $BLOCKLIST_DOWNLOADED."
+                log_failure_msg "Check your configuration in $BLOCKLISTS_LIST and try a new \"$(basename $0) update\"."
+                rm "$BLOCKLIST_DOWNLOADED" ||
+                    { log_failure_msg "Error: rm exited with $?" ; exit 1 ; }
+                exit $E_BLOCKLIST
+                }
+            ;;
+        # gz packed file
+        "$(/usr/bin/printf '\x1F\x8B\x08')"*)
+            echo -n "detected gz... "
+            zcat "$BLOCKLIST_DOWNLOADED" > "${BLOCKLIST_EXTRACTED}.tmp" || {
+                log_failure_msg "Error $E_BLOCKLIST: Failed to extract $LIST_NAME."
+                log_failure_msg "Removing $BLOCKLIST_DOWNLOADED."
+                log_failure_msg "Check your configuration in $BLOCKLISTS_LIST and try a new \"$(basename $0) update\"."
+                rm "$BLOCKLIST_DOWNLOADED" ||
+                    { log_failure_msg "Error: rm exited with $?" ; exit 1 ; }
+                exit $E_BLOCKLIST
+                }
+            ;;
+        # zip packed file
+        "$(/usr/bin/printf '\x50\x4B\x03\x04')"*)
+            echo -n "detected zip... "
+            test_external unzip || {
+                log_failure_msg "Error $E_XEXTERNAL: unzip not installed."
+                exit $E_XEXTERNAL
+                }
+            unzip -p "$BLOCKLIST_DOWNLOADED" > "${BLOCKLIST_EXTRACTED}.tmp" || {
+                log_failure_msg "Error $E_BLOCKLIST: Failed to extract $LIST_NAME."
+                log_failure_msg "Removing $BLOCKLIST_DOWNLOADED."
+                log_failure_msg "Check your configuration in $BLOCKLISTS_LIST and try a new \"$(basename $0) update\"."
+                rm "$BLOCKLIST_DOWNLOADED" ||
+                    { log_failure_msg "Error: rm exited with $?" ; exit 1 ; }
+                exit $E_BLOCKLIST
+                }
+            ;;
+        # Assuming non-packed otherwise:
+        *)
+            echo -n "not packed... "
+            ln -fs $BLOCKLIST_DOWNLOADED ${BLOCKLIST_EXTRACTED}.tmp ||
+                { log_failure_msg " Error: ln exited with $?"; exit 1 ; }
+            ;;
+    esac
+    # Count the lines in the list and check if there are any lines.
+    if [ "$( wc -l < ${BLOCKLIST_EXTRACTED}.tmp )" -gt 0 ] ; then
+        # Add a newline at end of file if it was missing
+        # This creates a copy of local blocklists even if nothing is changed instead of just linking
+        sed -e '$a\' "${BLOCKLIST_EXTRACTED}.tmp" > "${BLOCKLIST_EXTRACTED}" &&
+            rm ${BLOCKLIST_EXTRACTED}.tmp ||
+            { log_failure_msg "Error: $? Failed to save extracted blocklist ${BLOCKLIST_EXTRACTED}" ; exit 1 ; }
+        echo "done."
+    else
+        # TODO: Remove list from e.g. UPDATE_SUCCESS
+        log_warning_msg "${BLOCKLIST_EXTRACTED}.tmp is empty!"
+        log_warning_msg "wc -l: $(wc -l ${BLOCKLIST_EXTRACTED}.tmp)"
+        if [ -f "$BLOCKLIST_EXTRACTED" ] ; then
+            log_warning_msg "Keeping old $BLOCKLIST_EXTRACTED."
+            UPDATE_FAIL="$UPDATE_FAIL $LIST_NAME (new list was empty, keeping old, last modified: $(stat --format=%y $BLOCKLIST_DOWNLOADED | head -c 16));"
+        else
+            touch $BLOCKLIST_EXTRACTED
+            UPDATE_FAIL="$UPDATE_FAIL $LIST_NAME (new list was empty, no old list available! Ignoring ...);"
+        fi
+    fi
+}
+
+# Function that updates blocklists and reloads daemon
+update_blocklists () {
+    # Remove the old MD5SUM file now, so that if anything goes wrong,
+    # it's clear we have to rebuild the blocklist:
+    [ -f "$MD5SUM_FILE" ] && {
+        rm "$MD5SUM_FILE" || { log_failure_msg " Error: rm exited with $?" ; exit 1 ; }
+        }
+
+    UPDATE_FAIL=""          # Lists failed blocklist updates
+    UPDATE_403=""           # Lists failed blocklist updates with "access forbidden"
+    UPDATE_SUCCESS=""       # Lists successful blocklist updates
+    UPDATE_SUCCESS_NA=""    # Lists blocklist where no update was available
+
+    # Read the non-comment|not-empty lines from BLOCKLISTS_LIST.
+    # Ignore all entries after # (comments).
+    # LISTS_URL are all blocklists that are configured to be handled automatically.
+    set_LISTS_URL
+
+    # Only do the automatic updating, if any blocklist is configured to be handled automatically.
+    if [ -n "$LISTS_URL" ] ; then
+        echo "Updating blocklists ..."
+        test_net
+
+        for LIST in $LISTS_URL ; do
+            get_blocklist
+        done
+
+        echo "Blocklists updated."
+    else
+        echo "Automatic blocklist management disabled."
+    fi
+}
+
+# Function that builds the MASTER_BLOCKLIST
+# - from all remote blocklists (configured in BLOCKLISTS_LIST) and
+# - all local blocklists (all lists in LOCAL_BLOCKLIST_DIR, except those
+#   starting with "." or ending with "~"),
+# - but without lines that match case-insensitive IP_REMOVE.
+# pgld is started with just this list.
+# Ratio: We want to reload the daemon as fast as possible. Therefore do the whole
+# blocklist management separately and save one premerged MASTER_BLOCKLIST to harddisk.
+# Bad: for large local blocklists this means excess usage of harddisk space.
+build_blocklist () {
+    echo "Building blocklist ... "
+
+    # DAEMON is needed to merge the single blocklists.
+    test_DAEMON
+
+    [ -d "$MASTER_BLOCKLIST_DIR" ] || {
+        echo -n "Creating missing directory $MASTER_BLOCKLIST_DIR ..."
+        mkdir -p "$MASTER_BLOCKLIST_DIR" && echo "."
+        } || {
+        log_failure_msg "Error $E_XCD: Missing directory $MASTER_BLOCKLIST_DIR."
+        log_failure_msg "Check the $MASTER_BLOCKLIST_DIR setting."
+        exit $E_XCD
+    }
+    BLOCKLISTSCAT=""
+
+    # Remove the old MD5SUM file now, so that if anything goes wrong,
+    # it's clear we have to rebuild the blocklist:
+    [ -f "$MD5SUM_FILE" ] && {
+    rm "$MD5SUM_FILE" || { log_failure_msg " Error: rm exited with $?" ; exit 1 ; }
+    }
+
+    # Move master blocklist to backup position. This way it is also removed,
+    # in case the configuartion changed in that way, that no blocklists are
+    # configured for the automatic blocklist management.
+    [ -f "$MASTER_BLOCKLIST" ] &&
+        mv $MASTER_BLOCKLIST ${MASTER_BLOCKLIST}~
+
+    # Prepare removing lines from the blocklist with "grep":
+    # remove pending ";" and replace all other ";" with "|" in IP_REMOVE.
+    SINGLE_REMOVE="$( echo $IP_REMOVE | sed " s/;$// ; s/;/|/g " )"
+
+    # Read the non-comment|not-empty lines from BLOCKLISTS_LIST.
+    # Ignore all entries after # (comments).
+    # LISTS_URL are all blocklists that are configured to be handled automatically.
+    set_LISTS_URL
+    if [ -n "$LISTS_URL" ] ; then
+        test_BLOCKLISTS_DIR
+
+        for LIST in $LISTS_URL ; do
+            # This function depends on LIST:
+            LIST_URL2LIST_NAME
+
+            # Set name of the extracted blocklist.
+            BLOCKLIST_EXTRACTED="$BLOCKLISTS_DIR/$LIST_NAME/extracted/$LIST_NAME"
+
+            # Test if list is available:
+            [ -f "$BLOCKLIST_EXTRACTED" ] ||
+                get_blocklist || {
+                log_failure_msg "Error $E_BLOCKLIST: $LIST_NAME not available."
+                log_failure_msg "Check the entry $LIST"
+                log_failure_msg "in $BLOCKLISTS_LIST. Aborting!"
+                exit $E_BLOCKLIST
+                }
+
+            # Log which lines will be removed later
+            if [ -n "$IP_REMOVE" ] ; then
+                echo "Removing the following lines from $LIST_NAME:"
+                grep -Ei "$SINGLE_REMOVE" "$BLOCKLIST_EXTRACTED" | sort
+            fi
+
+            # Remember all used lists
+            BLOCKLISTSCAT="$BLOCKLISTSCAT $BLOCKLIST_EXTRACTED"
+        done
+    fi
+
+    set_BLOCKLISTS_LOCAL
+    if [ -n "$BLOCKLISTS_LOCAL" ] ; then
+        for LIST in $BLOCKLISTS_LOCAL ; do
+
+            # For local blocklist the same extract function is used as for remote lists
+            LIST_NAME="$(basename $LIST)"
+            BLOCKLIST_DOWNLOAD="$LIST"
+            BLOCKLIST_DIR="${BLOCKLISTS_DIR}/blocklists-local"
+            # A link to the original local list
+            BLOCKLIST_DOWNLOADED="${BLOCKLIST_DIR}/${LIST_NAME}"
+            # BLOCKLIST_DOWNLOADED is extracted to this file (or linked if it was unpacked)
+            BLOCKLIST_EXTRACTED="${BLOCKLIST_DOWNLOADED}.extracted"
+            [ -d "${BLOCKLIST_DIR}" ] || {
+                echo -n "Creating missing directory ${BLOCKLIST_DIR} ..."
+                mkdir -p ${BLOCKLIST_DIR} && echo "."
+                }
+            ln -fs ${BLOCKLIST_DOWNLOAD} ${BLOCKLIST_DOWNLOADED}
+            extract_blocklist
+
+            # Log which lines will be removed later
+            if [ -n "$IP_REMOVE" ] ; then
+                echo "Removing the following lines from ${LIST_NAME}:"
+                grep -Ei "$SINGLE_REMOVE" "${BLOCKLIST_EXTRACTED}" | sort
+            fi
+
+            # Remember all used lists
+            BLOCKLISTSCAT="$BLOCKLISTSCAT ${BLOCKLIST_EXTRACTED}"
+        done
+    fi
+
+    if [ -z "$BLOCKLISTSCAT" ] ; then
+        log_failure_msg "Error $E_BLOCKLIST: No blocklists configured or available."
+        exit $E_BLOCKLIST
+    else
+        # Tells whether blocklist was built successfully
+        BUILT=0
+
+        # Build blocklist and remove some lines from the blocklists
+        if [ -n "$IP_REMOVE" ] ; then
+            # Cat together all single blocklists
+            cat --squeeze-blank $BLOCKLISTSCAT |
+            # Ignore comment lines and remove lines from IP_REMOVE (case-insensitive)
+            grep -Eiv "^[[:space:]]*#|$SINGLE_REMOVE" |
+            # Replace repeated whitespace with a single occurence
+            tr -s [:space:] |
+            # Delete everything complimentary to the following characters/regex
+            # alphanumeric
+            # space
+            # :\*.-,[]
+            # newline (return gets removed, so CR+LF gets LF)
+            tr -cd '[:alnum:][:space:]:\\\*\.\-,[]\n' |
+            # Only keep the last occurence of :
+            sed 's/.*:/&|/' | tr -d : | tr "\|" ":" |
+            # Premerge the blocklist
+            $DAEMON -m > $MASTER_BLOCKLIST && BUILT=1
+        # Build blocklist without removing some lines from the blocklists
+        else
+            # Cat together all single blocklists
+            cat --squeeze-blank $BLOCKLISTSCAT |
+            # Ignore comment lines
+            grep -Ev "^[[:space:]]*#" |
+            # Replace repeated whitespace with a single occurence
+            tr -s [:space:] |
+            # Delete everything complimentary to the following characters/regex
+            # alphanumeric
+            # space
+            # :\*.-,[]
+            # newline (return gets removed, so CR+LF gets LF)
+            tr -cd '[:alnum:][:space:]:\\\*\.\-,[]\n' |
+            # Only keep the last occurence of :
+            sed 's/.*:/&|/' | tr -d : | tr "\|" ":" |
+            # Premerge the blocklist, pgld's information is sent to STDERR
+            # and therefore ends in pglcmd.log
+            $DAEMON -m > $MASTER_BLOCKLIST && BUILT=1
+        fi
+
+        if [ "$BUILT" -eq 1 ] ; then
+            echo "Blocklist built."
+        else
+            log_failure_msg "Error: build_blocklist failed."
+            if [ -f ${MASTER_BLOCKLIST}~ ] ; then
+                echo -n "Restoring $MASTER_BLOCKLIST ..."
+                mv ${MASTER_BLOCKLIST}~ $MASTER_BLOCKLIST ||
+                    { log_failure_msg " Error: mv exited with $?" ; exit 1 ; }
+                log_end_msg 0
+            else
+                exit $E_BLOCKLIST
+            fi
+        fi
+    fi
+
+    # Save configuration settings on which this blocklist bases:
+    set_md5sum
+    echo "$MD5SUM" > "$MD5SUM_FILE"
+}
+
+# Function that tests if IPs get blocked
+test_ipblocking () {
+    # First check some preconditions for the test:
+    test_DAEMON
+    test_REJECT
+
+    [ -f "$MASTER_BLOCKLIST" ] || {
+        log_failure_msg " Error $E_BLOCKLIST: $MASTER_BLOCKLIST not available."
+        exit $E_BLOCKLIST
+        }
+
+    # Detect the logfile, where hits are logged.
+    if [ "$LOG_LOGFILE" -eq 1 ] ; then
+        TEST_LOG="$DAEMON_LOG"
+    elif [ "$LOG_SYSLOG" -eq 1 ] ; then
+        TEST_LOG="/var/log/syslog"
+    else
+        echo "Error: $NAME has to be started with either LOG_SYSLOG=\"1\" or LOG_LOGFILE=\"1\" for \"test\" to work."
+        exit $E_CONFIG
+    fi
+
+    echo "Testing $DESC:"
+    # Check if daemon is running
+    status_of_proc $DAEMON $NAME > /dev/null 2>&1
+    RETVAL=$?
+    case "$RETVAL" in
+        0)    # Daemon is running
+            true
+            ;;
+        3)    # Daemon is not running
+            status_of_proc $DAEMON $NAME
+            exit $?
+            ;;
+        *)    # Problematic daemon status. Be verbose and exit!
+            echo "Problematic daemon status: $RETVAL"
+            status_of_proc $DAEMON $NAME
+            exit $?
+            ;;
+    esac
+
+    # If logfile does not exist, reload daemon to reopen a new one.
+    [ -f "$TEST_LOG" ] || kill -s HUP "$(pidofproc $DAEMON)"
+
+    # Pick TEST_IP. Assume blocklist in text (not binary) format.
+    TESTLINE="$(expr $$ % 100 + 10)"
+
+    # Pick the last IP address from a random line in the MASTER_BLOCKLIST (earlier IPs often result in problems with ping)
+    # Remove the leading zeros in the IPs.
+    TEST_IP="$(head -n$TESTLINE $MASTER_BLOCKLIST | grep -Eo "$IPv4_REGEX" | tail -n1 )"
+    echo "CAUTION: This is just a simple test to check if $DESC blocks"
+    echo "outgoing connections. For this, an IP from the blocklist will be pinged. Then "
+    echo "the test checks if this IP appears in $TEST_LOG."
+    echo "$NAME MARKs packets to be blocked. This means you have to make sure that the"
+    echo "MARKed packets are also blocked later (with appropriate iptables rules)."
+    echo "To do that you can use LOG_IPTABLES=\"LOG --log-level info\""
+    echo "This test does not check if you have sane iptables rules. Therefore success"
+    echo "doesn't imply that everything is working as you expect it."
+    echo ""
+    echo "Also have a look at \"$(basename $0) status\"."
+    echo ""
+
+    echo "Trying to ping $TEST_IP from $MASTER_BLOCKLIST ..."
+    LOG_LENGTH="$( wc -l < $TEST_LOG )" # remember log length before test
+    ping -c1 -W2 $TEST_IP > /dev/null 2>&1
+    RETVAL_PING=$? # the ping exit code
+    # The ping exit status is 0 if ping succeeds and 1 if ping does not receive any reply packets.
+    # On other error it exits with code 2.
+
+    # Wait a second to give the daemon time to log the current block
+    sleep 1
+    LOG_LENGTH_NEW="$( wc -l < $TEST_LOG )" # new log length
+
+    if [ "$LOG_LENGTH" -ne "$LOG_LENGTH_NEW" ] ; then    # log length changed
+        tail -n$((${LOG_LENGTH_NEW}-${LOG_LENGTH})) $TEST_LOG |
+            grep -q $TEST_IP
+        RETVAL=$? # the grep exit status
+        # The grep exit status is 0 if selected lines are found and 1 otherwise.
+        # If an error occurred the grep exit status is 2.
+    else
+        RETVAL=1
+    fi
+
+    if [ "$RETVAL" -eq 0 ] ; then    # IP in logfile
+        if [ "$RETVAL_PING" -eq 1 ] ; then    # No reply to ping
+            echo "$NAME marked the IP to be blocked and the IP did not answer."
+            echo "Test succeeded."
+        elif [ "$RETVAL_PING" -eq 0 ] ; then    # Reply to ping
+            echo "$NAME blocked the IP, but ping got an answer or failed."
+            echo "Check the iptables settings and make sure that \"marked block\" packets really"
+            echo "get blocked."
+            RETVAL=2
+        else
+            echo "Some error occured with ping, no test result."
+            RETVAL=2
+        fi
+    elif [ "$RETVAL" -eq 1 ] ; then    # IP not in logfile
+        echo "$NAME did not mark the IP to be blocked."
+        if [ "$RETVAL_PING" -eq 0 ] ; then    # Reply to ping
+            echo "$TEST_IP answered. Test failed."
+        elif [ "$RETVAL_PING" -eq 1 ] ; then    # No reply to ping
+            echo "$TEST_IP did not answer the ping."
+            echo ""
+            echo "No clear test result! Trying \"$TRACEROUTE -n -m 2 ${TEST_IP} ${TRACEROUTE_PORT}\" now:"
+            if [ -n "$TRACEROUTE" ] && test_external $TRACEROUTE ; then
+                TRACE_LOG="${TMPDIR}/$(basename $0).test.log"
+                $TRACEROUTE -n -m 2 $TEST_IP ${TRACEROUTE_PORT} > $TRACE_LOG 2>&1
+                RETVAL_TRACEROUTE=$?    # the traceroute exit status
+                cat $TRACE_LOG
+                echo ""
+                if [ "$RETVAL_TRACEROUTE" -eq 1 ] && grep -q "send: Operation not permitted" $TRACE_LOG ; then
+                    echo "Probably the $TRACEROUTE packet was blocked by another iptables rule on your"
+                    echo "machine. Everything might be ok."
+                    RETVAL=0
+                elif [ "$RETVAL_TRACEROUTE" -eq 0 ] && [ "$( wc -l < $TRACE_LOG )" -eq 2 ] ; then
+                    # Wait a second to give the daemon time to log the current block
+                    sleep 1
+                    LOG_LENGTH_NEW="$( wc -l < $TEST_LOG )" # new log length
+                    if [ "$LOG_LENGTH" -ne "$LOG_LENGTH_NEW" ] ; then    # log length changed
+                        tail -n$(($LOG_LENGTH_NEW-$LOG_LENGTH)) $TEST_LOG |
+                            grep -q $TEST_IP
+                        RETVAL=$? # the grep exit status
+                        # The grep exit status is 0 if selected lines are found and 1 otherwise.
+                        # If an error occurred the grep exit status is 2.
+                        if [ "$RETVAL" -eq 0 ] ; then
+                            echo "Now the packet was blocked by pglcmd. Everything might be ok."
+                            RETVAL=0
+                        fi
+                    else
+                        echo "The packet did not leave your machine, but wasn't blocked either. Confusing."
+                        echo "$TRACEROUTE return code was $RETVAL_TRACEROUTE."
+                    fi
+                elif [ "$RETVAL_TRACEROUTE" -eq 0 ] && [ "$(wc -l < $TRACE_LOG )" -eq 3 ] ; then
+                    echo "The $TRACEROUTE packet was not blocked on your machine. There is a problem!"
+                else
+                    echo "Probably $TEST_IP is down/doesn't answer to pings."
+                    echo "This still means that $NAME is not working!"
+                fi
+            else
+                echo "$TRACEROUTE not installed."
+            fi
+        else
+            echo "Some error occured with ping, no test result."
+            RETVAL=2
+        fi
+    else    # grep error
+        echo "Some error occured with grep, no test result."
+        RETVAL=2
+    fi
+    return $RETVAL
+}
+
+# Just dump stats
+dump_stats () {
+    SIG_STATS="USR2"
+    pgl_stats
+}
+
+# Dump and reset stats
+reset_stats () {
+    SIG_STATS="USR1"
+    pgl_stats
+}
+
+# generic stats function (SIGUSR1/SIGUSR2)
+pgl_stats () {
+    status_of_proc $DAEMON $NAME > /dev/null 2>&1 || {
+        echo "$DAEMON is not running."
+        exit 1
+        }
+    if [ "$LOG_LOGFILE" = 1 ] ; then
+        # If logfile does not exist, reload daemon to reopen a new one.
+        [ -f "$DAEMON_LOG" ] || kill -s HUP "$(pidofproc $DAEMON)"
+        CURLINE="$( wc -l < $DAEMON_LOG )"
+        kill -s $SIG_STATS "$(pidofproc $DAEMON)"
+        (
+        sleep 5
+        tail -n+$(($CURLINE + 1)) $DAEMON_LOG | grep STATS:
+        ) &
+    elif [ "$LOG_SYSLOG" = 1 ] ; then
+        CURLINE="$( grep pgld: /var/log/syslog | wc -l )"
+        kill -s $SIG_STATS "$(pidofproc $DAEMON)"
+        (
+        sleep 5
+        grep pgld: /var/log/syslog | tail -n+$(($CURLINE + 1)) | grep STATS:
+        ) &
+    else
+        echo "Logging to logfile or syslog must be enabled to dump stats."
+    fi
+}
+
+email_stats () {
+    # Check if pgl is configured to mail the stats, and if daemon is running
+    # (otherwise stats are not available).
+    # After "reset_stats" sleep longer than the forked process in "reset_stats" itself,
+    # so that we catch its output.
+    if [ $STATS_MAILTO ] && status_of_proc $DAEMON $NAME >/dev/null 2>&1 && test_sendmail ; then
+        echo -n "Emailing stats"
+        SUBJECT="$NAME hit statistics"
+        cat<<EOF | $SENDMAIL -t &
+To: $STATS_MAILTO
+Subject: $SUBJECT
+
+$(reset_stats ; sleep 6)
+
+EOF
+        log_end_msg "$?"
+    fi
+}
+
+search () {
+    # Read the non-comment|not-empty lines from BLOCKLISTS_LIST.
+    # Ignore all entries after # (comments).
+    set_LISTS_URL
+    echo "Checking your currently used blocklists for \"$SEARCHPATTERN\" (case-insensitive):"
+    for LIST in $LISTS_URL ; do
+        # This function depends on LIST:
+        LIST_URL2LIST_NAME
+        BLOCKLIST="$BLOCKLISTS_DIR/$LIST_NAME/extracted/$LIST_NAME"
+        # Exit immediately with zero status if any match is found
+        grep -qEi "$SEARCHPATTERN" "$BLOCKLIST" && {
+            echo
+            echo "$LIST_NAME ($LIST):"
+            grep -Ei "$SEARCHPATTERN" "$BLOCKLIST"
+            # Remember that current list contains SEARCHPATTERN
+            HITLIST="$HITLIST $LIST"
+            }
+    done
+    echo
+    echo "\"$SEARCHPATTERN\" was found in these lists:"
+    for LIST in $HITLIST ; do
+        # This function depends on LIST:
+        LIST_URL2LIST_NAME
+        echo "$LIST_NAME ($LIST)"
+    done
+    echo
+    echo "If you don't want to block the above shown ranges, then you may add"
+    echo "\"$SEARCHPATTERN\" to IP_REMOVE in $CMD_CONF."
+    echo "Or you may remove some of these lists from $BLOCKLISTS_LIST."
+}

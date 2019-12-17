@@ -71,3 +71,9 @@ src/parse-ip-neigh
 config.mk
 ops/Vagrantfile
 
+bin/
+etc/
+lib/
+sbin/
+share/
+src/pgl/pglgui/Makefile

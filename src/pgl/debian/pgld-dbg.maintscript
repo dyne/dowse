@@ -1,0 +1,4 @@
+if dpkg-maintscript-helper supports dir_to_symlink; then
+    dpkg-maintscript-helper dir_to_symlink \
+        /usr/share/doc/pgld-dbg /usr/share/doc/pgld pgld-dbg 2.3.0-1~
+fi

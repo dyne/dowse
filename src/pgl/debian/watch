@@ -1,0 +1,10 @@
+# watch control file for uscan
+# See uscan(1) for format
+
+# Compulsory line, this is a version 3 file
+version=3
+
+# qa.debian.org redirector for new files on sourceforge, for devscripts >= 2.9
+http://sf.net/peerguardian/pgl-(.+)\.tar\.gz
+http://sf.net/peerguardian/pgl-(\d\S*)\.(?:zip|tgz|tbz|txz|(?:tar\.(?:gz|bz2|xz)))
+opts=pgpsigurlmangle=s/$/.asc/ http://sf.net/peerguardian/pgl-(\d\S*)\.(?:zip|tgz|tbz|txz|(?:tar\.(?:gz|bz2|xz)))

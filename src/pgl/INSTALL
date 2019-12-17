@@ -1,0 +1,352 @@
+pgl/INSTALL                                   Sun, 25 Jan 2015 13:15:50 +0100
+
+
+
+Table of Contents:
+==================
+
+1.) Manual installation
+2.) Uninstall
+3.) Build dependencies and runtime environment
+4.) Available packages, build scripts and other distribution specific tips
+
+
+
+
+1.) Manual installation
+=======================
+
+This is the general method to install pgl. Please also have a look at the
+distribution specific section (chapter 4).
+
+
+Step 1: Get the source:
+-----------------------
+
+Either get the latest stable release from peerguardian.sourceforge.net and
+unpack it.
+
+Or get the current development code:
+  git clone git://git.code.sf.net/p/peerguardian/code pgl
+
+
+Step 2: Install pgl's dependencies
+----------------------------------
+
+Install the build dependencies (including the development headers) and runtime
+environment for the components (see chapter 3).
+
+
+Step 3: Compilation and installation
+------------------------------------
+
+Step 3.0: Create/update autotools files (only required for git version)
+-----------------------------------------------------------------------
+
+If you are using the development version from the git repository generate
+the autotools files first. Go to the pgl/ directory and run:
+  ./autogen.sh
+
+To update the files run:
+  autoreconf
+
+
+Step 3.1: Configure
+-------------------
+
+Pgl uses autotools which comes with several configure-switches you have
+to check before compiling. Go to the pgl/ directory and run:
+  ./configure --help
+
+Check the options and the paths. There are some common paths and options you
+should consider to set like:
+  --prefix         [default: /usr/local]
+  --sysconfdir     [default: $prefix/etc, recommended: /etc]
+  --localstatedir  [default: $prefix/var, recommended: /var]
+  --with-iconsdir  [default: $datadir/pixmaps]
+  --with-initddir  [default: $sysconfdir/init.d]
+  --with-logdir    [default: $localstatedir/log/pgl]
+  --with-piddir    [default: $localstatedir/run]
+  --with-tmpdir    [default: /tmp]
+  --with-lsb=      [default: none/built-in,
+                    recommended: /lib/lsb/init-functions]
+
+IMPORTANT: Especially the "--sysconfdir=/etc" setting is required for a working
+installation! Otherwise you should expect e.g. dbus errors.
+
+For a slick installation you can build without the GUI and turn off dbus
+support:
+  --without-qt4
+  --disable-dbus
+
+Especially for embedded devices (like router or NAS box) you might disable
+storing of textual IP range descriptions:
+  --enable-lowmem
+But generally it is recommended (and required for the GUI) to use the default,
+which is not to use lowmem.
+
+Now you should be clear about the settings you need for your distribution and
+run something similar to:
+  ./configure \
+    --prefix=/my/prefix \
+    --with-initddir=/my/initddir \
+    --sysconfdir=/etc
+
+Full example configure line for a complete build and full system integration
+(on a Debian system):
+  ./configure \
+    --prefix=/usr \
+    --mandir=/usr/share/man \
+    --datadir=/usr/share \
+    --sysconfdir=/etc \
+    --localstatedir=/var \
+    --with-lsb=/lib/lsb/init-functions \
+    --enable-cron \
+    --enable-dbus \
+    --enable-logrotate \
+    --enable-networkmanager \
+    --enable-zlib \
+    --with-qt4 \
+    --disable-lowmem
+
+Minimal example line for a complete build and full system integration (on a
+Debian system, installs most things to /usr/local/):
+  ./configure \
+    --sysconfdir=/etc \
+    --localstatedir=/var \
+    --with-lsb=/lib/lsb/init-functions
+
+If you use systemd on your system, use:
+  --with-systemd
+You can also specify the unit dir path like (usually not necessary):
+  --with-systemd=/usr/lib/systemd/system/
+
+Gentoo has its own init file, use it with:
+  --with-gentoo-init
+
+
+Step 3.2: Build and install
+---------------------------
+
+After configure you can build and install the package, just issue:
+  make
+  make install
+
+
+Step 3.3: Activate pgl on system initialization
+-----------------------------------------------
+
+
+a) SysV init script
+-------------------
+
+On some systems (e.g. Debian and Ubuntu based) it may be required to activate
+the init script:
+  update-rc.d pgl defaults
+
+Or alternatively:
+  /usr/lib/lsb/install_initd /etc/init.d/pgl
+
+RedHat's system initialization:
+  chkconfig add pgl
+  chkconfig pgl on
+
+Or probably manually, something like:
+  ln -s /etc/init.d/pgl /etc/rc0.d/K01pgl
+  ln -s /etc/init.d/pgl /etc/rc1.d/K01pgl
+  ln -s /etc/init.d/pgl /etc/rc2.d/S20pgl
+  ln -s /etc/init.d/pgl /etc/rc3.d/S20pgl
+  ln -s /etc/init.d/pgl /etc/rc4.d/S20pgl
+  ln -s /etc/init.d/pgl /etc/rc5.d/S20pgl
+  ln -s /etc/init.d/pgl /etc/rc6.d/K01pgl
+
+Or something else, please tell us how it works for your distribution!
+
+Other systems, like Gentoo, don't need this activation of the init script.
+
+
+b) systemd service file
+-----------------------
+
+To start the program for the session:
+  systemctl start pgl.service
+
+To have it up and running on every boot
+  systemctl enable pgl.service
+
+
+
+
+2.) Uninstall
+===============================
+
+To uninstall issue the following command:
+  make uninstall
+
+
+
+
+3.) Build dependencies and runtime environment
+==============================================
+
+Build dependencies:
+- autotools (autoconf, automake, libtoolize)
+- nfnetlink development files
+- libnetfilter-queue development files (>= 1.0, or use the git pgl_backport
+  branch if you have a lower version)
+- libdbus development files (optional, required for the GUI)
+- Qt4 development files including Qt4 dbus (optional, required for the GUI)
+- zlib development files (optional, for loading gz compressed blocklists
+  directly)
+
+Runtime environment pgld:
+- the above libraries
+- iptables (required)
+- netfilter kernel support (Linux kernel >= 2.6.13 for NFQUEUE support or
+  >= 2.6.20 to use the queue maxlen option).
+  Either as modules or directly built in the kernel. These are the modules that
+  are loaded here. Note that "xt_" may be named "ip_" or "ipt_" on older
+  systems. This list was compiled with:
+  lsmod|grep -E "^x|^nf|^ip"|grep -Ev "^ip6|^ipv6|^nfs|^xhci"|sed "s| .*||"|sort
+    iptable_filter
+    ip_tables
+    ipt_REJECT
+    nf_conntrack
+    nf_conntrack_ipv4
+    nf_defrag_ipv4
+    nfnetlink
+    nfnetlink_queue
+    x_tables
+    xt_conntrack
+    xt_iprange
+    xt_mark
+    xt_NFQUEUE
+    xt_tcpudp
+- dbus daemon (optional)
+
+ Runtime environment pglcmd:
+- pgld
+- wget (optional, needed for blocklists update)
+- p7zip (optional, needed for blocklists packed as .7z)
+- unzip (optional, needed for blocklists packed as .zip)
+- start-stop-daemon (optional)
+- awk, sed, grep, basename, dirname, cat, cd, mv, cp, zcat, md5sum, renice,
+  pidof (those should really be on every system)
+- /usr/bin/printf (optional, needed during "update" for archive type
+  detection)
+- /lib/lsb/init-functions (optional,there's a copy built in)
+- NetworkManager (optional, needed for automatic whitelisting of newly
+  brought up network interfaces. Not needed in Debian.)
+- sendmail (optional, needed to send informational (blocklist updates) and
+  warning mails (if pglcmd.wd detects a problem.)
+
+ Runtime environment pglgui:
+- pgld
+- pglcmd
+- Qt4
+- dbus
+- whois
+
+
+
+
+4.) Available packages, build scripts and other distribution specific tips
+==========================================================================
+
+pgl was written and tested under Debian Gnu/Linux Jessie. However it should
+run under every Linux system. It is our goal to make life as easy as possible
+for users and packagers.
+
+NOTE FOR PACKAGERS:
+If you are a packager just contact us at
+http://sourceforge.net/projects/peerguardian/ or
+jre-phoenix@users.sourceforge.net.
+We'll gladly give you all possible support, change the code if feasible and
+publish your work. Of course you are welcome to join the project and e.g.
+commit directly to the git repository.
+To test if pgl is correctly integrated in your system, you'll have to verify
+the correct handling of the init, cron, NetworkManager and logrotate files
+(all are part of pglcmd, logrotate also of pgld), and may test if
+LSB="/lib/lsb/init-functions" works.
+
+
+deb packages:
+-------------
+jre provides official packages in a repository for automatic updates:
+Debian at http://moblock-deb.sourceforge.net
+Ubuntu at https://launchpad.net/~jre-phoenix/+archive/ppa
+
+Debian RFP: http://bugs.debian.org/578192
+Ubuntu RFP: https://bugs.launchpad.net/ubuntu/+bug/109822
+
+
+rpm packages:
+-------------
+peerguardian is in Mageia Cauldron, see
+https://bugs.mageia.org/show_bug.cgi?id=8502
+
+[outdated]
+by pixecs (last update 06-03-2011, pgl 2.0.4):
+  http://forums.phoenixlabs.org/thread-15882-post-120482.html#pid120482
+
+
+[outdated]
+CentOS by agent86 (last update 06-20-2011, pgl 2.0.4):
+http://forums.phoenixlabs.org/thread-16383-post-120468.html
+spec and patch file
+rpms (including netfilter libraries)
+RedHat's system initialization:
+  chkconfig add pgl
+  chkconfig pgl on
+
+
+openSUSE:
+---------
+Giorgos successfully compiled pgl 2.3.4, keeping all options, except Gentoo
+  script and lowmem.
+        ./configure --sysconfdir=/etc --with-systemd
+        make
+        su
+        make install
+
+interesting, but unverified [outdated: pgl 2.2.2 of 25 Jun 2012, retrieved:
+ Jan 2015]:
+https://build.opensuse.org/package/show?project=home%3Afabio_s&package=pgl
+http://software.opensuse.org/package/pgl
+http://software.opensuse.org/package/pgl-gui
+
+
+ARCH / AUR (Arch User Repo):
+----------------------------
+PKGBUILD by Pierre Buard (Gilrain), Arch Linux maintainer
+https://aur.archlinux.org/packages/pgl
+https://aur.archlinux.org/packages/pgl-cli
+https://aur.archlinux.org/packages/pgl-git/
+
+
+Gentoo:
+-------
+available in main portage tree by our Gentoo maintainer hasufell:
+http://packages.gentoo.org/package/net-firewall/pglinux
+
+
+Slackware [outdated]:
+---------------------
+by godmachine81:
+branch "pgl_slackware" in the git repository, slack tar available.
+
+
+synology [outdated]:
+--------------------
+2009 by dino:
+http://forums.phoenixlabs.org/thread-1622-post-119717.html#pid119717
+
+
+Maemo N900 porting request:
+---------------------------
+http://talk.maemo.org/showthread.php?t=93239, 2014-05-26
+
+
+OpenWrt [not checked, outdated]:
+--------------------------------
+https://dev.openwrt.org/browser/packages/net/peerguardian

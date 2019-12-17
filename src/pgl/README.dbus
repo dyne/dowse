@@ -1,0 +1,110 @@
+pgl dbus support
+=================
+
+pgl is able to use the systemwide message bus (not the per-user-session bus),
+where it uses the system dbus daemon (pgl is not the daemon itself). So all pgl
+components are clients.
+
+
+Configuration:
+==============
+
+Set in the pgl/Makefile:
+  DBUS ?= yes
+(For LOWMEM = yes this is disabled automatically.)
+Then:
+- pgld is compiled with dbus support
+- pglcmd is configured with DBUS="1", and thus
+  - starts pgld with dbus enabled ("-d" command line option)
+  - pglcmd has dbus enabled
+- pglgui: WIP
+
+The dbus conf file is in pgl/pgld/org.netfilter.pgl.conf and installed to
+/etc/dbus-1/system.d/org.netfilter.pgl.conf
+
+
+Currently only logging is implemented:
+======================================
+the sender (pgld and pglcmd (WIP)) emits "signals" that are broadcasted. The
+"signal" is the message that is logged.
+pglgui may listen (on the interface) to these signals.
+
+
+
+How to use dbus:
+================
+
+General:
+========
+
+You can monitor the pgl interface on the system dbus:
+   dbus-monitor --system "interface=org.netfilter.pgl"
+
+
+Naming Conventions;
+D-Bus namespaces are all lowercase and correspond to reversed domain names, as
+ with Java. e.g. "org.freedesktop"
+Interface, signal, method, and property names are "WindowsStyleCaps", note that
+ the first letter is capitalized, unlike Java.
+Object paths are normally all lowercase with underscores used rather than
+ hyphens.
+
+bus: system bus
+
+bus names (address of the connection on the system bus):
+    org.netfilter.pgl
+
+interface (can usually be omitted)
+    org/netfilter/pgl
+
+object path (name of the object):
+    org/netfilter/pgl/
+
+Object/Member of pgld logging:
+    org/netfilter/pgl/pgld_message
+TODO:
+    org/netfilter/pgl/IpMatch
+    org/netfilter/pgl/pglcmd_Error
+
+
+How to use dbus to log in pgld:
+===============================
+
+dbus was initially implemented in NFBlock by jpv and reimplemented by jimtb. It
+uses the lowlevel bindings "libdbus".
+
+http://dbus.freedesktop.org/doc/api/html/index.html, especially:
+http://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html
+
+Logging is done with signals (broadcasting, "1:n publish-subscribe" coming from
+an object)
+
+    dbmsg = dbus_message_new_signal ("/org/netfilter/pgl",
+                                         "org.netfilter.pgl",
+                                         "pgld_message");
+
+
+How to use dbus to log in pglcmd:
+=================================
+
+dbus-send --system /org/netfilter/pgl/pglcmd org.netfilter.pgl.signal string:"hello world"
+dbus-send --system /org/netfilter/pgl/pglcmd org.netfilter.pgl.pglcmd_message string:"hello world"
+
+
+
+How to read the dbus logs in pglgui:
+====================================
+
+pglgui uses the dbus binding (wrapper library) for Qt.
+
+
+dbus documentation:
+===================
+
+This helped me a lot:
+http://www.freedesktop.org/wiki/Software/dbus (Homepage)
+http://www.freedesktop.org/wiki/IntroductionToDBus
+http://dbus.freedesktop.org/doc/dbus-tutorial.html
+
+Probably interesting for Qt pglgui:
+http://doc.trolltech.com/4.2/intro-to-dbus.html

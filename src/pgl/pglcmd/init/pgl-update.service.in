@@ -1,0 +1,17 @@
+[Unit]
+Description=PeerGuardian Linux - daily blocklists update
+Documentation=man:pgld(1)
+Documentation=file://@data_root_dir@/doc/pgl/README.blocklists
+Wants=network-online.target
+After=network-online.target pgl.service
+
+[Service]
+Type=oneshot
+ExecStart=@BIN_DIR@/pglcmd update
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+CapabilityBoundingSet=
+ProtectSystem=true
+ProtectHome=true
+ReadWriteDirectories=@MASTERBLOCKLISTDIR@ @LOG_DIR@ @BLOCKLISTSDIR@

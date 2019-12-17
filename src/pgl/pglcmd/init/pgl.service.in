@@ -1,0 +1,23 @@
+[Unit]
+Description=PeerGuardian Linux - an IP Blocker
+Documentation=man:pgld(1)
+Documentation=file://@data_root_dir@/doc/pgl/README.blocklists
+After=network.target syslog.target
+After=iptables.service ip6tables.service shorewall.service shorewall6.service
+After=firehol.service firestarter.service firewalld.service ufw.service
+
+[Service]
+Type=forking
+ExecStart=@BIN_DIR@/pglcmd start
+ExecReload=@BIN_DIR@/pglcmd reload
+ExecStop=@BIN_DIR@/pglcmd stop
+PIDFile=@PID_DIR@/pgld.pid
+TimeoutStartSec=0
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_SYS_MODULE CAP_SYS_NICE
+ProtectSystem=true
+ProtectHome=true
+ReadWriteDirectories=@PID_DIR@ @TMP_DIR@ @MASTERBLOCKLISTDIR@ @LOG_DIR@ @BLOCKLISTSDIR@
+
+[Install]
+WantedBy=multi-user.target
+Also=pgl-update.timer
