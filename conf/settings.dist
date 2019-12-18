@@ -58,6 +58,9 @@ firewall=yes # yes, no or flush (blank open)
 # Act as an access point, creating at least one wifi network
 access_point=yes # yes or no
 
+# Use the DNS cache to speed up queries
+dns_cache=no # yes or no
+
 #########################
 # SAFE TO LEAVE UNCHANGED
 # in most cases, if you don't know what you are doing

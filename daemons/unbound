@@ -1,0 +1,102 @@
+#!/usr/bin/env zsh
+
+source $R/env
+
+cat <<EOF > /run/dowse/conf/unbound.conf
+### Configuration from https://calomel.org/unbound_dns.html
+server:
+  # log verbosity
+    verbosity: 1
+
+  # specify the interfaces to answer queries from by ip-address.  The default
+  # is to listen to localhost (127.0.0.1 and ::1).  specify 0.0.0.0 and ::0 to
+  # bind to all available interfaces.  specify every interface[@port] on a new
+  # 'interface:' labeled line.  The listen interfaces are not changed on
+  # reload, only on restart.
+    interface: 0.0.0.0
+
+  # port to answer queries from
+    port: 5300
+
+  # Enable IPv4, "yes" or "no".
+    do-ip4: yes
+
+  # Enable IPv6, "yes" or "no".
+    do-ip6: yes
+
+  # Enable UDP, "yes" or "no".
+    do-udp: yes
+
+  # Enable TCP, "yes" or "no". If TCP is not needed, Unbound is actually
+  # quicker to resolve as the functions related to TCP checks are not done.i
+  # NOTE: you may need tcp enabled to get the DNSSEC results from *.edu domains
+  # due to their size.
+    do-tcp: yes
+
+  # control which client ips are allowed to make (recursive) queries to this
+  # server. Specify classless netblocks with /size and action.  By default
+  # everything is refused, except for localhost.  Choose deny (drop message),
+  # refuse (polite error reply), allow (recursive ok), allow_snoop (recursive
+  # and nonrecursive ok)
+    access-control: $dowse_net allow
+
+  # perform prefetching of close to expired message cache entries.  If a client
+  # requests the dns lookup and the TTL of the cached hostname is going to
+  # expire in less than 10% of its TTL, unbound will (1st) return the ip of the
+  # host to the client and (2nd) pre-fetch the dns request from the remote dns
+  # server. This method has been shown to increase the amount of cached hits by
+  # local clients by 10% on average.
+    prefetch: yes
+
+  # number of threads to create. 1 disables threading. This should equal the number
+  # of CPU cores in the machine. Our example machine has 4 CPU cores.
+    num-threads: 4
+
+  ## Unbound Optimization and Speed Tweaks ###
+
+  # If nonzero, unwanted replies are not only reported in statistics, but also
+  # a running total is kept per thread. If it reaches the threshold, a warning
+  # is printed and a defensive action is taken, the cache is cleared to flush
+  # potential poison out of it.  A suggested value is 10000000, the default is
+  # 0 (turned off). We think 10K is a good value.
+    unwanted-reply-threshold: 10000
+
+  # Allow to query localhost DNS server
+    do-not-query-localhost: no
+
+  # Forward all queries to localhost (where there is dnscrypt-proxy)
+  forward-zone:
+    name: "."
+    forward-addr: 127.0.0.1
+
+EOF
+
+if [ "$dns_cache" = "yes" ]; then
+	cat <<EOF >> /run/dowse/conf/unbound.conf
+  # the time to live (TTL) value lower bound, in seconds. Default 0.
+  # If more than an hour could easily give trouble due to stale data.
+    cache-min-ttl: 3600
+
+  # the time to live (TTL) value cap for RRsets and messages in the
+  # cache. Items are not cached for longer. In seconds.
+    cache-max-ttl: 86400
+
+  # the number of slabs to use for cache and must be a power of 2 times the
+  # number of num-threads set above. more slabs reduce lock contention, but
+  # fragment memory usage.
+    msg-cache-slabs: 8
+    rrset-cache-slabs: 8
+    infra-cache-slabs: 8
+    key-cache-slabs: 8
+
+  # Increase the memory size of the cache. Use roughly twice as much rrset cache
+  # memory as you use msg cache memory. Due to malloc overhead, the total memory
+  # usage is likely to rise to double (or 2.5x) the total cache memory. The test
+  # box has 4gig of ram so 256meg for rrset allows a lot of room for cacheed objects.
+    rrset-cache-size: 256m
+    msg-cache-size: 128m
+EOF
+fi
+
+exec /usr/sbin/unbound -d -c /run/dowse/conf/unbound.conf
+

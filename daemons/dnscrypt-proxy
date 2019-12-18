@@ -72,7 +72,8 @@ print $rconf | redis dynamic
 
 # if undefined, eg at the first startup, it takes a default value
 #dnscrypt_name=${dns_selected:-dnscrypt.eu-nl}
-dnscrypt_name=${1:-"adguard-dns-ns1"}
+#dnscrypt_name=${1:-"adguard-dns-ns1"}
+dnscrypt_name=${1:-"d0wn-is-ns2"}
 
 func "Launching dnscrypt-proxy to listen on port 53"
 act "dnscrypt proxy server: $dnscrypt_name"
@@ -110,7 +111,7 @@ else
 			hostname=$hostname \
 			domain=$lan \
 			interface=$bridge \
-			exec $bin -a $address:53 \
+			exec $bin -a 127.0.0.1:53000 \
 			-l /var/log/dowse/dnscrypt.log \
 			-L $R/src/dnscrypt-proxy/dnscrypt-resolvers.csv \
 			-R "$dnscrypt_name" \

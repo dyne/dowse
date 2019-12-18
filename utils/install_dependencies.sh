@@ -36,6 +36,7 @@ apt-get -y -q --no-install-recommends install \
 		redis \
 		snooze \
 		supervisor \
+		unbound \
 		uuid-dev \
 		wget \
 		xmlstarlet \
