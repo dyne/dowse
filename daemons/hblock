@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+
+timefile="/run/dowse/hblock_timefile"
+conf="/run/dowse/conf/unbound_blocked.conf"
+remote_conf="https://hblock.molinero.dev/hosts_unbound.conf"
+snooze -S"*" -M"*" -H"*" -t $timefile -T 1d \
+	sh -c "wget $remote_conf -O $conf; touch $timefile"
+

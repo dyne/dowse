@@ -5,6 +5,7 @@ source $R/env
 cat <<EOF > /run/dowse/conf/unbound.conf
 ### Configuration from https://calomel.org/unbound_dns.html
 server:
+  include: "/run/dowse/conf/unbound_blocked.conf"
   # log verbosity
     verbosity: 1
 
