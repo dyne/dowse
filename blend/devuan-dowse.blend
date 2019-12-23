@@ -1,0 +1,49 @@
+#!/usr/bin/env zsh
+# Copyright (c) 2019 Dyne.org Foundation
+# live-sdk is written and maintained by Ivan J. <parazyd@dyne.org>
+#
+# This file is part of dowse
+# devuan-dowse.blend is maintained by danyspin97
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+BLENDPATH="${BLENDPATH:-$(dirname $0)}"
+
+source $BLENDPATH/config
+
+notice "$version"
+
+blend_postinst() {
+	req=(blend_name dowse_release fetch_script)
+	ckreq || return 
+
+	notice "executing $blend_name postinst"
+
+	# Download the fetch script for Dowse
+	wget -O $strapdir/fetch $fetch_script
+	sed -i "s/\$DOWSE_TAG/$dowse_release/" $strapdir/fetch
+	chroot-script -d fetch
+
+	# Remove conflicting programs starting at boot
+	# Disable services starting at boot
+	for s in mosquitto redis-server hostapd netdata supervisor isc-dhcp-server
+	do
+		update-rc.d $s disable
+	done
+
+	# Start dowse at boot
+	update-rc.d dowse start
+}
+
+

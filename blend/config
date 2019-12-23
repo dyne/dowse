@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+## configuration file for devuan-dowse blend
+
+blend_name="dowse"
+
+release="beowulf"
+version="3.0.0"
+
+dowse_release="host-ap"
+
+image_name="${os}_${release}_${version}_${arch}_${blend_name}"
+
+# Needed to fetch dowse repository
+extra_packages+=(git)
+fetch_script="https://raw.githubusercontent.com/dyne/dowse/host-ap/utils/fetch.sh"
+
