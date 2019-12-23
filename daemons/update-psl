@@ -6,5 +6,7 @@ psl_list="https://publicsuffix.org/list/public_suffix_list.dat"
 file="$R/src/dnscrypt-plugin/public_suffix_list.dat"
 
 timefile="/run/dowse/update_psl_timefile"
+# Sleep to wait that dnscrypt and unbound have properly started
 snooze -S"*" -M"*" -H"*" -t $timefile -T 1d \
-	sh -c "wget $psl_list -O $file; touch $timefile"
+	sh -c "sleep 60; wget $psl_list -O $file; touch $timefile"
+
