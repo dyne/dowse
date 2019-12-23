@@ -111,7 +111,7 @@ else
 			hostname=$hostname \
 			domain=$lan \
 			interface=$bridge \
-			exec $bin -a 127.0.0.1:53000 \
+			exec $bin -a $address:53000 \
 			-l /var/log/dowse/dnscrypt.log \
 			-L $R/src/dnscrypt-proxy/dnscrypt-resolvers.csv \
 			-R "$dnscrypt_name" \

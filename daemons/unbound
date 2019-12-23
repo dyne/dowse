@@ -17,7 +17,7 @@ server:
     interface: 0.0.0.0
 
   # port to answer queries from
-    port: 5300
+    port: 53
 
   # Enable IPv4, "yes" or "no".
     do-ip4: yes
@@ -63,12 +63,12 @@ server:
     unwanted-reply-threshold: 10000
 
   # Allow to query localhost DNS server
-    do-not-query-localhost: no
+    do-not-query-localhost: yes
 
   # Forward all queries to localhost (where there is dnscrypt-proxy)
   forward-zone:
     name: "."
-    forward-addr: 127.0.0.1
+    forward-addr: $address@53000
 
 EOF
 
