@@ -8,7 +8,7 @@ dnscrypt_dowse_la_SOURCES = dnscrypt-dowse.c domainlist.c ip2mac.c
 
 dnscrypt_dowse_la_LIBADD = @LDNS_LIBS@ -ljemalloc -lhiredis -L../libdowse -l:libdowse.a
 
-dnscrypt_dowse_la_CFLAGS = -O3 -Wall -I../dnscrypt-proxy/src/include -I../redis/deps -I../redis/deps/hiredis -I..
+dnscrypt_dowse_la_CFLAGS = -O3 -Wall -I..
 
 dnscrypt_dowse_la_LDFLAGS = $(AM_LDFLAGS) \
 -avoid-version \
