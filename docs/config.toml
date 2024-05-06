@@ -5,6 +5,7 @@ title = "Dowse"
 theme = "dyne-soft"
 disableKinds = ["taxonomy, term"]
 enableRobotsTXT = "false"
+
 [taxonomies]
   tag = "tags"
 
@@ -13,10 +14,12 @@ enableRobotsTXT = "false"
   moto = 'Situational awareness in your local network'
   publisher = "Dyne.org"
   google_analytics_id = ""
-  logo = "/assets/img/dowse-logo.svg"
-  icon = "/assets/img/dyne-icon.svg"
-  footerIcon = "/assets/img/dyne-icon.svg"
+  logo = "assets/img/dowse-logo.svg"
+  icon = "assets/img/dyne-icon.svg"
+  footerIcon = "/ssets/img/dyne-icon.svg"
   email = "info@dyne.org"
+  download = "download"
+  documentation = "https://github.com/dyne/dowse/wiki"
 
   [params.geo]
     timezone = "Europe/Netherlands"

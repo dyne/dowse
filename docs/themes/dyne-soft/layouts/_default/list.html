@@ -18,7 +18,7 @@
 {{ range .Paginator.Pages }}
 <section class="front-section">
 
-  <div style="background-image:url({{ .Params.Image }});filter: sepia() hue-rotate(120deg)">
+  <div style="background-image:url({{ .Params.Image | relURL }});filter: sepia() hue-rotate(120deg)">
   </div>
 
   <div class="content-wrapper">

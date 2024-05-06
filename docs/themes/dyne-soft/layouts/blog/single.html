@@ -1,6 +1,6 @@
 {{ define "header" }}
 <header class="hero-single" id="top">
-  <div class="imagecontainer" style="background-image: url({{ .Params.image }}); background-size:cover; background-position:center center;">
+  <div class="imagecontainer" style="background-image: url({{ .Params.image | relURL }}); background-size:cover; background-position:center center;">
   </div>
   <div class="content-wrapper">
     <a href="/" alt="back to home">{{ partial "svg/dowse-icon.svg" . }}</a>

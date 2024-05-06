@@ -7,7 +7,7 @@ image: ''
 ---
 ### Web Design
 
-* [Set Hallstrom](https://set.hallstrom.ch)
+* [Setto](https://setto.basspistol.com)
 
 ### CMS
 

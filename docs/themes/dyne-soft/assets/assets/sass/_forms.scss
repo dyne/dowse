@@ -1,7 +1,7 @@
 .textspace {
   height: 100px;
 
-} 
+}
 
 input, textarea, select {
   width: 100%;
@@ -43,7 +43,7 @@ input[type=submit]:hover {
 }
 
 .contact-info {
-  display: flex; 
+  display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   label {
@@ -72,21 +72,21 @@ label {
   user-select: none;
   display: none;
   }
-  
+
   input[type=checkbox].css-checkbox {
-      position: absolute; 
-      overflow: hidden; 
-      clip: rect(0 0 0 0); 
-      height:1px; 
-      width:1px; 
-      margin:-1px; 
+      position: absolute;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      height:1px;
+      width:1px;
+      margin:-1px;
       padding:0;
       border:0;
   }
-  
+
   input[type=checkbox].css-checkbox + label.css-label {
     padding-left:20px;
-    height:15px; 
+    height:15px;
     display:inline-block;
     background-repeat:no-repeat;
     background-position: 0 0;
@@ -94,21 +94,21 @@ label {
     vertical-align:middle;
     cursor:pointer;
   }
-  
+
   input[type=checkbox].css-checkbox:checked + label.css-label {
     background-position: 0 -15px;
   }
-  
+
   .css-label{
-    background-image:url(/assets/img/check.png);
+    background-image:url(../../assets/img/check.png);
   }
 
 
-  
+
 
   input[type=checkbox].css-checkbox.lrg + label.css-label.lrg {
     padding-left:22px;
-    height:20px; 
+    height:20px;
     display:inline-block;
     line-height:20px;
     background-repeat:no-repeat;
@@ -117,9 +117,9 @@ label {
     vertical-align:middle;
       cursor:pointer;
   }
-  
+
   input[type=checkbox].css-checkbox.lrg:checked + label.css-label.lrg{
-  
+
       background-position: 0 -20px;
   }
 

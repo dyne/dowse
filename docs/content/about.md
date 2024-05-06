@@ -1,10 +1,7 @@
 ---
 title: About Dowse
-description_markdown: "The Internet of Things hype generates a ton of buzz about things
-  that will be allowed to connect to the internet and talk to other devices. This buzz
-  requires attention. Things like home appliances should have a clear behaviour and a
-  simple switch to put them off. \n\nDowse puts this switch back to any device in your LAN."
-image: '/images/dowse-dataprevention-campaign-1024x576.jpg'
+description_markdown: "Dowse processes all DNS network connections on its network and makes them visible in real-time, showing when we connect to **.com**, **.org** or **.net** domains, or to the corporate cloud of social networks. This way we can immediately see how many connections are opened by our personal devices, without us even knowing, every time we connect to a network."
+image: 'images/dowse-dataprevention-campaign-1024x576.jpg'
 sections:
 - title: "Experiment along"
   content_markdown: "Dowse talks back to your devices. It uses open standards: MQTT,
@@ -12,18 +9,18 @@ sections:
     that Dowse publishes to turn them to action. It is a good starting point for artists,
     hobbyists and makers to create amazing network-aware effects and interfaces. \n\n**We try
     to help a community of dowsers to explore this possibility.**"
-  image: "/images/dowsing_on_map.png"
+  image: "images/dowsing_on_map.png"
   button:
-    URL: "/community/"
+    URL: "community"
     label: Become a dowser
 - title: Peaceful Zone
   content_markdown: "Your local area network should be a safe-sapce. A zone of peace of mind.
   Knowing what happens in the digital realm can seem like worrysome sorcery or black-magic.\n\n
   **Dowse is meant to help you preserve the peace of mind by creating awareness and
   demystifying the communication taking place between your devices.**"
-  image: "/images/dowse-dataprevention-campaign-thumb.jpg"
+  image: "images/dowse-dataprevention-campaign-thumb.jpg"
   button:
-    URL: "/download/"
+    URL: "download"
     label: This is the Way
 layout: about
 ---
@@ -34,7 +31,7 @@ layout: about
 
 The Dowse box gives you back control. Dowse is *free and open source software*. There is no big company behind it. By installing the Dowse box you will get insight down to the network layer of what is *actually* going on in your home. Who is talking to whom, what, where and when? You can see which device connects to which company and you can turn that communication off, or allow it.
 
-We call it an *"Awareness Box"*. You will be aware of the invisible world surrounding you and your familly. To us, this is the first step. Dowse is building a [community of developers](/community) who will create modules allowing you to safely and securely share your data with whomever you want. After all there are a lot of pros about getting insight into your own behavior, your family's and your home as a companion. Yet the control should stay with you. You will share if you know what you are really sharing.
+We call it an *"Awareness Box"*. You will be aware of the invisible world surrounding you and your familly. To us, this is the first step. Dowse is building a [community of developers](/dowse/community) who will create modules allowing you to safely and securely share your data with whomever you want. After all there are a lot of pros about getting insight into your own behavior, your family's and your home as a companion. Yet the control should stay with you. You will share if you know what you are really sharing.
 
 In short, it is a device that is designed to do a few things very well:
 

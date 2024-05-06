@@ -2,7 +2,10 @@
 - name: GitHub
   URL: https://github.com/dyne/dowse
   icon: fa-github
-- name: Twietter
+- name: Mastofon
+  URL: https://toot.community/@dyne
+  icon: fa-mastodon
+- name: Twitter
   URL: https://twitter.com/dyneorg
   icon: fa-twitter
 ---

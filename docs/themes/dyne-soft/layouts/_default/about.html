@@ -18,11 +18,11 @@
     <div class="text-content">
       <h2>{{ .title }}</h2>
       <p>{{ .content_markdown | markdownify }}</p>
-      <p><a href="{{ .button.URL }}" class="button">{{ .button.label }}</a></p>
+      <p><a href="{{ .button.URL | relURL }}" class="button">{{ .button.label }}</a></p>
     </div>
     <div class="cartouche">
       <figure>
-        <img src="{{ .image }}" alt="{{ .name }}" />
+        <img src="{{ .image | relURL }}" alt="{{ .name }}" />
       </figure>
     </div>
   </div>

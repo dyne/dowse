@@ -1,7 +1,7 @@
 
 {{ define "header" }}
 <header class="hero" id="top">
-  <div class="imagecontainer" style="background-image: url(/images/Dowse-LPM.webp);opacity:0.3;">
+  <div class="imagecontainer" style="background-image: url({{ .Params.image | relURL }});opacity:0.3;">
   </div>
   <div class="content-wrapper">
     <a href="#start" class="svg">
@@ -17,23 +17,24 @@
   <div class="content-wrapper">
     <div class="content">
       <h1>{{ .Params.description }}</h1>
-      <p><a href="/download/" class="button">Download</a> <a href="documentation" class="button">Documentation</a></p>
+      <p><a href="{{ .Site.Params.download }}" class="button">Download</a> <a href="{{ .Site.Params.documentation}}" class="button">Documentation</a></p>
       {{ .Content | markdownify }}
     </div>
   </div>
 </section>
 {{ range .Params.sections }}
+{{ $baseurl := .Site.BaseURL }}
 <article class="narative">
   <div class="content-wrapper">
 
     <div class="text-content">
       <h2>{{ .title }}</h2>
       <p>{{ .description_markdown | markdownify }}</p>
-      <p><a href="{{ .button.URL }}" class="button">{{ .button.label }}</a></p>
+      <p><a href="{{ .button.URL | relURL }}" class="button">{{ .button.label }}</a></p>
     </div>
     <div class="cartouche">
       <figure>
-        <img src="{{ .image }}" />
+        <img src="{{ .image | relURL }}" />
       </figure>
     </div>
   </div>
