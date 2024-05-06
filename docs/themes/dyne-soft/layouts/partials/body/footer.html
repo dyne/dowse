@@ -24,7 +24,7 @@
         {{ end }}
         {{ range .Site.Data.navigation }}
         {{ if ne .name "Contact"}}
-        <li><a href="{{ .URL }}" {{ if eq .external true }} target="_blank" rel="noopener"
+        <li><a href="{{ .URL | relURL }}" {{ if eq .external true }} target="_blank" rel="noopener"
             {{ end }}>{{ .icon }} {{ .name }}</a></li>
         {{ end }}
         {{ end }}
@@ -47,8 +47,8 @@
       </div>
       <p>&copy;{{ now.Format "2006" }} {{ .Site.Title }}
         <!-- | <a href="/webcreds/">Credits</a>  -->
-        | <a href="/cookies/">Privacy Policy</a>
-        | <a href="/credits/">Credits</a></p>
+        | <a href="{{ "cookies" | relURL }}">Privacy Policy</a>
+        | <a href="{{ "credits" | relURL }}">Credits</a></p>
 
     </small>
   </div>

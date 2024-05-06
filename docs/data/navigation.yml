@@ -7,7 +7,7 @@
   URL: "download"
   icon: ''
   external: false
-- name: "Manual"
+- name: "Docs"
   URL: "https://github.com/dyne/dowse/wiki"
   icon: ''
   external: true
