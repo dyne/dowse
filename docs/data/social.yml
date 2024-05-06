@@ -1,0 +1,8 @@
+---
+- name: GitHub
+  URL: https://github.com/dyne/dowse
+  icon: fa-github
+- name: Twietter
+  URL: https://twitter.com/dyneorg
+  icon: fa-twitter
+---
