@@ -61,3 +61,10 @@ Dowse is not only a functional tool, but a symbolic operation proposing a differ
 The way privacy awareness (rather than protection) is presented to its users is not envisioned as a violent process, but as a responsible, natural act in search of harmony among the things connecting the inside with the outside of one’s private, common and public aspects of life.
 
 <iframe width="100%" height="460" src="https://www.youtube-nocookie.com/embed/9p5LozWuENE?si=xAQ9AF-V_3RXOQ0W" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## Credits
+The Dowse network visualization shown in the exibition is designed and developed by **Denis "Jaromil" Roio**, who published it along with the Dowse Whitepaper in 2013. Soon Jaromil was joined by **Rob van Kranenburg** who has woven the Dowse narrative to a wider perspective on the Internet of Things, and by **Federico Bonelli** who ran workshops in various schools using Dowse.
+
+The project has been funded by **SIDN Fonds** and received the ISOC NL Prize 2016.
+
+The Dowse software running in this exhibition includes code contributions by **Luca Greco, Ivan Jelinčić, Andrea Scarpino, Nicola Rossi and Danilo Spinella**, and is based on the **DNSCrypt Proxy v2** framework by **Frank Denis**. Jaromil is still the current maintainer and accepts contributions via Dyne.org.
