@@ -67,4 +67,4 @@ The Dowse network visualization shown in the exibition is designed and developed
 
 The project has been funded by **SIDN Fonds** and received the ISOC NL Prize 2016.
 
-The Dowse software running in this exhibition includes code contributions by **Luca Greco, Ivan Jelinčić, Andrea Scarpino, Nicola Rossi and Danilo Spinella**, and is based on the **DNSCrypt Proxy v2** framework by **Frank Denis**. Jaromil is still the current maintainer and accepts contributions via Dyne.org.
+The Dowse software includes code contributions by **Luca Greco, Ivan Jelinčić, Andrea Scarpino, Nicola Rossi and Danilo Spinella**, and is based on the **DNSCrypt Proxy v2** framework by **Frank Denis**. **Jaromil** is still the current maintainer and accepts contributions via Dyne.org.
