@@ -1,10 +1,10 @@
 ---
 - name: "About"
-  URL: "about"
+  URL: "about/"
   icon: ''
   external: false
 - name: "Download"
-  URL: "download"
+  URL: "download/"
   icon: ''
   external: false
 - name: "Docs"
@@ -12,7 +12,7 @@
   icon: ''
   external: true
 - name: "Community"
-  URL: "community"
+  URL: "community/"
   icon: ''
   external: false
 ---

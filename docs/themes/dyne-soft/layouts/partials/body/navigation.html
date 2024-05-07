@@ -15,7 +15,7 @@
 {{ range .Site.Data.navigation }}
 
     {{ if eq .external false }}
-      <li><a href="{{ .URL | relURL }}" onclick="removeBlur()" class="{{ if eq .URL $.Page.RelPermalink }}current{{ end }} button">{{ .icon }} {{ .name }}</a></li>
+      <li><a href="{{ .URL | relURL }}" onclick="removeBlur()" class="{{ if eq ( .URL | relURL) $.Page.RelPermalink }}current{{ end }} button">{{ .icon }} {{ .name }}</a></li>
     {{ else }}
       <li><a href="{{ .URL }}" target="_blank" rel="noopener" onclick="removeBlur()" class="button">{{ .icon }} {{ .name }}</a></li>
     {{ end }}
