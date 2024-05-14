@@ -23,10 +23,11 @@ RUN apk update && apk add openssl \
     -in /etc/test.csr -signkey /etc/test.key -out /etc/test.crt
 # make the final image
 FROM wolfssl/wolfssl:alpine-lib
+ENV DOHD_PORT=443
 COPY --from=builder /usr/bin/dohd /usr/bin/dohd
 COPY --from=builder /usr/local/lib/libwolfssl.so* /usr/lib/
 COPY --from=builder /usr/lib/libnghttp2.so* /usr/lib
 COPY --from=builder /etc/test.* /etc/
 RUN adduser -D -H -s /bin/false dohd
 RUN chown dohd:dohd /etc/test.*
-CMD dohd -c /etc/test.crt -k /etc/test.key -p 8053 -u dohd -F
+CMD echo "Listening on port $DOHD_PORT" && dohd -c /etc/test.crt -k /etc/test.key -p $DOHD_PORT -u dohd -v -F
