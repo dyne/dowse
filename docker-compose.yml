@@ -1,0 +1,26 @@
+version: '3'
+services:
+
+  kea-dhcp:
+    network_mode: "host"
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    image: wastrachan/kea:latest
+    ports:
+      - "67:67/udp"
+    volumes:
+      - ./containers/kea-dhcp:/data/kea
+    restart: always
+
+  dohd:
+    build: containers/dohd
+    # container_name: dohd
+    network_mode: "host"
+    deploy:
+      mode: replicated
+      replicas: 3
+      endpoint_mode: vip
+    image: dyne/dowse:dohd
+    ports: [ "443" ]
