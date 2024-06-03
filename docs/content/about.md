@@ -29,9 +29,10 @@ layout: about
 
 <iframe width="100%" height="460" src="https://www.youtube-nocookie.com/embed/wDLyYk_TQtI?si=E9j_UJs_SwmCN6gc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-The Dowse box gives you back control. Dowse is *free and open source software*. There is no big company behind it. By installing the Dowse box you will get insight down to the network layer of what is *actually* going on in your home. Who is talking to whom, what, where and when? You can see which device connects to which company and you can turn that communication off, or allow it.
+### Synopsis
+We believe that complex and hidden network connections make people unaware of how their privacy is violated and how their data is communicated to third parties. We see Dowse primarily as an educational tool to share an insight into what is going on in a private network. We call this local area network (LAN) awareness: who is talking to whom or what, where and when? Any audience witnessing an operating Dowse installation is hit by a “wow!” effect and this awe serves to raise their awareness about the privacy implications of joining a network with a private device.
 
-We call it an *"Awareness Box"*. You will be aware of the invisible world surrounding you and your familly. To us, this is the first step. Dowse is building a [community of developers](/dowse/community) who will create modules allowing you to safely and securely share your data with whomever you want. After all there are a lot of pros about getting insight into your own behavior, your family's and your home as a companion. Yet the control should stay with you. You will share if you know what you are really sharing.
+Dowse is an application to filter all DNS queries in a Local Area Network (LAN) and make them visible in a beautiful looking live data visualization. It groups queries to show when we connect to .com or any other top-level domain (TLD) and is capable of distinguishing global cloud servers among them. Dowse can help analyze the traffic of any device connected to its LAN: mobile phones, laptops and “Internet of Things” (IoT) objects, without requiring technical knowledge of protocols: it is useful to demonstrate how many connections are opened on our behalf, without us even knowing, every time we connect to a network.
 
 In short, it is a device that is designed to do a few things very well:
 
