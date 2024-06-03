@@ -18,7 +18,8 @@ enableRobotsTXT = "false"
   icon = "assets/img/dyne-icon.svg"
   footerIcon = "assets/img/dyne-icon.svg"
   email = "info@dyne.org"
-  download = "download"
+  sourcecode = "https://github.com/dyne/dowse"
+  download = "https://github.com/dyne/dowse"
   documentation = "https://github.com/dyne/dowse/wiki"
 
   [params.geo]

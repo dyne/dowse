@@ -3,8 +3,8 @@
   URL: "about/"
   icon: ''
   external: false
-- name: "Download"
-  URL: "download/"
+- name: "Workshops"
+  URL: "workshops/"
   icon: ''
   external: false
 - name: "Docs"

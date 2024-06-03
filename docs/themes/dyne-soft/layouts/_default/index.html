@@ -17,7 +17,7 @@
   <div class="content-wrapper">
     <div class="content">
       <h1>{{ .Params.description }}</h1>
-      <p><a href="{{ .Site.Params.download }}" class="button">Download</a> <a href="{{ .Site.Params.documentation}}" class="button">Documentation</a></p>
+      <p><a href="{{ .Site.Params.sourcecode }}" class="button">Source Code</a> <a href="{{ .Site.Params.documentation}}" class="button">Documentation</a></p>
       {{ .Content | markdownify }}
     </div>
   </div>
