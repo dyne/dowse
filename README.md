@@ -19,6 +19,26 @@ Components used:
 - https://www.isc.org/dhcp/
 - https://dyne.org/dohd
 
+## Setup
+
+Use [this list for dnscrypt-proxy v2](https://download.dnscrypt.info/resolvers-list/v2/public-resolvers.md) to chose a resolver. Pick one supporting DNSCrypt protocol.
+
+
+Take the `sdns://...` url and decode it using the [dnscrypt stamps online tool](https://dnscrypt.info/stamps/). Make sure the dropbox on the left confirms it is using the DNSCrypt protocol.
+
+Copy and Paste the values obtained in a new dnscrypt-proxy.conf and use it to start:
+```
+ProviderName    [name here]
+ProviderKey     31337... sequence of hex numbers here
+ResolverAddress [IP here]
+LocalAddress 192.168.0.2:53 (or your local ip and port)
+LocalCache on
+Daemonize on
+Plugin libdcplugin_dowse.so
+```
+
+The last line is important because it will load the Dowse plugin, which is a shared library built by this repository and installed in `/usr/local/lib/dnscrypt-proxy/`.
+
 ## Credits
 
 Application design and development: [Jaromil](https://jaromil.dyne.org)
